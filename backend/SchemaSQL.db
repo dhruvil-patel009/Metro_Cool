@@ -1,0 +1,56 @@
+create table profiles (
+  id uuid references auth.users on delete cascade,
+  role text check (role in ('user','technician','admin')) not null,
+  first_name text,
+  middle_name text,
+  last_name text,
+  phone text unique,
+  email text unique,
+  profile_photo text,
+  created_at timestamp default now(),
+  primary key (id)
+);
+
+
+create table technician_details (
+  id uuid references profiles(id) on delete cascade,
+  aadhaar_pan_url text,
+  experience_years int,
+  promo_code text,
+  is_verified boolean default false,
+  primary key (id)
+);
+
+
+create table admins (
+  id uuid references profiles(id) on delete cascade,
+  created_by uuid,
+  created_at timestamp default now(),
+  primary key (id)
+);
+
+
+STEP 5: Enable Row Level Security (HIGH SECURITY)
+
+alter table profiles enable row level security;
+alter table technician_details enable row level security;
+alter table admins enable row level security;
+
+STEP 6: Add RLS Policies
+
+
+Profiles (User can read own data)
+
+create policy "Read own profile"
+on profiles for select
+using (auth.uid() = id);
+
+
+Technician details
+
+create policy "Tech read own data"
+on technician_details for select
+using (auth.uid() = id);
+
+
+
