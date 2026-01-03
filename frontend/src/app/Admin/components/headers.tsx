@@ -10,10 +10,9 @@ const pageTitles: Record<string, string> = {
   "/Admin/Categories": "Categories",
   "/Admin/Technician": "Technicians",
   "/Admin/users": "Users",
-  "/Admin/bookings": "Bookings",
-  "/Admin/settlements": "Settlements",
-  "/Admin/reports": "Reports",
-  "/Admin/settings": "Settings",
+  "/Admin/Bookings": "Bookings",
+  "/Admin/Settlements": "Settlements",
+  "/Admin/Settings": "Settings",
 };
 
 export function Header() {
