@@ -5,7 +5,6 @@ import UsersContent from "../components/user-content"
 export default function UsersPage() {
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
-      <Header />
       <div className="p-6 lg:p-8">
         {/* Breadcrumb */}
         <div className="mb-4 flex items-center gap-2 text-sm text-gray-600">

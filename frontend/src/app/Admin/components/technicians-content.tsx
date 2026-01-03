@@ -5,7 +5,6 @@ import { Users, UserCheck, Clock, Plus, Filter, Eye, MoreVertical } from "lucide
 import { Button } from "@/app/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
 import Image from "next/image"
-import { Header } from "./headers"
 
 type Technician = {
   id: string
@@ -100,7 +99,6 @@ export default function TechniciansContent() {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
-      <Header />
 
       <main className="p-6 space-y-6">
         {/* Stat Cards */}
