@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 
 const pageTitles: Record<string, string> = {
-  "/Admin": "Dashboard",
-  "/Admin/Services": "Services",
-  "/Admin/Categories": "Categories",
-  "/Admin/Technician": "Technicians",
-  "/Admin/users": "Users",
-  "/Admin/Bookings": "Bookings",
-  "/Admin/Settlements": "Settlements",
-  "/Admin/Settings": "Settings",
+  "/admin": "Dashboard",
+  "/admin/Services": "Services",
+  "/admin/Categories": "Categories",
+  "/admin/Technician": "Technicians",
+  "/admin/users": "Users",
+  "/admin/Bookings": "Bookings",
+  "/admin/Settlements": "Settlements",
+  "/admin/Settings": "Settings",
 };
 
 export function Header() {
@@ -21,7 +21,7 @@ export function Header() {
   const title =
     pageTitles[pathname] ||
     pageTitles["/" + pathname.split("/")[1]] ||
-    "Admin";
+    "admin";
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
@@ -58,7 +58,7 @@ export function Header() {
               <p className="text-sm font-semibold text-gray-900">
                 Alex Morgan
               </p>
-              <p className="text-xs text-gray-500">Super Admin</p>
+              <p className="text-xs text-gray-500">Super admin</p>
             </div>
 
             <Avatar className="h-10 w-10 border-2 border-cyan-500">

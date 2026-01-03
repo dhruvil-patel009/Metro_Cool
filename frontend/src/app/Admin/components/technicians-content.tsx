@@ -101,19 +101,18 @@ export default function TechniciansContent() {
     <div className="flex-1 overflow-auto bg-gray-50">
 
       <main className="p-6 space-y-6">
-        {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
-              <span className="text-sm text-gray-600">Total Technicians</span>
-              <div className="p-2 bg-cyan-50 rounded-lg">
+              <span className="text-sm text-gray-600 font-medium">Total Technicians</span>
+              <div className="p-2.5 bg-cyan-50 rounded-lg">
                 <Users className="w-5 h-5 text-cyan-500" />
               </div>
             </div>
             <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold">124</h3>
-              <span className="text-sm text-green-600 flex items-center mb-1">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 className="text-3xl font-bold text-gray-900">124</h3>
+              <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
+                <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -126,17 +125,17 @@ export default function TechniciansContent() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
-              <span className="text-sm text-gray-600">Active Now</span>
-              <div className="p-2 bg-green-50 rounded-lg">
+              <span className="text-sm text-gray-600 font-medium">Active Now</span>
+              <div className="p-2.5 bg-green-50 rounded-lg">
                 <UserCheck className="w-5 h-5 text-green-500" />
               </div>
             </div>
             <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold">86</h3>
-              <span className="text-sm text-green-600 flex items-center mb-1">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 className="text-3xl font-bold text-gray-900">86</h3>
+              <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
+                <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -149,45 +148,50 @@ export default function TechniciansContent() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
-              <span className="text-sm text-gray-600">Pending Requests</span>
-              <div className="p-2 bg-orange-50 rounded-lg">
+              <span className="text-sm text-gray-600 font-medium">Pending Requests</span>
+              <div className="p-2.5 bg-orange-50 rounded-lg">
                 <Clock className="w-5 h-5 text-orange-500" />
               </div>
             </div>
             <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold">5</h3>
-              <span className="text-sm text-orange-600 font-medium mb-1">! Action Needed</span>
+              <h3 className="text-3xl font-bold text-gray-900">5</h3>
+              <span className="text-sm text-orange-600 font-semibold mb-1">! Action Needed</span>
             </div>
           </div>
         </div>
 
-        {/* Technicians Table */}
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="p-6 border-b">
-            <div className="flex items-center justify-between">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex gap-2">
                 <button
                   onClick={() => setActiveTab("all")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === "all" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === "all"
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                 >
                   All Technicians
                 </button>
                 <button
                   onClick={() => setActiveTab("leave")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === "leave" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === "leave"
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                 >
                   On Leave
                 </button>
                 <button
                   onClick={() => setActiveTab("inactive")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === "inactive" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === "inactive"
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                 >
                   Inactive
@@ -195,11 +199,11 @@ export default function TechniciansContent() {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" className="gap-2 bg-transparent">
+                <Button variant="outline" className="gap-2 border-gray-200 hover:bg-gray-50 bg-transparent">
                   <Filter className="w-4 h-4" />
                   Filter
                 </Button>
-                <Button className="gap-2 bg-cyan-500 hover:bg-cyan-600">
+                <Button className="gap-2 bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm">
                   <Plus className="w-4 h-4" />
                   Add Technician
                 </Button>
@@ -209,31 +213,31 @@ export default function TechniciansContent() {
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Technician
                   </th>
-                  <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Phone Number
                   </th>
-                  <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Services Assigned
                   </th>
-                  <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Approval
                   </th>
-                  <th className="text-left py-3 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {technicians.map((tech) => (
-                  <tr key={tech.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={tech.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <Image
@@ -241,7 +245,7 @@ export default function TechniciansContent() {
                           alt={tech.name}
                           width={40}
                           height={40}
-                          className="rounded-full"
+                          className="rounded-full object-cover"
                         />
                         <div>
                           <div className="font-semibold text-gray-900">{tech.name}</div>
@@ -255,7 +259,7 @@ export default function TechniciansContent() {
                         {tech.services.map((service, idx) => (
                           <span
                             key={idx}
-                            className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium"
+                            className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
                           >
                             {service}
                           </span>
@@ -275,7 +279,7 @@ export default function TechniciansContent() {
                     <td className="py-4 px-6">
                       <div
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                          tech.approval === "Approved" ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"
+                          tech.approval === "Approved" ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"
                         }`}
                       >
                         {tech.approval === "Approved" ? (
@@ -298,8 +302,8 @@ export default function TechniciansContent() {
                     <td className="py-4 px-6">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
+                          <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                            <MoreVertical className="w-4 h-4 text-gray-600" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -316,7 +320,7 @@ export default function TechniciansContent() {
             </table>
           </div>
 
-          <div className="px-6 py-4 border-t flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
             <div className="text-sm text-gray-600">Showing 1-3 of 124</div>
             <div className="flex gap-2">
               <Button
@@ -324,6 +328,7 @@ export default function TechniciansContent() {
                 size="sm"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((prev) => prev - 1)}
+                className="disabled:opacity-50"
               >
                 Previous
               </Button>
@@ -334,10 +339,9 @@ export default function TechniciansContent() {
           </div>
         </div>
 
-        {/* Technician Requests */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-900">Technician Requests</h2>
-          <button className="text-cyan-500 hover:text-cyan-600 font-medium text-sm flex items-center gap-1">
+          <button className="text-cyan-500 hover:text-cyan-600 font-medium text-sm flex items-center gap-1 transition-colors">
             View All
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -347,23 +351,26 @@ export default function TechniciansContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {requests.map((request) => (
-            <div key={request.id} className="bg-white rounded-lg p-6 shadow-sm relative">
+            <div
+              key={request.id}
+              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 relative"
+            >
               {request.isNew && (
-                <span className="absolute top-4 right-4 px-3 py-1 bg-cyan-500 text-white text-xs font-semibold rounded-full">
+                <span className="absolute top-6 right-6 px-3 py-1 bg-cyan-500 text-white text-xs font-semibold rounded-full">
                   New
                 </span>
               )}
 
-              <div className="flex items-start gap-4 mb-4">
+              <div className="flex items-start gap-4 mb-5">
                 <Image
                   src={request.avatar || "/placeholder.svg"}
                   alt={request.name}
                   width={64}
                   height={64}
-                  className="rounded-full"
+                  className="rounded-full object-cover"
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 text-lg mb-1">{request.name}</h3>
+                  <h3 className="font-bold text-gray-900 text-lg mb-1">{request.name}</h3>
                   <p className="text-sm text-gray-500 mb-3">{request.appliedAt}</p>
                   <div className="flex flex-wrap gap-2">
                     {request.certifications.map((cert, idx) => (
@@ -378,18 +385,23 @@ export default function TechniciansContent() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1 bg-transparent"
+                  className="flex-1 border-gray-200 hover:bg-gray-50 bg-transparent"
                   onClick={() => handleReject(request.id, request.name)}
                 >
                   Reject
                 </Button>
                 <Button
-                  className="flex-1 bg-cyan-500 hover:bg-cyan-600"
+                  className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm"
                   onClick={() => handleApprove(request.id, request.name)}
                 >
                   Approve
                 </Button>
-                <Button variant="outline" size="icon" onClick={() => handleViewDetails(request.id)}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-gray-200 hover:bg-gray-50 bg-transparent"
+                  onClick={() => handleViewDetails(request.id)}
+                >
                   <Eye className="w-4 h-4" />
                 </Button>
               </div>

@@ -1,12 +1,15 @@
+"use client"
+
+
+import { StatCard } from "./components/state-card";
 import { WeeklyEarningsChart } from "./components/weekly-earnings-chart";
 import { WeeklyBookingsChart } from "./components/weekly-Booking-chart";
 import { RecentBookingsTable } from "./components/recent-booking";
-import { StatCard } from "./components/state-card";
 import { Smartphone, DollarSign, Users, Calendar } from "lucide-react"
 
 
 
-export default function AdminDashboard() {
+export default function adminDashboard() {
 
      const stats = [
     {
@@ -48,22 +51,50 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-       {stats.map((stat, index) => (
-              <StatCard key={index} {...stat} />
+   <div className="flex min-h-screen bg-gray-50/50">
+
+      <div className="flex flex-1 flex-col">
+
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+          {/* Stats Grid */}
+          <div className="mb-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {stats.map((stat, index) => (
+              <div
+                key={index}
+                style={{
+                  animation: "fadeInUp 0.5s ease-out",
+                  animationDelay: `${index * 0.1}s`,
+                  animationFillMode: "both",
+                }}
+              >
+                <StatCard {...stat} />
+              </div>
             ))}
+          </div>
+
+          {/* Charts Grid */}
+          <div className="mb-8 grid gap-6 lg:grid-cols-2">
+            <WeeklyBookingsChart />
+            <WeeklyEarningsChart />
+          </div>
+
+          {/* Recent Bookings Table */}
+          <RecentBookingsTable />
+        </main>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <WeeklyBookingsChart />
-        <WeeklyEarningsChart />
-      </div>
-
-      {/* Recent Bookings */}
-      <RecentBookingsTable />
+      <style jsx global>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
-  );
+  )
 }

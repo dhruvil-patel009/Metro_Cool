@@ -12,49 +12,36 @@ export function ServicesContent() {
   const [selectedCategory, setSelectedCategory] = useState("all")
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50/50">
 
       <div className="flex flex-1 flex-col">
 
         <main className="flex-1 p-6 lg:p-8">
-          {/* Breadcrumb */}
-          <div className="mb-6 flex items-center gap-2 text-sm text-gray-600">
-            <span>Dashboard</span>
-            <span>/</span>
-            <span>Services Management</span>
-            <span>/</span>
-            <span className="font-medium text-gray-900">All Services</span>
-          </div>
-
           {/* Page Header */}
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Services Management</h1>
-              <p className="mt-1 text-sm text-gray-600">Manage, track, and update your HVAC service offerings.</p>
-            </div>
-            <Button className="bg-cyan-500 text-white hover:bg-cyan-600">
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Service
-            </Button>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Services Management</h1>
+            <p className="mt-2 text-sm text-gray-600">Manage, track, and update your HVAC service offerings.</p>
           </div>
 
-          {/* Filters and Search */}
-          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-1 flex-col gap-4 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          {/* Filters and Search Bar */}
+          <div className="mb-6 flex flex-col gap-4 rounded-xl bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative flex-1 sm:max-w-sm">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" />
                 <Input
                   type="text"
                   placeholder="Search services by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="h-10 border-gray-200 pl-10 focus-visible:ring-cyan-500 text-black"
                 />
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="All Categories" />
+                <SelectTrigger className="h-10 w-full border-gray-200 sm:w-[200px] text-black">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="h-4 w-4 " />
+                    <SelectValue placeholder="All Categories"  />
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
@@ -65,12 +52,24 @@ export function ServicesContent() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon">
-                <Download className="h-4 w-4" />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10  hover:bg-gray-50 bg-transparent"
+              >
+                <Download className="h-4 w-4 text-gray-600" />
               </Button>
-              <Button variant="outline" size="icon">
-                <Printer className="h-4 w-4" />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 border-gray-200 hover:bg-gray-50 bg-transparent"
+              >
+                <Printer className="h-4 w-4 text-gray-600" />
+              </Button>
+              <Button className="h-10 bg-cyan-500 text-white shadow-sm transition-all hover:bg-cyan-600 hover:shadow">
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Service
               </Button>
             </div>
           </div>

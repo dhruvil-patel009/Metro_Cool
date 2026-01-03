@@ -20,14 +20,14 @@ import {
 import { cn } from "@/app/lib/utils";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/Admin" },
-  { icon: Briefcase, label: "Services", href: "/Admin/Services" },
-  { icon: FolderTree, label: "Categories", href: "/Admin/Categories" },
-  { icon: Users, label: "Technicians", href: "/Admin/Technician" },
-  { icon: UserCircle, label: "Users", href: "/Admin/users" },
-  { icon: Calendar, label: "Bookings", href: "/Admin/Bookings" },
-  { icon: CreditCard, label: "Settlements", href: "/Admin/Settlements" },
-  { icon: Settings, label: "Settings", href: "/Admin/Settings" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
+  { icon: Briefcase, label: "Services", href: "/admin/Services" },
+  { icon: FolderTree, label: "Categories", href: "/admin/Categories" },
+  { icon: Users, label: "Technicians", href: "/admin/Technician" },
+  { icon: UserCircle, label: "Users", href: "/admin/users" },
+  { icon: Calendar, label: "Bookings", href: "/admin/Bookings" },
+  { icon: CreditCard, label: "Settlements", href: "/admin/Settlements" },
+  { icon: Settings, label: "Settings", href: "/admin/Settings" },
 ];
 
 export function Sidebar() {
@@ -72,7 +72,7 @@ export function Sidebar() {
             {isOpen && (
               <div>
                 <h1 className="text-sm font-bold">Comfort HVAC</h1>
-                <p className="text-xs text-gray-500">Admin Panel</p>
+                <p className="text-xs text-gray-500">admin Panel</p>
               </div>
             )}
           </div>
@@ -89,8 +89,8 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {menuItems.map((item) => {
             const isActive =
-  item.href === "/Admin"
-    ? pathname === "/Admin"
+  item.href === "/admin"
+    ? pathname === "/admin"
     : pathname === item.href || pathname.startsWith(item.href + "/");
 
 

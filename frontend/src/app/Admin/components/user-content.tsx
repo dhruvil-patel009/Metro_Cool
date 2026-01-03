@@ -65,11 +65,11 @@ export default function UsersContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
-        <Button className="bg-cyan-500 hover:bg-cyan-600">
+        <Button className="bg-cyan-500 hover:bg-cyan-600 transition-all duration-200 hover:shadow-lg">
           <Plus className="mr-2 h-4 w-4" />
           Add New User
         </Button>
@@ -78,51 +78,51 @@ export default function UsersContent() {
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Total Users */}
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Users</p>
+              <p className="text-sm font-medium text-gray-600">Total Users</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">2,543</p>
-              <p className="mt-1 flex items-center text-sm text-green-600">
+              <p className="mt-1 flex items-center text-sm font-medium text-green-600">
                 <span className="mr-1">↑</span>
                 +12% from last month
               </p>
             </div>
-            <div className="rounded-lg bg-blue-100 p-3">
+            <div className="rounded-lg bg-blue-50 p-3 transition-transform duration-200 hover:scale-110">
               <Users className="h-6 w-6 text-blue-600" />
             </div>
           </div>
         </div>
 
         {/* Active Users */}
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Users</p>
+              <p className="text-sm font-medium text-gray-600">Active Users</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">2,102</p>
-              <p className="mt-1 flex items-center text-sm text-green-600">
+              <p className="mt-1 flex items-center text-sm font-medium text-green-600">
                 <span className="mr-1">↑</span>
-                +6% increase
+                +5% increase
               </p>
             </div>
-            <div className="rounded-lg bg-green-100 p-3">
+            <div className="rounded-lg bg-green-50 p-3 transition-transform duration-200 hover:scale-110">
               <ShieldCheck className="h-6 w-6 text-green-600" />
             </div>
           </div>
         </div>
 
         {/* New This Month */}
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-600">New This Month</p>
+              <p className="text-sm font-medium text-gray-600">New This Month</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">145</p>
-              <p className="mt-1 flex items-center text-sm text-gray-500">
+              <p className="mt-1 flex items-center text-sm font-medium text-gray-500">
                 <span className="mr-1">→</span>
                 Stable
               </p>
             </div>
-            <div className="rounded-lg bg-purple-100 p-3">
+            <div className="rounded-lg bg-purple-50 p-3 transition-transform duration-200 hover:scale-110">
               <UserPlus className="h-6 w-6 text-purple-600" />
             </div>
           </div>
@@ -137,12 +137,12 @@ export default function UsersContent() {
             placeholder="Search users by name, email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 transition-shadow duration-200 focus:shadow-sm"
           />
         </div>
         <div className="flex items-center gap-2">
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[140px] transition-shadow duration-200 hover:shadow-sm">
               <SelectValue placeholder="All Roles" />
             </SelectTrigger>
             <SelectContent>
@@ -153,7 +153,7 @@ export default function UsersContent() {
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[140px] transition-shadow duration-200 hover:shadow-sm">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -164,67 +164,75 @@ export default function UsersContent() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className="transition-all duration-200 hover:bg-gray-50 bg-transparent">
             <Filter className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="rounded-lg border bg-white">
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b bg-gray-50">
+            <thead className="border-b border-gray-200 bg-gray-50/50">
               <tr>
                 <th className="px-6 py-3 text-left">
                   <input
                     type="checkbox"
                     checked={selectedUsers.length === users.length}
                     onChange={toggleAllUsers}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-gray-300 text-cyan-500 focus:ring-cyan-500"
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Contact Info
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Total Bookings
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Status
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+              {users.map((user, index) => (
+                <tr
+                  key={user.id}
+                  className="transition-colors duration-150 hover:bg-gray-50"
+                  style={{
+                    animation: `fadeIn 0.3s ease-in-out ${index * 0.1}s both`,
+                  }}
+                >
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
                       checked={selectedUsers.includes(user.id)}
                       onChange={() => toggleUserSelection(user.id)}
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-gray-300 text-cyan-500 focus:ring-cyan-500"
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-3">
                       <img
                         src={user.avatar || "/placeholder.svg"}
                         alt={user.name}
-                        className="h-10 w-10 rounded-full object-cover"
+                        className="h-10 w-10 rounded-full object-cover ring-2 ring-gray-100"
                       />
-                      <div className="ml-3">
-                        <p className="font-medium text-gray-900">{user.name}</p>
+                      <div>
+                        <p className="font-semibold text-gray-900">{user.name}</p>
                         <p className="text-sm text-gray-500">{user.role}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <div className="flex items-center text-sm text-gray-600">
                         <Mail className="mr-2 h-4 w-4 text-gray-400" />
                         {user.email}
@@ -236,18 +244,18 @@ export default function UsersContent() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="inline-flex items-center justify-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
+                    <span className="inline-flex items-center justify-center rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
                       {user.bookings}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
                         user.status === "Active"
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-green-50 text-green-700"
                           : user.status === "Blocked"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-gray-50 text-gray-700"
                       }`}
                     >
                       <span
@@ -256,7 +264,7 @@ export default function UsersContent() {
                             ? "bg-green-600"
                             : user.status === "Blocked"
                               ? "bg-red-600"
-                              : "bg-gray-600"
+                              : "bg-gray-500"
                         }`}
                       />
                       {user.status}
@@ -265,8 +273,8 @@ export default function UsersContent() {
                   <td className="px-6 py-4 text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="transition-all duration-200 hover:bg-gray-100">
+                          <MoreVertical className="h-4 w-4 text-gray-500" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -286,31 +294,44 @@ export default function UsersContent() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between border-t px-6 py-4">
+        <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
           <p className="text-sm text-gray-600">Showing 1 to 4 of 1,248 results</p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled>
+            <Button variant="outline" size="sm" disabled className="transition-all duration-200 bg-transparent">
               Previous
             </Button>
-            <Button variant="default" size="sm" className="bg-cyan-500 hover:bg-cyan-600">
+            <Button size="sm" className="bg-cyan-500 hover:bg-cyan-600 transition-all duration-200">
               1
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="transition-all duration-200 hover:bg-gray-50 bg-transparent">
               2
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="transition-all duration-200 hover:bg-gray-50 bg-transparent">
               3
             </Button>
-            <span className="px-2 text-gray-500">...</span>
-            <Button variant="outline" size="sm">
+            <span className="px-2 text-gray-400">...</span>
+            <Button variant="outline" size="sm" className="transition-all duration-200 hover:bg-gray-50 bg-transparent">
               12
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="transition-all duration-200 hover:bg-gray-50 bg-transparent">
               Next
             </Button>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   )
 }

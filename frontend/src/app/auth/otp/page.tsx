@@ -55,23 +55,34 @@ export default function VerifyOTP() {
             );
 
             const data = await res.json();
+            console.log("OTP VERIFY RESPONSE:", data);
+
 
             if (!res.ok) {
                 toast.error(data.error || "Invalid OTP");
                 return;
             }
 
-            // 🔐 Store tokens (DEV MODE)
-            localStorage.setItem("accessToken", data.session.accessToken);
-            localStorage.setItem("refreshToken", data.session.refreshToken);
+            // 🔐 Safe token storage
+            if (data?.accessToken) {
+                localStorage.setItem("accessToken", data.accessToken);
+            }
+            if (data?.refreshToken) {
+                localStorage.setItem("refreshToken", data.refreshToken);
+            }
 
             toast.success("Login successful");
 
-            // 🚦 Redirect by role
-            if (data.user.role === "admin") router.push("/Admin");
-            else if (data.user.role === "technician") router.push("/Technician");
-            else router.push("/User");
-        } catch {
+            // 🔁 Normalize role
+            const role = data?.user?.role?.toLowerCase();
+
+            setTimeout(() => {
+                if (role === "admin") router.replace("/admin");
+                else if (role === "technician") router.replace("/Technician");
+                else router.replace("/User");
+            }, 300);
+        } catch (err) {
+            console.error(err);
             toast.error("Server error. Try again.");
         } finally {
             setLoading(false);
@@ -119,7 +130,7 @@ export default function VerifyOTP() {
                     </h1>
                     <p className="max-w-lg text-lg leading-relaxed text-white/90">
                         Verify your identity to manage service requests, technicians, and automated settlements safely. Designed for
-                        Users, Technicians, and Admins.
+                        Users, Technicians, and admins.
                     </p>
                 </div>
             </div>
@@ -165,20 +176,20 @@ export default function VerifyOTP() {
                         )}
                     /> */}
 
-<div className="mt-6">
-  <OtpInput
-    value={otp}
-    onChange={setOtp}
-    numInputs={6}
-    shouldAutoFocus
-    inputType="tel"
-    containerStyle="flex justify-between gap-3"
-    renderInput={(props) => (
-      <input
-        {...props}
-              style={{ width: 56, height: 56 }}
+                    <div className="mt-6">
+                        <OtpInput
+                            value={otp}
+                            onChange={setOtp}
+                            numInputs={6}
+                            shouldAutoFocus
+                            inputType="tel"
+                            containerStyle="flex justify-between gap-3"
+                            renderInput={(props) => (
+                                <input
+                                    {...props}
+                                    style={{ width: 56, height: 56 }}
 
-        className="
+                                    className="
           h-14 w-24 mb-4
           rounded-xl
           border border-gray-300
@@ -191,12 +202,12 @@ export default function VerifyOTP() {
           focus:ring-2 focus:ring-blue-600/20
           focus:outline-none
         "
-        autoComplete="one-time-code"
-        inputMode="numeric"
-      />
-    )}
-  />
-</div>
+                                    autoComplete="one-time-code"
+                                    inputMode="numeric"
+                                />
+                            )}
+                        />
+                    </div>
 
 
 

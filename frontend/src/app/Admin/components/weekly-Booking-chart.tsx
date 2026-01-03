@@ -15,27 +15,38 @@ const data = [
 
 export function WeeklyBookingsChart() {
   return (
-    <Card>
+    <Card className="border-0 bg-white shadow-sm transition-all duration-300 hover:shadow-md">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-lg">Weekly Bookings</CardTitle>
-            <CardDescription>Total bookings per day</CardDescription>
+            <CardTitle className="text-xl font-bold text-gray-900">Weekly Bookings</CardTitle>
+            <CardDescription className="mt-1 text-sm text-gray-500">Total bookings per day</CardDescription>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold text-cyan-600">145</p>
-            <p className="text-xs text-gray-500">This Week</p>
+            <p className="text-3xl font-bold text-cyan-500">145</p>
+            <p className="text-xs text-gray-400">This Week</p>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-            <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={data} barCategoryGap="20%">
+            <XAxis
+              dataKey="day"
+              stroke="#9ca3af"
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#6b7280" }}
+            />
+            <YAxis hide />
+            <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={50}>
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill="#22d3ee" opacity={0.8} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill="#22d3ee"
+                  className="transition-opacity duration-300 hover:opacity-80"
+                />
               ))}
             </Bar>
           </BarChart>
