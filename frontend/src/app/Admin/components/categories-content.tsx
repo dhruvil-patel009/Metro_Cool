@@ -1,29 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Search, Plus, MoreVertical, Filter } from "lucide-react"
-import { Button } from "@/app/components/ui/button"
-import { Input } from "@/app/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
-import { Switch } from "@/app/components/ui/switch"
-import Image from "next/image"
+import { useState } from "react";
+import { Search, Plus, MoreVertical, Filter } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu";
+import { Switch } from "@/app/components/ui/switch";
+import Image from "next/image";
 
 interface Category {
-  id: string
-  name: string
-  description: string
-  image: string
-  icon: string
-  iconColor: string
-  isActive: boolean
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  icon: string;
+  iconColor: string;
+  isActive: boolean;
 }
 
 const categories: Category[] = [
   {
     id: "cat-001",
     name: "AC Installation",
-    description: "Complete installation services for residential split and central air units.",
+    description:
+      "Complete installation services for residential split and central air units.",
     image: "/ac-unit.jpg",
     icon: "❄️",
     iconColor: "bg-cyan-500",
@@ -32,7 +44,8 @@ const categories: Category[] = [
   {
     id: "cat-002",
     name: "Heating Repair",
-    description: "Diagnostics and repair for furnaces, heat pumps, and boilers.",
+    description:
+      "Diagnostics and repair for furnaces, heat pumps, and boilers.",
     image: "/old-fashioned-furnace.png",
     icon: "🔥",
     iconColor: "bg-orange-500",
@@ -41,7 +54,8 @@ const categories: Category[] = [
   {
     id: "cat-003",
     name: "Duct Cleaning",
-    description: "Professional cleaning of air ducts to improve indoor air quality.",
+    description:
+      "Professional cleaning of air ducts to improve indoor air quality.",
     image: "/duct.jpg",
     icon: "🌬️",
     iconColor: "bg-gray-500",
@@ -51,7 +65,8 @@ const categories: Category[] = [
     id: "cat-004",
     name: "Emergency Services",
     description: "24/7 Rapid response for critical HVAC failures.",
-    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
     icon: "⚡",
     iconColor: "bg-red-500",
     isActive: true,
@@ -59,7 +74,8 @@ const categories: Category[] = [
   {
     id: "cat-005",
     name: "Smart Thermostats",
-    description: "Installation and configuration of smart home climate control systems.",
+    description:
+      "Installation and configuration of smart home climate control systems.",
     image: "/smart-thermostat.png",
     icon: "⚙️",
     iconColor: "bg-purple-500",
@@ -68,36 +84,40 @@ const categories: Category[] = [
   {
     id: "cat-006",
     name: "Maintenance Plans",
-    description: "Annual and bi-annual system checkups and filter replacements.",
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80",
+    description:
+      "Annual and bi-annual system checkups and filter replacements.",
+    image:
+      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80",
     icon: "📋",
     iconColor: "bg-blue-600",
     isActive: true,
   },
-]
+];
 
 export function CategoriesContent() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [categoryStates, setCategoryStates] = useState<Record<string, boolean>>(
-    categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.isActive }), {}),
-  )
+    categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.isActive }), {})
+  );
 
   const filteredCategories = categories.filter((category) => {
-    const matchesSearch = category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = category.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "active" && categoryStates[category.id]) ||
-      (statusFilter === "inactive" && !categoryStates[category.id])
-    return matchesSearch && matchesStatus
-  })
+      (statusFilter === "inactive" && !categoryStates[category.id]);
+    return matchesSearch && matchesStatus;
+  });
 
   const toggleCategory = (categoryId: string) => {
     setCategoryStates((prev) => ({
       ...prev,
       [categoryId]: !prev[categoryId],
-    }))
-  }
+    }));
+  };
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto">
@@ -111,8 +131,12 @@ export function CategoriesContent() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Categories Management</h1>
-          <p className="text-gray-600">Manage service categories for the HVAC platform.</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Categories Management
+          </h1>
+          <p className="text-gray-600">
+            Manage service categories for the HVAC platform.
+          </p>
         </div>
         <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
           <Plus className="w-4 h-4 mr-2" />
@@ -156,7 +180,12 @@ export function CategoriesContent() {
           >
             {/* Image */}
             <div className="relative h-48 bg-gray-100">
-              <Image src={category.image || "/placeholder.svg"} alt={category.name} fill className="object-cover" />
+              <Image
+                src={category.image || "/placeholder.svg"}
+                alt={category.name}
+                fill
+                className="object-cover"
+              />
               {/* Icon Badge */}
               <div
                 className={`absolute bottom-3 left-3 ${category.iconColor} w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-md`}
@@ -177,31 +206,46 @@ export function CategoriesContent() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>Edit Category</DropdownMenuItem>
                   <DropdownMenuItem>View Services</DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-600">
+                    Delete
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
 
             {/* Content */}
             <div className="p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.name}</h3>
-              <p className="text-sm text-gray-600 mb-4 line-clamp-2">{category.description}</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {category.name}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                {category.description}
+              </p>
 
               {/* Status and Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-2 h-2 rounded-full ${categoryStates[category.id] ? "bg-green-500" : "bg-gray-400"}`}
+                    className={`w-2 h-2 rounded-md ${
+                      categoryStates[category.id]
+                        ? "bg-green-500"
+                        : "bg-gray-400"
+                    }`}
                   />
                   <span
                     className={`text-sm font-medium ${
-                      categoryStates[category.id] ? "text-green-700" : "text-gray-500"
+                      categoryStates[category.id]
+                        ? "text-green-700"
+                        : "text-gray-500"
                     }`}
                   >
                     {categoryStates[category.id] ? "Active" : "Inactive"}
                   </span>
                 </div>
-                <Switch checked={categoryStates[category.id]} onCheckedChange={() => toggleCategory(category.id)} />
+                <Switch
+                  checked={categoryStates[category.id]}
+                  onCheckedChange={() => toggleCategory(category.id)}
+                />
               </div>
             </div>
           </div>
@@ -212,10 +256,14 @@ export function CategoriesContent() {
           <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
             <Plus className="w-8 h-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Create Category</h3>
-          <p className="text-sm text-gray-500 text-center">Add a new service category to the platform</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Create Category
+          </h3>
+          <p className="text-sm text-gray-500 text-center">
+            Add a new service category to the platform
+          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
