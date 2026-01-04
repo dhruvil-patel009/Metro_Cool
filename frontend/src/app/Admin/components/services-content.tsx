@@ -6,10 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { ServicesTable } from "./services-table"
+import { AddServiceModal } from "./add-services-model"
 
 export function ServicesContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
+    const [isAddServiceModalOpen, setIsAddServiceModalOpen] = useState(false)
+
 
   return (
     <div className="flex min-h-screen bg-gray-50/50">
@@ -67,7 +70,10 @@ export function ServicesContent() {
               >
                 <Printer className="h-4 w-4 text-gray-600" />
               </Button>
-              <Button className="h-10 bg-cyan-500 text-white shadow-sm transition-all hover:bg-cyan-600 hover:shadow">
+              <Button
+                onClick={() => setIsAddServiceModalOpen(true)}
+                className="h-10 bg-cyan-500 text-white shadow-sm transition-all hover:bg-cyan-600 hover:shadow"
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Add New Service
               </Button>
@@ -78,6 +84,8 @@ export function ServicesContent() {
           <ServicesTable searchQuery={searchQuery} selectedCategory={selectedCategory} />
         </main>
       </div>
+            <AddServiceModal isOpen={isAddServiceModalOpen} onClose={() => setIsAddServiceModalOpen(false)} />
+
     </div>
   )
 }

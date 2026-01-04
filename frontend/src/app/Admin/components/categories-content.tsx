@@ -139,14 +139,14 @@ export function CategoriesContent() {
             placeholder="Search categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-white border-gray-200 focus:border-cyan-500 focus:ring-cyan-500 h-10"
+            className="pl-9 bg-white border-gray-200 focus:border-cyan-500 focus:ring-cyan-500 h-10 text-black"
           />
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           <Filter className="w-4 h-4 text-gray-500" />
           <span className="text-sm text-gray-600">Filter by:</span>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] bg-white border-gray-200 h-10">
+            <SelectTrigger className="w-[140px] bg-white border-gray-200 h-10 text-black">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
