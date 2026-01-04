@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
 import { Switch } from "@/app/components/ui/switch"
 import Image from "next/image"
+import { AddCategoryModal } from "./add-categories-model"
+
 
 interface Category {
   id: string
@@ -85,6 +87,8 @@ export function CategoriesContent() {
     categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.isActive }), {}),
   )
 
+    const [isModalOpen, setIsModalOpen] = useState(false)
+
   const filteredCategories = categories.filter((category) => {
     const matchesSearch = category.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus =
@@ -99,6 +103,10 @@ export function CategoriesContent() {
       ...prev,
       [categoryId]: !prev[categoryId],
     }))
+  }
+
+  function handleAddCategory(category: { name: string; image: string; isActive: boolean }): void {
+    throw new Error("Function not implemented.")
   }
 
   return (
@@ -116,7 +124,8 @@ export function CategoriesContent() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Categories Management</h1>
           <p className="text-gray-500">Manage service categories for the HVAC platform.</p>
         </div>
-        <Button className="bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm transition-all hover:shadow-md shrink-0">
+        <Button           onClick={() => setIsModalOpen(true)}
+ className="bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm transition-all hover:shadow-md shrink-0">
           <Plus className="w-4 h-4 mr-2" />
           Add Category
         </Button>
@@ -214,7 +223,7 @@ export function CategoriesContent() {
                 <Switch
                   checked={categoryStates[category.id]}
                   onCheckedChange={() => toggleCategory(category.id)}
-                  className="data-[state=checked]:bg-cyan-500"
+                    className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200"
                 />
               </div>
             </div>
@@ -223,6 +232,8 @@ export function CategoriesContent() {
 
         {/* Create Category Card */}
         <div
+                  onClick={() => setIsModalOpen(true)}
+
           className="bg-white rounded-xl border-2 border-dashed border-gray-300 hover:border-cyan-400 hover:bg-gray-50 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center p-8 min-h-[360px]"
           style={{
             animation: `fadeInUp 0.5s ease-out ${filteredCategories.length * 0.1}s both`,
@@ -235,6 +246,8 @@ export function CategoriesContent() {
           <p className="text-sm text-gray-500 text-center">Add a new service category to the platform</p>
         </div>
       </div>
+
+      <AddCategoryModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleAddCategory} />
 
       <style jsx>{`
         @keyframes fadeInUp {

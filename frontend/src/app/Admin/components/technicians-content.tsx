@@ -165,7 +165,7 @@ export default function TechniciansContent() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex gap-2">
+              <div className="flex gap-4 bg-gray-200 p-1 border rounded-3xl">
                 <button
                   onClick={() => setActiveTab("all")}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -199,14 +199,14 @@ export default function TechniciansContent() {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" className="gap-2 border-gray-200 hover:bg-gray-50 bg-transparent">
+                <Button variant="outline" className="gap-2 border-gray-200 hover:bg-gray-50 bg-transparent text-black">
                   <Filter className="w-4 h-4" />
                   Filter
                 </Button>
-                <Button className="gap-2 bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm">
+                {/* <Button className="gap-2 bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm">
                   <Plus className="w-4 h-4" />
                   Add Technician
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
@@ -385,7 +385,7 @@ export default function TechniciansContent() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1 border-gray-200 hover:bg-gray-50 bg-transparent"
+                  className="flex-1 border-gray-200 hover:bg-gray-50 bg-transparent text-black"
                   onClick={() => handleReject(request.id, request.name)}
                 >
                   Reject
@@ -399,7 +399,7 @@ export default function TechniciansContent() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="border-gray-200 hover:bg-gray-50 bg-transparent"
+                  className="border-gray-200 hover:bg-gray-50 bg-transparent text-black"
                   onClick={() => handleViewDetails(request.id)}
                 >
                   <Eye className="w-4 h-4" />

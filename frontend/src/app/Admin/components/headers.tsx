@@ -3,6 +3,7 @@
 import { Search, Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
+import { NotificationsDropdown } from "./notification-dropdown";
 
 const pageTitles: Record<string, string> = {
   "/admin": "Dashboard",
@@ -44,27 +45,19 @@ export function Header() {
           </div>
         </div>
 
-        {/* RIGHT: ACTIONS */}
+{/* Right Side - Notifications & Profile */}
         <div className="ml-auto flex items-center gap-4">
-          {/* Notifications */}
-          <button className="relative rounded-lg p-2 hover:bg-gray-100">
-            <Bell className="h-5 w-5 text-gray-600" />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-          </button>
+          {/* Notification Bell */}
+          <NotificationsDropdown />
 
-          {/* Profile */}
+          {/* User Profile */}
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-gray-900">
-                Alex Morgan
-              </p>
-              <p className="text-xs text-gray-500">Super admin</p>
+              <p className="text-sm font-semibold text-gray-900">Alex Morgan</p>
+              <p className="text-xs text-gray-500">Super Admin</p>
             </div>
-
             <Avatar className="h-10 w-10 border-2 border-cyan-500">
-              <AvatarFallback className="bg-cyan-100 text-cyan-700">
-                AM
-              </AvatarFallback>
+              <AvatarFallback className="bg-cyan-100 text-cyan-700">AM</AvatarFallback>
             </Avatar>
           </div>
         </div>
