@@ -25,10 +25,9 @@ const menuItems = [
   { icon: FolderTree, label: "Categories", href: "/Admin/Categories" },
   { icon: Users, label: "Technicians", href: "/Admin/Technician" },
   { icon: UserCircle, label: "Users", href: "/Admin/users" },
-  { icon: Calendar, label: "Bookings", href: "/Admin/bookings" },
-  { icon: CreditCard, label: "Settlements", href: "/Admin/settlements" },
-  { icon: FileText, label: "Reports", href: "/Admin/reports" },
-  { icon: Settings, label: "Settings", href: "/Admin/settings" },
+  { icon: Calendar, label: "Bookings", href: "/Admin/Bookings" },
+  { icon: CreditCard, label: "Settlements", href: "/Admin/Settlements" },
+  { icon: Settings, label: "Settings", href: "/Admin/Settings" },
 ];
 
 export function Sidebar() {
@@ -90,8 +89,10 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {menuItems.map((item) => {
             const isActive =
-              pathname === item.href ||
-              pathname.startsWith(item.href + "/");
+  item.href === "/Admin"
+    ? pathname === "/Admin"
+    : pathname === item.href || pathname.startsWith(item.href + "/");
+
 
             return (
               <Link
