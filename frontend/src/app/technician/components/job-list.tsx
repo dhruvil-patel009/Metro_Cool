@@ -1,153 +1,140 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent } from "@/app/components/ui/card"
-import { Badge } from "@/app/components/ui/badge"
+import { cn } from "@/app/lib/utils"
+
+import { useState, useMemo } from "react"
+import { Search, SlidersHorizontal, ArrowRight } from "lucide-react"
+import { Input } from "@/app/components/ui/input"
 import { Button } from "@/app/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
-import { MapPin, Calendar, Clock, MoreVertical } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
+import { JobCard, type Job } from "./job-card"
 
-const jobs = [
+const MOCK_JOBS: Job[] = [
   {
-    id: 1,
-    status: "new",
-    statusLabel: "New Request",
-    title: "AC Repair & Maintenance",
-    customer: "Sarah Jenkins",
-    customerAvatar: "SJ",
-    location: "Downtown Lofts, Apt 4B",
-    time: "Today, 2:00 PM - 4:00 PM",
-    timeAgo: "15 min ago",
-    image: "/floor-plan-blueprint.png",
+    id: "1",
+    title: "AC System Maintenance",
+    customer: "John Doe",
+    address: "123 Maple Street, Downtown",
+    time: "09:00 AM - 11:00 AM",
+    status: "in-progress",
+    image: "/ac-unit-maintenance.jpg",
   },
   {
-    id: 2,
-    status: "new",
-    statusLabel: "New Request",
-    title: "Commercial Plumbing Check",
-    customer: "TechFlow Inc.",
-    customerAvatar: "TF",
-    location: "1200 Innovation Drive, Floor 3",
-    time: "Tomorrow, 9:00 AM",
-    timeAgo: "45 min ago",
-    image: "/office-building-technology.jpg",
+    id: "2",
+    title: "Heater Coil Repair",
+    customer: "Sarah Smith",
+    address: "456 Oak Avenue, Westside",
+    time: "11:30 AM - 01:00 PM",
+    status: "scheduled",
+    image: "/heater-repair.jpg",
   },
   {
-    id: 3,
-    status: "pending",
-    statusLabel: "Pending Approval",
-    title: "Smart Thermostat Install",
+    id: "3",
+    title: "HEPA Filter Replacement",
     customer: "Mike Ross",
-    customerAvatar: "MR",
-    location: "850 West Gardens",
-    time: "Thu, Oct 12, 10:30 AM",
-    timeAgo: "2 hrs ago",
-    image: "/smart-thermostat-device.jpg",
+    address: "789 Pine Lane, Suburbs",
+    time: "02:00 PM - 02:45 PM",
+    status: "pending",
+    image: "/filter-replacement.png",
   },
 ]
 
-const tabs = [
-  { id: "new", label: "New Jobs", count: 3 },
-  { id: "accepted", label: "Accepted Jobs", count: 5 },
-  { id: "completed", label: "Completed Jobs", count: 0 },
-]
+export function JobList() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "in-progress" | "scheduled" | "pending">("all")
 
-export function JobsList() {
-  const [activeTab, setActiveTab] = useState("new")
+  const filteredJobs = useMemo(() => {
+    return MOCK_JOBS.filter((job) => {
+      const matchesSearch =
+        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.address.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesStatus = statusFilter === "all" || job.status === statusFilter
+
+      return matchesSearch && matchesStatus
+    })
+  }, [searchQuery, statusFilter])
 
   return (
-    <div>
-      <div className="mb-6 flex items-center gap-1 border-b border-border">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`relative px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === tab.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.label}
-            {tab.count > 0 && (
-              <Badge variant="secondary" className="ml-2 bg-primary text-primary-foreground">
-                {tab.count}
-              </Badge>
-            )}
-            {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-          </button>
-        ))}
+    <div className="space-y-6">
+      <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row gap-4">
+        <div className="flex-1 relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#0891b2] transition-colors" />
+          <Input
+            className="pl-12 bg-white border-slate-200 h-12 text-sm focus-visible:ring-1 focus-visible:ring-[#0891b2] focus-visible:border-[#0891b2]"
+            placeholder="Search jobs, customers, or addresses..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Button size="icon" className="absolute right-1.5 top-1.5 h-9 w-9 bg-[#0891b2] hover:bg-[#0e7490]">
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="h-12 px-6 font-bold border-slate-200 text-slate-700 min-w-[140px] justify-between bg-transparent"
+            >
+              <SlidersHorizontal className="w-4 h-4 mr-2" />
+              {statusFilter === "all" ? "All Jobs" : statusFilter.replace("-", " ")}
+              <ArrowRight className="w-4 h-4 ml-2 rotate-90" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All Jobs</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("in-progress")}>In Progress</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("scheduled")}>Scheduled</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {jobs.map((job) => (
-          <Card key={job.id} className="overflow-hidden border-border">
-            <CardContent className="p-0">
-              <div className="grid md:grid-cols-[1fr_200px]">
-                <div className="p-6">
-                  <div className="mb-4 flex items-start justify-between">
-                    <Badge
-                      variant="secondary"
-                      className={
-                        job.status === "new"
-                          ? "bg-blue-50 text-primary hover:bg-blue-100"
-                          : "bg-orange-50 text-orange-600 hover:bg-orange-100"
-                      }
-                    >
-                      {job.statusLabel}
-                    </Badge>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {job.timeAgo}
-                    </div>
-                  </div>
-
-                  <h3 className="mb-3 text-xl font-semibold text-foreground">{job.title}</h3>
-
-                  <div className="mb-4 flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src="/placeholder.svg?height=24&width=24" />
-                      <AvatarFallback className="bg-muted text-xs">{job.customerAvatar}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm text-foreground">{job.customer}</span>
-                  </div>
-
-                  <div className="mb-2 flex items-start gap-2 text-sm text-muted-foreground">
-                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <span>{job.location}</span>
-                  </div>
-
-                  <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>{job.time}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
-                      View Details
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Accept Job</DropdownMenuItem>
-                        <DropdownMenuItem>Decline</DropdownMenuItem>
-                        <DropdownMenuItem>Contact Customer</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-
-                <div className="relative hidden bg-muted md:block">
-                  <img src={job.image || "/placeholder.svg"} alt={job.title} className="h-full w-full object-cover" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-bold flex items-center gap-2">
+          <CalendarIcon className="w-5 h-5 text-[#0891b2]" />
+          Today's Schedule
+        </h3>
+        <Button variant="link" className="text-[#0891b2] font-bold text-sm">
+          View Full Schedule
+          <ArrowRight className="w-4 h-4 ml-1" />
+        </Button>
       </div>
+
+      <div className="space-y-4">
+        {filteredJobs.length > 0 ? (
+          filteredJobs.map((job) => <JobCard key={job.id} job={job} />)
+        ) : (
+          <div className="py-20 text-center bg-white rounded-xl border-2 border-dashed border-slate-200">
+            <p className="text-slate-400 font-medium">No jobs found matching your criteria.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CalendarIcon({ className }: { className?: string }) {
+  return (
+    <div className={cn("p-1 bg-cyan-50 rounded", className)}>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+        <line x1="16" x2="16" y1="2" y2="6" />
+        <line x1="8" x2="8" y1="2" y2="6" />
+        <line x1="3" x2="21" y1="10" y2="10" />
+        <path d="m9 16 2 2 4-4" />
+      </svg>
     </div>
   )
 }

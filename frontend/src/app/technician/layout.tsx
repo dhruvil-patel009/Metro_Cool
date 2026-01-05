@@ -1,15 +1,47 @@
 import type React from "react"
-import { TechnicianHeader } from "./components/technician-header"
+import type { Metadata } from "next"
+import { Geist, Geist_Mono } from "next/font/google"
+import { SidebarProvider } from "./components/sidebar-content"
+import { AppLayout } from "./components/app-layout"
 
-export default function TechnicianLayout({
+const _geist = Geist({ subsets: ["latin"] })
+const _geistMono = Geist_Mono({ subsets: ["latin"] })
+
+export const metadata: Metadata = {
+  title: "v0 App",
+  description: "Created with v0",
+  generator: "v0.app",
+  icons: {
+    icon: [
+      {
+        url: "/icon-light-32x32.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/icon-dark-32x32.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+      {
+        url: "/icon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+    apple: "/apple-icon.png",
+  },
+}
+
+export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode
-}) {
+}>) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <TechnicianHeader />
-      <main className="mx-auto max-w-[1400px] p-6">{children}</main>
-    </div>
+    <html lang="en">
+      <body className={`font-sans antialiased`}>
+        <SidebarProvider>
+          <AppLayout>{children}</AppLayout>
+        </SidebarProvider>
+      </body>
+    </html>
   )
 }
