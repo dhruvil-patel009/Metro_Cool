@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import type React from "react"
 
@@ -27,7 +27,8 @@ const categories: Category[] = [
   {
     id: "cat-001",
     name: "AC Installation",
-    description: "Complete installation services for residential split and central air units.",
+    description:
+      "Complete installation services for residential split and central air units.",
     image: "/ac-unit.jpg",
     icon: <Snowflake className="w-5 h-5 text-white" />,
     iconColor: "bg-cyan-500",
@@ -36,7 +37,8 @@ const categories: Category[] = [
   {
     id: "cat-002",
     name: "Heating Repair",
-    description: "Diagnostics and repair for furnaces, heat pumps, and boilers.",
+    description:
+      "Diagnostics and repair for furnaces, heat pumps, and boilers.",
     image: "/old-fashioned-furnace.png",
     icon: <Flame className="w-5 h-5 text-white" />,
     iconColor: "bg-orange-500",
@@ -45,7 +47,8 @@ const categories: Category[] = [
   {
     id: "cat-003",
     name: "Duct Cleaning",
-    description: "Professional cleaning of air ducts to improve indoor air quality.",
+    description:
+      "Professional cleaning of air ducts to improve indoor air quality.",
     image: "/duct.jpg",
     icon: <Wind className="w-5 h-5 text-white" />,
     iconColor: "bg-gray-500",
@@ -63,7 +66,8 @@ const categories: Category[] = [
   {
     id: "cat-005",
     name: "Smart Thermostats",
-    description: "Installation and configuration of smart home climate control systems.",
+    description:
+      "Installation and configuration of smart home climate control systems.",
     image: "/smart-thermostat.png",
     icon: <Settings className="w-5 h-5 text-white" />,
     iconColor: "bg-purple-500",
@@ -78,32 +82,34 @@ const categories: Category[] = [
     iconColor: "bg-blue-600",
     isActive: true,
   },
-]
+];
 
 export function CategoriesContent() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [categoryStates, setCategoryStates] = useState<Record<string, boolean>>(
-    categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.isActive }), {}),
-  )
+    categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.isActive }), {})
+  );
 
     const [isModalOpen, setIsModalOpen] = useState(false)
 
   const filteredCategories = categories.filter((category) => {
-    const matchesSearch = category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = category.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "active" && categoryStates[category.id]) ||
-      (statusFilter === "inactive" && !categoryStates[category.id])
-    return matchesSearch && matchesStatus
-  })
+      (statusFilter === "inactive" && !categoryStates[category.id]);
+    return matchesSearch && matchesStatus;
+  });
 
   const toggleCategory = (categoryId: string) => {
     setCategoryStates((prev) => ({
       ...prev,
       [categoryId]: !prev[categoryId],
-    }))
-  }
+    }));
+  };
 
   function handleAddCategory(category: { name: string; image: string; isActive: boolean }): void {
     throw new Error("Function not implemented.")
@@ -196,7 +202,9 @@ export function CategoriesContent() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem>Edit Category</DropdownMenuItem>
                   <DropdownMenuItem>View Services</DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-600">
+                    Delete
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -210,11 +218,17 @@ export function CategoriesContent() {
               <div className="flex items-center justify-between pt-2">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-2 h-2 rounded-full ${categoryStates[category.id] ? "bg-green-500" : "bg-gray-400"}`}
+                    className={`w-2 h-2 rounded-md ${
+                      categoryStates[category.id]
+                        ? "bg-green-500"
+                        : "bg-gray-400"
+                    }`}
                   />
                   <span
                     className={`text-sm font-medium ${
-                      categoryStates[category.id] ? "text-green-700" : "text-gray-500"
+                      categoryStates[category.id]
+                        ? "text-green-700"
+                        : "text-gray-500"
                     }`}
                   >
                     {categoryStates[category.id] ? "Active" : "Inactive"}
@@ -242,8 +256,12 @@ export function CategoriesContent() {
           <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 group-hover:bg-cyan-50 transition-colors">
             <Plus className="w-8 h-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Create Category</h3>
-          <p className="text-sm text-gray-500 text-center">Add a new service category to the platform</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Create Category
+          </h3>
+          <p className="text-sm text-gray-500 text-center">
+            Add a new service category to the platform
+          </p>
         </div>
       </div>
 
@@ -262,5 +280,5 @@ export function CategoriesContent() {
         }
       `}</style>
     </div>
-  )
+  );
 }
