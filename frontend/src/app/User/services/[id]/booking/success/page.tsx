@@ -108,7 +108,7 @@ export default function BookingSuccessPage({ params }: { params: Promise<{ id: s
           {/* Service Info */}
           <div className="flex gap-4 mb-6 pb-6 border-b border-gray-100">
             <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-              <img src="/technician-working-on-ac-unit.jpg" alt="Service" className="w-full h-full object-cover" />
+              <img src="/assets/technician-working-on-ac-unit.jpg" alt="Service" className="w-full h-full object-cover" />
             </div>
             <div className="flex-1">
               <span className="inline-block bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded mb-2 uppercase tracking-wide">
@@ -252,7 +252,7 @@ export default function BookingSuccessPage({ params }: { params: Promise<{ id: s
             Back to Home
           </Link>
           <Link
-            href="/bookings"
+            href="/User/bookings?id=${bookingId}"
             className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-200"
           >
             View My Bookings

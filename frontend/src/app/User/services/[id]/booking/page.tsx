@@ -48,9 +48,13 @@ const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 const MORNING_SLOTS = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM"]
 const AFTERNOON_SLOTS = ["12:00 PM", "02:00 PM", "04:00 PM", "05:30 PM"]
 
-export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BookingPage({
+    params,
+}: {
+    params: { id: string }
+}) {
     const router = useRouter()
-    const { id } = use(params)
+  const { id } = params
     const service = servicesData.find((s) => s.id === id)
 
     const [currentDate] = useState(new Date())
@@ -98,9 +102,9 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     const taxAndFees = 2.5
     const total = subtotal + taxAndFees
 
-      const handleContinueBooking = () => {
-    router.push(`/User/services/${id}/booking/confirm`)
-  }
+    const handleContinueBooking = () => {
+        router.push(`/User/services/${id}/booking/confirm`)
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans animate-fade-in">

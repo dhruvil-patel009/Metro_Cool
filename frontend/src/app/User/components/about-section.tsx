@@ -32,7 +32,7 @@ export function AboutSection() {
               </p>
             </div>
 
-            <button className="bg-[#1d242d] text-white px-8 py-4 rounded-full font-bold flex items-center gap-3 hover:bg-black transition-all">
+            <button className="bg-[#1d242d] text-white px-8 py-4 rounded-full font-bold flex items-center gap-3 hover:bg-black transition-all" >
               Read full story <ArrowRight className="w-4 h-4" />
             </button>
           </div>
