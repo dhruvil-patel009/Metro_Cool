@@ -57,6 +57,7 @@ export default function Page() {
         }
       );
 
+      console.log("resdata is a ", res)
       const data = await res.json();
 
       if (!res.ok) {

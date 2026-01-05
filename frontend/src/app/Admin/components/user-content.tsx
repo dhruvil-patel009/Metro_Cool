@@ -69,10 +69,10 @@ export default function UsersContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
-        <Button className="bg-cyan-500 hover:bg-cyan-600 transition-all duration-200 hover:shadow-lg">
+        {/* <Button className="bg-cyan-500 hover:bg-cyan-600 transition-all duration-200 hover:shadow-lg">
           <Plus className="mr-2 h-4 w-4" />
           Add New User
-        </Button>
+        </Button> */}
       </div>
 
       {/* Stats Cards */}
@@ -137,12 +137,12 @@ export default function UsersContent() {
             placeholder="Search users by name, email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 transition-shadow duration-200 focus:shadow-sm"
+            className="pl-10 transition-shadow duration-200 focus:shadow-sm text-black"
           />
         </div>
         <div className="flex items-center gap-2">
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[140px] transition-shadow duration-200 hover:shadow-sm">
+            <SelectTrigger className="w-[140px] transition-shadow duration-200 hover:shadow-sm text-black">
               <SelectValue placeholder="All Roles" />
             </SelectTrigger>
             <SelectContent>
@@ -153,7 +153,7 @@ export default function UsersContent() {
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] transition-shadow duration-200 hover:shadow-sm">
+            <SelectTrigger className="w-[140px] transition-shadow duration-200 hover:shadow-sm text-black">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -164,7 +164,7 @@ export default function UsersContent() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="icon" className="transition-all duration-200 hover:bg-gray-50 bg-transparent">
+          <Button variant="outline" size="icon" className="transition-all duration-200 hover:bg-gray-50 bg-transparent text-black">
             <Filter className="h-4 w-4" />
           </Button>
         </div>

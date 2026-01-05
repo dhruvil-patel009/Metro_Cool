@@ -178,10 +178,10 @@ export function BookingsContent() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Bookings Management</h1>
             <p className="text-gray-600">Track appointments, manage technician schedules, and monitor payments.</p>
           </div>
-          <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
+          {/* <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
             <Plus className="w-4 h-4 mr-2" />
             Create Booking
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -237,14 +237,25 @@ export function BookingsContent() {
               placeholder="Search by ID, User..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white"
+              className="
+    pl-10
+    bg-white
+    text-gray-900
+    border border-gray-200
+    focus:border-cyan-500
+    focus:ring-0
+    focus:outline-none
+  "
             />
           </div>
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2 min-w-[180px]">
               <CalendarDays className="w-4 h-4 text-gray-500" />
               <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white text-black
+  border border-gray-200
+  focus:border-cyan-500
+  focus:ring-0">
                   <SelectValue placeholder="Date: All time" />
                 </SelectTrigger>
                 <SelectContent>
@@ -258,7 +269,10 @@ export function BookingsContent() {
             <div className="flex items-center gap-2 min-w-[160px]">
               <Filter className="w-4 h-4 text-gray-500" />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white text-black
+  border border-gray-200
+  focus:border-cyan-500
+  focus:ring-0 ">
                   <SelectValue placeholder="Status: Any" />
                 </SelectTrigger>
                 <SelectContent>
@@ -274,10 +288,13 @@ export function BookingsContent() {
             <div className="flex items-center gap-2 min-w-[160px]">
               <DollarSign className="w-4 h-4 text-gray-500" />
               <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white text-black
+  border border-gray-200
+  focus:border-cyan-500
+  focus:ring-0">
                   <SelectValue placeholder="Payment: All" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent >
                   <SelectItem value="all">Payment: All</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="unpaid">Unpaid</SelectItem>
@@ -285,7 +302,7 @@ export function BookingsContent() {
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="outline" className="bg-white">
+            <Button variant="outline" className="bg-white text-black">
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
