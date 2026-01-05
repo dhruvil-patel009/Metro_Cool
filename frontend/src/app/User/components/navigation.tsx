@@ -1,12 +1,15 @@
 "use client"
 
 import { cn } from "@/app/lib/utils"
-import { Snowflake, Menu } from "lucide-react"
+import { Snowflake, Menu, FileText, User, MapPin, CreditCard, Bell, LogOut } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState } from "react"
 
 export function Navigation() {
   const pathname = usePathname()
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false)
+
 
   const navItems = [
     { href: "/User", label: "Home" },
@@ -54,11 +57,48 @@ export function Navigation() {
 
           <div className="flex items-center gap-3">
             <button className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200">
-              Book Now
+              Book Service
             </button>
-            <button className="hidden sm:block text-gray-600 px-4 py-2 text-sm font-semibold hover:text-gray-900 transition-colors duration-200">
-              Login
-            </button>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              >
+                <div className="text-right hidden sm:block">
+                  <div className="text-sm font-semibold text-gray-900">Alex Johnson</div>
+                  <div className="text-xs text-gray-500">Gold Member</div>
+                </div>
+                <div className="relative">
+                  <img
+                    src="/placeholder.svg?height=40&width=40"
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                  />
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
+              </button>
+
+              {showProfileDropdown && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Link
+                    href="/User/profile"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setShowProfileDropdown(false)}
+                  >
+                    <User className="w-4 h-4" />
+                    Profile 
+                  </Link>
+                 
+                  <div className="border-t border-gray-100 my-2"></div>
+                  <button className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full">
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button className="md:hidden">
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
