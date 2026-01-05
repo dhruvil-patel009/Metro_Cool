@@ -160,7 +160,7 @@ export default function Page() {
           {/* Role Selection Cards */}
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Join as User */}
-            <button className="group flex flex-col items-center rounded-lg border-2 border-gray-200 bg-white p-6 transition-all hover:border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+            <button className="group flex flex-col items-center rounded-lg border-2 border-gray-200 bg-white p-6 transition-all hover:border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onClick={() => router.replace("/auth/register")}>
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 transition-colors group-hover:bg-blue-200">
                 <User className="h-6 w-6 text-blue-700" />
               </div>
@@ -169,7 +169,7 @@ export default function Page() {
             </button>
 
             {/* Join as Technician */}
-            <button className="group flex flex-col items-center rounded-lg border-2 border-gray-200 bg-white p-6 transition-all hover:border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+            <button className="group flex flex-col items-center rounded-lg border-2 border-gray-200 bg-white p-6 transition-all hover:border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onClick={() => router.replace("/auth/technician-registration")}>
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 transition-colors group-hover:bg-blue-200">
                 <Users className="h-6 w-6 text-blue-700" />
               </div>
