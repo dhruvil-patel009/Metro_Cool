@@ -9,7 +9,8 @@ import { Card } from "@/app/components/ui/card"
 import { Wallet, BadgeCheck, BarChart3, User, CreditCard, Phone, Mail, Tag, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import SuccessModal from "../register/successModel";
+import SuccessModal from "./successModel";
+import Link from "next/link";
 
 export default function TechnicianRegistration() {
   const [loading, setLoading] = useState(false);
@@ -355,6 +356,13 @@ const handleSubmit = async (e: React.FormEvent) => {
                   >
                 {loading ? 'Submitting...' : 'Complete Registration'}
                   </Button>
+
+                   <p className="text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link href="/auth/login" className="text-blue-600 hover:underline">
+              Sign in
+            </Link>
+          </p>
                   <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
                     <Lock className="w-3 h-3" />
                     <span>Your data is securely encrypted and stored.</span>

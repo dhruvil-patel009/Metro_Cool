@@ -1,12 +1,25 @@
-export default function Home() {
+import { HeroSection } from "./User/components/hero-section";
+import { ServicesSection } from "./User/components/services-section";
+import { CTASection } from "./User/components/cta-section";
+import { TestimonialsSection } from "./User/components/testimonial-section";
+import { ProductsSection } from "./User/components/product-section";
+import { AboutSection } from "./User/components/about-section";
+import Header from "./components/header";
+import { Footer } from "./User/components/footer";
+
+
+
+export default function HomePage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="rounded-md bg-white p-8 shadow-lg text-center">
-        <h1 className="text-3xl font-bold text-blue-600">
-          Tailwind CSS Working ✅
-        </h1>
-        <p className="mt-3 text-gray-600">Next.js + Tailwind + Node 20+</p>
-      </div>
-    </main>
-  );
+    <div className="min-h-screen bg-white font-sans text-[#1a1a1a]">
+      <Header/>
+      <HeroSection />
+      <ServicesSection />
+      <ProductsSection />
+      <AboutSection />
+      <TestimonialsSection />
+      <CTASection />
+      <Footer/>
+    </div>
+  )
 }
