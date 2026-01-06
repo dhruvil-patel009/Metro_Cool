@@ -5,11 +5,39 @@ import { Snowflake, Menu, FileText, User, MapPin, CreditCard, Bell, LogOut } fro
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import Image from "next/image"
 
 export function Navigation() {
   const pathname = usePathname()
     const [showProfileDropdown, setShowProfileDropdown] = useState(false)
 
+const router = useRouter()
+
+const handleLogout = async () => {
+  try {
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`,
+      {
+        method: "POST",
+        credentials: "include", // important if cookies are used
+      }
+    )
+
+    // 🔹 Clear client-side session (if stored)
+    localStorage.removeItem("session")
+    localStorage.removeItem("user")
+
+    toast.success("Logged out successfully")
+
+    setShowProfileDropdown(false)
+
+    router.push("/")
+  } catch (error) {
+    toast.error("Logout failed. Try again.")
+  }
+}
 
   const navItems = [
     { href: "/User", label: "Home" },
@@ -70,11 +98,14 @@ export function Navigation() {
                   <div className="text-xs text-gray-500">Gold Member</div>
                 </div>
                 <div className="relative">
-                  <img
-                    src="/placeholder.svg?height=40&width=40"
-                    alt="Profile"
-                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                  />
+                 <Image
+  src="/assets/profile.png"
+  alt="Profile"
+  width={40}
+  height={40}
+  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+/>
+
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                 </div>
               </button>
@@ -91,7 +122,8 @@ export function Navigation() {
                   </Link>
                  
                   <div className="border-t border-gray-100 my-2"></div>
-                  <button className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full">
+                  <button className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"   onClick={handleLogout}
+>
                     <LogOut className="w-4 h-4" />
                     Sign Out
                   </button>

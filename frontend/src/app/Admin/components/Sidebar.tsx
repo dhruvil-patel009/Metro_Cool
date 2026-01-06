@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
@@ -34,6 +34,23 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
+    const router = useRouter()
+  
+
+
+    /* ---------- LOGOUT HANDLER ---------- */
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:5000/api/auth/logout", {
+        method: "POST",
+        credentials: "include", // 🔑 important
+      })
+
+      router.push("/")
+    } catch (error) {
+      console.error("Logout failed", error)
+    }
+  }
 
   return (
     <>
@@ -115,7 +132,8 @@ export function Sidebar() {
 
         {/* LOGOUT (ALWAYS AT BOTTOM) */}
         <div className="border-t p-3 shrink-0">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"           onClick={handleLogout}
+>
             <LogOut className="h-5 w-5" />
             {isOpen && <span>Logout</span>}
           </button>

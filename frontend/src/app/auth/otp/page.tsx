@@ -64,8 +64,8 @@ export default function VerifyOTP() {
       toast.success("Login successful");
 
       // 🚦 Redirect by role
-      if (data.user.role === "admin") router.push("/Admin");
-      else if (data.user.role === "technician") router.push("/Technician");
+      if (data.user.role === "admin") router.push("/admin");
+      else if (data.user.role === "technician") router.push("/technician");
       else router.push("/User");
     } catch {
       toast.error("Server error. Try again.");

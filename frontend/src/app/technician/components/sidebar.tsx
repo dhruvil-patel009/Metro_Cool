@@ -10,8 +10,9 @@ import {
   CheckCircle2,
   Briefcase,
   Menu,
+  LogOut,
 } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/app/lib/utils"
 import { Button } from "@/app/components/ui/button"
@@ -36,6 +37,7 @@ const systemItems = [
 export function Sidebar() {
   const { isCollapsed, toggle } = useSidebar()
   const pathname = usePathname()
+  const router = useRouter()
 
   /* ---------- ACTIVE ROUTE LOGIC ---------- */
   const isRouteActive = (href: string) => {
@@ -43,6 +45,20 @@ export function Sidebar() {
       return pathname === "/technician"
     }
     return pathname === href || pathname.startsWith(href + "/")
+  }
+
+  /* ---------- LOGOUT HANDLER ---------- */
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:5000/api/auth/logout", {
+        method: "POST",
+        credentials: "include", // 🔑 important
+      })
+
+      router.push("/")
+    } catch (error) {
+      console.error("Logout failed", error)
+    }
   }
 
   return (
@@ -157,25 +173,19 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* -------------------- FOOTER / PROGRESS -------------------- */}
-      {!isCollapsed && (
-        <div className="mt-auto p-4 border-t">
-          <div className="rounded-xl border bg-slate-50 p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase text-slate-500">
-                Weekly Goal
-              </span>
-              <span className="text-xs font-bold text-[#0891b2]">85%</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-[#0891b2]"
-                style={{ width: "85%" }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* -------------------- LOGOUT FOOTER -------------------- */}
+      <div className="mt-auto p-4 border-t">
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50",
+            isCollapsed && "justify-center px-0"
+          )}
+        >
+          <LogOut className="w-4 h-4" />
+          {!isCollapsed && <span>Logout</span>}
+        </button>
+      </div>
     </aside>
   )
 }

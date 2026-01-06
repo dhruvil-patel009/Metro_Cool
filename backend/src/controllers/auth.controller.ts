@@ -259,4 +259,31 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
 };
 
 
+/**
+ * LOGOUT (ALL ROLES)
+ */
+export const logout = async (_req: Request, res: Response) => {
+    // 🔹 If you later store refresh tokens in DB,
+    // you can invalidate them here.
+
+    // 🔹 If using cookies (recommended for prod)
+    res.clearCookie("accessToken", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false, // true in production (HTTPS)
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+};
+
+
 
