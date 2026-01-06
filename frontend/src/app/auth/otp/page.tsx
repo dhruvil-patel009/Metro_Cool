@@ -5,7 +5,7 @@ import { ArrowLeft, Phone, Edit3, Info, Shield } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
-import { toast } from "react-toastify"
+import { toast } from "sonner"
 import OtpInput from "react-otp-input";
 
 

@@ -1,468 +1,471 @@
-// "use client";
-
-// import { useState } from "react";
-// import { useRouter } from "next/navigation";
-// import {
-//   Phone,
-//   Mail,
-//   Camera,
-//   CreditCard,
-//   Tag
-// } from "lucide-react";
-// import { toast, ToastContainer } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
-// // import VerificationPendingModal from "@/app/components/VerificationPendingModal";
-
-// export default function TechnicianRegistration() {
-//   const router = useRouter();
-
-//   const [loading, setLoading] = useState(false);
-//   const [showModal, setShowModal] = useState(false);
-
-//   const [form, setForm] = useState({
-//     firstName: "",
-//     middleName: "",
-//     lastName: "",
-//     phone: "",
-//     email: "",
-//     experienceYears: "",
-//     promoCode: "",
-//   });
-
-//   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-//   const [aadhaarPan, setAadhaarPan] = useState<File | null>(null);
-//   const [profilePreview, setProfilePreview] = useState<string | null>(null);
-
-//   const handleChange = (e: any) => {
-//     setForm({ ...form, [e.target.name]: e.target.value });
-//   };
-
-//   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = e.target.files?.[0];
-//     if (!file) return;
-//     setProfilePhoto(file);
-//     setProfilePreview(URL.createObjectURL(file));
-//   };
-
-//   const handleAadhaarPanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = e.target.files?.[0];
-//     if (!file) return;
-//     setAadhaarPan(file);
-//   };
-
-//   const handleSubmit = async () => {
-//     if (!form.firstName || !form.lastName || !form.phone || !form.email) {
-//       toast.warning("Please fill all required fields");
-//       return;
-//     }
-
-//     if (!profilePhoto || !aadhaarPan) {
-//       toast.warning("Please upload profile photo and Aadhaar/PAN");
-//       return;
-//     }
-
-//     try {
-//       setLoading(true);
-
-//       const formData = new FormData();
-//       Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-//       formData.append("role", "technician");
-//       formData.append("profile_photo", profilePhoto);
-//       formData.append("aadhaar_pan", aadhaarPan);
-
-//       const res = await fetch(
-//         `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
-//         { method: "POST", body: formData }
-//       );
-
-//       const data = await res.json();
-//       if (!res.ok) {
-//         toast.error(data.error || "Registration failed");
-//         return;
-//       }
-
-//       toast.success("🎉 Registration successful!");
-//       setShowModal(true);
-//     } catch {
-//       toast.error("Server error. Try again later.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <>
-//       <ToastContainer position="top-right" autoClose={3000} />
-
-//       <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-100 flex items-center justify-center p-4">
-//         <div className="grid max-w-6xl w-full bg-white rounded-2xl shadow-xl overflow-hidden lg:grid-cols-3">
-
-//           {/* LEFT INFO PANEL */}
-//           <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-cyan-600 to-blue-700 text-white p-8">
-//             <div>
-//               <h2 className="text-3xl font-bold mb-4">Join Our Network</h2>
-//               <p className="text-sm text-cyan-100">
-//                 Connect with thousands of customers looking for HVAC experts.
-//               </p>
-//             </div>
-
-//             <ul className="space-y-6 mt-10">
-//               <li className="flex gap-3">
-//                 <span>💳</span>
-//                 <div>
-//                   <h4 className="font-semibold">Instant Payments</h4>
-//                   <p className="text-sm text-cyan-100">
-//                     Get paid immediately after job completion.
-//                   </p>
-//                 </div>
-//               </li>
-//               <li className="flex gap-3">
-//                 <span>✔️</span>
-//                 <div>
-//                   <h4 className="font-semibold">Verified Badge</h4>
-//                   <p className="text-sm text-cyan-100">
-//                     Build trust with customers.
-//                   </p>
-//                 </div>
-//               </li>
-//               <li className="flex gap-3">
-//                 <span>📈</span>
-//                 <div>
-//                   <h4 className="font-semibold">Grow Faster</h4>
-//                   <p className="text-sm text-cyan-100">
-//                     Earn more as you complete more jobs.
-//                   </p>
-//                 </div>
-//               </li>
-//             </ul>
-//           </div>
-
-//           {/* FORM */}
-//           <div className="lg:col-span-2 p-6 sm:p-10">
-//             <h3 className="text-2xl font-bold mb-2">
-//               Technician Registration
-//             </h3>
-//             <p className="text-gray-500 mb-6">
-//               Fill your details to start receiving jobs.
-//             </p>
-
-//             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-//               {["firstName", "middleName", "lastName"].map((name) => (
-//                 <input
-//                   key={name}
-//                   name={name}
-//                   placeholder={name.replace(/([A-Z])/g, " $1")}
-//                   onChange={handleChange}
-//                   className="input"
-//                 />
-//               ))}
-//             </div>
-
-//             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-//               <div className="relative">
-//                 <Phone className="input-icon" />
-//                 <input
-//                   name="phone"
-//                   placeholder="Phone number"
-//                   onChange={handleChange}
-//                   className="input pl-10"
-//                 />
-//               </div>
-
-//               <div className="relative">
-//                 <Mail className="input-icon" />
-//                 <input
-//                   name="email"
-//                   placeholder="Email address"
-//                   onChange={handleChange}
-//                   className="input pl-10"
-//                 />
-//               </div>
-//             </div>
-
-//             <select
-//               name="experienceYears"
-//               onChange={handleChange}
-//               className="input mt-4"
-//             >
-//               <option value="">Select experience</option>
-//               <option value="1-3">1-3 Years</option>
-//               <option value="3-5">3-5 Years</option>
-//               <option value="5+">5+ Years</option>
-//             </select>
-
-//             {/* UPLOADS */}
-//             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-//               <div
-//                 onClick={() => document.getElementById("profilePhoto")?.click()}
-//                 className="upload-box"
-//               >
-//                 {profilePreview ? (
-//                   <img src={profilePreview} className="h-24 mx-auto rounded" />
-//                 ) : (
-//                   <>
-//                     <Camera />
-//                     <p>Upload Profile Photo</p>
-//                   </>
-//                 )}
-//               </div>
-
-//               <div
-//                 onClick={() => document.getElementById("aadhaarPan")?.click()}
-//                 className="upload-box"
-//               >
-//                 <CreditCard />
-//                 <p>Upload Aadhaar / PAN</p>
-//               </div>
-//             </div>
-
-//             <input hidden id="profilePhoto" type="file" onChange={handleProfilePhotoChange} />
-//             <input hidden id="aadhaarPan" type="file" onChange={handleAadhaarPanChange} />
-
-//             <div className="relative mt-4">
-//               <Tag className="input-icon" />
-//               <input
-//                 name="promoCode"
-//                 placeholder="Promo code (optional)"
-//                 onChange={handleChange}
-//                 className="input pl-10"
-//               />
-//             </div>
-
-//             <button
-//               onClick={handleSubmit}
-//               disabled={loading}
-//               className="mt-6 w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-semibold transition-all active:scale-95"
-//             >
-//               {loading ? "Submitting..." : "Complete Registration"}
-//             </button>
-//           </div>
-//         </div>
-
-//         {/* <VerificationPendingModal open={showModal} /> */}
-//       </div>
-
-//       {/* Tailwind helpers */}
-//       <style jsx>{`
-//         .input {
-//           @apply w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none transition;
-//         }
-//         .input-icon {
-//           @apply absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400;
-//         }
-//         .upload-box {
-//           @apply cursor-pointer border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-cyan-500 hover:bg-cyan-50 transition;
-//         }
-//       `}</style>
-//     </>
-//   );
-// }
-
-
-
-
-"use client"
+"use client";
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
-import { User, Phone, Mail, Award as IdCard, Contact, Edit } from "lucide-react"
-import Link from "next/link"
+import { Card } from "@/app/components/ui/card"
+import { Wallet, BadgeCheck, BarChart3, User, CreditCard, Phone, Mail, Tag, Lock } from "lucide-react"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import SuccessModal from "../register/successModel";
 
-export default function CustomerRegistrationPage() {
-  const [profileImage, setProfileImage] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
+export default function TechnicianRegistration() {
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const router = useRouter();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
+
+  const [form, setForm] = useState({
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    experienceYears: '',
+    promoCode: ''
+  });
+
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [aadhaarPan, setAadhaarPan] = useState<File | null>(null);
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
+  const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
+
+const handleReturnToHome = () => {
+  router.push('/');
+}
+  const handleChange = (e: any) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setProfilePhoto(file);
+    setProfilePreview(URL.createObjectURL(file));
+  };
+
+  const handleAadhaarPanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAadhaarPan(file);
+    setAadhaarPreview(URL.createObjectURL(file));
+  };
+
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (
+    type: "profile" | "document",
+    file: File | null
+  ) => {
+    if (!file) return;
+
+    if (type === "profile") {
+      setProfilePhoto(file);
+      setProfilePreview(URL.createObjectURL(file));
     }
-  }
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
+    if (type === "document") {
+      setAadhaarPan(file);
+      setAadhaarPreview(URL.createObjectURL(file));
     }
+  };
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault(); // 🔥 VERY IMPORTANT
+
+  if (!form.firstName || !form.lastName || !form.phone || !form.email) {
+    toast.warning('Please fill all required fields');
+    return;
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
+  if (!profilePhoto || !aadhaarPan) {
+    toast.warning('Please upload profile photo and Aadhaar/PAN');
+    return;
   }
 
-  const handleDragLeave = () => {
-    setIsDragging(false)
-  }
+  try {
+    setLoading(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle form submission
+    const formData = new FormData();
+    formData.append('role', 'technician');
+    formData.append('firstName', form.firstName);
+    formData.append('middleName', form.middleName);
+    formData.append('lastName', form.lastName);
+    formData.append('phone', form.phone);
+    formData.append('email', form.email);
+    formData.append('experienceYears', form.experienceYears);
+    formData.append('promoCode', form.promoCode);
+    formData.append('profile_photo', profilePhoto);
+    formData.append('aadhaar_pan', aadhaarPan);
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      toast.error(data.error || 'Registration failed');
+      return;
+    }
+
+    toast.success('🎉 Registration successful! Waiting for admin approval');
+    setShowModal(true);
+  } catch (err) {
+    toast.error('Server error. Please try again later');
+  } finally {
+    setLoading(false);
   }
+};
+
+
+  const handleModalConfirm = () => {
+    setShowModal(false);
+    router.push('/login'); // 👈 login page
+  };
+
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-sm p-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h3 className="text-blue-600 font-medium text-sm mb-2">Customer Registration</h3>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create your Account</h1>
-          <p className="text-gray-600 text-sm">
-            Join the marketplace for premium HVAC solutions and seamless service management.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Profile Photo Upload */}
-          <div className="border border-gray-200 rounded-lg p-8">
-            <div className="flex flex-col items-center">
-              <div
-                className={`relative ${isDragging ? "opacity-70" : ""}`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                <input
-                  type="file"
-                  id="profile-upload"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileChange}
+    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Left Side - Hero & Benefits */}
+          <div className="lg:sticky lg:top-8 space-y-6 w-full lg:w-[420px] flex-shrink-0">
+            {/* Hero Card */}
+            <Card className="overflow-hidden shadow-xl">
+              <div className="relative h-64">
+                <img
+                  src="/assets/hero-technician.jpg"
+                  alt="Technician at work"
+                  className="w-full h-full object-cover"
                 />
-                <label htmlFor="profile-upload" className="cursor-pointer block">
-                  <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center relative group hover:bg-gray-200 transition-colors">
-                    {profileImage ? (
-                      <img
-                        src={profileImage || "/placeholder.svg"}
-                        alt="Profile"
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-10 h-10 text-gray-400" />
-                    )}
-                    <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white">
-                      <Edit className="w-4 h-4 text-white" />
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 to-transparent" />
+                <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
+                  <h2 className="text-3xl font-bold mb-3 text-balance">Join Our Network</h2>
+                  <p className="text-blue-100 text-pretty leading-relaxed">
+                    Connect with thousands of customers looking for HVAC experts like you. Grow your business today.
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Benefits Cards */}
+            <div className="space-y-4">
+              <BenefitCard
+                icon={<Wallet className="w-6 h-6" />}
+                title="Automated Settlements"
+                description="Get paid instantly upon job completion with our automated financial system."
+                color="bg-orange-100 text-orange-600"
+              />
+              <BenefitCard
+                icon={<BadgeCheck className="w-6 h-6" />}
+                title="Verified Technician Badge"
+                description="Build trust with clients by displaying your verified status on profile."
+                color="bg-cyan-100 text-cyan-600"
+              />
+              <BenefitCard
+                icon={<BarChart3 className="w-6 h-6" />}
+                title="Tiered Benefits"
+                description="Unlock lower commission rates as you complete more jobs successfully."
+                color="bg-blue-100 text-blue-600"
+              />
+            </div>
+          </div>
+
+          {/* Right Side - Registration Form */}
+          <div className="flex-1 w-full">
+            <Card className="p-8 shadow-xl bg-white">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-500 mb-2">Technician Registration</h1>
+                <p className="text-gray-600">Fill in your details to start receiving service requests.</p>
+              </div>
+
+<form onSubmit={handleSubmit} className="space-y-8">
+                {/* Personal Details */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      Personal Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <label htmlFor="firstName" className="text-sm font-medium text-gray-900">
+                          First Name
+                        </label>
+                        <Input
+                          id="firstName"
+                          name="firstName"
+                          placeholder="John"
+                          onChange={handleChange}
+                          className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="middleName" className="text-sm font-medium text-gray-900">
+                          Middle Name
+                        </label>
+                        <Input
+                          id="middleName"
+                          name="middleName"
+                          onChange={handleChange}
+                          className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="lastName" className="text-sm font-medium text-gray-900">
+                          Last Name
+                        </label>
+                        <Input
+                          id="lastName"
+                          name="lastName"
+                          placeholder="Doe"
+                          onChange={handleChange}
+                          className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
-                </label>
-              </div>
-              <h3 className="text-gray-900 font-semibold mt-4 mb-1">Profile Photo</h3>
-              <p className="text-sm text-gray-600">Click to upload or drag and drop (Optional)</p>
-            </div>
-          </div>
 
-          {/* Personal Information */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                <IdCard className="w-5 h-5 text-blue-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-900 mb-2">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <Input id="firstName" type="text" placeholder="John" required className="h-11" />
-              </div>
-
-              <div>
-                <label htmlFor="middleName" className="block text-sm font-medium text-gray-900 mb-2">
-                  Middle Name
-                </label>
-                <Input id="middleName" type="text" placeholder="" className="h-11" />
-              </div>
-
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-900 mb-2">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <Input id="lastName" type="text" placeholder="Doe" required className="h-11" />
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Details */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                <Contact className="w-5 h-5 text-blue-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">Contact Details</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-900 mb-2">
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <Phone className="w-4 h-4" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label htmlFor="phone" className="text-sm font-medium text-gray-900">
+                        Phone Number
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          placeholder="(555) 000-0000"
+                          onChange={handleChange}
+                          className="pl-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="email" className="text-sm font-medium text-gray-900">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          placeholder="john@example.com"
+                          onChange={handleChange}
+                          className="pl-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <Input id="phone" type="tel" placeholder="(555) 123-4567" required className="h-11 pl-10" />
                 </div>
-              </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
-                  Email Address <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <Mail className="w-4 h-4" />
+                {/* Professional Info */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      Professional Info
+                    </h3>
+                    <div className="space-y-2">
+                      <label htmlFor="yearsOfExperience" className="text-sm font-medium text-gray-900">
+                        Years of Experience
+                      </label>
+                      <select
+                        id="yearsOfExperience"
+                        name="yearsOfExperience"
+                        onChange={handleChange}
+                        className="flex h-10 w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                      >
+                        <option value="">Select years</option>
+                        <option value="0-1">0-1 years</option>
+                        <option value="1-3">1-3 years</option>
+                        <option value="3-5">3-5 years</option>
+                        <option value="5-10">5-10 years</option>
+                        <option value="10+">10+ years</option>
+                      </select>
+                    </div>
                   </div>
-                  <Input id="email" type="email" placeholder="john.doe@example.com" required className="h-11 pl-10" />
+
+                  {/* File Uploads */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FileUploadBox
+                      icon={<User className="w-8 h-8" />}
+                      title="Upload Profile Photo"
+                      subtitle="JPG, PNG (Max 2MB)"
+                      inputRef={profileInputRef}
+                      file={profilePhoto}
+                      preview={profilePreview}
+                      accept="image/jpeg,image/png"
+                      onFileSelect={(file) => handleFileUpload("profile", file)}
+                    />
+
+                    <FileUploadBox
+                      icon={<CreditCard className="w-8 h-8" />}
+                      title="Upload Aadhaar / PAN"
+                      subtitle="PDF, JPG (Max 5MB)"
+                      inputRef={documentInputRef}
+                      file={aadhaarPan}
+                      preview={aadhaarPreview}
+                      accept="application/pdf,image/jpeg,image/png"
+                      onFileSelect={(file) => handleFileUpload("document", file)}
+                    />
+                  </div>
+
                 </div>
-              </div>
-            </div>
+
+                {/* Promo Code */}
+                <div className="space-y-2">
+                  <label htmlFor="promoCode" className="text-sm font-medium text-gray-900">
+                    Promo Code <span className="text-gray-500">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Input
+                      id="promoCode"
+                      name="promoCode"
+                      placeholder="Enter code"
+                      onChange={handleChange}
+                      className="pl-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="space-y-4">
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base font-semibold bg-orange-600 hover:bg-orange-700 text-white shadow-lg hover:shadow-xl"
+                    disabled={loading}
+                  >
+                {loading ? 'Submitting...' : 'Complete Registration'}
+                  </Button>
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                    <Lock className="w-3 h-3" />
+                    <span>Your data is securely encrypted and stored.</span>
+                  </div>
+                </div>
+              </form>
+            </Card>
           </div>
-
-          {/* Terms and Conditions */}
-          <p className="text-center text-sm text-gray-600">
-            By registering, you agree to our{" "}
-            <Link href="/terms" className="text-blue-600 hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-blue-600 hover:underline">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full h-12 bg-blue-700 hover:bg-blue-800 text-white font-medium text-base rounded-lg transition-colors"
-          >
-            Create Account
-          </Button>
-
-          {/* Sign In Link */}
-          <p className="text-center text-sm text-gray-600">
-            Already have an account?{" "}
-            <Link href="/signin" className="text-blue-600 hover:underline font-medium">
-              Sign in
-            </Link>
-          </p>
-        </form>
+        </div>
       </div>
+        {/* Success Modal */}
+      {showModal && (
+        <SuccessModal
+          onReturnToHome={handleReturnToHome}
+          onClose={() => setShowModal(false)}
+        />
+         )}
     </div>
   )
 }
+
+// Benefit Card Component
+function BenefitCard({
+  icon,
+  title,
+  description,
+  color,
+}: {
+  icon: React.ReactNode
+  title: string
+  description: string
+  color: string
+}) {
+  return (
+    <Card className="p-5 bg-white hover:shadow-lg transition-shadow duration-300 cursor-pointer">
+      <div className="flex gap-4">
+        <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${color} flex items-center justify-center shadow-md`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 mb-1 text-pretty">{title}</h3>
+          <p className="text-sm text-gray-600 leading-relaxed text-pretty">{description}</p>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+// File Upload Box Component
+function FileUploadBox({
+  icon,
+  title,
+  subtitle,
+  inputRef,
+  file,
+  preview,
+  accept,
+  onFileSelect,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  file: File | null;
+  preview?: string | null;
+  accept: string;
+  onFileSelect: (file: File | null) => void;
+}) {
+  return (
+    <div
+      onClick={() => inputRef.current?.click()}
+      className="border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all bg-white"
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        accept={accept}
+        onChange={(e) => onFileSelect(e.target.files?.[0] || null)}
+      />
+
+      {/* 🔹 NO FILE SELECTED */}
+      {!file && (
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="text-blue-600">{icon}</div>
+          <p className="font-medium text-gray-900 text-sm">{title}</p>
+          <p className="text-xs text-gray-500">{subtitle}</p>
+        </div>
+      )}
+
+      {/* 🔹 FILE SELECTED */}
+      {file && (
+        <div className="flex flex-col items-center gap-3">
+          {preview ? (
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-28 h-28 rounded-lg object-cover border"
+            />
+          ) : (
+            <div className="text-sm text-blue-600 font-medium truncate max-w-[180px]">
+              📄 {file.name}
+            </div>
+          )}
+
+          <p className="text-xs text-green-600 font-semibold">
+            ✓ File Selected
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+

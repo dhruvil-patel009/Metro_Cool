@@ -4,7 +4,7 @@ import { useState } from "react"
 import { ArrowRight, Phone, User, Users } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 export default function Page() {
 
