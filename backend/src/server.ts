@@ -1,3 +1,4 @@
+//server.ts
 import "dotenv/config"; // 🔥 LOAD ENV FIRST (best way)
 import app from "./app.js";
 

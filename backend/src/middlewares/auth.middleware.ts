@@ -1,3 +1,4 @@
+// middleware/auth.middleware.ts
 import { Request, Response, NextFunction } from "express";
 import { supabase } from "../utils/supabase.js";
 
@@ -10,7 +11,39 @@ export const protect = async (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers.authorization?.split(" ")[1];
+    const authHeader = req.headers.authorization;
+
+  const token = authHeader?.split(" ")[1];
+
+
+      // 🔐 Always check token first
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    /**
+   * 🔹 DEV MODE TOKEN SUPPORT
+   */
+  if (token.startsWith("dev-token-")) {
+    const userId = token.replace("dev-token-", "");
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (error || !data) {
+      return res.status(401).json({ error: "Invalid dev token" });
+    }
+
+    req.user = data;
+    return next();
+  }
+
+   /**
+   * 🔹 PROD MODE (REAL SUPABASE JWT)
+   */
 
   if (!token) {
     return res.status(401).json({ error: "No token provided" });

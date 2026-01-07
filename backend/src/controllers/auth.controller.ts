@@ -1,3 +1,4 @@
+// controllers/auth.controller.ts
 import { Request, Response } from "express";
 import { supabase } from "../utils/supabase.js";
 

@@ -54,3 +54,23 @@ using (auth.uid() = id);
 
 
 
+
+
+
+
+=========================== Services Table Created ================================ 
+
+
+create table services (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  service_code text unique not null,
+  category text not null,
+  price numeric not null,
+  pricing_type text default 'fixed', -- fixed / hourly
+  description text,
+  image_url text,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
