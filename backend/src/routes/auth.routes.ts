@@ -1,3 +1,5 @@
+// routes/auth.routes.ts
+
 import { Router } from "express";
 import {
   register,

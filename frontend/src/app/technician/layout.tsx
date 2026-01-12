@@ -3,6 +3,9 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { SidebarProvider } from "./components/sidebar-content"
 import { AppLayout } from "./components/app-layout"
+import ProtectedRoute from "../components/ProtectedRoute"
+import { Sidebar } from "./components/sidebar"
+import { Header } from "../technician/components/header"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -36,12 +39,19 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased`}>
-        <SidebarProvider>
-          <AppLayout>{children}</AppLayout>
-        </SidebarProvider>
-      </body>
-    </html>
+     <ProtectedRoute allow={["technician"]}>
+      <SidebarProvider>
+        <div className="flex h-screen">
+          <Sidebar />
+
+          <div className="flex flex-1 flex-col">
+            <Header />
+            <main className="flex-1 overflow-auto">
+              {children}
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    </ProtectedRoute>
   )
 }

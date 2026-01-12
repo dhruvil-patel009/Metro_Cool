@@ -1,22 +1,23 @@
-//middlewares/role.middleware.ts
 import { Response, NextFunction } from "express";
 import { supabase } from "../utils/supabase.js";
 import { AuthRequest } from "./auth.middleware.js";
 
 export const authorize =
-  (role: "user" | "technician" | "admin") =>
-    async (req: AuthRequest, res: Response, next: NextFunction) => {
+  (...allowedRoles: ("user" | "technician" | "admin")[]) =>
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", req.user!.id)
+      .single();
 
-      const userId = req.user.id;
+    if (error || !data) {
+      return res.status(401).json({ error: "User not found" });
+    }
 
-      const { data } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", req.user.id)
-        .single();
+    if (!allowedRoles.includes(data.role)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
 
-      if (data?.role !== role)
-        return res.status(403).json({ error: "Forbidden" });
-
-      next();
-    };
+    next();
+  };

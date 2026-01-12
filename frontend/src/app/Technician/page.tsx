@@ -2,6 +2,7 @@ import { Button } from "@/app/components/ui/button"
 import { Plus, Calendar } from "lucide-react"
 import { StatCards } from "./components/state-cards"
 import { JobList } from "./components/job-list"
+import ProtectedRoute from "../components/ProtectedRoute"
 
 export default function Dashboard() {
   return (

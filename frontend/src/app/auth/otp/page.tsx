@@ -7,10 +7,13 @@ import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import OtpInput from "react-otp-input";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function VerifyOTP() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const setAuth = useAuthStore((s) => s.setAuth);
+
 
   const phone = searchParams.get("phone"); // from login page
 
@@ -57,20 +60,47 @@ export default function VerifyOTP() {
         return;
       }
 
-      // 🔐 Store tokens (DEV MODE)
-      localStorage.setItem("accessToken", data.session.accessToken);
-      localStorage.setItem("refreshToken", data.session.refreshToken);
+      /**
+       * ✅ THE MOST IMPORTANT FIX
+       * Save token + role using Zustand
+       */
+      setAuth(
+        data.session.accessToken, // dev-token-xxx
+        data.user.role            // admin | technician | user
+      );
+
+      toast.success("Login successful");
+
+      /**
+       * ✅ ROLE-BASED REDIRECT
+       */
+      if (data.user.role === "admin") {
+        router.replace("/admin");
+      } else if (data.user.role === "technician") {
+        router.replace("/technician");
+      } else {
+        router.replace("/User");
+      }
+
+      // // 🔐 Store tokens (DEV MODE)
+      // localStorage.setItem("accessToken", data.session.accessToken);
+      // localStorage.setItem("refreshToken", data.session.refreshToken);
 
       toast.success("Login successful");
 
       // 🚦 Redirect by role
-      if (data.user.role === "admin") router.push("/admin");
-      else if (data.user.role === "technician") router.push("/technician");
-      else router.push("/User");
+  
     } catch {
       toast.error("Server error. Try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+    // ⌨️ Enter key
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && otp.length === 6 && !loading) {
+      handleVerify();
     }
   };
 
@@ -83,11 +113,7 @@ export default function VerifyOTP() {
       .padStart(2, "0")}`;
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && otp.length === 6 && !loading) {
-      handleVerify();
-    }
-  };
+
 
   return (
     <div className="flex min-h-screen">

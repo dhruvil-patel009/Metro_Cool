@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import AuthProvider from "@/providers/AuthProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,16 +29,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-    
+        <AuthProvider>
+          <main className="flex-1">{children}</main>
+        </AuthProvider>
 
-        {/* PAGE CONTENT */}
-        <main className="flex-1">
-          {children}
-        </main>
-
-
-
-        {/* TOAST */}
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>

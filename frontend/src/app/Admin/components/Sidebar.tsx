@@ -18,6 +18,8 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import { toast } from "react-toastify";
+import { useAuthStore } from "@/store/auth.store";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
@@ -35,22 +37,32 @@ export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
     const router = useRouter()
+  const logout = useAuthStore((s) => s.logout);
   
 
 
     /* ---------- LOGOUT HANDLER ---------- */
-  const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:5000/api/auth/logout", {
-        method: "POST",
-        credentials: "include", // 🔑 important
-      })
+  // const handleLogout = async () => {
+  //   try {
+  //     await fetch("http://localhost:5000/api/auth/logout", {
+  //       method: "POST",
+  //       credentials: "include", // 🔑 important
+  //     })
 
-      router.push("/")
-    } catch (error) {
-      console.error("Logout failed", error)
-    }
-  }
+  //     router.push("/")
+  //   } catch (error) {
+  //     console.error("Logout failed", error)
+  //   }
+  // }
+
+  const handleLogout = () => {
+    logout(); // ✅ clears token, role, refreshToken, Zustand state
+
+    toast.success("Logged out successfully");
+
+    
+    router.replace("/"); // ✅ correct redirect
+  };
 
   return (
     <>

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Footer } from "./components/footer";
 import { Navigation } from "./components/navigation";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 
 export default function AdminLayout({
@@ -18,9 +19,9 @@ const hideLayout =
     return (
         <>
              {!hideLayout && <Navigation />}
-      <main className="min-h-screen overflow-y-auto bg-gray-50">
+      <ProtectedRoute allow={["user"]}>
         {children}
-      </main>
+      </ProtectedRoute>
       {!hideLayout && <Footer />}
     </>
 

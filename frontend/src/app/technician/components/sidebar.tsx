@@ -17,6 +17,8 @@ import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/app/lib/utils"
 import { Button } from "@/app/components/ui/button"
 import { useSidebar } from "./sidebar-content"
+import { toast } from "sonner"
+import { useAuthStore } from "@/store/auth.store"
 
 /* -------------------- NAV CONFIG -------------------- */
 
@@ -38,6 +40,7 @@ export function Sidebar() {
   const { isCollapsed, toggle } = useSidebar()
   const pathname = usePathname()
   const router = useRouter()
+  const logout = useAuthStore((s) => s.logout);
 
   /* ---------- ACTIVE ROUTE LOGIC ---------- */
   const isRouteActive = (href: string) => {
@@ -48,18 +51,14 @@ export function Sidebar() {
   }
 
   /* ---------- LOGOUT HANDLER ---------- */
-  const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:5000/api/auth/logout", {
-        method: "POST",
-        credentials: "include", // 🔑 important
-      })
+const handleLogout = () => {
+    logout(); // ✅ clears token, role, refreshToken, Zustand state
 
-      router.push("/")
-    } catch (error) {
-      console.error("Logout failed", error)
-    }
-  }
+    toast.success("Logged out successfully");
+
+
+    router.replace("/"); // ✅ correct redirect
+  };
 
   return (
     <aside

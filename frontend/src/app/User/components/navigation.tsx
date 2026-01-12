@@ -8,36 +8,49 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import Image from "next/image"
+import { useAuthStore } from "@/store/auth.store"
 
 export function Navigation() {
   const pathname = usePathname()
     const [showProfileDropdown, setShowProfileDropdown] = useState(false)
 
 const router = useRouter()
+  const logout = useAuthStore((s) => s.logout);
 
-const handleLogout = async () => {
-  try {
-    await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`,
-      {
-        method: "POST",
-        credentials: "include", // important if cookies are used
-      }
-    )
 
-    // 🔹 Clear client-side session (if stored)
-    localStorage.removeItem("session")
-    localStorage.removeItem("user")
+// const handleLogout = async () => {
+//   try {
+//     await fetch(
+//       `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`,
+//       {
+//         method: "POST",
+//         credentials: "include", // important if cookies are used
+//       }
+//     )
 
-    toast.success("Logged out successfully")
+//     // 🔹 Clear client-side session (if stored)
+//     localStorage.removeItem("session")
+//     localStorage.removeItem("user")
 
-    setShowProfileDropdown(false)
+//     toast.success("Logged out successfully")
 
-    router.push("/")
-  } catch (error) {
-    toast.error("Logout failed. Try again.")
-  }
-}
+//     setShowProfileDropdown(false)
+
+//     router.push("/")
+//   } catch (error) {
+//     toast.error("Logout failed. Try again.")
+//   }
+// }
+
+const handleLogout = () => {
+    logout(); // ✅ clears token, role, refreshToken, Zustand state
+
+    toast.success("Logged out successfully");
+
+    setShowProfileDropdown(false);
+
+    router.replace("/"); // ✅ correct redirect
+  };
 
   const navItems = [
     { href: "/User", label: "Home" },

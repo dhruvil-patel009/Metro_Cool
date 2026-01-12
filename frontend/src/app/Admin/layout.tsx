@@ -1,5 +1,6 @@
 "use client";
 
+import ProtectedRoute from "../components/ProtectedRoute";
 import { Header } from "./components/headers";
 import { Sidebar } from "./components/Sidebar";
 
@@ -9,6 +10,7 @@ export default function adminLayout({
   children: React.ReactNode;
 }) {
   return (
+<ProtectedRoute allow={["admin"]}>
     <div className="h-screen bg-gray-100 overflow-hidden">
       <div className="flex h-full">
         {/* SIDEBAR */}
@@ -20,11 +22,10 @@ export default function adminLayout({
           <Header />
 
           {/* CONTENT */}
-          <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
             {children}
-          </main>
         </div>
       </div>
     </div>
+  </ProtectedRoute>
   );
 }

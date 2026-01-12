@@ -131,7 +131,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   const handleModalConfirm = () => {
     setShowModal(false);
-    router.push('/login'); // 👈 login page
+    router.push('/auth/login'); // 👈 login page
   };
 
 
