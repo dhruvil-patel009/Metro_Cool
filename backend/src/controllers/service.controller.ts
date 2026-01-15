@@ -13,8 +13,8 @@ export const createService = async (req: Request, res: Response) => {
       price,
       pricingType,
       description,
-      imageUrl
-    } = req.body;
+      imageUrl,
+    } = req.body || {};
 
     if (!title || !serviceCode || !category || !price) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -29,53 +29,95 @@ export const createService = async (req: Request, res: Response) => {
         price,
         pricing_type: pricingType || "fixed",
         description,
-        image_url: imageUrl
+        image_url: imageUrl,
       })
       .select()
       .single();
 
-    if (error) {
-      return res.status(400).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: error.message });
+    
 
     res.status(201).json({
       message: "Service created successfully",
-      service: data
+      service: data,
     });
+
+    console.log("BODY:", req.body);
+console.log("FILE:", req.file);
   } catch (err) {
-    console.error("CREATE SERVICE ERROR:", err);
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
+};
+
+/**
+ * ADMIN — Get ALL Services (Dashboard Table)
+ */
+export const getAllServicesAdmin = async (_req: Request, res: Response) => {
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  res.json(data);
+};
+
+/**
+ * PUBLIC — Get Active Services
+ */
+export const getActiveServices = async (_req: Request, res: Response) => {
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  res.json(data);
+};
+
+/**
+ * ADMIN — Get Single Service
+ */
+export const getServiceById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) return res.status(404).json({ error: "Service not found" });
+
+  res.json(data);
 };
 
 /**
  * ADMIN — Update Service
  */
 export const updateService = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const { data, error } = await supabase
-      .from("services")
-      .update({
-        ...req.body,
-        updated_at: new Date()
-      })
-      .eq("id", id)
-      .select()
-      .single();
+  const { data, error } = await supabase
+    .from("services")
+    .update({
+      ...req.body,
+      updated_at: new Date(),
+    })
+    .eq("id", id)
+    .select()
+    .single();
 
-    if (error) {
-      return res.status(400).json({ error: error.message });
-    }
+  if (error) return res.status(400).json({ error: error.message });
 
-    res.json({
-      message: "Service updated",
-      service: data
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
-  }
+  res.json({
+    message: "Service updated",
+    service: data,
+  });
 };
 
 /**
@@ -92,13 +134,11 @@ export const toggleServiceStatus = async (req: Request, res: Response) => {
     .select()
     .single();
 
-  if (error) {
-    return res.status(400).json({ error: error.message });
-  }
+  if (error) return res.status(400).json({ error: error.message });
 
   res.json({
     message: "Service status updated",
-    service: data
+    service: data,
   });
 };
 
@@ -108,31 +148,9 @@ export const toggleServiceStatus = async (req: Request, res: Response) => {
 export const deleteService = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const { error } = await supabase
-    .from("services")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("services").delete().eq("id", id);
 
-  if (error) {
-    return res.status(400).json({ error: error.message });
-  }
+  if (error) return res.status(400).json({ error: error.message });
 
   res.json({ message: "Service deleted successfully" });
-};
-
-/**
- * PUBLIC — Get Active Services
- */
-export const getActiveServices = async (_req: Request, res: Response) => {
-  const { data, error } = await supabase
-    .from("services")
-    .select("*")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    return res.status(400).json({ error: error.message });
-  }
-
-  res.json(data);
 };

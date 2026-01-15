@@ -1,172 +1,150 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { MoreVertical } from "lucide-react"
-import { Switch } from "@/app/components/ui/switch"
-import { Checkbox } from "@/app/components/ui/checkbox"
-import { Button } from "@/app/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
-import { cn } from "@/app/lib/utils"
+import { useEffect, useState } from "react";
+import { MoreVertical } from "lucide-react";
+import { Switch } from "@/app/components/ui/switch";
+import { Checkbox } from "@/app/components/ui/checkbox";
+import { Button } from "@/app/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu";
+import { cn } from "@/app/lib/utils";
+import { apiFetch } from "@/app/lib/api";
 
 interface Service {
-  id: string
-  name: string
-  serviceId: string
-  image: string
-  category: string
-  categoryColor: string
-  price: number
-  priceType: "Fixed Rate" | "Hourly"
-  status: "Active" | "Inactive"
-  enabled: boolean
+  id: string;
+  title: string;
+  service_code: string;
+  category: string;
+  price: number;
+  pricing_type: "fixed" | "hourly";
+  image_url?: string;
+  is_active: boolean;
 }
-
-const servicesData: Service[] = [
-  {
-    id: "1",
-    name: "Full AC Service & Cleaning",
-    serviceId: "#SRV-001",
-    image: "/ac-unit.jpg",
-    category: "AC Repair",
-    categoryColor: "text-blue-600 bg-blue-50",
-    price: 149.0,
-    priceType: "Fixed Rate",
-    status: "Active",
-    enabled: true,
-  },
-  {
-    id: "2",
-    name: "Gas Furnace Inspection",
-    serviceId: "#SRV-024",
-    image: "/old-fashioned-furnace.png",
-    category: "Heating",
-    categoryColor: "text-orange-600 bg-orange-50",
-    price: 89.0,
-    priceType: "Hourly",
-    status: "Active",
-    enabled: false,
-  },
-  {
-    id: "3",
-    name: "Duct Cleaning (Seasonal)",
-    serviceId: "#SRV-045",
-    image: "/duct.jpg",
-    category: "Maintenance",
-    categoryColor: "text-yellow-600 bg-yellow-50",
-    price: 199.0,
-    priceType: "Fixed Rate",
-    status: "Inactive",
-    enabled: false,
-  },
-  {
-    id: "4",
-    name: "Smart Thermostat Setup",
-    serviceId: "#SRV-102",
-    image: "/smart-thermostat.png",
-    category: "Smart Home",
-    categoryColor: "text-purple-600 bg-purple-50",
-    price: 75.0,
-    priceType: "Fixed Rate",
-    status: "Active",
-    enabled: true,
-  },
-  {
-    id: "5",
-    name: "System Diagnostics",
-    serviceId: "#SRV-115",
-    image: "/diagnostic-tool.jpg",
-    category: "AC Repair",
-    categoryColor: "text-blue-600 bg-blue-50",
-    price: 65.0,
-    priceType: "Hourly",
-    status: "Active",
-    enabled: true,
-  },
-]
 
 interface ServicesTableProps {
-  searchQuery: string
-  selectedCategory: string
+  searchQuery: string;
+  selectedCategory: string;
 }
 
-export function ServicesTable({ searchQuery, selectedCategory }: ServicesTableProps) {
-  const [selectedServices, setSelectedServices] = useState<string[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [services, setServices] = useState(servicesData)
-  const itemsPerPage = 5
+export function ServicesTable({
+  searchQuery,
+  selectedCategory,
+}: ServicesTableProps) {
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
 
-  // Filter services
+  const itemsPerPage = 5;
+
+  /* ---------------- FETCH SERVICES ---------------- */
+  useEffect(() => {
+    apiFetch("/services/admin")
+      .then(setServices)
+      .finally(() => setLoading(false));
+  }, []);
+
+  /* ---------------- FILTERING ---------------- */
   const filteredServices = services.filter((service) => {
-    const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = service.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
     const matchesCategory =
-      selectedCategory === "all" || service.category.toLowerCase().replace(" ", "-") === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+      selectedCategory === "all" ||
+      service.category.toLowerCase().replace(" ", "-") === selectedCategory;
 
-  const totalPages = Math.ceil(filteredServices.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentServices = filteredServices.slice(startIndex, endIndex)
+    return matchesSearch && matchesCategory;
+  });
 
+  /* ---------------- PAGINATION ---------------- */
+  const totalPages = Math.ceil(filteredServices.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentServices = filteredServices.slice(startIndex, endIndex);
+
+  /* ---------------- SELECTION ---------------- */
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedServices(currentServices.map((s) => s.id))
-    } else {
-      setSelectedServices([])
-    }
+    setSelectedServices(
+      checked ? currentServices.map((s) => s.id) : []
+    );
+  };
+
+  const handleSelectService = (id: string, checked: boolean) => {
+    setSelectedServices((prev) =>
+      checked ? [...prev, id] : prev.filter((s) => s !== id)
+    );
+  };
+
+  /* ---------------- ENABLE / DISABLE ---------------- */
+  const handleToggleEnable = async (service: Service) => {
+    await apiFetch(`/services/${service.id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive: !service.is_active }),
+    });
+
+    setServices((prev) =>
+      prev.map((s) =>
+        s.id === service.id
+          ? { ...s, is_active: !s.is_active }
+          : s
+      )
+    );
+  };
+
+  if (loading) {
+    return <div className="p-6 text-gray-500">Loading services...</div>;
   }
 
-  const handleSelectService = (serviceId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedServices([...selectedServices, serviceId])
-    } else {
-      setSelectedServices(selectedServices.filter((id) => id !== serviceId))
-    }
-  }
-
-  const handleToggleEnable = (serviceId: string) => {
-    setServices(
-      services.map((service) => (service.id === serviceId ? { ...service, enabled: !service.enabled } : service)),
-    )
-  }
-
+  /* ---------------- UI ---------------- */
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b border-gray-200 bg-gray-50/50">
+          <thead className="border-b bg-gray-50/50">
             <tr>
-              <th className="w-12 px-6 py-4 text-left">
+              <th className="w-12 px-6 py-4">
                 <Checkbox
-                  checked={currentServices.length > 0 && currentServices.every((s) => selectedServices.includes(s.id))}
+                  checked={
+                    currentServices.length > 0 &&
+                    currentServices.every((s) =>
+                      selectedServices.includes(s.id)
+                    )
+                  }
                   onCheckedChange={handleSelectAll}
                 />
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Service Details
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
+                Service
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                 Category
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                 Price
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                 Status
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                 Enable
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">
                 Actions
               </th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-100">
             {currentServices.map((service, index) => (
               <tr
                 key={service.id}
-                className="group transition-colors duration-150 hover:bg-gray-50/50"
+                className="hover:bg-gray-50/50"
                 style={{
                   animation: `fadeIn 0.3s ease-out ${index * 0.05}s both`,
                 }}
@@ -174,71 +152,82 @@ export function ServicesTable({ searchQuery, selectedCategory }: ServicesTablePr
                 <td className="px-6 py-4">
                   <Checkbox
                     checked={selectedServices.includes(service.id)}
-                    onCheckedChange={(checked) => handleSelectService(service.id, checked as boolean)}
+                    onCheckedChange={(checked) =>
+                      handleSelectService(service.id, checked as boolean)
+                    }
                   />
                 </td>
+
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg shadow-sm ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-105">
-                      <img
-                        src={service.image || "/placeholder.svg"}
-                        alt={service.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
+                    <img
+                      src={service.image_url || "/placeholder.svg"}
+                      className="h-14 w-14 rounded-lg object-cover ring-1 ring-gray-200"
+                    />
                     <div>
-                      <div className="font-semibold text-gray-900">{service.name}</div>
-                      <div className="mt-0.5 text-xs text-gray-500">ID: {service.serviceId}</div>
+                      <div className="font-semibold text-gray-900">
+                        {service.title}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        ID: {service.service_code}
+                      </div>
                     </div>
                   </div>
                 </td>
+
                 <td className="px-6 py-4">
-                  <span className={cn("inline-flex rounded-md px-2.5 py-1 text-xs font-medium", service.categoryColor)}>
+                  <span className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
                     {service.category}
                   </span>
                 </td>
+
                 <td className="px-6 py-4">
-                  <div className="font-semibold text-gray-900">${service.price.toFixed(2)}</div>
-                  <div className="mt-0.5 text-xs text-gray-500">{service.priceType}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "h-2 w-2 rounded-full",
-                        service.status === "Active" ? "bg-green-500" : "bg-red-500",
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-sm font-medium",
-                        service.status === "Active" ? "text-gray-700" : "text-gray-500",
-                      )}
-                    >
-                      {service.status}
-                    </span>
+                  <div className="font-semibold">
+                    ${service.price.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {service.pricing_type === "fixed"
+                      ? "Fixed Rate"
+                      : "Hourly"}
                   </div>
                 </td>
+
+                <td className="px-6 py-4">
+                  <span
+                    className={cn(
+                      "text-sm font-medium",
+                      service.is_active
+                        ? "text-green-600"
+                        : "text-red-500"
+                    )}
+                  >
+                    {service.is_active ? "Active" : "Inactive"}
+                  </span>
+                </td>
+
                 <td className="px-6 py-4">
                   <Switch
-                    checked={service.enabled}
-                    onCheckedChange={() => handleToggleEnable(service.id)}
-                    className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200
-"
+                    checked={service.is_active}
+                    onCheckedChange={() =>
+                      handleToggleEnable(service)
+                    }
+                    className="data-[state=checked]:bg-cyan-500"
                   />
                 </td>
+
                 <td className="px-6 py-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-black hover:text-gray-600">
+                      <Button variant="ghost" size="icon">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem>Edit Service</DropdownMenuItem>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem>View</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600">
+                        Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
@@ -247,67 +236,6 @@ export function ServicesTable({ searchQuery, selectedCategory }: ServicesTablePr
           </tbody>
         </table>
       </div>
-
-      <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4">
-        <div className="text-sm text-gray-500">
-          Showing {startIndex + 1} to {Math.min(endIndex, filteredServices.length)} of {filteredServices.length} entries
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className="h-9 px-3 text-gray-600 hover:bg-gray-100 disabled:opacity-40"
-          >
-            Previous
-          </Button>
-          {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setCurrentPage(page)}
-              className={cn(
-                "h-9 w-9",
-                currentPage === page ? "bg-cyan-500 text-white hover:bg-cyan-600" : "text-gray-600 hover:bg-gray-100",
-              )}
-            >
-              {page}
-            </Button>
-          ))}
-          {totalPages > 3 && (
-            <>
-              <span className="px-1 text-sm text-gray-400">...</span>
-              <Button variant="ghost" size="sm" className="h-9 w-9 text-gray-600 hover:bg-gray-100">
-                {totalPages}
-              </Button>
-            </>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            className="h-9 px-3 text-gray-600 hover:bg-gray-100 disabled:opacity-40"
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
-  )
+  );
 }

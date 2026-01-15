@@ -9,26 +9,30 @@ export default function ProtectedRoute({
   children,
   allow,
 }: {
-  children: React.ReactNode;
   allow: Role[];
+  children: React.ReactNode;
 }) {
-  const { token, role, hydrated } = useAuthStore();
+  const { token, user, hydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
+    // ⏳ Wait until Zustand hydrates from localStorage
     if (!hydrated) return;
 
-    if (!token || !role) {
+    // ❌ Not logged in
+    if (!token || !user) {
       router.replace("/auth/login");
       return;
     }
 
-    if (!allow.includes(role)) {
-      router.replace("/403");
+    // ❌ Role not allowed
+    if (!allow.includes(user.role)) {
+      router.replace("/unauthorized");
     }
-  }, [hydrated, token, role]);
+  }, [token, user, allow, hydrated, router]);
 
-  if (!hydrated) return null;
+  // 🛑 Prevent flash before hydrate
+  if (!hydrated || !token || !user) return null;
 
   return <>{children}</>;
 }

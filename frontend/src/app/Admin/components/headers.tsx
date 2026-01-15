@@ -4,6 +4,7 @@ import { Search, Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import { NotificationsDropdown } from "./notification-dropdown";
+import { useAuthStore } from "@/store/auth.store";
 
 const pageTitles: Record<string, string> = {
   "/admin": "Dashboard",
@@ -18,11 +19,17 @@ const pageTitles: Record<string, string> = {
 
 export function Header() {
   const pathname = usePathname();
+    const user = useAuthStore((s) => s.user);
+
 
   const title =
     pageTitles[pathname] ||
     pageTitles["/" + pathname.split("/")[1]] ||
     "admin";
+
+    const fullName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim();
+  const initials =
+    `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
@@ -53,11 +60,11 @@ export function Header() {
           {/* User Profile */}
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-gray-900">Alex Morgan</p>
-              <p className="text-xs text-gray-500">Super Admin</p>
+              <p className="text-sm font-semibold text-gray-900">{fullName || "Admin User"}</p>
+              <p className="text-xs text-gray-500">{user?.role}</p>
             </div>
             <Avatar className="h-10 w-10 border-2 border-cyan-500">
-              <AvatarFallback className="bg-cyan-100 text-cyan-700">AM</AvatarFallback>
+              <AvatarFallback className="bg-cyan-100 text-cyan-700">{initials || "AD"}</AvatarFallback>
             </Avatar>
           </div>
         </div>

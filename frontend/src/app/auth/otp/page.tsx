@@ -65,9 +65,18 @@ export default function VerifyOTP() {
        * Save token + role using Zustand
        */
       setAuth(
-        data.session.accessToken, // dev-token-xxx
-        data.user.role            // admin | technician | user
+        data.session.accessToken,
+        {
+          id: data.user.id,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          role: data.user.role,
+          phone: data.user.phone,
+          email: data.user.email,
+        }
       );
+
+
 
       toast.success("Login successful");
 
