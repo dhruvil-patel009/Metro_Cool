@@ -79,3 +79,29 @@ create table services (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+
+
+============================================  Products ==========================================
+
+create table products (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  specifications jsonb,
+  price numeric not null,
+  discount_price numeric,
+  rating numeric default 0,
+  reviews_count int default 0,
+  in_stock boolean default true,
+
+  main_image text,
+  thumbnail_image text,
+  gallery_images text[],
+  catalog_pdf text,
+
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+
+alter table products disable row level security;

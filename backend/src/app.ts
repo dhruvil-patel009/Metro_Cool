@@ -9,6 +9,7 @@ import { swaggerSpec } from "./config/swagger.js";
 import userRoutes from "./routes/user.routes.js";
 import technicianRoutes from "./routes/technician.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import productRoutes from "./routes/product.routes.js";
 
 const app = express();
 
@@ -24,6 +25,8 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/products", productRoutes);
+
 
 
 app.use("/api/user", userRoutes);

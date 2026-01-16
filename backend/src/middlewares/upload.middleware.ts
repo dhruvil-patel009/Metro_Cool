@@ -19,10 +19,7 @@ const fileFilter = (
 
   if (!allowedMimeTypes.includes(file.mimetype)) {
     return cb(
-      new multer.MulterError(
-        "LIMIT_UNEXPECTED_FILE",
-        "Only JPG, PNG images or PDF files are allowed"
-      )
+      new Error("Only JPG, PNG images or PDF files are allowed")
     );
   }
 
@@ -32,7 +29,7 @@ const fileFilter = (
 export const upload = multer({
   storage,
   limits: {
-    fileSize: 50 * 1024 * 1024 // 5MB
+    fileSize: 500 * 1024 * 1024 // 50MB
   },
   fileFilter
 });
