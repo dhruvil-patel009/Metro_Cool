@@ -1,4 +1,5 @@
 export interface Product {
+  title(title: any): [any, any]
   id: string
   name: string
   description: string

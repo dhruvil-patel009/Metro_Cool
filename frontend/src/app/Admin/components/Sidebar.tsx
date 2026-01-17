@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   X,
+  PackageSearch,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { toast } from "react-toastify";
@@ -25,6 +26,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
   { icon: Briefcase, label: "Services", href: "/admin/Services" },
   { icon: FolderTree, label: "Categories", href: "/admin/Categories" },
+  { icon: PackageSearch, label: "Products", href: "/admin/products" },
   { icon: Users, label: "Technicians", href: "/admin/Technician" },
   { icon: UserCircle, label: "Users", href: "/admin/users" },
   { icon: Calendar, label: "Bookings", href: "/admin/Bookings" },

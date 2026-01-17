@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { supabase } from "../utils/supabase.js";
+import { uploadFileToSupabase } from "../utils/uploadToSupabase.js";
 
 /* ---------------- CREATE PRODUCT ---------------- */
 export const createProduct = async (req: Request, res: Response) => {
@@ -20,12 +21,26 @@ export const createProduct = async (req: Request, res: Response) => {
 
     const files = req.files as any;
 
-    const mainImage = files?.mainImage?.[0]?.originalname;
-    const thumbnail = files?.thumbnail?.[0]?.originalname;
-    const catalogPdf = files?.catalog?.[0]?.originalname;
+const mainImage = files?.mainImage
+  ? await uploadFileToSupabase(files.mainImage[0], "main")
+  : null;
 
-    const galleryImages =
-      files?.gallery?.map((f: any) => f.originalname) || [];
+const thumbnail = files?.thumbnail
+  ? await uploadFileToSupabase(files.thumbnail[0], "thumbnail")
+  : null;
+
+const catalogPdf = files?.catalog
+  ? await uploadFileToSupabase(files.catalog[0], "catalog")
+  : null;
+
+const galleryImages = files?.gallery
+  ? await Promise.all(
+      files.gallery.map((f: any) =>
+        uploadFileToSupabase(f, "gallery")
+      )
+    )
+  : [];
+
 
     const { data, error } = await supabase
       .from("products")
