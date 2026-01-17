@@ -57,7 +57,7 @@ const categories: Category[] = [
   {
     id: "cat-004",
     name: "Emergency Services",
-    description: "24/7 Rapid response for critical HVAC failures.",
+    description: "24/7 Rapid response for critical AC failures.",
     image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
     icon: <Zap className="w-5 h-5 text-white" />,
     iconColor: "bg-red-500",
@@ -128,7 +128,7 @@ export function CategoriesContent() {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Categories Management</h1>
-          <p className="text-gray-500">Manage service categories for the HVAC platform.</p>
+          <p className="text-gray-500">Manage service categories for the AC platform.</p>
         </div>
         <Button           onClick={() => setIsModalOpen(true)}
  className="bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm transition-all hover:shadow-md shrink-0">

@@ -115,7 +115,7 @@ export default function CustomerRegistrationPage() {
             Create your Account
           </h1>
           <p className="text-gray-600 text-sm">
-            Join the marketplace for premium HVAC solutions.
+            Join the marketplace for premium AC solutions.
           </p>
         </div>
 

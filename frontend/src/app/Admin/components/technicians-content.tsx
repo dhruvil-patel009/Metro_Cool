@@ -64,7 +64,7 @@ const requests: TechnicianRequest[] = [
     id: "1",
     name: "Mike Johnson",
     appliedAt: "Applied 2 hours ago",
-    certifications: ["HVAC Certified", "5yr Exp"],
+    certifications: ["AC Certified", "5yr Exp"],
     avatar: "/technician-male.jpg",
     isNew: true,
   },

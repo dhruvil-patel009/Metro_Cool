@@ -38,7 +38,7 @@ export function ServicesContent() {
               Services Management
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Manage, track, and update your HVAC service offerings.
+              Manage, track, and update your AC service offerings.
             </p>
           </div>
 
@@ -69,7 +69,7 @@ export function ServicesContent() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="HVAC">HVAC</SelectItem>
+                  <SelectItem value="AC">AC</SelectItem>
                   <SelectItem value="Heating">Heating</SelectItem>
                   <SelectItem value="Maintenance">Maintenance</SelectItem>
                   <SelectItem value="Smart Home">Smart Home</SelectItem>

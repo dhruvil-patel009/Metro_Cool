@@ -161,7 +161,7 @@ export default function AddAdminModal({ isOpen, onClose, onAdd }: AddAdminModalP
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <Input
                     type="email"
-                    placeholder="admin@comforthvac.com"
+                    placeholder="admin@comfortAC.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className={`pl-10 ${errors.email ? "border-red-500" : ""}`}

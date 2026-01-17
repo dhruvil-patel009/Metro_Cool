@@ -10,7 +10,7 @@ import { JobCardV2 } from "../components/job-card-v2"
 const jobs = [
   {
     id: "2938",
-    title: "HVAC System Repair - Unit 4B",
+    title: "AC System Repair - Unit 4B",
     customer: "John Doe",
     location: "123 Pine St, Downtown Seattle, WA",
     dateTime: "Oct 24, 2:00 PM",

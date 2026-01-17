@@ -19,14 +19,14 @@ export default function SettingsContent() {
 
   const [firstName, setFirstName] = useState("Alex")
   const [lastName, setLastName] = useState("Johnson")
-  const [email, setEmail] = useState("alex.admin@comforthvac.com")
+  const [email, setEmail] = useState("alex.admin@comfortAC.com")
   const [roleDescription, setRoleDescription] = useState("Responsible for system configuration and user management.")
 
   const [admins, setAdmins] = useState([
     {
       id: 1,
       name: "Alex Johnson",
-      email: "alex.admin@comforthvac.com",
+      email: "alex.admin@comfortAC.com",
       avatar: "AJ",
       role: "Super Admin",
       permissions: "Full system access",
@@ -36,7 +36,7 @@ export default function SettingsContent() {
     {
       id: 2,
       name: "Sarah Miller",
-      email: "sarah.miller@comforthvac.com",
+      email: "sarah.miller@comfortAC.com",
       avatar: "SM",
       role: "Operations Manager",
       permissions: "Technicians, Bookings, Reports",
@@ -46,7 +46,7 @@ export default function SettingsContent() {
     {
       id: 3,
       name: "David Chen",
-      email: "david.c@comforthvac.com",
+      email: "david.c@comfortAC.com",
       avatar: "DC",
       role: "Support Agent",
       permissions: "View-only access",

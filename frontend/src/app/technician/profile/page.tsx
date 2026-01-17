@@ -31,11 +31,11 @@ export default function ProfilePage() {
     phone: "+1 (555) 123-4567",
     zipCode: "98101",
     address: "1234 Technology Blvd, Suite 100, Seattle, WA",
-    bio: "Specializing in commercial HVAC systems with over 10 years of experience. Certified for all major brands and emergency repair protocols.",
+    bio: "Specializing in commercial AC systems with over 10 years of experience. Certified for all major brands and emergency repair protocols.",
   })
 
   const [skills, setSkills] = useState([
-    "HVAC Repair",
+    "AC Repair",
     "Electrical Wiring",
     "Preventative Maintenance",
     "OSHA Certified",
@@ -88,7 +88,7 @@ export default function ProfilePage() {
                     <h2 className="text-2xl font-bold text-slate-900">Alex Technician</h2>
                     <BadgeCheck className="w-6 h-6 text-blue-500" />
                   </div>
-                  <p className="text-slate-600 font-medium mb-3">Senior HVAC Specialist</p>
+                  <p className="text-slate-600 font-medium mb-3">Senior AC Specialist</p>
                   <div className="flex items-center gap-4 text-sm text-slate-500">
                     <div className="flex items-center gap-1.5">
                       <MapPin className="w-4 h-4" />

@@ -16,18 +16,18 @@ export function AboutSection() {
 
             <div className="space-y-6 text-gray-500 leading-relaxed mb-10">
               <p>
-                Founded in 2016, <span className="font-bold text-[#1d242d]">Comfort HVAC Solutions</span> began with a
+                Founded in 2016, <span className="font-bold text-[#1d242d]">Comfort AC Solutions</span> began with a
                 mission to deliver precision cooling for residential, industrial, and IT environments. With over 9+
-                years of experience handling commercial chillers, industrial HVAC systems, and server-room cooling, we
+                years of experience handling commercial chillers, industrial AC systems, and server-room cooling, we
                 noticed one major gap — the service booking experience was outdated.
               </p>
               <p>
-                <span className="text-blue-600 font-bold">MetroCool</span> is the digital evolution of Comfort HVAC
-                Solutions. We bring industrial-grade HVAC expertise into a seamless, 60-second online booking
+                <span className="text-blue-600 font-bold">MetroCool</span> is the digital evolution of Comfort AC
+                Solutions. We bring industrial-grade AC expertise into a seamless, 60-second online booking
                 experience.
               </p>
               <p>
-                When customers book with MetroCool, they receive technicians trained by HVAC engineers — not just
+                When customers book with MetroCool, they receive technicians trained by AC engineers — not just
                 general service workers.
               </p>
             </div>
@@ -41,7 +41,7 @@ export function AboutSection() {
             <AboutCard
               icon={<History className="w-5 h-5 text-blue-600" />}
               title="Deep Roots"
-              desc="Backed by nearly a decade of HVAC expertise."
+              desc="Backed by nearly a decade of AC expertise."
             />
             <AboutCard
               icon={<Sparkles className="w-5 h-5 text-blue-600" />}

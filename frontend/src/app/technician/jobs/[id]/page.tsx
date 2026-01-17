@@ -67,7 +67,7 @@ export default function JobDetailsPage() {
               <div className="w-4 h-4 rounded-sm border-2 border-[#0891b2] flex items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#0891b2]" />
               </div>
-              HVAC Maintenance
+              AC Maintenance
             </div>
             <h2 className="text-4xl font-black text-slate-900 tracking-tight">Standard System Tune-up</h2>
             <div className="flex items-center gap-6 text-slate-400 font-semibold">

@@ -100,7 +100,7 @@ export function Sidebar() {
             </div>
             {isOpen && (
               <div>
-                <h1 className="text-sm font-bold">Comfort HVAC</h1>
+                <h1 className="text-sm font-bold">Comfort AC</h1>
                 <p className="text-xs text-gray-500">admin Panel</p>
               </div>
             )}

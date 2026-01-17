@@ -127,7 +127,7 @@ export default function BookingPage({
                 <div className="mb-8">
                     <h1 className="text-3xl md:text-4xl font-bold mb-2">Select Date & Time</h1>
                     <p className="text-gray-600">
-                        Choose a convenient slot for our HVAC experts to visit your property. We value your time.
+                        Choose a convenient slot for our AC experts to visit your property. We value your time.
                     </p>
                 </div>
 

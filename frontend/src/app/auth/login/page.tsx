@@ -91,7 +91,7 @@ export default function Page() {
       <div className="relative flex min-h-[400px] w-full flex-col justify-between bg-slate-900 p-8 lg:min-h-screen lg:w-1/2 lg:p-12">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <Image src="/assets/login-screen.png" alt="HVAC Technician at work" fill className="object-cover" priority />
+          <Image src="/assets/login-screen.png" alt="AC Technician at work" fill className="object-cover" priority />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/60" />
         </div>
 
@@ -102,13 +102,13 @@ export default function Page() {
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white/10 backdrop-blur-sm">
               <div className="h-6 w-6 rounded border-2 border-white" />
             </div>
-            <span className="text-xl font-semibold text-white">HVAC Marketplace</span>
+            <span className="text-xl font-semibold text-white">AC Marketplace</span>
           </div>
         </div>
 
         <div className="relative z-10 mt-auto">
           <h1 className="mb-4 text-balance text-4xl font-bold leading-tight text-white lg:text-5xl">
-            Professional HVAC solutions for every season.
+            Professional AC solutions for every season.
           </h1>
           <p className="text-pretty text-lg text-gray-100 lg:text-xl">
             Connect with certified technicians, manage service requests, and handle payments all in one place.
@@ -155,7 +155,7 @@ export default function Page() {
 
           {/* New User Section */}
           <div>
-            <p className="text-center text-sm text-gray-600">New to HVAC Marketplace?</p>
+            <p className="text-center text-sm text-gray-600">New to AC Marketplace?</p>
           </div>
 
           {/* Role Selection Cards */}

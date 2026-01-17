@@ -4,7 +4,7 @@ export const heroSlides = [
     badge: "Certified Cooling Experts",
     title: "Mastering the Art of",
     highlight: "Cool Comfort",
-    desc: "Experience premium HVAC services with our engineering-first approach. We ensure perfect climate control for your home.",
+    desc: "Experience premium AC services with our engineering-first approach. We ensure perfect climate control for your home.",
   },
   {
     bg: "/assets/Hero-Slider-AC-Repairing-2.jpg",
@@ -18,7 +18,7 @@ export const heroSlides = [
     badge: "24/7 Service Support",
     title: "Reliable Climate",
     highlight: "Control Solutions",
-    desc: "From installation to maintenance, we deliver hassle-free HVAC services you can depend on.",
+    desc: "From installation to maintenance, we deliver hassle-free AC services you can depend on.",
   },
 ]
 

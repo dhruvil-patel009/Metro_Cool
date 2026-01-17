@@ -13,6 +13,8 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { cn } from "@/app/lib/utils";
 import { apiFetch } from "@/app/lib/api";
+import { deleteService, getAllServicesAdmin } from "@/app/lib/services.api";
+import { EditServiceModal } from "./edit-service-modal";
 
 interface Service {
   id: string;
@@ -38,6 +40,8 @@ export function ServicesTable({
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [editingService, setEditingService] = useState<any>(null);
+
 
   const itemsPerPage = 5;
 
@@ -97,12 +101,19 @@ export function ServicesTable({
     );
   };
 
+  
+  const handleDelete = async (id: string) => {
+    await deleteService(id);
+    setServices((prev) => prev.filter((s) => s.id !== id));
+  };
+
   if (loading) {
     return <div className="p-6 text-gray-500">Loading services...</div>;
   }
 
   /* ---------------- UI ---------------- */
   return (
+    <>
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -223,9 +234,10 @@ export function ServicesTable({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem   onClick={() => setEditingService(service)}
+>Edit</DropdownMenuItem>
                       <DropdownMenuItem>View</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
+                      <DropdownMenuItem className="text-red-600"  onClick={() => handleDelete(service.id)}>
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -236,6 +248,19 @@ export function ServicesTable({
           </tbody>
         </table>
       </div>
+
     </div>
+      {editingService && (
+  <EditServiceModal
+    isOpen={!!editingService}
+    service={editingService}
+    onClose={() => {
+      setEditingService(null);
+      getAllServicesAdmin().then(setServices); // refresh
+    }}
+  />
+  )}
+    
+    </>
   );
 }

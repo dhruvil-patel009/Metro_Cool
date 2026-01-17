@@ -9,6 +9,10 @@ import { Input } from "@/app/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { Switch } from "@/app/components/ui/switch"
 import { Textarea } from "@/app/components/ui/textarea"
+import { createService } from "@/app/lib/services.api";
+import { toast } from "sonner";
+
+
 
 interface AddServiceModalProps {
   isOpen: boolean
@@ -59,27 +63,35 @@ export function AddServiceModal({ isOpen, onClose }: AddServiceModalProps) {
     if (file) handleFileSelect(file)
   }
 
-  const handleSubmit = () => {
-    // Validate form
-    if (!serviceName || !category || !price || !serviceImage) {
-      alert("Please fill in all required fields")
-      return
-    }
-
-    // Handle service creation logic here
-    console.log("[v0] Creating service:", {
-      serviceName,
-      category,
-      price,
-      priceType,
-      description,
-      isActive,
-      serviceImage,
-    })
-
-    // Reset form and close modal
-    handleClose()
+const handleSubmit = async () => {
+  if (!serviceName || !category || !price) {
+    toast.error("⚠️ Please fill in all required fields");
+    return;
   }
+
+  try {
+    await createService({
+      title: serviceName,
+      serviceCode: `SRV-${Date.now()}`, // auto unique
+      category,
+      price: Number(price),
+      pricingType: priceType as "fixed" | "hourly",
+      description,
+      imageUrl: serviceImage || "",
+      isActive,
+    });
+
+    
+    handleClose();
+
+        toast.success("🎉 Service created successfully!");
+
+  } catch (err: any) {
+toast.error(
+      err?.message || "❌ Failed to create service. Please try again."
+    );  }
+};
+
 
   const handleClose = () => {
     setServiceName("")
@@ -100,7 +112,7 @@ export function AddServiceModal({ isOpen, onClose }: AddServiceModalProps) {
           <div className="flex items-start justify-between border-b border-gray-200 p-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Add New Service</h2>
-              <p className="mt-1 text-sm text-gray-500">Fill in the details to create a new HVAC service.</p>
+              <p className="mt-1 text-sm text-gray-500">Fill in the details to create a new AC service.</p>
             </div>
             <button
               onClick={handleClose}

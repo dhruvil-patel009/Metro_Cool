@@ -105,3 +105,36 @@ create table products (
 );
 
 alter table products disable row level security;
+
+=========================== Bucket =================================
+
+1️⃣ Allow public uploads to services bucket
+create policy "Allow public uploads to services bucket"
+on storage.objects
+for insert
+to public
+with check (
+  bucket_id = 'services'
+);
+
+
+2️⃣ Allow public reads (image access)
+
+create policy "Allow public reads from services bucket"
+on storage.objects
+for select
+to public
+using (
+  bucket_id = 'services'
+);
+
+
+3️⃣ (OPTIONAL but recommended) Allow delete (for future cleanup)
+
+create policy "Allow public deletes from services bucket"
+on storage.objects
+for delete
+to public
+using (
+  bucket_id = 'services'
+);

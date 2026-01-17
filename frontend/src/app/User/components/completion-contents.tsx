@@ -76,7 +76,7 @@ export default function CompletionContent() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-gray-900">Rahul Sharma</h3>
-                  <p className="text-sm text-gray-600">Senior HVAC Technician • Metro Cool Pro</p>
+                  <p className="text-sm text-gray-600">Senior AC Technician • Metro Cool Pro</p>
                   <div className="flex items-center gap-4 mt-2">
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />

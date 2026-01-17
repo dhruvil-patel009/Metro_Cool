@@ -95,7 +95,7 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                         <div className="w-2.5 h-2.5 rounded-full border-2 border-[#0891b2]" />
                       </div>
                       <span className="text-sm font-bold text-slate-500 tracking-wide">
-                        Job #{params.id}-AC - HVAC Repair
+                        Job #{params.id}-AC - AC Repair
                       </span>
                     </div>
                   </div>

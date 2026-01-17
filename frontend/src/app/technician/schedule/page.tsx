@@ -75,7 +75,7 @@ const upcomingJobs: Job[] = [
 
 const calendarJobs = [
   { date: 13, title: "Inspection", color: "bg-emerald-500" },
-  { date: 19, title: "HVAC Repair", color: "bg-teal-500" },
+  { date: 19, title: "AC Repair", color: "bg-teal-500" },
   {
     date: 24,
     jobs: [

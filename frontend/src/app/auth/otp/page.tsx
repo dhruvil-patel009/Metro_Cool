@@ -131,7 +131,7 @@ export default function VerifyOTP() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/assets/otp-screen.jpg"
-            alt="HVAC Technician at work"
+            alt="AC Technician at work"
             fill
             className="object-cover"
             priority
@@ -144,7 +144,7 @@ export default function VerifyOTP() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
             <Phone className="h-5 w-5" />
           </div>
-          <span className="text-xl font-semibold">HVAC Marketplace</span>
+          <span className="text-xl font-semibold">AC Marketplace</span>
         </div>
 
         {/* Hero Text */}

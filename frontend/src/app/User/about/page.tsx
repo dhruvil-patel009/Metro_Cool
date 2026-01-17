@@ -196,7 +196,7 @@ export default function AboutPage() {
               <h3 className="text-xl font-bold text-gray-900 mb-4">Certified Expertise</h3>
               <p className="text-gray-600">
                 Every technician on our team is NATE-certified and undergoes 150+ hours of annual training on the latest
-                HVAC systems.
+                AC systems.
               </p>
             </div>
 
@@ -297,7 +297,7 @@ export default function AboutPage() {
             <h2 className="text-4xl font-bold mb-4">Ready to Feel the Difference?</h2>
             <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
               Don't let the weather dictate your comfort. Schedule your service with Metro Cool today and experience
-              HVAC done right.
+              AC done right.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link href="/services">

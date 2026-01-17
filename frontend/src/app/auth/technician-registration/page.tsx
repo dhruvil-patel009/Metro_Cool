@@ -153,7 +153,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
                   <h2 className="text-3xl font-bold mb-3 text-balance">Join Our Network</h2>
                   <p className="text-blue-100 text-pretty leading-relaxed">
-                    Connect with thousands of customers looking for HVAC experts like you. Grow your business today.
+                    Connect with thousands of customers looking for AC experts like you. Grow your business today.
                   </p>
                 </div>
               </div>

@@ -23,7 +23,7 @@ const earningsData = {
 }
 
 const earningsHistory = [
-  { id: "#JB-1024", service: "HVAC Maintenance", category: "Regular Service", date: "Oct 24, 2023", amount: 120.0 },
+  { id: "#JB-1024", service: "AC Maintenance", category: "Regular Service", date: "Oct 24, 2023", amount: 120.0 },
   { id: "#JB-1023", service: "Emergency Repair", category: "Urgent", date: "Oct 23, 2023", amount: 250.0 },
   { id: "#JB-1022", service: "System Installation", category: "New Unit", date: "Oct 22, 2023", amount: 450.0 },
   { id: "#JB-1021", service: "Service Call", category: "Diagnostics", date: "Oct 21, 2023", amount: 95.0 },
