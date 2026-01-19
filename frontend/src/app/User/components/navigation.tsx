@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import Image from "next/image"
 import { useAuthStore } from "@/store/auth.store"
+import logo from '../../../../public/assets/logo.ico'
+
 
 export function Navigation() {
   const pathname = usePathname()
@@ -65,10 +67,9 @@ const handleLogout = () => {
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-              <Snowflake className="text-white w-5 h-5" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Metro Cool</span>
+                                   <Link href="/User">
+                        <Image src={logo} alt="Metro cool logo" width={120} />
+                        </Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">

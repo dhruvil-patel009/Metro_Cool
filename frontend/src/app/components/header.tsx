@@ -2,9 +2,11 @@
 
 import { cn } from "@/app/lib/utils"
 import { Snowflake, Menu, FileText, User, MapPin, CreditCard, Bell, LogOut } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
+import logo from '../../../public/assets/logo.ico'
 
 export default function Header() {
     const router = useRouter();
@@ -28,10 +30,9 @@ const handlelogin = () => {
             <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-20 items-center">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                            <Snowflake className="text-white w-5 h-5" />
-                        </div>
-                        <span className="text-xl font-bold tracking-tight">Metro Cool</span>
+                        <Link href="#">
+                        <Image src={logo} alt="Metro cool logo" width={120} />
+                        </Link>
                     </div>
 
                     <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
