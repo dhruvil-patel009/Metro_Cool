@@ -8,6 +8,7 @@ import {
   Truck,
   ChevronRight,
   Heart,
+  Download,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -103,7 +104,7 @@ export default function ProductDetailsPage() {
                 src={images[selectedImage]}
                 alt={product.title}
                 fill
-                className="object-contain p-8"
+                className="p-8"
               />
             </div>
 
@@ -116,7 +117,7 @@ export default function ProductDetailsPage() {
                     i === selectedImage ? "ring-2 ring-blue-600" : ""
                   }`}
                 >
-                  <Image src={img} alt="" fill className="object-contain p-2" />
+                  <Image src={img} alt="" fill className="p-2" />
                 </button>
               ))}
             </div>
@@ -341,6 +342,8 @@ export default function ProductDetailsPage() {
         </div>
         </div>
 
+
+
         {/* RELATED */}
         {relatedProducts.length > 0 && (
           <section className="mt-16">
@@ -357,7 +360,7 @@ export default function ProductDetailsPage() {
                     alt={p.title}
                     width={300}
                     height={200}
-                    className="mx-auto object-contain"
+                    className="mx-auto"
                   />
                   <h3 className="mt-3 text-sm font-bold">{p.title}</h3>
                   <p className="text-blue-600 font-bold">
@@ -368,6 +371,52 @@ export default function ProductDetailsPage() {
             </div>
           </section>
         )}
+
+                {/* ================= BROCHURE / CATALOG ================= */}
+    {product.catalog_pdf && (
+      <div className="rounded-xl border bg-white p-6 shadow-sm mt-12">
+
+        {/* HEADER */}
+        <h3 className="mb-6 text-lg font-bold text-slate-900">
+          Official Product Brochure
+        </h3>
+
+        {/* PREVIEW CARD */}
+        <div className="relative overflow-hidden rounded-lg border bg-slate-100">
+
+          {/* PDF PREVIEW */}
+          <iframe
+            src={product.catalog_pdf}
+            className="h-[420px] w-full"
+            title="Product Brochure"
+          />
+
+          {/* OVERLAY BUTTON */}
+          {/* <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+            <a
+              href={product.catalog_pdf}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md bg-white px-6 py-3 font-bold shadow hover:bg-slate-100"
+            >
+              View Brochure
+            </a>
+          </div> */}
+        </div>
+
+        {/* DOWNLOAD BUTTON */}
+        <div className="mt-6 flex justify-center">
+          <a
+            href={product.catalog_pdf}
+            download
+            className="flex items-center gap-2 rounded-md border border-blue-600 px-6 py-3 font-bold text-blue-600 hover:bg-blue-50 transition"
+          >
+            <Download className="h-4 w-4" />
+            Download Brochure
+          </a>
+        </div>
+      </div>
+    )}
 
       </main>
     </div>

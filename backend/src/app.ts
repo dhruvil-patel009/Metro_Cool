@@ -32,6 +32,7 @@ app.use("/api/products", productRoutes);
 
 
 
+
 app.use("/api/user", userRoutes);
 app.use("/api/technician", technicianRoutes);
 app.use("/api/admin", adminRoutes);

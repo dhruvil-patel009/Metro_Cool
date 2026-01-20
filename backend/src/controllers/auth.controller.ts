@@ -18,14 +18,24 @@ export const register = async (req: Request, res: Response) => {
       phone,
       email,
       experienceYears,
-      promoCode
+      promoCode,
+      services // ✅ technician services
     } = req.body;
 
+    /* -------------------- VALIDATION -------------------- */
     if (!phone || !email || !firstName || !lastName) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({
+        error: "Missing required fields"
+      });
     }
 
-    // 1️⃣ Create Auth User
+    if (role === "technician" && (!services || !services.length)) {
+      return res.status(400).json({
+        error: "Services are required for technician"
+      });
+    }
+
+    /* -------------------- CREATE AUTH USER -------------------- */
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         phone,
@@ -34,12 +44,14 @@ export const register = async (req: Request, res: Response) => {
       });
 
     if (authError || !authData?.user) {
-      return res.status(400).json({ error: authError?.message });
+      return res.status(400).json({
+        error: authError?.message || "User creation failed"
+      });
     }
 
     const userId = authData.user.id;
 
-    // 2️⃣ Read uploaded files
+    /* -------------------- FILE HANDLING -------------------- */
     const files = req.files as {
       profile_photo?: Express.Multer.File[];
       aadhaar_pan?: Express.Multer.File[];
@@ -51,7 +63,7 @@ export const register = async (req: Request, res: Response) => {
     let profilePhotoUrl: string | null = null;
     let aadhaarPanUrl: string | null = null;
 
-    // 3️⃣ Upload Profile Photo
+    /* -------------------- UPLOAD PROFILE PHOTO -------------------- */
     if (profileFile) {
       const ext = profileFile.originalname.split(".").pop();
       const path = `profiles/${userId}.${ext}`;
@@ -64,7 +76,9 @@ export const register = async (req: Request, res: Response) => {
         });
 
       if (error) {
-        return res.status(400).json({ error: "Profile photo upload failed" });
+        return res.status(400).json({
+          error: "Profile photo upload failed"
+        });
       }
 
       profilePhotoUrl = supabase.storage
@@ -72,7 +86,7 @@ export const register = async (req: Request, res: Response) => {
         .getPublicUrl(path).data.publicUrl;
     }
 
-    // 4️⃣ Upload Aadhaar / PAN
+    /* -------------------- UPLOAD AADHAAR / PAN -------------------- */
     if (aadhaarFile) {
       const ext = aadhaarFile.originalname.split(".").pop();
       const path = `aadhaar_pan/${userId}.${ext}`;
@@ -85,7 +99,9 @@ export const register = async (req: Request, res: Response) => {
         });
 
       if (error) {
-        return res.status(400).json({ error: "Aadhaar/PAN upload failed" });
+        return res.status(400).json({
+          error: "Aadhaar/PAN upload failed"
+        });
       }
 
       aadhaarPanUrl = supabase.storage
@@ -93,14 +109,14 @@ export const register = async (req: Request, res: Response) => {
         .getPublicUrl(path).data.publicUrl;
     }
 
-    // 5️⃣ Insert Profile
+    /* -------------------- INSERT PROFILE -------------------- */
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .insert({
         id: userId,
         role,
         first_name: firstName,
-        middle_name: middleName,
+        middle_name: middleName || null,
         last_name: lastName,
         phone,
         email,
@@ -110,10 +126,12 @@ export const register = async (req: Request, res: Response) => {
       .single();
 
     if (profileError) {
-      return res.status(400).json({ error: profileError.message });
+      return res.status(400).json({
+        error: profileError.message
+      });
     }
 
-    // 6️⃣ Technician Details
+    /* -------------------- TECHNICIAN DETAILS -------------------- */
     let technicianData = null;
 
     if (role === "technician") {
@@ -133,34 +151,48 @@ export const register = async (req: Request, res: Response) => {
           experience_years: experienceYearsInt,
           promo_code: promoCode || null,
           aadhaar_pan_url: aadhaarPanUrl,
+
+          // 🔥 CORE BUSINESS LOGIC
+          services,                    // technician services
+          approval_status: "pending",  // under review
+          status: "inactive",          // blocked until approved
           is_verified: false
         })
         .select()
         .single();
 
       if (error) {
-        return res.status(400).json({ error: error.message });
+        return res.status(400).json({
+          error: error.message
+        });
       }
 
       technicianData = data;
     }
 
-    // 7️⃣ FINAL RESPONSE
+    /* -------------------- FINAL RESPONSE -------------------- */
     return res.status(201).json({
-      message: "Registered successfully",
+      message:
+        role === "technician"
+          ? "Registered successfully. Profile under review."
+          : "Registered successfully",
+
       user: {
         id: userId,
         role,
         phone,
         email
       },
+
       profile: profileData,
       technician: technicianData
     });
 
-  } catch (err) {
-    console.error("REGISTER ERROR:", err);
-    return res.status(500).json({ error: "Server error" });
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
+    return res.status(500).json({
+      error: "Internal server error"
+    });
   }
 };
 
