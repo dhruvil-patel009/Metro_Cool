@@ -7,12 +7,20 @@ export const createProduct = async (req: Request, res: Response) => {
   try {
     const {
       title,
+      shortDesc,
       description,
-      specifications,
       price,
-      discountPrice,
+      oldPrice,
       rating,
+      reviewCount,
+      badge,
+      badgeColor,
       inStock,
+      category,
+      brand,
+      capacity,
+      specifications,
+      features,
     } = req.body;
 
     if (!title || !price) {
@@ -21,40 +29,60 @@ export const createProduct = async (req: Request, res: Response) => {
 
     const files = req.files as any;
 
-const mainImage = files?.mainImage
-  ? await uploadFileToSupabase(files.mainImage[0], "main")
-  : null;
+    /* ---------- FILE UPLOADS ---------- */
+    const mainImage = files?.mainImage
+      ? await uploadFileToSupabase(files.mainImage[0], "main")
+      : null;
 
-const thumbnail = files?.thumbnail
-  ? await uploadFileToSupabase(files.thumbnail[0], "thumbnail")
-  : null;
+    const thumbnails = files?.thumbnail
+      ? await Promise.all(
+          files.thumbnail.map((f: any) =>
+            uploadFileToSupabase(f, "thumbnail")
+          )
+        )
+      : [];
 
-const catalogPdf = files?.catalog
-  ? await uploadFileToSupabase(files.catalog[0], "catalog")
-  : null;
+    if (thumbnails.length < 3) {
+      return res
+        .status(400)
+        .json({ error: "Minimum 3 thumbnail images required" });
+    }
 
-const galleryImages = files?.gallery
-  ? await Promise.all(
-      files.gallery.map((f: any) =>
-        uploadFileToSupabase(f, "gallery")
-      )
-    )
-  : [];
+    const galleryImages = files?.gallery
+      ? await Promise.all(
+          files.gallery.map((f: any) =>
+            uploadFileToSupabase(f, "gallery")
+          )
+        )
+      : [];
 
+    const catalogPdf = files?.catalog
+      ? await uploadFileToSupabase(files.catalog[0], "catalog")
+      : null;
 
+    /* ---------- INSERT PRODUCT ---------- */
     const { data, error } = await supabase
       .from("products")
       .insert({
         title,
+        short_desc: shortDesc,
         description,
-        specifications: specifications ? JSON.parse(specifications) : null,
         price,
-        discount_price: discountPrice,
+        old_price: oldPrice,
         rating,
+        review_count: reviewCount,
+        badge,
+        badge_color: badgeColor,
         in_stock: inStock === "true",
+        category,
+        brand,
+        capacity,
+
+        specifications: specifications ? JSON.parse(specifications) : [],
+        features: features ? JSON.parse(features) : [],
 
         main_image: mainImage,
-        thumbnail_image: thumbnail,
+        thumbnail_images: thumbnails,
         gallery_images: galleryImages,
         catalog_pdf: catalogPdf,
       })
@@ -64,15 +92,16 @@ const galleryImages = files?.gallery
     if (error) throw error;
 
     res.status(201).json({
-      message: "Product created",
+      message: "Product created successfully",
       product: data,
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+    console.log("Product not insert",err.message)
   }
 };
 
-/* ---------------- GET ALL (PUBLIC) ---------------- */
+/* ---------------- GET ALL ---------------- */
 export const getProducts = async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("products")
@@ -101,22 +130,34 @@ export const getProductById = async (req: Request, res: Response) => {
 export const updateProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const { data, error } = await supabase
-    .from("products")
-    .update({
+  try {
+    const payload = {
       ...req.body,
+      specifications: req.body.specifications
+        ? JSON.parse(req.body.specifications)
+        : undefined,
+      features: req.body.features
+        ? JSON.parse(req.body.features)
+        : undefined,
       updated_at: new Date(),
-    })
-    .eq("id", id)
-    .select()
-    .single();
+    };
 
-  if (error) return res.status(400).json({ error: error.message });
+    const { data, error } = await supabase
+      .from("products")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
 
-  res.json({
-    message: "Product updated",
-    product: data,
-  });
+    if (error) throw error;
+
+    res.json({
+      message: "Product updated successfully",
+      product: data,
+    });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 /* ---------------- DELETE ---------------- */

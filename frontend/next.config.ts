@@ -10,6 +10,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    domains: ["nlimsceezdxwkykpzlbv.supabase.co"],
     remotePatterns: [
       {
         protocol: "https",

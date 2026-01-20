@@ -1,236 +1,264 @@
 "use client"
 
-import { ShoppingCart, Star, Check, Shield, Truck, ChevronRight, Heart } from "lucide-react"
+import {
+  ShoppingCart,
+  Star,
+  Check,
+  Shield,
+  Truck,
+  ChevronRight,
+  Heart,
+} from "lucide-react"
 import Link from "next/link"
-import { use, useState } from "react"
 import Image from "next/image"
-import { getProductById, products } from "../../lib/product-data"
+import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
 
-export default function ProductDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params)
-  const product = getProductById(resolvedParams.id)
+export default function ProductDetailsPage() {
+  const { id } = useParams<{ id: string }>()
+
+  const [product, setProduct] = useState<any>(null)
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([])
   const [selectedImage, setSelectedImage] = useState(0)
-  const [selectedCapacity, setSelectedCapacity] = useState(product?.capacity || "1.5 Ton")
+  const [selectedCapacity, setSelectedCapacity] = useState("1.5 Ton")
   const [addInstallation, setAddInstallation] = useState(false)
   const [activeTab, setActiveTab] = useState("description")
+  const [loading, setLoading] = useState(true)
 
-  if (!product) {
+  /* ---------------- FETCH PRODUCT ---------------- */
+  useEffect(() => {
+    if (!id) return
+
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setProduct(data)
+        setSelectedCapacity(data.capacity || "1.5 Ton")
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [id])
+
+  /* ---------------- FETCH RELATED ---------------- */
+  useEffect(() => {
+    if (!product?.category) return
+
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products`)
+      .then((res) => res.json())
+      .then((data) => {
+        setRelatedProducts(
+          data
+            .filter(
+              (p: any) =>
+                p.id !== product.id && p.category === product.category
+            )
+            .slice(0, 4)
+        )
+      })
+  }, [product])
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc]">
-        <main className="container mx-auto px-4 py-12 animate-fade-in">
-          <h1 className="text-2xl font-bold">Product not found</h1>
-          <Link href="/products" className="text-blue-600 hover:underline mt-4 inline-block">
-            Back to Products
-          </Link>
-        </main>
+      <div className="min-h-screen flex items-center justify-center font-semibold">
+        Loading product...
       </div>
     )
   }
 
-  const relatedProducts = products.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4)
+  if (!product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Product not found
+      </div>
+    )
+  }
+
+  /* ---------------- IMAGES ---------------- */
+  const images = [
+    product.main_image,
+    ...(product.thumbnail_images || []),
+    ...(product.gallery_images || []),
+  ].filter(Boolean)
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
+      <main className="mx-auto max-w-[1320px] px-4 py-6">
 
-      <main className="mx-auto max-w-[1320px] px-4 py-6 animate-fade-in">
-        {/* Breadcrumbs */}
+        {/* BREADCRUMB */}
         <nav className="mb-6 flex items-center gap-2 text-xs text-slate-500">
-          <Link href="/" className="hover:text-[#0060ff]">
-            Home
-          </Link>
+          <Link href="/">Home</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link href="/products" className="hover:text-[#0060ff]">
-            Products
-          </Link>
+          <Link href="/User/products">Products</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link href="/products" className="hover:text-[#0060ff]">
-            {product.category}
-          </Link>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-slate-900">{product.name}</span>
+          <span>{product.title}</span>
         </nav>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 xl:gap-12">
-          {/* Product Gallery */}
-          <div className="lg:col-span-7 xl:col-span-8">
-            <div className="relative aspect-square w-full overflow-hidden rounded-md border bg-white shadow-sm">
+        {/* MAIN */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+
+          {/* GALLERY */}
+          <div className="lg:col-span-8">
+            <div className="relative aspect-square rounded-md border bg-white">
               <Image
-                src={product.images[selectedImage] || "/placeholder.svg"}
-                alt={product.name}
+                src={images[selectedImage]}
+                alt={product.title}
                 fill
                 className="object-contain p-8"
               />
             </div>
-            <div className="mt-4 grid grid-cols-4 gap-3 sm:gap-4">
-              {product.images.map((img, i) => (
+
+            <div className="mt-4 grid grid-cols-4 gap-3">
+              {images.map((img: string, i: number) => (
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
-                  className={`relative aspect-square min-h-[64px] overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:border-[#0060ff] ${i === selectedImage ? "ring-2 ring-[#0060ff]" : ""}`}
+                  className={`relative aspect-square rounded-md border bg-white ${
+                    i === selectedImage ? "ring-2 ring-blue-600" : ""
+                  }`}
                 >
-                  <Image
-                    src={img || "/placeholder.svg"}
-                    alt={`Thumbnail ${i + 1}`}
-                    fill
-                    className="object-contain p-2"
-                  />
+                  <Image src={img} alt="" fill className="object-contain p-2" />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Buy Box */}
-          <div className="lg:col-span-5 xl:col-span-4">
-            <div className="rounded-md border bg-white p-6 shadow-sm">
+          {/* BUY BOX */}
+          <div className="lg:col-span-4">
+            <div className="rounded-md border bg-white p-6">
+
               <div className="mb-4 flex gap-2">
-                <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 tracking-wider">
-                  {product.inStock ? "IN STOCK" : "OUT OF STOCK"}
+                <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+                  {product.in_stock ? "IN STOCK" : "OUT OF STOCK"}
                 </span>
                 {product.badge && (
-                  <span className="rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#0060ff] tracking-wider">
-                    {product.badge.toUpperCase()}
+                  <span className="rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                    {product.badge}
                   </span>
                 )}
               </div>
 
-              <h1 className="mb-2 text-2xl font-bold text-slate-900 lg:text-3xl">{product.name}</h1>
+              <h1 className="mb-2 text-2xl font-bold">{product.title}</h1>
 
               <div className="mb-6 flex items-center gap-2">
                 <div className="flex text-amber-400">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`h-4 w-4 ${i < Math.floor(product.rating) ? "fill-current" : ""}`} />
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < Math.floor(product.rating || 0)
+                          ? "fill-current"
+                          : ""
+                      }`}
+                    />
                   ))}
                 </div>
-                <span className="text-xs text-slate-500">({product.reviews} reviews)</span>
+                <span className="text-xs text-slate-500">
+                  ({product.review_count || 0} reviews)
+                </span>
               </div>
 
               <div className="mb-6 flex items-baseline gap-3">
-                <span className="text-3xl font-bold text-[#0060ff]">${product.price.toFixed(2)}</span>
-                {product.oldPrice && (
-                  <>
-                    <span className="text-sm text-slate-400 line-through">${product.oldPrice.toFixed(2)}</span>
-                    <span className="text-xs font-bold text-emerald-600">
-                      Save {Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
-                    </span>
-                  </>
+                <span className="text-3xl font-bold text-blue-600">
+                  ${Number(product.price).toFixed(2)}
+                </span>
+                {product.old_price && (
+                  <span className="text-sm line-through text-slate-400">
+                    ${Number(product.old_price).toFixed(2)}
+                  </span>
                 )}
               </div>
 
-              {product.capacity && (
-                <div className="mb-6">
-                  <span className="mb-3 block text-sm font-medium text-slate-700">Capacity</span>
-                  <div className="flex gap-3">
-                    {["1.0 Ton", "1.5 Ton", "2.0 Ton"].map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedCapacity(size)}
-                        className={`flex-1 rounded-lg border py-2.5 text-xs font-medium transition-all ${size === selectedCapacity ? "border-[#0060ff] bg-blue-50 text-[#0060ff] ring-1 ring-[#0060ff]" : "bg-white text-slate-600 hover:bg-slate-50"}`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
+              {/* CAPACITY */}
+              <div className="mb-6">
+                <span className="mb-2 block text-sm font-medium">Capacity</span>
+                <div className="flex gap-3">
+                  {["1.0 Ton", "1.5 Ton", "2.0 Ton"].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setSelectedCapacity(c)}
+                      className={`flex-1 rounded-md border py-2 text-xs font-bold ${
+                        c === selectedCapacity
+                          ? "border-blue-600 bg-blue-50 text-blue-600"
+                          : ""
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              <div className="mb-8 rounded-md border bg-slate-50 p-4">
-                <label className="flex items-start gap-3 cursor-pointer">
+              {/* INSTALLATION */}
+              <div className="mb-6 rounded-md border bg-slate-50 p-4">
+                <label className="flex gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={addInstallation}
                     onChange={(e) => setAddInstallation(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#0060ff] focus:ring-[#0060ff]"
                   />
                   <div className="flex-1">
-                    <div className="flex justify-between">
-                      <span className="text-sm font-bold text-slate-900">Professional Installation</span>
-                      <span className="text-sm font-bold text-slate-900">+$50.00</span>
+                    <div className="flex justify-between font-bold">
+                      <span>Professional Installation</span>
+                      <span>$50.00</span>
                     </div>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-                      Includes unboxing, mounting, and demo by certified Metro Cool experts.
+                    <p className="text-xs text-slate-500">
+                      Includes mounting & demo by experts
                     </p>
                   </div>
                 </label>
               </div>
 
-              <div className="space-y-3">
-                <button className="flex w-full items-center justify-center gap-2 rounded-md bg-[#0060ff] py-[18px] font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-600 active:scale-[0.98]">
-                  <ShoppingCart className="h-5 w-5" />
-                  Purchase Now
-                </button>
-                <button className="w-full rounded-md border border-slate-200 py-[18px] font-bold text-slate-700 transition-all hover:bg-slate-50 active:scale-[0.98]">
-                  Add to Cart
-                </button>
+              <button className="mb-3 w-full rounded-md bg-blue-600 py-4 font-bold text-white">
+                Purchase Now
+              </button>
+              <button className="w-full rounded-md border py-4 font-bold">
+                Add to Cart
+              </button>
+
+              <div className="mt-6 grid grid-cols-2 gap-4 border-t pt-6">
+                <div className="flex gap-2">
+                  <Shield className="h-4 w-4 text-blue-600" />
+                  <span className="text-xs font-bold">5 Years Warranty</span>
+                </div>
+                <div className="flex gap-2">
+                  <Truck className="h-4 w-4 text-blue-600" />
+                  <span className="text-xs font-bold">Free Delivery</span>
+                </div>
               </div>
 
-              <div className="mt-8 grid grid-cols-2 gap-4 border-t pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-[#0060ff]">
-                    <Shield className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                      WARRANTY
-                    </span>
-                    <span className="text-xs font-bold text-slate-700">5 Years Comp.</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-[#0060ff]">
-                    <Truck className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                      DELIVERY
-                    </span>
-                    <span className="text-xs font-bold text-slate-700">Free Express</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs Section */}
+        {/* TABS */}
         <div className="mt-12">
-          <div className="mb-6 flex overflow-x-auto border-b scrollbar-hide">
-            {["Description", "Specifications", `Reviews (${product.reviews})`].map((tab) => (
+          <div className="mb-6 flex border-b">
+            {["description", "specifications", "reviews"].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab.toLowerCase().split(" ")[0])}
-                className={`px-6 py-[18px] text-sm font-medium transition-all ${activeTab === tab.toLowerCase().split(" ")[0] ? "border-b-2 border-[#0060ff] text-[#0060ff]" : "text-slate-500 hover:text-slate-900"}`}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-4 text-sm font-bold ${
+                  activeTab === tab
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-slate-500"
+                }`}
               >
-                {tab}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
 
-          <div className="rounded-md border bg-white p-8 shadow-sm">
+          <div className="rounded-md border bg-white p-8">
             {activeTab === "description" && (
-              <>
-                <h2 className="mb-4 text-xl font-bold text-slate-900">Efficient Cooling for Modern Homes</h2>
-                <p className="mb-6 leading-relaxed text-slate-500">{product.description}</p>
-                <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {product.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <div className="mt-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#0060ff] text-white">
-                        <Check className="h-2 w-2" />
-                      </div>
-                      <span className="text-sm leading-relaxed text-slate-600">
-                        <strong className="text-slate-900">{feature.title}:</strong> {feature.description}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </>
+              <p className="text-slate-500">{product.description}</p>
             )}
 
             {activeTab === "specifications" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {product.specifications.map((spec, i) => (
-                  <div key={i} className="flex justify-between py-3 border-b border-slate-100">
-                    <span className="text-sm font-medium text-slate-600">{spec.label}</span>
-                    <span className="text-sm font-bold text-slate-900">{spec.value}</span>
+              <div className="grid md:grid-cols-2 gap-4">
+                {(product.specifications || []).map((s: any, i: number) => (
+                  <div key={i} className="flex justify-between border-b py-2">
+                    <span>{s.label}</span>
+                    <span className="font-bold">{s.value}</span>
                   </div>
                 ))}
               </div>
@@ -269,8 +297,6 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
                     ))}
                   </div>
                 </div>
-
-                {/* Individual Reviews */}
                 <div className="lg:col-span-9">
                   <div className="space-y-8">
                     {[
@@ -310,67 +336,39 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
                     Load more reviews
                   </button>
                 </div>
-              </div>
-            )}
           </div>
+            )}
+        </div>
         </div>
 
-        {/* Related Products */}
+        {/* RELATED */}
         {relatedProducts.length > 0 && (
           <section className="mt-16">
-            <div className="mb-8 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-slate-900">You might also like</h2>
-              <Link href="/products" className="text-sm font-bold text-[#0060ff] hover:underline">
-                View all
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {relatedProducts.map((relatedProduct) => (
+            <h2 className="mb-6 text-2xl font-bold">You might also like</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {relatedProducts.map((p) => (
                 <Link
-                  key={relatedProduct.id}
-                  href={`/products/${relatedProduct.id}`}
-                  className="group overflow-hidden rounded-md border bg-white shadow-sm transition-all hover:shadow-md"
+                  key={p.id}
+                  href={`/User/products/${p.id}`}
+                  className="rounded-md border bg-white p-4"
                 >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-50">
-                    <Image
-                      src={relatedProduct.image || "/placeholder.svg"}
-                      alt={relatedProduct.name}
-                      fill
-                      className="object-contain p-6 transition-transform group-hover:scale-105"
-                    />
-                    {relatedProduct.badge && (
-                      <span
-                        className={`absolute left-3 top-3 rounded ${relatedProduct.badgeColor} px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider`}
-                      >
-                        {relatedProduct.badge}
-                      </span>
-                    )}
-                    <button className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-slate-400 backdrop-blur-sm transition-all hover:bg-white hover:text-rose-500">
-                      <Heart className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-slate-900 line-clamp-1">{relatedProduct.name}</h3>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        <span className="text-[10px] font-bold text-slate-500">{relatedProduct.rating}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-bold text-[#0060ff]">${relatedProduct.price.toFixed(2)}</span>
-                      {relatedProduct.oldPrice && (
-                        <span className="text-[10px] text-slate-400 line-through">
-                          ${relatedProduct.oldPrice.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <Image
+                    src={p.main_image}
+                    alt={p.title}
+                    width={300}
+                    height={200}
+                    className="mx-auto object-contain"
+                  />
+                  <h3 className="mt-3 text-sm font-bold">{p.title}</h3>
+                  <p className="text-blue-600 font-bold">
+                    ${Number(p.price).toFixed(2)}
+                  </p>
                 </Link>
               ))}
             </div>
           </section>
         )}
+
       </main>
     </div>
   )

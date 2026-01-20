@@ -24,8 +24,8 @@ router.post(
   authorize("admin"),
   upload.fields([
     { name: "mainImage", maxCount: 1 },
-    { name: "thumbnail", maxCount: 1 },
-    { name: "gallery", maxCount: 10 },
+    { name: "thumbnail", maxCount: 20 }, // 🔥 multiple thumbnails
+    { name: "gallery", maxCount: 20 },
     { name: "catalog", maxCount: 1 },
   ]),
   createProduct
