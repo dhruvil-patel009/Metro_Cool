@@ -21,6 +21,7 @@ export default function VerifyOTP() {
   const [timeLeft, setTimeLeft] = useState(179); // 2:59 in seconds
   const [loading, setLoading] = useState(false);
 
+
   // 🔐 Guard
   useEffect(() => {
     if (!phone) router.push("/auth/login");
@@ -106,6 +107,11 @@ export default function VerifyOTP() {
     }
   };
 
+  const formatPhone = (phone?: string | null) => {
+  if (!phone) return "";
+  return phone.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+};
+
     // ⌨️ Enter key
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && otp.length === 6 && !loading) {
@@ -180,7 +186,7 @@ export default function VerifyOTP() {
             <p className="text-gray-600">
               We've sent a 6-digit verification code to{" "}
               <span className="font-semibold text-gray-900">
-                (555) 123-4567
+                {formatPhone(phone)}
               </span>
               .
             </p>
@@ -233,6 +239,7 @@ export default function VerifyOTP() {
         "
                   autoComplete="one-time-code"
                   inputMode="numeric"
+                   onKeyDown={handleKeyDown}
                 />
               )}
             />
