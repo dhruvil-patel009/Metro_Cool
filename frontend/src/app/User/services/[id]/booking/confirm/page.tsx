@@ -4,7 +4,7 @@ import { use, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ChevronRight, User, Phone, MapPin, ArrowRight, MessageCircle } from "lucide-react"
-import { servicesData } from "@/app/User/lib/services-data"
+import { servicesData } from "@/app/user/lib/services-data"
 import { toast } from "react-toastify"
 
 const ISSUE_OPTIONS = [

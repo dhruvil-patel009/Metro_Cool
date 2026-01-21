@@ -5,6 +5,11 @@ import {
   approveTechnician,
   rejectTechnician,
   deactivateTechnician,
+  getTechnicians,
+  getPendingRequests,
+  updateTechnician,
+  getTechnicianById,
+  deleteTechnician,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -22,23 +27,23 @@ router.get(
 
 /* ================= TECHNICIANS ================= */
 
-// ✅ GET all technicians (pagination)
-// router.get(
-//   "/technicians",
-//   protect,
-//   authorize("admin"),
-//   getTechnicians
-// );
+// ✅ GET ALL TECHNICIANS (PAGINATED)
+router.get(
+  "/technicians",
+  protect,
+  authorize("admin"),
+  getTechnicians
+);
 
-// // ✅ GET pending technician requests
-// router.get(
-//   "/technicians/requests",
-//   protect,
-//   authorize("admin"),
-//   getPendingRequests
-// );
+// ✅ GET PENDING TECHNICIAN REQUESTS
+router.get(
+  "/technicians/requests",
+  protect,
+  authorize("admin"),
+  getPendingRequests
+);
 
-// ✅ APPROVE technician
+// ✅ APPROVE TECHNICIAN
 router.patch(
   "/technicians/:id/approve",
   protect,
@@ -46,7 +51,7 @@ router.patch(
   approveTechnician
 );
 
-// ✅ REJECT technician
+// ✅ REJECT TECHNICIAN
 router.patch(
   "/technicians/:id/reject",
   protect,
@@ -54,12 +59,36 @@ router.patch(
   rejectTechnician
 );
 
-// ✅ DEACTIVATE technician
+// ✅ DEACTIVATE TECHNICIAN
 router.patch(
   "/technicians/:id/deactivate",
   protect,
   authorize("admin"),
   deactivateTechnician
+);
+
+// VIEW single technician
+router.get(
+  "/technicians/:id",
+  protect,
+  authorize("admin"),
+  getTechnicianById
+);
+
+// UPDATE technician
+router.patch(
+  "/technicians/:id",
+  protect,
+  authorize("admin"),
+  updateTechnician
+);
+
+// DELETE technician
+router.delete(
+  "/technicians/:id",
+  protect,
+  authorize("admin"),
+  deleteTechnician
 );
 
 export default router;

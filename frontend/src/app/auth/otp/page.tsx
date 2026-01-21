@@ -61,6 +61,15 @@ export default function VerifyOTP() {
         return;
       }
 
+
+      /**
+ * 🔥 SAVE ACCESS TOKEN (DEV MODE)
+ */
+localStorage.setItem("accessToken", data.session.accessToken);
+
+/**
+ * 🔥 STORE AUTH IN ZUSTAND
+ */
       /**
        * ✅ THE MOST IMPORTANT FIX
        * Save token + role using Zustand

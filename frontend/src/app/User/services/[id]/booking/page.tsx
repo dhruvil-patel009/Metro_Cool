@@ -4,7 +4,7 @@ import { use, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Calendar, ChevronRight, ChevronLeft, Info, MessageCircle, Check } from "lucide-react"
-import { servicesData } from "@/app/User/lib/services-data"
+import { servicesData } from "@/app/user/lib/services-data"
 
 // Generate calendar days for the current month
 function generateCalendarDays(year: number, month: number) {

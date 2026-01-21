@@ -5,11 +5,11 @@ import { supabase } from "../utils/supabase.js";
 const TEMP_OTP = process.env.TEMP_OTP || "123456";
 
 
-/**
- * REGISTER (NO PASSWORD)
- */
 export const register = async (req: Request, res: Response) => {
   try {
+    /* ======================================================
+       1️⃣ BODY VALUES
+    ====================================================== */
     const {
       role,
       firstName,
@@ -19,23 +19,48 @@ export const register = async (req: Request, res: Response) => {
       email,
       experienceYears,
       promoCode,
-      services // ✅ technician services
+      services // ⚠️ STRING from multipart/form-data
     } = req.body;
 
-    /* -------------------- VALIDATION -------------------- */
+    /* ======================================================
+       🔥 2️⃣ SERVICES PARSING (MANDATORY FOR SUPABASE)
+    ====================================================== */
+    let parsedServices: string[] | null = null;
+
+    if (role === "technician") {
+      if (!services) {
+        return res.status(400).json({
+          error: "Services are required for technician"
+        });
+      }
+
+      try {
+        parsedServices = JSON.parse(services); // 🔴 CRITICAL LINE
+      } catch (err) {
+        return res.status(400).json({
+          error: "Invalid services format"
+        });
+      }
+
+      if (!Array.isArray(parsedServices) || parsedServices.length === 0) {
+        return res.status(400).json({
+          error: "Services must be a non-empty array"
+        });
+      }
+    }
+
+    /* ======================================================
+       3️⃣ BASIC VALIDATION
+    ====================================================== */
     if (!phone || !email || !firstName || !lastName) {
       return res.status(400).json({
         error: "Missing required fields"
       });
     }
 
-    if (role === "technician" && (!services || !services.length)) {
-      return res.status(400).json({
-        error: "Services are required for technician"
-      });
-    }
-
-    /* -------------------- CREATE AUTH USER -------------------- */
+    /* ======================================================
+       4️⃣ CREATE AUTH USER
+    ====================================================== */
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         phone,
@@ -51,7 +76,9 @@ export const register = async (req: Request, res: Response) => {
 
     const userId = authData.user.id;
 
-    /* -------------------- FILE HANDLING -------------------- */
+    /* ======================================================
+       5️⃣ FILE HANDLING
+    ====================================================== */
     const files = req.files as {
       profile_photo?: Express.Multer.File[];
       aadhaar_pan?: Express.Multer.File[];
@@ -63,7 +90,7 @@ export const register = async (req: Request, res: Response) => {
     let profilePhotoUrl: string | null = null;
     let aadhaarPanUrl: string | null = null;
 
-    /* -------------------- UPLOAD PROFILE PHOTO -------------------- */
+    /* -------------------- PROFILE PHOTO -------------------- */
     if (profileFile) {
       const ext = profileFile.originalname.split(".").pop();
       const path = `profiles/${userId}.${ext}`;
@@ -86,7 +113,7 @@ export const register = async (req: Request, res: Response) => {
         .getPublicUrl(path).data.publicUrl;
     }
 
-    /* -------------------- UPLOAD AADHAAR / PAN -------------------- */
+    /* -------------------- AADHAAR / PAN -------------------- */
     if (aadhaarFile) {
       const ext = aadhaarFile.originalname.split(".").pop();
       const path = `aadhaar_pan/${userId}.${ext}`;
@@ -109,7 +136,9 @@ export const register = async (req: Request, res: Response) => {
         .getPublicUrl(path).data.publicUrl;
     }
 
-    /* -------------------- INSERT PROFILE -------------------- */
+    /* ======================================================
+       6️⃣ INSERT PROFILE
+    ====================================================== */
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .insert({
@@ -131,14 +160,18 @@ export const register = async (req: Request, res: Response) => {
       });
     }
 
-    /* -------------------- TECHNICIAN DETAILS -------------------- */
+    /* ======================================================
+       7️⃣ TECHNICIAN DETAILS
+    ====================================================== */
     let technicianData = null;
 
     if (role === "technician") {
       const experienceMap: Record<string, number> = {
+        "0-1": 0,
         "1-3": 1,
         "3-5": 3,
-        "5+": 5
+        "5-10": 5,
+        "10+": 10
       };
 
       const experienceYearsInt =
@@ -152,10 +185,10 @@ export const register = async (req: Request, res: Response) => {
           promo_code: promoCode || null,
           aadhaar_pan_url: aadhaarPanUrl,
 
-          // 🔥 CORE BUSINESS LOGIC
-          services,                    // technician services
-          approval_status: "pending",  // under review
-          status: "inactive",          // blocked until approved
+          services: parsedServices, // 🔴 MUST BE ARRAY (TEXT[])
+
+          approval_status: "pending",
+          status: "inactive",
           is_verified: false
         })
         .select()
@@ -170,7 +203,9 @@ export const register = async (req: Request, res: Response) => {
       technicianData = data;
     }
 
-    /* -------------------- FINAL RESPONSE -------------------- */
+    /* ======================================================
+       8️⃣ FINAL RESPONSE
+    ====================================================== */
     return res.status(201).json({
       message:
         role === "technician"
@@ -195,6 +230,7 @@ export const register = async (req: Request, res: Response) => {
     });
   }
 };
+
 
 
 

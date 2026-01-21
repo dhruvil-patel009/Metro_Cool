@@ -25,7 +25,9 @@ export default function TechnicianRegistration() {
     phone: '',
     email: '',
     experienceYears: '',
-    promoCode: ''
+    promoCode: '',
+      services: [] as string[],
+
   });
 
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
@@ -101,6 +103,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     formData.append('email', form.email);
     formData.append('experienceYears', form.experienceYears);
     formData.append('promoCode', form.promoCode);
+    formData.append('services', JSON.stringify(form.services));
     formData.append('profile_photo', profilePhoto);
     formData.append('aadhaar_pan', aadhaarPan);
 
@@ -134,6 +137,29 @@ const handleSubmit = async (e: React.FormEvent) => {
     router.push('/auth/login'); // 👈 login page
   };
 
+  const SERVICE_OPTIONS = [
+  'AC Repair',
+  'AC Installation',
+  'AC Maintenance',
+  'Gas Refilling',
+  'AC Uninstallation',
+];
+
+const handleServiceAdd = (service: string) => {
+  if (form.services.includes(service)) return;
+
+  setForm({
+    ...form,
+    services: [...form.services, service],
+  });
+};
+
+const handleServiceRemove = (service: string) => {
+  setForm({
+    ...form,
+    services: form.services.filter((s) => s !== service),
+  });
+};
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -302,6 +328,51 @@ const handleSubmit = async (e: React.FormEvent) => {
                       </select>
                     </div>
                   </div>
+
+                  {/* Services Provided */}
+<div className="space-y-2">
+  <label className="text-sm font-medium text-gray-900">
+    Services Provided
+  </label>
+
+  {/* Dropdown */}
+  <select
+    onChange={(e) => {
+      handleServiceAdd(e.target.value);
+      e.currentTarget.selectedIndex = 0; // reset
+    }}
+    className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+  >
+    <option value="">Select service</option>
+    {SERVICE_OPTIONS.map((service) => (
+      <option key={service} value={service}>
+        {service}
+      </option>
+    ))}
+  </select>
+
+  {/* Selected Services */}
+  {form.services.length > 0 && (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {form.services.map((service) => (
+        <span
+          key={service}
+          className="flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium"
+        >
+          {service}
+          <button
+            type="button"
+            onClick={() => handleServiceRemove(service)}
+            className="text-blue-700 hover:text-red-600 font-bold"
+          >
+            ×
+          </button>
+        </span>
+      ))}
+    </div>
+  )}
+</div>
+
 
                   {/* File Uploads */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

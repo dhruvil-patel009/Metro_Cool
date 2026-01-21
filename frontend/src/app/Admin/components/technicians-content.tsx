@@ -1,105 +1,247 @@
 "use client"
 
-import { useState } from "react"
-import { Users, UserCheck, Clock, Plus, Filter, Eye, MoreVertical } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Users, UserCheck, Clock, Filter, Eye, MoreVertical } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu"
 import Image from "next/image"
+import { authHeaders } from "../../lib/authHeader"
+import { toast } from "sonner";
+import { Skeleton } from "@/app/components/ui/skeleton"
 
-type Technician = {
+
+
+/* ================= TYPES ================= */
+
+type ApiTechnician = {
+  id: string
+  services: string[]
+  status: "active" | "inactive"
+  approval_status: "approved" | "pending" | "rejected"
+  profiles: {
+    first_name: string
+    last_name: string
+    phone: string
+    profile_photo: string
+  }
+}
+
+type TechnicianUI = {
   id: string
   name: string
   techId: string
   phone: string
   services: string[]
-  status: "Active" | "Inactive" | "On Leave"
+  status: "Active" | "Inactive"
   approval: "Approved" | "Review" | "Pending"
   avatar: string
 }
 
-type TechnicianRequest = {
-  id: string
-  name: string
-  appliedAt: string
-  certifications: string[]
-  avatar: string
-  isNew: boolean
-}
-
-const technicians: Technician[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    techId: "TC-8842",
-    phone: "(555) 123-4567",
-    services: ["AC Repair", "Installation"],
-    status: "Active",
-    approval: "Approved",
-    avatar: "/thoughtful-man-portrait.png",
-  },
-  {
-    id: "2",
-    name: "Sarah Smith",
-    techId: "TC-8843",
-    phone: "(555) 987-6543",
-    services: ["Maintenance"],
-    status: "Inactive",
-    approval: "Approved",
-    avatar: "/woman-portrait.png",
-  },
-  {
-    id: "3",
-    name: "David Miller",
-    techId: "TC-8845",
-    phone: "(555) 456-7890",
-    services: ["Heat Pumps", "Emergency"],
-    status: "Active",
-    approval: "Review",
-    avatar: "/professional-man.png",
-  },
-]
-
-const requests: TechnicianRequest[] = [
-  {
-    id: "1",
-    name: "Mike Johnson",
-    appliedAt: "Applied 2 hours ago",
-    certifications: ["AC Certified", "5yr Exp"],
-    avatar: "/technician-male.jpg",
-    isNew: true,
-  },
-  {
-    id: "2",
-    name: "Emily Chen",
-    appliedAt: "Applied 5 hours ago",
-    certifications: ["Electrician", "Heat Specialist"],
-    avatar: "/technician-female.jpg",
-    isNew: false,
-  },
-]
+/* ================= COMPONENT ================= */
 
 export default function TechniciansContent() {
-  const [activeTab, setActiveTab] = useState<"all" | "leave" | "inactive">("all")
+  const [activeTab, setActiveTab] =
+    useState<"all" | "active" | "inactive">("all");
   const [currentPage, setCurrentPage] = useState(1)
+    const [allTechnicians, setAllTechnicians] = useState<TechnicianUI[]>([])
 
-  const handleApprove = (id: string, name: string) => {
-    console.log(`[v0] Approving technician request: ${name} (${id})`)
-    // Handle approval logic
-  }
+  const limit = 3
 
-  const handleReject = (id: string, name: string) => {
-    console.log(`[v0] Rejecting technician request: ${name} (${id})`)
-    // Handle rejection logic
-  }
+  const [requests, setRequests] = useState<ApiTechnician[]>([])
+  const [total, setTotal] = useState(0)
+  const [viewTech, setViewTech] = useState<any>(null);
+  const [editTech, setEditTech] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleViewDetails = (id: string) => {
-    console.log(`[v0] Viewing details for request: ${id}`)
-    // Handle view details logic
+
+
+  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+
+  /* ================= API CALLS ================= */
+
+const fetchTechnicians = async () => {
+  try {
+    setLoading(true)
+
+    const res = await fetch(
+      `${BASE_URL}/admin/technicians?page=${currentPage}&limit=${limit}`,
+      { headers: authHeaders() }
+    )
+
+    if (!res.ok) throw new Error()
+
+    const json = await res.json()
+
+    const mappedData: TechnicianUI[] = json.data.map((t: ApiTechnician) => ({
+      id: t.id,
+      techId: t.id.slice(0, 8).toUpperCase(),
+      name: `${t.profiles.first_name} ${t.profiles.last_name}`,
+      phone: t.profiles.phone,
+      services: t.services,
+      status: t.status === "active" ? "Active" : "Inactive",
+      approval:
+        t.approval_status === "approved"
+          ? "Approved"
+          : t.approval_status === "pending"
+          ? "Review"
+          : "Pending",
+      avatar: t.profiles.profile_photo || "/placeholder.svg",
+    }))
+
+    // ✅ THIS IS THE KEY LINE
+    setAllTechnicians(mappedData)
+    setTotal(json.total)
+  } catch {
+    toast.error("Failed to load technicians")
+  } finally {
+    setLoading(false)
   }
+}
+
+   /* ================= FILTER LOGIC (🔥 MAIN FIX) ================= */
+
+  const filteredTechnicians = useMemo(() => {
+    if (activeTab === "active") {
+      return allTechnicians.filter(t => t.status === "Active")
+    }
+
+    if (activeTab === "inactive") {
+      return allTechnicians.filter(t => t.status === "Inactive")
+    }
+
+    return allTechnicians
+  }, [activeTab, allTechnicians])
+
+  const toggleStatus = async (id: string, makeActive: boolean) => {
+    try {
+      await fetch(`${BASE_URL}/admin/technicians/${id}`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          status: makeActive ? "active" : "inactive",
+        }),
+      });
+
+      // 🔥 OPTIMISTIC UPDATE (FAST)
+      setAllTechnicians((prev) =>
+        prev.map((t) =>
+          t.id === id
+            ? { ...t, status: makeActive ? "Active" : "Inactive" }
+            : t
+        )
+      );
+
+      toast.success(
+        makeActive ? "Technician activated" : "Technician deactivated"
+      );
+    } catch {
+      toast.error("Status update failed");
+    }
+  };
+
+
+  const fetchRequests = async () => {
+    const res = await fetch(
+      `${BASE_URL}/admin/technicians/requests`,
+      { headers: authHeaders() }
+    );
+    setRequests(await res.json());
+  };
+
+  const handleApprove = async (id: string) => {
+    await fetch(`${BASE_URL}/admin/technicians/${id}/approve`, {
+      method: "PATCH",
+      headers: authHeaders(),
+    });
+    fetchTechnicians();
+    fetchRequests();
+  };
+
+  const handleReject = async (id: string) => {
+    await fetch(`${BASE_URL}/admin/technicians/${id}/reject`, {
+      method: "PATCH",
+      headers: authHeaders(),
+    });
+    fetchRequests();
+  };
+
+  const handleDeactivate = async (id: string) => {
+    try {
+      await fetch(`${BASE_URL}/admin/technicians/${id}/deactivate`, {
+        method: "PATCH",
+        headers: authHeaders(),
+      });
+
+      toast.success("Technician deactivated");
+      fetchTechnicians();
+    } catch {
+      toast.error("Failed to deactivate");
+    }
+  };
+
+
+
+  const handleView = async (id: string) => {
+    try {
+      const res = await fetch(`${BASE_URL}/admin/technicians/${id}`, {
+        headers: authHeaders(),
+      });
+
+      if (!res.ok) throw new Error();
+
+      setViewTech(await res.json());
+    } catch {
+      toast.error("Failed to load technician");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this technician?")) {
+      toast.warning("Deletion cancelled");
+      return;
+    }
+
+    try {
+      await fetch(`${BASE_URL}/admin/technicians/${id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+
+      toast.success("Technician deleted");
+      fetchTechnicians();
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
+
+
+  useEffect(() => {
+    fetchTechnicians()
+  }, [currentPage, activeTab])
+
+  useEffect(() => {
+    fetchRequests()
+  }, [])
+
+  const formatPhone = (phone: string) => {
+    if (!phone) return "";
+
+    const digits = phone.replace(/\D/g, "");
+
+    if (digits.length !== 10) return phone;
+
+    return `(${digits.slice(0, 3)}) - ${digits.slice(3, 6)} - ${digits.slice(6)}`;
+  };
+
+  /* ================= UI (UNCHANGED) ================= */
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
-
       <main className="p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
@@ -161,42 +303,28 @@ export default function TechniciansContent() {
             </div>
           </div>
         </div>
-
+        {/* ===== TABLE ===== */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex gap-4 bg-gray-200 p-1 border rounded-3xl">
-                <button
-                  onClick={() => setActiveTab("all")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === "all"
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
-                >
-                  All Technicians
-                </button>
-                <button
-                  onClick={() => setActiveTab("leave")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === "leave"
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
-                >
-                  On Leave
-                </button>
-                <button
-                  onClick={() => setActiveTab("inactive")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === "inactive"
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
-                >
-                  Inactive
-                </button>
-              </div>
+              <div className="flex gap-4 bg-gray-200 p-1 border rounded-3xl w-fit">
+          {["all", "active", "inactive"].map(tab => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab as any)
+                setCurrentPage(1)
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                activeTab === tab
+                  ? "bg-white text-gray-900"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
 
               <div className="flex gap-2">
                 <Button variant="outline" className="gap-2 border-gray-200 hover:bg-gray-50 bg-transparent text-black">
@@ -210,198 +338,212 @@ export default function TechniciansContent() {
               </div>
             </div>
           </div>
-
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
                     Technician
                   </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
                     Phone Number
                   </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
                     Services Assigned
                   </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
                     Status
                   </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
                     Approval
                   </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {technicians.map((tech) => (
-                  <tr key={tech.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
+
+              <tbody className="divide-y">
+                {loading ? (
+                  [...Array(limit)].map((_, i) => (
+                    <tr key={i}>
+                      <td colSpan={6} className="px-6 py-4">
+                        <Skeleton className="h-10 w-full" />
+                      </td>
+                    </tr>
+                  ))
+                ) : filteredTechnicians.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                      No technicians found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTechnicians.map((tech) => (
+                    <tr key={tech.id} className="hover:bg-gray-50">
+                      <td className="py-4 px-6 flex items-center gap-3">
                         <Image
-                          src={tech.avatar || "/placeholder.svg"}
+                          src={tech.avatar}
                           alt={tech.name}
                           width={40}
                           height={40}
-                          className="rounded-full object-cover"
+                          className="rounded-full w-16 h-16"
                         />
                         <div>
-                          <div className="font-semibold text-gray-900">{tech.name}</div>
-                          <div className="text-sm text-gray-500">ID: {tech.techId}</div>
+                          <div className="font-semibold">{tech.name}</div>
+                          <div className="text-sm text-gray-500">
+                            ID: {tech.techId}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-gray-700">{tech.phone}</td>
-                    <td className="py-4 px-6">
-                      <div className="flex flex-wrap gap-2">
-                        {tech.services.map((service, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
-                          >
-                            {service}
+                      </td>
+
+                      <td className="px-6">{formatPhone(tech.phone)}</td>
+
+                      <td className="px-6">
+                        <div className="flex gap-2 flex-wrap">
+                          {tech.services.map((s, i) => (
+                            <span
+                              key={i}
+                              className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-2 h-2 rounded-full ${tech.status === "Active"
+                                ? "bg-green-500"
+                                : "bg-gray-400"
+                              }`}
+                          />
+                          <span className="text-sm font-medium text-gray-700">
+                            {tech.status}
                           </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6">
                         <div
-                          className={`w-2 h-2 rounded-full ${
-                            tech.status === "Active" ? "bg-green-500" : "bg-gray-400"
-                          }`}
-                        />
-                        <span className="text-sm font-medium text-gray-700">{tech.status}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                          tech.approval === "Approved" ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"
-                        }`}
-                      >
-                        {tech.approval === "Approved" ? (
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        ) : (
-                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 012 0v4a1 1 0 11-2 0V9zm1-4a1 1 0 100 2 1 1 0 000-2z" />
-                          </svg>
-                        )}
-                        {tech.approval}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-                            <MoreVertical className="w-4 h-4 text-gray-600" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Profile</DropdownMenuItem>
-                          <DropdownMenuItem>Edit Details</DropdownMenuItem>
-                          <DropdownMenuItem>Assign Services</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">Deactivate</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${tech.approval === "Approved"
+                              ? "bg-blue-50 text-blue-600"
+                              : "bg-orange-50 text-orange-600"
+                            }`}
+                        >
+                          {tech.approval}
+                        </div>
+                      </td>
+                      <td className="px-6">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Profile
+                            </DropdownMenuItem>
+
+                            {tech.status === "Active" ? (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  toggleStatus(tech.id, false)
+                                }
+                                className="text-orange-600"
+                              >
+                                Deactivate
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  toggleStatus(tech.id, true)
+                                }
+                                className="text-green-600"
+                              >
+                                Activate
+                              </DropdownMenuItem>
+                            )}
+
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDelete(tech.id)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
+          {/* ===== PAGINATION ===== */}
           <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-            <div className="text-sm text-gray-600">Showing 1-3 of 124</div>
+            <div className="text-sm text-gray-600">
+              Showing {(currentPage - 1) * limit + 1}–
+              {Math.min(currentPage * limit, total)} of {total}
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => prev - 1)}
-                className="disabled:opacity-50"
+                onClick={() => setCurrentPage((p) => p - 1)}
               >
                 Previous
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => prev + 1)}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage * limit >= total}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
                 Next
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Technician Requests</h2>
-          <button className="text-cyan-500 hover:text-cyan-600 font-medium text-sm flex items-center gap-1 transition-colors">
-            View All
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+        {/* ===== REQUESTS ===== */}
+        <h2 className="text-xl font-bold text-gray-900">
+          Technician Requests
+        </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {requests.map((request) => (
-            <div
-              key={request.id}
-              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 relative"
-            >
-              {request.isNew && (
-                <span className="absolute top-6 right-6 px-3 py-1 bg-cyan-500 text-white text-xs font-semibold rounded-full">
-                  New
-                </span>
-              )}
-
-              <div className="flex items-start gap-4 mb-5">
+          {requests.map((r) => (
+            <div key={r.id} className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex gap-4 mb-4">
                 <Image
-                  src={request.avatar || "/placeholder.svg"}
-                  alt={request.name}
+                  src={r.profiles.profile_photo || "/placeholder.svg"}
+                  alt=""
                   width={64}
                   height={64}
-                  className="rounded-full object-cover"
+                  className="rounded-full w-16 h-16"
                 />
-                <div className="flex-1">
-                  <h3 className="font-bold text-gray-900 text-lg mb-1">{request.name}</h3>
-                  <p className="text-sm text-gray-500 mb-3">{request.appliedAt}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {request.certifications.map((cert, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">
-                        {cert}
-                      </span>
-                    ))}
-                  </div>
+                <div>
+                  <h3 className="font-bold">
+                    {r.profiles.first_name} {r.profiles.last_name}
+                  </h3>
+                  <p className="text-sm text-gray-500">Pending Approval</p>
                 </div>
               </div>
 
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 border-gray-200 hover:bg-gray-50 bg-transparent text-black"
-                  onClick={() => handleReject(request.id, request.name)}
-                >
+                <Button variant="outline" onClick={() => handleReject(r.id)}>
                   Reject
                 </Button>
-                <Button
-                  className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm"
-                  onClick={() => handleApprove(request.id, request.name)}
-                >
+                <Button onClick={() => handleApprove(r.id)}>
                   Approve
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="border-gray-200 hover:bg-gray-50 bg-transparent text-black"
-                  onClick={() => handleViewDetails(request.id)}
-                >
+                <Button variant="outline" size="icon">
                   <Eye className="w-4 h-4" />
                 </Button>
               </div>

@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle, Calendar, Clock, MapPin, Printer, FileText, ArrowRight } from "lucide-react"
-import { servicesData } from "@/app/User/lib/services-data"
+import { servicesData } from "@/app/user/lib/services-data"
 export default function BookingSuccessPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const searchParams = useSearchParams()
