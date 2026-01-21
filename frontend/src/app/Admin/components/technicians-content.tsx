@@ -58,6 +58,10 @@ export default function TechniciansContent() {
   const [editTech, setEditTech] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const [totalTechnicians, setTotalTechnicians] = useState(0)
+const [activeTechnicians, setActiveTechnicians] = useState(0)
+const [pendingRequests, setPendingRequests] = useState(0)
+
 
 
   const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
@@ -73,11 +77,15 @@ const fetchTechnicians = async () => {
       { headers: authHeaders() }
     )
 
-    if (!res.ok) throw new Error()
+    if (!res.ok) throw new Error("Failed to fetch technicians")
 
     const json = await res.json()
 
-    const mappedData: TechnicianUI[] = json.data.map((t: ApiTechnician) => ({
+    const raw: ApiTechnician[] = json.data
+
+    
+
+    const mappedData: TechnicianUI[] = raw.map((t) => ({
       id: t.id,
       techId: t.id.slice(0, 8).toUpperCase(),
       name: `${t.profiles.first_name} ${t.profiles.last_name}`,
@@ -93,15 +101,52 @@ const fetchTechnicians = async () => {
       avatar: t.profiles.profile_photo || "/placeholder.svg",
     }))
 
-    // ✅ THIS IS THE KEY LINE
+    // ✅ IMPORTANT STATE UPDATE
     setAllTechnicians(mappedData)
     setTotal(json.total)
-  } catch {
+
+    
+
+  } catch (error) {
+    console.error(error)
     toast.error("Failed to load technicians")
   } finally {
     setLoading(false)
   }
 }
+
+const fetchStats = async () => {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/admin/technicians/stats`,
+      { headers: authHeaders() }
+    )
+
+    if (!res.ok) throw new Error()
+
+    const data = await res.json()
+
+setTotalTechnicians(Number(data.total))
+setActiveTechnicians(Number(data.active))
+setPendingRequests(Number(data.pending))
+  } catch {
+    toast.error("Failed to load stats")
+  }
+}
+
+
+useEffect(() => {
+  const token = localStorage.getItem("accessToken")
+  if (token) {
+    fetchStats()
+  }
+}, [])
+
+useEffect(() => {
+  if (allTechnicians.length) {
+    fetchStats()
+  }
+}, [allTechnicians])
 
    /* ================= FILTER LOGIC (🔥 MAIN FIX) ================= */
 
@@ -252,7 +297,7 @@ const fetchTechnicians = async () => {
               </div>
             </div>
             <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold text-gray-900">124</h3>
+              <h3 className="text-3xl font-bold text-gray-900">{totalTechnicians}</h3>
               <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
                 <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -275,7 +320,7 @@ const fetchTechnicians = async () => {
               </div>
             </div>
             <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold text-gray-900">86</h3>
+              <h3 className="text-3xl font-bold text-gray-900">{activeTechnicians}</h3>
               <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
                 <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -298,7 +343,7 @@ const fetchTechnicians = async () => {
               </div>
             </div>
             <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold text-gray-900">5</h3>
+              <h3 className="text-3xl font-bold text-gray-900">{pendingRequests}</h3>
               <span className="text-sm text-orange-600 font-semibold mb-1">! Action Needed</span>
             </div>
           </div>

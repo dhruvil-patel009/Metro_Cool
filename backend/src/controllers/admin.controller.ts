@@ -47,6 +47,43 @@ export const getTechnicians = async (req: Request, res: Response) => {
   }
 };
 
+export const getTechnicianStats = async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from("technician_details")
+      .select("status, approval_status")
+
+    if (error) {
+      return res.status(500).json({
+        message: "Failed to fetch technician stats",
+        error: error.message,
+      })
+    }
+
+    // ✅ SAFETY: data can be null
+    const technicians = data ?? []
+
+    const total = technicians.length
+    const active = technicians.filter(
+      (t) => t.status === "active"
+    ).length
+
+    const pending = technicians.filter(
+      (t) => t.approval_status === "pending"
+    ).length
+
+    return res.status(200).json({
+      total,
+      active,
+      pending,
+    })
+  } catch (err) {
+    return res.status(500).json({
+      message: "Unexpected server error",
+    })
+  }
+}
+
 /* ================= GET PENDING TECHNICIAN REQUESTS ================= */
 
 export const getPendingRequests = async (_req: Request, res: Response) => {

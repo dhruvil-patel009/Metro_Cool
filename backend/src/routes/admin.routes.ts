@@ -10,6 +10,7 @@ import {
   updateTechnician,
   getTechnicianById,
   deleteTechnician,
+  getTechnicianStats,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -74,6 +75,9 @@ router.get(
   authorize("admin"),
   getTechnicianById
 );
+
+router.get("/admin/technicians/stats", protect, authorize("admin"), getTechnicianStats)
+
 
 // UPDATE technician
 router.patch(
