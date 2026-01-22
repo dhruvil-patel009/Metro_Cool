@@ -3,7 +3,7 @@
 import { Search, Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
-import { NotificationsDropdown } from "./notification-dropdown";
+import { NotificationsDropdown } from "../components/notification-dropdown";
 import { useAuthStore } from "@/store/auth.store";
 
 const pageTitles: Record<string, string> = {

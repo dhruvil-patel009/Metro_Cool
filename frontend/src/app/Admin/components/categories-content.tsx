@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
 import { Switch } from "@/app/components/ui/switch"
 import Image from "next/image"
-import { AddCategoryModal } from "./add-categories-model"
+import { AddCategoryModal } from "../components/add-categories-model"
 
 
 interface Category {

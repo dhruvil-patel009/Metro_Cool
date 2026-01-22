@@ -14,7 +14,7 @@ import {
 import { cn } from "@/app/lib/utils";
 import { apiFetch } from "@/app/lib/api";
 import { deleteService, getAllServicesAdmin } from "@/app/lib/services.api";
-import { EditServiceModal } from "./edit-service-modal";
+import { EditServiceModal } from "../components/edit-service-modal";
 
 interface Service {
   id: string;

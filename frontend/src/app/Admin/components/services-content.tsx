@@ -18,7 +18,7 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { ServicesTable } from "./services-table";
-import { AddServiceModal } from "./add-services-model";
+import { AddServiceModal } from "../components/add-services-model";
 
 export function ServicesContent() {
   const [searchQuery, setSearchQuery] = useState("");
