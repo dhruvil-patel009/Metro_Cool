@@ -18,8 +18,9 @@
         "name": "next"
       }
     ],
+     "baseUrl": ".",                   // ✅ REQUIRED
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]               // ✅ REQUIRED
     }
   },
   "include": [
