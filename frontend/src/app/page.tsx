@@ -1,12 +1,12 @@
 
 import Header from "./components/header";
-import { AboutSection } from "./User/components/about-section";
-import { CTASection } from "./User/components/cta-section";
-import { Footer } from "./User/components/footer";
-import { HeroSection } from "./User/components/hero-section";
-import { ProductsSection } from "./User/components/product-section";
-import { ServicesSection } from "./User/components/services-section";
-import { TestimonialsSection } from "./User/components/testimonial-section";
+import { AboutSection } from "./user/components/about-section";
+import { CTASection } from "./user/components/cta-section";
+import { Footer } from "./user/components/footer";
+import { HeroSection } from "./user/components/hero-section";
+import { ProductsSection } from "./user/components/product-section";
+import { ServicesSection } from "./user/components/services-section";
+import { TestimonialsSection } from "./user/components/testimonial-section";
 
 
 

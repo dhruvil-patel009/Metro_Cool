@@ -9,10 +9,10 @@ export function ProfileSidebar() {
   const pathname = usePathname()
 
   const menuItems = [
-    { href: "/User/profile", label: "Profile Information", icon: User, badge: null },
-    { href: "/User/profile/orders", label: "Order History", icon: FileText, badge: "24" },
-    { href: "/User/profile/addresses", label: "Saved Addresses", icon: MapPin, badge: null },
-    { href: "/User/profile/notifications", label: "Notifications", icon: Bell, badge: null },
+    { href: "/user/profile", label: "Profile Information", icon: User, badge: null },
+    { href: "/user/profile/orders", label: "Order History", icon: FileText, badge: "24" },
+    { href: "/user/profile/addresses", label: "Saved Addresses", icon: MapPin, badge: null },
+    { href: "/user/profile/notifications", label: "Notifications", icon: Bell, badge: null },
   ]
 
   return (

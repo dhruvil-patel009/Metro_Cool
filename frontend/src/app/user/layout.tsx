@@ -13,7 +13,7 @@ export default function AdminLayout({
 }) {
       const pathname = usePathname();
 const hideLayout =
-    pathname?.includes("/User/services/") &&
+    pathname?.includes("/user/services/") &&
     pathname?.endsWith("/booking/success");
 
     return (

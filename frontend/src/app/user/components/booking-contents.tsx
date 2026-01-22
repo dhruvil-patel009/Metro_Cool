@@ -50,7 +50,7 @@ useEffect(() => {
         // 🔁 Redirect to feedback after toast
         setTimeout(() => {
           router.push(
-            `/User/bookings/feedback?id=${bookingIdFromUrl || "MC-8293"}`
+            `/user/bookings/feedback?id=${bookingIdFromUrl || "MC-8293"}`
           )
         }, 1500)
 

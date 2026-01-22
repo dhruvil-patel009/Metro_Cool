@@ -89,7 +89,7 @@ export default function ProductDetailsPage() {
         <nav className="mb-6 flex items-center gap-2 text-xs text-slate-500">
           <Link href="/">Home</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link href="/User/products">Products</Link>
+          <Link href="/user/products">Products</Link>
           <ChevronRight className="h-3 w-3" />
           <span>{product.title}</span>
         </nav>
@@ -352,7 +352,7 @@ export default function ProductDetailsPage() {
               {relatedProducts.map((p) => (
                 <Link
                   key={p.id}
-                  href={`/User/products/${p.id}`}
+                  href={`/user/products/${p.id}`}
                   className="rounded-md border bg-white p-4"
                 >
                   <Image

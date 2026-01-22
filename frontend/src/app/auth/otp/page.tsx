@@ -98,7 +98,7 @@ localStorage.setItem("accessToken", data.session.accessToken);
       } else if (data.user.role === "technician") {
         router.replace("/technician");
       } else {
-        router.replace("/User");
+        router.replace("/user");
       }
 
       // // 🔐 Store tokens (DEV MODE)

@@ -296,7 +296,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   </div>
 
                   <Link
-                    href={`/User/services/${service.id}/booking`}
+                    href={`/user/services/${service.id}/booking`}
                     className="w-full bg-[#0060ff] text-white py-5 rounded-md font-bold text-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200"
                   >
                     Book Appointment <ChevronRight className="w-5 h-5" />

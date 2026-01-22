@@ -40,7 +40,7 @@ export default function CompletionContent() {
       <div className="max-w-7xl mx-auto">
         {/* Back Button */}
         {/* <Link
-          href={`/User/bookings?id=${bookingId}`}
+          href={`/user/bookings?id=${bookingId}`}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />

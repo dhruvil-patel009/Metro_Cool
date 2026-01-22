@@ -18,11 +18,11 @@ const handlelogin = () => {
     router.push('/auth/login');
 }
     const navItems = [
-        { href: "/User", label: "Home" },
-        { href: "/User/services", label: "Services" },
-        { href: "/User/products", label: "Products" },
-        { href: "/User/about", label: "About Us" },
-        { href: "/User/contact", label: "Contact" },
+        { href: "/user", label: "Home" },
+        { href: "/user/services", label: "Services" },
+        { href: "/user/products", label: "Products" },
+        { href: "/user/about", label: "About Us" },
+        { href: "/user/contact", label: "Contact" },
     ]
 
     return (
@@ -87,7 +87,7 @@ const handlelogin = () => {
               {showProfileDropdown && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   <Link
-                    href="/User/profile"
+                    href="/user/profile"
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     onClick={() => setShowProfileDropdown(false)}
                   >

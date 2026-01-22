@@ -38,12 +38,12 @@ export default function FeedbackContent() {
       duration: 2000,
     })
     setTimeout(() => {
-      router.push(`/User/bookings/completion?id=${bookingId}`)
+      router.push(`/user/bookings/completion?id=${bookingId}`)
     }, 1000)
   }
 
   const handleSkip = () => {
-    router.push(`/User/bookings/completion?id=${bookingId}`)
+    router.push(`/user/bookings/completion?id=${bookingId}`)
   }
 
   return (

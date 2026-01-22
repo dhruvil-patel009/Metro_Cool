@@ -85,7 +85,7 @@ export default function ServicesPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/User/services/${service.id}`}
+                  href={`/user/services/${service.id}`}
                   className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   View Details

@@ -138,7 +138,7 @@ export default function ProductsPage() {
               {filteredProducts.map((product: any) => (
                 <Link
                   key={product.id}
-                  href={`/User/products/${product.id}`}
+                  href={`/user/products/${product.id}`}
                   className="group relative h-[450px] bg-white rounded-md overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
                 >
                   {/* IMAGE */}
