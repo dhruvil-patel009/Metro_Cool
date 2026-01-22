@@ -17,8 +17,11 @@ const app = express();
 // 🔥 CORS FIX (MOST IMPORTANT)
 app.use(
   cors({
-    origin: "http://localhost:3000", // frontend URL
-    // origin: "https://metro-cool-p3g4.vercel.app", // frontend URL
+    origin: [
+      "https://metro-cool.vercel.app",
+      "http://localhost:3000",
+      "https://metro-cool-p3g4.vercel.app"
+    ],
     credentials: true,               // allow cookies
   })
 );
