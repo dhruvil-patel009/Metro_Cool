@@ -13,11 +13,12 @@ import productRoutes from "./routes/product.routes.js";
 
 const app = express();
 
-const PORT = process.env.PORT;
+
 // 🔥 CORS FIX (MOST IMPORTANT)
 app.use(
   cors({
-    origin: `http://localhost:3000${PORT}`, // frontend URL
+    origin: "http://localhost:3000", // frontend URL
+    // origin: "https://metro-cool-p3g4.vercel.app", // frontend URL
     credentials: true,               // allow cookies
   })
 );

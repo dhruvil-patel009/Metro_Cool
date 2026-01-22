@@ -274,14 +274,18 @@ export default function SchedulePage() {
                       {/* Multiple Events */}
                       {jobData && "jobs" in jobData && (
                         <div className="space-y-0.5 w-full">
-                          {jobData.jobs.slice(0, 3).map((job, idx) => (
-                            <div
-                              key={idx}
-                              className={cn("text-[8px] font-bold px-1 py-0.5 rounded text-white truncate", job.color)}
-                            >
-                              {job.time} - {job.title}
-                            </div>
-                          ))}
+                         {jobData && "jobs" in jobData && jobData.jobs && (
+  <div className="space-y-0.5 w-full">
+    {jobData.jobs.slice(0, 3).map((job, idx) => (
+      <div
+        key={idx}
+        className={cn("text-[8px] font-bold px-1 py-0.5 rounded text-white truncate", job.color)}
+      >
+        {job.time} - {job.title}
+      </div>
+    ))}
+  </div>
+)}
                         </div>
                       )}
 

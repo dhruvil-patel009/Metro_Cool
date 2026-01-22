@@ -5,7 +5,7 @@ import { SidebarProvider } from "./components/sidebar-content"
 import { AppLayout } from "./components/app-layout"
 import ProtectedRoute from "../components/ProtectedRoute"
 import { Sidebar } from "./components/sidebar"
-import { Header } from "../technician/components/header"
+import { Header } from "./components/header"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
