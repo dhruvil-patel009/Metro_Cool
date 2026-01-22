@@ -27,6 +27,9 @@ export default function VerifyOTP() {
     if (!phone) router.push("/auth/login");
   }, [phone, router]);
 
+    if (!phone) return null; // prevent render before phone is ready
+
+
   // Timer countdown
   useEffect(() => {
     if (timeLeft <= 0) return;
