@@ -13,6 +13,8 @@ import Image from "next/image"
 import { authHeaders } from "../../lib/authHeader"
 import { toast } from "sonner";
 import { Skeleton } from "@/app/components/ui/skeleton"
+import { useRouter } from "next/navigation"
+
 
 
 
@@ -48,7 +50,7 @@ export default function TechniciansContent() {
   const [activeTab, setActiveTab] =
     useState<"all" | "active" | "inactive">("all");
   const [currentPage, setCurrentPage] = useState(1)
-    const [allTechnicians, setAllTechnicians] = useState<TechnicianUI[]>([])
+  const [allTechnicians, setAllTechnicians] = useState<TechnicianUI[]>([])
 
   const limit = 3
 
@@ -59,8 +61,9 @@ export default function TechniciansContent() {
   const [loading, setLoading] = useState(true);
 
   const [totalTechnicians, setTotalTechnicians] = useState(0)
-const [activeTechnicians, setActiveTechnicians] = useState(0)
-const [pendingRequests, setPendingRequests] = useState(0)
+  const [activeTechnicians, setActiveTechnicians] = useState(0)
+  const [pendingRequests, setPendingRequests] = useState(0)
+  const router = useRouter();
 
 
 
@@ -77,20 +80,23 @@ const fetchTechnicians = async () => {
       { headers: authHeaders() }
     )
 
-    if (!res.ok) throw new Error("Failed to fetch technicians")
+    if (!res.ok) {
+      console.error("Fetch technicians failed:", res.status)
+      setAllTechnicians([])
+      setTotal(0)
+      return
+    }
 
     const json = await res.json()
 
-    const raw: ApiTechnician[] = json.data
-
-    
+    const raw: ApiTechnician[] = Array.isArray(json.data) ? json.data : []
 
     const mappedData: TechnicianUI[] = raw.map((t) => ({
       id: t.id,
       techId: t.id.slice(0, 8).toUpperCase(),
       name: `${t.profiles.first_name} ${t.profiles.last_name}`,
       phone: t.profiles.phone,
-      services: t.services,
+      services: t.services ?? [],
       status: t.status === "active" ? "Active" : "Inactive",
       approval:
         t.approval_status === "approved"
@@ -101,19 +107,15 @@ const fetchTechnicians = async () => {
       avatar: t.profiles.profile_photo || "/placeholder.svg",
     }))
 
-    // ✅ IMPORTANT STATE UPDATE
     setAllTechnicians(mappedData)
-    setTotal(json.total)
-
-    
-
-  } catch (error) {
-    console.error(error)
-    toast.error("Failed to load technicians")
+    setTotal(Number(json.total ?? 0))
+  } catch (err) {
+    console.error(err)
   } finally {
     setLoading(false)
   }
 }
+
 
 const fetchStats = async () => {
   try {
@@ -122,33 +124,35 @@ const fetchStats = async () => {
       { headers: authHeaders() }
     )
 
-    if (!res.ok) throw new Error()
+    if (!res.ok) {
+      console.error("Stats fetch failed:", res.status)
+      return
+    }
 
     const data = await res.json()
 
-setTotalTechnicians(Number(data.total))
-setActiveTechnicians(Number(data.active))
-setPendingRequests(Number(data.pending))
-  } catch {
-    toast.error("Failed to load stats")
+    setTotalTechnicians(Number(data.total ?? 0))
+    setActiveTechnicians(Number(data.active ?? 0))
+    setPendingRequests(Number(data.pending ?? 0))
+  } catch (err) {
+    console.error(err)
   }
 }
 
 
-useEffect(() => {
-  const token = localStorage.getItem("accessToken")
-  if (token) {
-    fetchStats()
-  }
-}, [])
 
-useEffect(() => {
-  if (allTechnicians.length) {
-    fetchStats()
-  }
-}, [allTechnicians])
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken")
+    if (token) {
+      fetchStats()
+    }
+  }, [])
 
-   /* ================= FILTER LOGIC (🔥 MAIN FIX) ================= */
+  useEffect(() => {
+      fetchStats()
+  }, [])
+
+  /* ================= FILTER LOGIC (🔥 MAIN FIX) ================= */
 
   const filteredTechnicians = useMemo(() => {
     if (activeTab === "active") {
@@ -190,13 +194,34 @@ useEffect(() => {
   };
 
 
-  const fetchRequests = async () => {
+const fetchRequests = async () => {
+  try {
     const res = await fetch(
       `${BASE_URL}/admin/technicians/requests`,
       { headers: authHeaders() }
-    );
-    setRequests(await res.json());
-  };
+    )
+
+    if (!res.ok) {
+      setRequests([])
+      return
+    }
+
+    const json = await res.json()
+
+    // ✅ ALWAYS FORCE ARRAY
+    if (Array.isArray(json)) {
+      setRequests(json)
+    } else if (Array.isArray(json.data)) {
+      setRequests(json.data)
+    } else {
+      setRequests([])
+    }
+  } catch (err) {
+    console.error(err)
+    setRequests([])
+  }
+}
+
 
   const handleApprove = async (id: string) => {
     await fetch(`${BASE_URL}/admin/technicians/${id}/approve`, {
@@ -353,29 +378,28 @@ useEffect(() => {
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex gap-4 bg-gray-200 p-1 border rounded-3xl w-fit">
-          {["all", "active", "inactive"].map(tab => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab as any)
-                setCurrentPage(1)
-              }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                activeTab === tab
-                  ? "bg-white text-gray-900"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
+                {["all", "active", "inactive"].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setActiveTab(tab as any)
+                      setCurrentPage(1)
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === tab
+                        ? "bg-white text-gray-900"
+                        : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" className="gap-2 border-gray-200 hover:bg-gray-50 bg-transparent text-black">
+                {/* <Button variant="outline" className="gap-2 border-gray-200 hover:bg-gray-50 bg-transparent text-black">
                   <Filter className="w-4 h-4" />
                   Filter
-                </Button>
+                </Button> */}
                 {/* <Button className="gap-2 bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm">
                   <Plus className="w-4 h-4" />
                   Add Technician
@@ -461,8 +485,8 @@ useEffect(() => {
                         <div className="flex items-center gap-2">
                           <div
                             className={`w-2 h-2 rounded-full ${tech.status === "Active"
-                                ? "bg-green-500"
-                                : "bg-gray-400"
+                              ? "bg-green-500"
+                              : "bg-gray-400"
                               }`}
                           />
                           <span className="text-sm font-medium text-gray-700">
@@ -474,8 +498,8 @@ useEffect(() => {
                       <td className="py-4 px-6">
                         <div
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${tech.approval === "Approved"
-                              ? "bg-blue-50 text-blue-600"
-                              : "bg-orange-50 text-orange-600"
+                            ? "bg-blue-50 text-blue-600"
+                            : "bg-orange-50 text-orange-600"
                             }`}
                         >
                           {tech.approval}
@@ -489,7 +513,7 @@ useEffect(() => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/Technician/${tech.id}`)}>
                               <Eye className="w-4 h-4 mr-2" />
                               View Profile
                             </DropdownMenuItem>
@@ -563,7 +587,7 @@ useEffect(() => {
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {requests.map((r) => (
+          {Array.isArray(requests) && requests.map((r) => (
             <div key={r.id} className="bg-white rounded-xl p-6 shadow-sm">
               <div className="flex gap-4 mb-4">
                 <Image
@@ -588,7 +612,7 @@ useEffect(() => {
                 <Button onClick={() => handleApprove(r.id)}>
                   Approve
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button className="cursor-pointer" variant="outline" size="icon" onClick={() => router.push(`/admin/Technician/${r.id}`)} >
                   <Eye className="w-4 h-4" />
                 </Button>
               </div>

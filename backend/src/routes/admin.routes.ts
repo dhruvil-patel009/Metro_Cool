@@ -28,6 +28,21 @@ router.get(
 
 /* ================= TECHNICIANS ================= */
 
+router.get(
+  "/technicians/stats",
+   protect, 
+   authorize("admin"), 
+   getTechnicianStats
+  );
+
+  // ✅ GET PENDING TECHNICIAN REQUESTS
+router.get(
+  "/technicians/requests",
+  protect,
+  authorize("admin"),
+  getPendingRequests
+);
+
 // ✅ GET ALL TECHNICIANS (PAGINATED)
 router.get(
   "/technicians",
@@ -36,13 +51,14 @@ router.get(
   getTechnicians
 );
 
-// ✅ GET PENDING TECHNICIAN REQUESTS
+//✅ VIEW single technician
 router.get(
-  "/technicians/requests",
+  "/technicians/:id",
   protect,
   authorize("admin"),
-  getPendingRequests
+  getTechnicianById
 );
+
 
 // ✅ APPROVE TECHNICIAN
 router.patch(
@@ -67,16 +83,6 @@ router.patch(
   authorize("admin"),
   deactivateTechnician
 );
-
-// VIEW single technician
-router.get(
-  "/technicians/:id",
-  protect,
-  authorize("admin"),
-  getTechnicianById
-);
-
-router.get("/admin/technicians/stats", protect, authorize("admin"), getTechnicianStats)
 
 
 // UPDATE technician

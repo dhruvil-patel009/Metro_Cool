@@ -19,7 +19,7 @@ export const getTechnicians = async (req: Request, res: Response) => {
         status,
         approval_status,
         experience_years,
-        profiles (
+        profiles!technician_details_id_fkey  (
           first_name,
           last_name,
           phone,
@@ -32,14 +32,15 @@ export const getTechnicians = async (req: Request, res: Response) => {
       .range(from, to);
 
     if (error) {
+      console.log("supabase Error:", error)
       return res.status(400).json({ error: error.message });
     }
 
     res.json({
       data,
-      total: count,
-      page,
-      limit,
+      total: count ?? 0,
+      // page,
+      // limit,
     });
   } catch (err) {
     console.error("GET TECHNICIANS ERROR:", err);
@@ -47,42 +48,27 @@ export const getTechnicians = async (req: Request, res: Response) => {
   }
 };
 
-export const getTechnicianStats = async (req: Request, res: Response) => {
+export const getTechnicianStats = async (_req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from("technician_details")
-      .select("status, approval_status")
+      .select("status, approval_status");
 
     if (error) {
-      return res.status(500).json({
-        message: "Failed to fetch technician stats",
-        error: error.message,
-      })
+      return res.status(500).json({ error: error.message });
     }
 
-    // ✅ SAFETY: data can be null
-    const technicians = data ?? []
+    const technicians = data ?? [];
 
-    const total = technicians.length
-    const active = technicians.filter(
-      (t) => t.status === "active"
-    ).length
-
-    const pending = technicians.filter(
-      (t) => t.approval_status === "pending"
-    ).length
-
-    return res.status(200).json({
-      total,
-      active,
-      pending,
-    })
-  } catch (err) {
-    return res.status(500).json({
-      message: "Unexpected server error",
-    })
+    res.json({
+      total: technicians.length,
+      active: technicians.filter(t => t.status === "active").length,
+      pending: technicians.filter(t => t.approval_status === "pending").length,
+    });
+  } catch {
+    res.status(500).json({ error: "Server error" });
   }
-}
+};
 
 /* ================= GET PENDING TECHNICIAN REQUESTS ================= */
 
@@ -95,7 +81,7 @@ export const getPendingRequests = async (_req: Request, res: Response) => {
         id,
         services,
         experience_years,
-        profiles (
+        profiles!technician_details_id_fkey(
           first_name,
           last_name,
           phone,
@@ -157,32 +143,45 @@ export const deactivateTechnician = async (req: Request, res: Response) => {
 };
 
 
-// VIEW
+
+// GET /admin/technicians/:id
+// controllers/admin.controller.ts
 export const getTechnicianById = async (req: Request, res: Response) => {
+  const { id } = req.params
+console.log("Request technician id:",req.params.id)
   const { data, error } = await supabase
     .from("technician_details")
     .select(`
       id,
-      services,
       status,
       approval_status,
       experience_years,
       promo_code,
-      profiles (
+      services,
+      aadhaar_pan_url,
+            created_at,
+      profiles!technician_details_id_fkey  (
         first_name,
+        middle_name,
         last_name,
         phone,
         email,
-        profile_photo
+        profile_photo,
+              created_at
       )
     `)
-    .eq("id", req.params.id)
-    .single();
+    .eq("id", id)
+    .single()
 
-  if (error) return res.status(404).json({ error: "Technician not found" });
+   if (error || !data) {
+    console.error(error)
+    return res.status(404).json({ message: "Technician not found" })
+  }
 
-  res.json(data);
-};
+  res.json(data)
+}
+
+
 
 // UPDATE
 export const updateTechnician = async (req: Request, res: Response) => {
