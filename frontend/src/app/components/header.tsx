@@ -61,7 +61,7 @@ const handlelogin = () => {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200" onClick={handlelogin}>
+                        <button className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200 cursor-pointer" onClick={handlelogin}>
                             Login
                         </button>
 

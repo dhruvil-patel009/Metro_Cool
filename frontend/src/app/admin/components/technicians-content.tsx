@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Users, UserCheck, Clock, Filter, Eye, MoreVertical } from "lucide-react"
+import { Users, UserCheck, Clock, Filter, Eye, MoreVertical, UserX  } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import {
   DropdownMenu,
@@ -62,6 +62,7 @@ export default function TechniciansContent() {
 
   const [totalTechnicians, setTotalTechnicians] = useState(0)
   const [activeTechnicians, setActiveTechnicians] = useState(0)
+  const [inactiveTechnicians, setInActiveTechnicians] = useState(0)
   const [pendingRequests, setPendingRequests] = useState(0)
   const router = useRouter();
 
@@ -133,6 +134,7 @@ const fetchStats = async () => {
 
     setTotalTechnicians(Number(data.total ?? 0))
     setActiveTechnicians(Number(data.active ?? 0))
+    setInActiveTechnicians(Number(data.inactive ?? 0))
     setPendingRequests(Number(data.pending ?? 0))
   } catch (err) {
     console.error(err)
@@ -141,15 +143,16 @@ const fetchStats = async () => {
 
 
 
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken")
-    if (token) {
-      fetchStats()
-    }
-  }, [])
+  // useEffect(() => {
+  //   const token = localStorage.getItem("accessToken")
+  //   if (token) {
+  //     fetchStats()
+  //   }
+  // }, [])
 
   useEffect(() => {
       fetchStats()
+      fetchRequests()
   }, [])
 
   /* ================= FILTER LOGIC (🔥 MAIN FIX) ================= */
@@ -171,6 +174,7 @@ const fetchStats = async () => {
       await fetch(`${BASE_URL}/admin/technicians/${id}`, {
         method: "PATCH",
         headers: authHeaders(),
+           cache: "no-store",
         body: JSON.stringify({
           status: makeActive ? "active" : "inactive",
         }),
@@ -185,6 +189,7 @@ const fetchStats = async () => {
         )
       );
 
+      fetchStats()
       toast.success(
         makeActive ? "Technician activated" : "Technician deactivated"
       );
@@ -227,9 +232,11 @@ const fetchRequests = async () => {
     await fetch(`${BASE_URL}/admin/technicians/${id}/approve`, {
       method: "PATCH",
       headers: authHeaders(),
+      cache: "no-store"
     });
     fetchTechnicians();
     fetchRequests();
+    fetchStats()
   };
 
   const handleReject = async (id: string) => {
@@ -280,10 +287,12 @@ const fetchRequests = async () => {
       await fetch(`${BASE_URL}/admin/technicians/${id}`, {
         method: "DELETE",
         headers: authHeaders(),
+        cache: "no-store",
       });
 
       toast.success("Technician deleted");
       fetchTechnicians();
+      fetchStats()
     } catch {
       toast.error("Delete failed");
     }
@@ -292,7 +301,7 @@ const fetchRequests = async () => {
 
   useEffect(() => {
     fetchTechnicians()
-  }, [currentPage, activeTab])
+  }, [currentPage])
 
   useEffect(() => {
     fetchRequests()
@@ -313,7 +322,7 @@ const fetchRequests = async () => {
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
       <main className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
               <span className="text-sm text-gray-600 font-medium">Total Technicians</span>
@@ -323,7 +332,7 @@ const fetchRequests = async () => {
             </div>
             <div className="flex items-end gap-2">
               <h3 className="text-3xl font-bold text-gray-900">{totalTechnicians}</h3>
-              <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
+              {/* <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
                 <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -333,7 +342,7 @@ const fetchRequests = async () => {
                   />
                 </svg>
                 +12%
-              </span>
+              </span> */}
             </div>
           </div>
 
@@ -346,7 +355,7 @@ const fetchRequests = async () => {
             </div>
             <div className="flex items-end gap-2">
               <h3 className="text-3xl font-bold text-gray-900">{activeTechnicians}</h3>
-              <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
+              {/* <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
                 <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -356,7 +365,29 @@ const fetchRequests = async () => {
                   />
                 </svg>
                 +5%
-              </span>
+              </span> */}
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+            <div className="flex items-start justify-between mb-4 ">
+              <span className="text-sm text-gray-600 font-medium">InActive Now</span>
+              <div className="p-2.5 bg-red-100 rounded-lg">
+                <UserX  className="w-5 h-5 text-red-500" />
+              </div>
+            </div>
+            <div className="flex items-end gap-2">
+              <h3 className="text-3xl font-bold text-gray-900">{inactiveTechnicians}</h3>
+              {/* <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
+                <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
+                </svg>
+                +5%
+              </span> */}
             </div>
           </div>
 
