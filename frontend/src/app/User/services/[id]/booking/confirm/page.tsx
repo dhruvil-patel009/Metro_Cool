@@ -4,8 +4,8 @@ import { use, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ChevronRight, User, Phone, MapPin, ArrowRight, MessageCircle } from "lucide-react"
-import { servicesData } from "@/app/user/lib/services-data"
 import { toast } from "react-toastify"
+import { servicesData } from "../../../../lib/services-data"
 
 const ISSUE_OPTIONS = [
   { id: "not-cooling", label: "Not Cooling", icon: "❄️" },
