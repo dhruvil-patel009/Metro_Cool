@@ -63,6 +63,7 @@ export const getTechnicianStats = async (_req: Request, res: Response) => {
     res.json({
       total: technicians.length,
       active: technicians.filter(t => t.status === "active").length,
+      inactive: technicians.filter(t => t.status === "inactive").length,
       pending: technicians.filter(t => t.approval_status === "pending").length,
     });
   } catch {
@@ -148,7 +149,7 @@ export const deactivateTechnician = async (req: Request, res: Response) => {
 // controllers/admin.controller.ts
 export const getTechnicianById = async (req: Request, res: Response) => {
   const { id } = req.params
-console.log("Request technician id:",req.params.id)
+  console.log("Request technician id:", req.params.id)
   const { data, error } = await supabase
     .from("technician_details")
     .select(`
@@ -173,7 +174,7 @@ console.log("Request technician id:",req.params.id)
     .eq("id", id)
     .single()
 
-   if (error || !data) {
+  if (error || !data) {
     console.error(error)
     return res.status(404).json({ message: "Technician not found" })
   }
@@ -202,3 +203,152 @@ export const deleteTechnician = async (req: Request, res: Response) => {
 
   res.json({ message: "Technician deleted" });
 };
+
+
+////////////////////////////////////////////////// Users //////////////////////////////////////////
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    const page = Number(req.query.page || 1)
+    const limit = Number(req.query.limit || 10)
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    const { data, count, error } = await supabase
+      .from("profiles")
+      .select(
+        `
+        id,
+        first_name,
+        last_name,
+        phone,
+        email,
+        profile_photo,
+        status,
+        created_at
+      `,
+        { count: "exact" }
+      )
+      .eq("role", "user")
+      .range(from, to)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.log("SUPABASE ERROR:", error)
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({
+      data,
+      total: count ?? 0,
+    })
+  } catch (err) {
+    console.error("GET USERS ERROR:", err)
+    res.status(500).json({ error: "Server error" })
+  }
+}
+
+
+export const getUserStats = async (_req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("role", "user")
+
+    if (error) {
+      return res.status(500).json({ error: error.message })
+    }
+
+    const users = data ?? []
+
+    res.json({
+      total: users.length,
+      active: users.filter(u => u.status === "active").length,
+      inactive: users.filter(u => u.status === "inactive").length,
+    })
+  } catch {
+    res.status(500).json({ error: "Server error" })
+  }
+}
+
+
+export const getUserById = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(`
+      id,
+      first_name,
+      middle_name,
+      last_name,
+      phone,
+      email,
+      profile_photo,
+      status,
+      created_at
+    `)
+    .eq("id", id)
+    .eq("role", "user")
+    .single()
+
+  if (error || !data) {
+    return res.status(404).json({ message: "User not found" })
+  }
+
+  res.json(data)
+}
+
+
+export const updateUser = async (req: Request, res: Response) => {
+  const { first_name, last_name, phone, status } = req.body
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      first_name,
+      last_name,
+      phone,
+      status,
+    })
+    .eq("id", req.params.id)
+    .eq("role", "user")
+
+  if (error) {
+    return res.status(400).json({ error: error.message })
+  }
+
+  res.json({ message: "User updated" })
+}
+
+
+export const deleteUser = async (req: Request, res: Response) => {
+  const { error } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", req.params.id)
+    .eq("role", "user")
+
+  if (error) {
+    return res.status(400).json({ error: error.message })
+  }
+
+  res.json({ message: "User deleted" })
+}
+
+
+export const toggleUserStatus = async (req: Request, res: Response) => {
+  const { status } = req.body // active | inactive
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ status })
+    .eq("id", req.params.id)
+    .eq("role", "user")
+
+  if (error) {
+    return res.status(400).json({ error: error.message })
+  }
+
+  res.json({ message: "Status updated" })
+}
