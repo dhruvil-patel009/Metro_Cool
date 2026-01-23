@@ -7,6 +7,10 @@ export interface CreateServicePayload {
   price: number;
   pricingType: "fixed" | "hourly";
   description?: string;
+  shortdescription?: string;
+  rating?: number;
+  badge?: string;
+  badgeColor?: string;
   imageUrl?: string;
   isActive?: boolean;
 }
@@ -65,6 +69,11 @@ export const updateService = async (
     price: payload.price,
     pricing_type: payload.pricingType,
     description: payload.description,
+     short_description: payload.shortdescription,
+
+    rating: payload.rating,
+    badge: payload.badge,
+    badge_color: payload.badgeColor,
     image_url: payload.imageUrl,   // ✅ FIX
     is_active: payload.isActive,   // ✅ FIX
   };

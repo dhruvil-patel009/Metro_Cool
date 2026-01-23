@@ -25,9 +25,14 @@ export function AddServiceModal({ isOpen, onClose }: AddServiceModalProps) {
   const [price, setPrice] = useState("")
   const [priceType, setPriceType] = useState("fixed")
   const [description, setDescription] = useState("")
+  const [shortdescription, setShortDescription] = useState("")
   const [isActive, setIsActive] = useState(true)
   const [serviceImage, setServiceImage] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [rating, setRating] = useState("4.5")
+const [badge, setBadge] = useState("")
+const [badgeColor, setBadgeColor] = useState("#2563eb") // blue-600 default
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (!isOpen) return null
@@ -69,6 +74,10 @@ const handleSubmit = async () => {
     return;
   }
 
+  setRating("4.5")
+setBadge("")
+setBadgeColor("#2563eb")
+
   try {
     await createService({
       title: serviceName,
@@ -77,6 +86,10 @@ const handleSubmit = async () => {
       price: Number(price),
       pricingType: priceType as "fixed" | "hourly",
       description,
+     shortdescription,
+      rating: Number(rating),
+      badge,
+      badgeColor,
       imageUrl: serviceImage || "",
       isActive,
     });
@@ -99,6 +112,7 @@ toast.error(
     setPrice("")
     setPriceType("fixed")
     setDescription("")
+    setShortDescription("")
     setIsActive(true)
     setServiceImage(null)
     onClose()
@@ -233,13 +247,94 @@ toast.error(
               {/* Description */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">Description</label>
-                <Textarea
-                  placeholder="Briefly describe what this service includes..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[100px] resize-none border-gray-300 focus-visible:ring-cyan-500 bg-white text-black"
-                />
+               <Textarea
+  placeholder="Full service description (supports multiline, copy, paste)"
+  value={description}
+  onChange={(e) => setDescription(e.target.value)}
+  rows={5}
+  className="resize-y border-gray-300 focus-visible:ring-cyan-500 bg-white text-black"
+/>
               </div>
+              {/* Short Description */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">Short Description</label>
+               <Textarea
+  placeholder="Short summary shown on service cards"
+  value={shortdescription}
+  onChange={(e) => setShortDescription(e.target.value)}
+  rows={3}
+  maxLength={160}
+  className="resize-none border-gray-300 focus-visible:ring-cyan-500 bg-white text-black"
+/>
+<p className="mt-1 text-xs text-gray-400">
+  {shortdescription.length}/160 characters
+</p>
+              </div>
+
+              {/* Rating */}
+<div>
+  <label className="mb-2 block text-sm font-medium text-gray-700">
+    Rating (0 – 5)
+  </label>
+  <Input
+    type="number"
+    step="0.1"
+    min="0"
+    max="5"
+    value={rating}
+    onChange={(e) => setRating(e.target.value)}
+    className="h-11 border-gray-300 focus-visible:ring-cyan-500 bg-white text-black"
+  />
+</div>
+
+
+{/* Badge */}
+<div>
+  <label className="mb-2 block text-sm font-medium text-gray-700">
+    Badge
+  </label>
+  <Select value={badge} onValueChange={setBadge}>
+    <SelectTrigger className="h-11 border-gray-300 bg-white text-black">
+      <SelectValue placeholder="Select Badge (optional)" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="POPULAR">POPULAR</SelectItem>
+      <SelectItem value="BESTSELLER">BESTSELLER</SelectItem>
+      <SelectItem value="NEW">NEW</SelectItem>
+      <SelectItem value="LIMITED">LIMITED</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+
+{/* Badge Color */}
+<div>
+  <label className="mb-2 block text-sm font-medium text-gray-700">
+    Badge Color
+  </label>
+
+  <div className="flex items-center gap-3">
+    <input
+      type="color"
+      value={badgeColor}
+      onChange={(e) => setBadgeColor(e.target.value)}
+      className="h-10 w-12 cursor-pointer rounded border border-gray-300"
+    />
+
+    <span className="text-sm text-gray-600">
+      {badgeColor}
+    </span>
+
+    {badge && (
+      <span
+        className="rounded px-2 py-1 text-xs font-bold text-white"
+        style={{ backgroundColor: badgeColor }}
+      >
+        {badge}
+      </span>
+    )}
+  </div>
+</div>
+
 
               {/* Service Status */}
               <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">

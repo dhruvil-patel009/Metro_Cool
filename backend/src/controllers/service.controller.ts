@@ -11,9 +11,14 @@ export const createService = async (req: Request, res: Response) => {
       serviceCode,
       category,
       price,
+       originalPrice,
       pricingType,
+      shortdescription,
       description,
       imageUrl,
+       rating,
+      badge,
+      badgeColor,
     } = req.body || {};
 
     if (!title || !serviceCode || !category || !price) {
@@ -23,13 +28,18 @@ export const createService = async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from("services")
       .insert({
-        title,
+         title,
         service_code: serviceCode,
         category,
         price,
+        original_price: originalPrice,
         pricing_type: pricingType || "fixed",
+        short_description: shortdescription,
         description,
         image_url: imageUrl,
+        rating: rating ?? 4.5,
+        badge,
+        badge_color: badgeColor || "blue",
       })
       .select()
       .single();

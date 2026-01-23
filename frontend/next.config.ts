@@ -17,6 +17,11 @@ const nextConfig = {
         hostname: "nlimsceezdxwkykpzlbv.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      {
+        protocol: "https",
+        hostname: "img.freepik.com",
+        pathname: "/**",
+      },
     ],
   },
 };
