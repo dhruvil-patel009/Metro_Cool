@@ -164,3 +164,124 @@ export const deleteService = async (req: Request, res: Response) => {
 
   res.json({ message: "Service deleted successfully" });
 };
+
+
+/**
+ * Get Service Details Public
+ */
+export const getServiceDetailsPublic = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .eq("id", id)
+    .eq("is_active", true)
+    .single();
+
+  if (error) {
+    return res.status(404).json({ error: "Service not found" });
+  }
+
+  res.json(data);
+};
+
+/**
+ * Get Service Details
+ */
+export const getServiceDetails = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) return res.status(404).json({ error: "Service not found" });
+
+  res.json(data);
+};
+
+
+/**
+ * Get Service Includes
+ */
+
+export const getServiceIncludes = async (req: Request, res: Response) => {
+  const { type } = req.params;
+
+  const { data } = await supabase
+    .from("service_includes")
+    .select("*")
+    .eq("service_type", type);
+
+  res.json(data);
+};
+
+
+/**
+ * Get Service Faqs
+ */
+
+export const getServiceFaqs = async (req: Request, res: Response) => {
+  const { type } = req.params;
+
+  const { data } = await supabase
+    .from("service_faqs")
+    .select("*")
+    .eq("service_type", type);
+
+  res.json(data);
+};
+
+
+/**
+ * Get Service Addons
+ */ 
+
+export const getServiceAddons = async (req: Request, res: Response) => {
+  const { type } = req.params;
+
+  const { data } = await supabase
+    .from("service_addons")
+    .select("*")
+    .eq("service_type", type);
+
+  res.json(data);
+};
+
+/**
+ * Like Services
+ */ 
+export const likeService = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  await supabase
+    .from("service_likes")
+    .insert({ service_id: id, user_id: userId });
+
+  res.json({ success: true });
+};
+
+
+/**
+ * PUBLIC — Get Single Active Service (For Frontend)
+ */
+export const getPublicServiceById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .eq("id", id)
+    .eq("is_active", true)
+    .single();
+
+  if (error) {
+    return res.status(404).json({ error: "Service not found" });
+  }
+
+  res.json(data);
+};

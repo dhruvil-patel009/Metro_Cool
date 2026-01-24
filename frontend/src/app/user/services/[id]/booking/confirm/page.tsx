@@ -1,8 +1,8 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { ChevronRight, User, Phone, MapPin, ArrowRight, MessageCircle } from "lucide-react"
 import { toast } from "react-toastify"
 import { servicesData } from "../../../../lib/services-data"
@@ -14,10 +14,11 @@ const ISSUE_OPTIONS = [
   { id: "other", label: "Other", icon: "⚙️" },
 ]
 
-export default function BookingConfirmPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BookingConfirmPage (){
   const router = useRouter()
-  const { id } = use(params)
-  const service = servicesData.find((s) => s.id === id)
+  const params = useParams<{ id: string }>()
+  const id = params.id
+  // const service = servicesData.find((s) => s.id === id)
 
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("09:00 - 11:00")
@@ -30,6 +31,15 @@ export default function BookingConfirmPage({ params }: { params: Promise<{ id: s
   const [city, setCity] = useState("")
   const [zipCode, setZipCode] = useState("")
   const [saveAddress, setSaveAddress] = useState(false)
+  const [service, setService] = useState<any>(null)
+
+
+  useEffect(() => {
+  const stored = localStorage.getItem("bookingService")
+  if (stored) {
+    setService(JSON.parse(stored))
+  }
+}, [])
 
   if (!service) {
     return (
@@ -116,7 +126,7 @@ export default function BookingConfirmPage({ params }: { params: Promise<{ id: s
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Time Slot</label>
                   <div className="grid grid-cols-2 gap-2">
                     {["09:00 - 11:00", "11:00 - 13:00", "14:00 - 16:00", "16:00 - 18:00"].map((slot) => (
@@ -141,7 +151,7 @@ export default function BookingConfirmPage({ params }: { params: Promise<{ id: s
                       </button>
                     ))}
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* What's the issue */}

@@ -7,6 +7,12 @@ import {
   getActiveServices,
   getAllServicesAdmin,
   getServiceById,
+  getServiceIncludes,
+  getServiceFaqs,
+  getServiceAddons,
+  likeService,
+  getServiceDetailsPublic,
+  getPublicServiceById,
 } from "../controllers/service.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -19,6 +25,19 @@ const router = Router();
  * PUBLIC
  */
 router.get("/", getActiveServices);
+router.get("/public/:id", getPublicServiceById); // ✅ ADD THIS
+
+
+// service details page
+router.get("/:id/details", getServiceDetailsPublic);
+
+// dynamic sections
+router.get("/:type/includes", getServiceIncludes);
+router.get("/:type/faqs", getServiceFaqs);
+router.get("/:type/addons", getServiceAddons);
+
+// like ❤️
+router.post("/:id/like", protect, likeService);
 
 /**
  * ADMIN

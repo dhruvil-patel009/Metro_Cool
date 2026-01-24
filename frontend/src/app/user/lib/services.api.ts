@@ -1,3 +1,5 @@
+import { apiFetch } from "@/app/lib/api"
+
 export type ServiceDTO = {
   badge: undefined
   badge_color: string
@@ -23,3 +25,22 @@ export async function getServices() {
 
   return res.json()
 }
+
+
+export const getServiceDetails = (id: string) =>
+  apiFetch(`/services/${id}/details`);
+
+export const getServiceIncludes = (type: string) =>
+  apiFetch(`/services/${type}/includes`);
+
+export const getServiceFaqs = (type: string) =>
+  apiFetch(`/services/${type}/faqs`);
+
+export const getServiceAddons = (type: string) =>
+  apiFetch(`/services/${type}/addons`);
+
+export const likeService = (id: string) =>
+  apiFetch(`/services/${id}/like`, { method: "POST" });
+
+export const getServiceById = (id: string) =>
+  apiFetch(`/services/public/${id}`);

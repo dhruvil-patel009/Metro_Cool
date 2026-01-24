@@ -10,6 +10,8 @@ import userRoutes from "./routes/user.routes.js";
 import technicianRoutes from "./routes/technician.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import productRoutes from "./routes/product.routes.js";
+import bookingRoutes from "./routes/bookings.routes.js"
+
 
 const app = express();
 
@@ -40,6 +42,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/technician", technicianRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/bookings", bookingRoutes)
+
 
 
 // 🔥 Swagger

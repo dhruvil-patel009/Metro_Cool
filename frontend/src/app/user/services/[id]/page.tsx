@@ -1,6 +1,6 @@
 "use client"
 
-import { use } from "react"
+import { use, useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -23,7 +23,14 @@ import {
   CheckCircle2,
   ThumbsUp,
 } from "lucide-react"
-import { servicesData } from "../../lib/services-data"
+import {
+  getServiceById,
+  getServiceIncludes,
+  getServiceAddons,
+  getServiceFaqs,
+  likeService,
+} from "../../lib/services.api"
+import { Card } from "@/app/components/ui/card"
 
 const iconMap = {
   SearchCheck,
@@ -34,15 +41,68 @@ const iconMap = {
 
 export default function ServiceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const service = servicesData.find((s) => s.id === id)
+  const [service, setService] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
+
+  /* =========================
+     FETCH ALL DATA (NO UI CHANGE)
+  ========================= */
+  useEffect(() => {
+    async function load() {
+      try {
+        const main = await getServiceById(id)
+
+        const [includes, addons, faqs] = await Promise.all([
+          getServiceIncludes(main.category),
+          getServiceAddons(main.category),
+          getServiceFaqs(main.category),
+        ])
+
+        setService({
+          ...main,
+
+          /* 🔑 map backend → UI fields */
+          longDescription: main.long_description,
+          originalPrice:
+            main.original_price ??
+            main.originalPrice ??
+            main.price + 20,
+          included: Array.isArray(includes) ? includes : [],
+          addons: Array.isArray(addons) ? addons : [],
+          faqs: Array.isArray(faqs) ? faqs : [],
+        })
+      } catch (e) {
+        setService(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    load()
+  }, [id])
+
+  /* =========================
+     LOADING STATE
+  ========================= */
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    )
+  }
+
+  /* =========================
+     NOT FOUND
+  ========================= */
   if (!service) {
     return (
       <div className="min-h-screen bg-white">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">Service Not Found</h1>
-            <Link href="/services" className="text-blue-600 hover:underline">
+            <Link href="/user/services" className="text-blue-600 hover:underline">
               Return to Services
             </Link>
           </div>
@@ -51,23 +111,27 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
     )
   }
 
+  /* =========================
+   PAGE (UI 100% SAME)
+========================= */
+
   return (
     <div className="min-h-screen bg-white font-sans text-[#1a1a1a] animate-fade-in">
 
       <main className="max-w-fit mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Breadcrumbs */}
         <nav className="flex items-center space-x-2 text-xs text-gray-400 mb-8">
-          <Link href="/" className="hover:text-[#0060ff] flex items-center gap-1">
+          <Link href="/user" className="hover:text-[#0060ff] flex items-center gap-1">
             <Calendar className="w-3 h-3" /> Home
           </Link>
           <ChevronRight className="w-3 h-3" />
-          <Link href="/services" className="hover:text-[#0060ff]">
+          <Link href="/user/services" className="hover:text-[#0060ff]">
             Services
           </Link>
-          <ChevronRight className="w-3 h-3" />
+          {/* <ChevronRight className="w-3 h-3" />
           <Link href="/services" className="hover:text-[#0060ff]">
             {service.category}
-          </Link>
+          </Link> */}
           <ChevronRight className="w-3 h-3" />
           <span className="text-gray-900 font-medium text-pretty">{service.title}</span>
         </nav>
@@ -79,7 +143,13 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-4">
                 {service.badge && (
-                  <span className="bg-blue-50 text-[#0060ff] text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-blue-100">
+                  <span
+                    className="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border"
+                    style={{
+                      backgroundColor: service.badge_color,
+                      color: "#fff",
+                    }}
+                  >
                     {service.badge}
                   </span>
                 )}
@@ -127,15 +197,15 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
             {/* Hero Image */}
             <div className="relative rounded-md overflow-hidden mb-12 shadow-2xl group">
               <Image
-                src={service.image || "/placeholder.svg"}
+                src={service.image_url || "/placeholder.svg"}
                 alt={service.title}
-                width={800}
+                width={500}
                 height={450}
                 className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-lg">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs font-bold">Available Today</span>
+                <span className="text-xs font-bold">Available</span>
               </div>
               <div className="absolute top-6 right-6 flex gap-2">
                 <button className="p-2.5 bg-white/90 backdrop-blur rounded-full shadow hover:bg-white transition-colors">
@@ -154,21 +224,23 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                 What&apos;s Included
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {service.included.map((item, i) => {
-                  const IconComponent = iconMap[item.icon as keyof typeof iconMap] || SearchCheck
+                {service.included.map((item: any, i: number) => {
+                  const Icon =
+                    iconMap[item.icon as keyof typeof iconMap] || SearchCheck
                   return (
-                    <div
-                      key={i}
-                      className="flex gap-4 p-5 rounded-md bg-white border border-gray-100 hover:shadow-md transition-shadow"
-                    >
-                      <div className={`w-12 h-12 shrink-0 rounded-md flex items-center justify-center ${item.color}`}>
-                        <IconComponent className="w-6 h-6" />
+                    <Card key={i}>
+                      <div
+                        className={`w-12 h-12 rounded-md flex items-center justify-center ${item.color}`}
+                      >
+                        <Icon className="w-6 h-6" />
                       </div>
                       <div>
                         <h3 className="font-bold mb-1">{item.title}</h3>
-                        <p className="text-xs text-gray-400 leading-relaxed">{item.description}</p>
+                        <p className="text-xs text-gray-400">
+                          {item.description}
+                        </p>
                       </div>
-                    </div>
+                    </Card>
                   )
                 })}
               </div>
@@ -182,7 +254,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   Enhance Your Service
                 </h2>
                 <div className="space-y-4">
-                  {service.addons.map((addon, i) => (
+                  {service.addons.map((addon: any, i: number) => (
                     <div
                       key={i}
                       className="flex items-center justify-between p-4 rounded-md bg-white border border-gray-100 hover:border-blue-100 transition-colors"
@@ -229,7 +301,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   Common Questions
                 </h2>
                 <div className="space-y-3">
-                  {service.faqs.map((faq, i) => (
+                  {service.faqs.map((faq: any, i: number) => (
                     <div
                       key={i}
                       className="group p-5 rounded-md bg-white border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"

@@ -1,8 +1,8 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Calendar, ChevronRight, ChevronLeft, Info, MessageCircle, Check } from "lucide-react"
 import { servicesData } from "../../../lib/services-data"
 
@@ -48,20 +48,41 @@ const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 const MORNING_SLOTS = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM"]
 const AFTERNOON_SLOTS = ["12:00 PM", "02:00 PM", "04:00 PM", "05:30 PM"]
 
-export default function BookingPage({
-    params,
-}: {
-    params: { id: string }
-}) {
+export default function BookingPage() {
     const router = useRouter()
-  const { id } = params
-    const service = servicesData.find((s) => s.id === id)
+      const params = useParams<{ id: string }>()
 
+  const id = params?.id
+    
+  // const service = servicesData.find((s) => s.id === id)
+
+  const service = servicesData[0] // temporary fallback
     const [currentDate] = useState(new Date())
     const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth())
     const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
     const [selectedDay, setSelectedDay] = useState(5)
     const [selectedTime, setSelectedTime] = useState("10:00 AM")
+
+    const [blockedDates, setBlockedDates] = useState<string[]>([])
+const [loading, setLoading] = useState(false)
+
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+
+useEffect(() => {
+  const month = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
+
+  fetch(
+    `${API_URL}/bookings/dates?serviceId=${id}&month=${month}`
+  )
+    .then(res => res.json())
+    .then(data => {
+      setBlockedDates(data.dates || [])
+    })
+    .catch(() => {
+      setBlockedDates([])
+    })
+}, [selectedMonth, selectedYear, id])
+
 
     if (!service) {
         return (
@@ -69,7 +90,7 @@ export default function BookingPage({
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
                         <h1 className="text-2xl font-bold mb-2">Service Not Found</h1>
-                        <Link href="/services" className="text-blue-600 hover:underline">
+                        <Link href="/user/services" className="text-blue-600 hover:underline">
                             Return to Services
                         </Link>
                     </div>
@@ -102,9 +123,54 @@ export default function BookingPage({
     const taxAndFees = 2.5
     const total = subtotal + taxAndFees
 
-    const handleContinueBooking = () => {
-        router.push(`/User/services/${id}/booking/confirm`)
+const handleContinueBooking = async () => {
+  if (!selectedDay) {
+    alert("Please select a date")
+    return
+  }
+
+  const bookingDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`
+
+  setLoading(true)
+
+  try {
+const token = localStorage.getItem("accessToken")
+
+if (!token) {
+  alert("Please login to book a service")
+  router.push("/login")
+  return
+}
+
+const res = await fetch(`${API_URL}/bookings`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    serviceId: id,
+    bookingDate,
+    timeSlot: selectedTime,
+  }),
+})
+
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.message || "Booking failed")
     }
+localStorage.setItem(
+  "bookingService",
+  JSON.stringify(service)
+)
+    router.push(`/user/services/${id}/booking/confirm`)
+  } catch (err: any) {
+    alert(err.message || "Date already booked")
+  } finally {
+    setLoading(false)
+  }
+}
+
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans animate-fade-in">
@@ -202,27 +268,34 @@ export default function BookingPage({
                                         {day}
                                     </div>
                                 ))}
-                                {calendarDays.map((day, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => day && setSelectedDay(day)}
-                                        disabled={!day}
-                                        className={`
-                      aspect-square p-2 rounded-lg text-sm font-medium transition-all
-                      ${!day ? "invisible" : ""}
-                      ${day === selectedDay
-                                                ? "bg-blue-600 text-white shadow-lg scale-105"
-                                                : "hover:bg-gray-100 text-gray-700"
-                                            }
-                      ${day && day < currentDate.getDate() && selectedMonth === currentDate.getMonth()
-                                                ? "text-gray-300 cursor-not-allowed"
-                                                : ""
-                                            }
-                    `}
-                                    >
-                                        {day}
-                                    </button>
-                                ))}
+{calendarDays.map((day, index) => {
+  if (!day) {
+    return <div key={index} />
+  }
+
+  const formattedDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+  const isBooked = blockedDates.includes(formattedDate)
+  const isPast =
+    day < currentDate.getDate() &&
+    selectedMonth === currentDate.getMonth() &&
+    selectedYear === currentDate.getFullYear()
+
+  return (
+    <button
+      key={index}
+      onClick={() => !isBooked && !isPast && setSelectedDay(day)}
+      disabled={isBooked || isPast}
+      className={`
+        aspect-square p-2 rounded-lg text-sm font-medium transition-all
+        ${day === selectedDay ? "bg-blue-600 text-white shadow-lg scale-105" : "hover:bg-gray-100 text-gray-700"}
+        ${isBooked || isPast ? "bg-gray-200 text-gray-400 cursor-not-allowed hover:bg-gray-200" : ""}
+      `}
+    >
+      {day}
+    </button>
+  )
+})}
+
                             </div>
                         </div>
 
@@ -373,12 +446,13 @@ export default function BookingPage({
 
                             {/* Continue Button */}
                             <button
-                                onClick={handleContinueBooking}
-                                className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 flex items-center justify-center gap-2 mb-4"
-                            >
-                                Continue Booking
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
+  onClick={handleContinueBooking}
+  disabled={loading}
+  className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 flex items-center justify-center gap-2 mb-4 disabled:opacity-60"
+>
+  {loading ? "Booking..." : "Continue Booking"}
+  <ChevronRight className="w-5 h-5" />
+</button>
 
                             {/* Guarantee Badge */}
                             <div className="flex items-center justify-center gap-2 mb-6">
