@@ -122,22 +122,73 @@ export const completeBooking = async (req: any, res: Response) => {
 }
 
 export const getBookingById = async (req: any, res: Response) => {
-  const { id } = req.params
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
 
-  const { data, error } = await supabase
-    .from("bookings")
-    .select(`
-      *,
-      service:services(*)
-    `)
-    .eq("id", id)
-    .eq("user_id", req.user.id)
-    .single()
+    const bookingId = req.params.id
+    const userId = req.user.id
 
-  if (error || !data) {
-    return res.status(404).json({ message: "Booking Not Found" })
-  }
+    // 1️⃣ Fetch booking
+    const {
+      data: booking,
+      error: bookingError,
+    } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("id", bookingId)
+      .eq("user_id", userId)
+      .single()
 
-  res.json({ booking: data })
+    if (bookingError || !booking) {
+      return res.status(404).json({ message: "Booking Not Found" })
+    }
+
+    // 2️⃣ Fetch related service
+    const {
+      data: service,
+      error: serviceError,
+    } = await supabase
+      .from("services")
+      .select("id, title, rating, price, image_url")
+      .eq("id", booking.service_id)
+      .single()
+
+    if (serviceError || !service) {
+      return res.status(404).json({ message: "Service Not Found" })
+    }
+
+    // 3️⃣ Fetch user profile
+const {
+  data: profile,
+  error: profileError,
+} = await supabase
+  .from("profiles")
+  .select("phone, first_name, last_name")
+  .eq("id", userId)
+  .single()
+
+if (profileError || !profile) {
+  return res.status(404).json({ message: "User profile not found" })
 }
+
+    // 4️⃣ Merge & return
+    res.json({
+      success: true,
+      booking: {
+        ...booking,
+        service,
+        user: {
+      full_name: `${profile.first_name} ${profile.last_name}`,
+      phone: profile.phone,
+    },
+      },
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+
 
