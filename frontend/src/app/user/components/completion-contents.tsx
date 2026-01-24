@@ -1,10 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { ArrowLeft, Star, Download, Lock, Copy, Check } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+
+
+declare global {
+  interface Window {
+    Razorpay: any
+  }
+}
+
 
 export default function CompletionContent() {
   const searchParams = useSearchParams()
@@ -14,9 +24,21 @@ export default function CompletionContent() {
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "cash" | null>(null)
   const [paymentConfirmed, setPaymentConfirmed] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [booking, setBooking] = useState<any>(null)
+  const [serviceOTP, setServiceOTP] = useState<string | null>(null)
 
-  const serviceOTP = "4829"
+  // const serviceOTP = "4829"
 
+  useEffect(() => {
+  const script = document.createElement("script")
+  script.src = "https://checkout.razorpay.com/v1/checkout.js"
+  script.async = true
+  document.body.appendChild(script)
+
+  return () => {
+    document.body.removeChild(script)
+  }
+}, [])
   const handlePayment = () => {
     // Simulate payment processing
     setTimeout(() => {
@@ -27,12 +49,157 @@ export default function CompletionContent() {
     }, 1000)
   }
 
-  const copyOTP = () => {
-    navigator.clipboard.writeText(serviceOTP)
-    setCopied(true)
-    toast.success("OTP copied to clipboard!")
-    setTimeout(() => setCopied(false), 2000)
+const copyOTP = () => {
+  if (!serviceOTP) return   // ⬅️ guard
+
+  navigator.clipboard.writeText(serviceOTP)
+  setCopied(true)
+  toast.success("OTP copied to clipboard!")
+  setTimeout(() => setCopied(false), 2000)
+}
+
+//   const handleRazorpay = async () => {
+//   const token = localStorage.getItem("accessToken")
+
+//   const res = await fetch(`${API_URL}/payments/razorpay-order`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${token}`,
+//     },
+//     body: JSON.stringify({
+//       booking_id: booking.id,
+//       amount: booking.total_amount,
+//     }),
+//   })
+
+
+//   useEffect(() => {
+//   if (!bookingId) return
+
+//   const token = localStorage.getItem("accessToken")
+
+//   fetch(`${API_URL}/bookings/${bookingId}`, {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//     cache: "no-store",
+//   })
+//     .then(res => res.json())
+//     .then(data => setBooking(data.booking))
+// }, [bookingId])
+
+
+//   const { orderId, key } = await res.json()
+
+//   const options = {
+//     key,
+//     amount: booking.total_amount * 100,
+//     currency: "INR",
+//     name: "Metro Cool",
+//     description: "AC Service Payment",
+//     order_id: orderId,
+//     method: {
+//       upi: true, // 👈 force UPI
+//     },
+//     handler: async (response: any) => {
+//       const verifyRes = await fetch(`${API_URL}/payments/verify`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({
+//           booking_id: booking.id,
+//           ...response,
+//         }),
+//       })
+
+//       const data = await verifyRes.json()
+//       setOtp(data.closure_otp)
+//       setPaymentConfirmed(true)
+//     },
+//   }
+
+//   // @ts-ignore
+//   const rzp = new window.Razorpay(options)
+//   rzp.open()
+// }
+
+const handleRazorpay = async () => {
+  if (paymentMethod !== "upi") return
+
+  const token = localStorage.getItem("accessToken")
+
+  const res = await fetch(`${API_URL}/payments/razorpay-order`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      booking_id: bookingId,
+      amount: 150,
+    }),
+  })
+
+  const { orderId, key } = await res.json()
+
+  const options = {
+    key,
+    amount: 150 * 100,
+    currency: "INR",
+    name: "Metro Cool",
+    description: "AC Service Payment",
+    order_id: orderId,
+    method: { upi: true },
+    handler: async (response: any) => {
+      const verifyRes = await fetch(`${API_URL}/payments/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          booking_id: bookingId,
+          ...response,
+        }),
+      })
+
+      const data = await verifyRes.json()
+      setServiceOTP(data.closure_otp)
+      setPaymentConfirmed(true)
+      toast.success("Payment successful")
+    },
   }
+
+  const rzp = new window.Razorpay(options)
+  rzp.open()
+}
+
+
+
+useEffect(() => {
+  if (!bookingId) return
+
+  const token = localStorage.getItem("accessToken")
+
+  fetch(`${API_URL}/bookings/${bookingId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then(res => res.json())
+    .then(data => setBooking(data.booking))
+    .catch(() => toast.error("Failed to load booking"))
+}, [bookingId])
+
+const handleCashPayment = async () => {
+  setPaymentConfirmed(true)
+  setServiceOTP("4829") // or fetch from backend
+  toast.success("Marked as Cash Payment")
+}
+
 
 
   return (
@@ -256,17 +423,19 @@ export default function CompletionContent() {
                 </div>
 
                 <button
-                  onClick={handlePayment}
-                  disabled={!paymentMethod}
-                  className={`w-full py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
-                    !paymentMethod ? "bg-gray-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 active:scale-98"
-                  }`}
-                >
-                  Pay ₹1,299
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </button>
+  onClick={() => {
+    if (paymentMethod === "upi") handleRazorpay()
+    if (paymentMethod === "cash") handleCashPayment()
+  }}
+  disabled={!paymentMethod}
+  className={`w-full py-4 rounded-xl font-bold text-white transition-all ${
+    !paymentMethod
+      ? "bg-gray-300 cursor-not-allowed"
+      : "bg-blue-600 hover:bg-blue-700"
+  }`}
+>
+  Pay ₹150
+</button>
 
                 <div className="flex items-center justify-center gap-2 mt-4">
                   <Lock className="w-3 h-3 text-gray-400" />
@@ -304,7 +473,7 @@ export default function CompletionContent() {
                   <div className="text-center">
                     <div className="text-sm text-gray-600 mb-2">Share this code</div>
                     <div className="flex justify-center gap-2 mb-3">
-                      {serviceOTP.split("").map((digit, idx) => (
+                      {serviceOTP?.split("").map((digit, idx) => (
                         <div
                           key={idx}
                           className="w-14 h-14 bg-white rounded-lg border-2 border-gray-200 flex items-center justify-center text-2xl font-bold text-gray-900"

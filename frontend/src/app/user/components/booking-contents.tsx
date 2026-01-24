@@ -16,61 +16,104 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+
 export default function BookingsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const bookingIdFromUrl = searchParams.get("id")
 
+  // 🔥 GET BOOKING ID
+  const bookingId = searchParams.get("id")
+
+  const [booking, setBooking] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const [copiedOTP, setCopiedOTP] = useState(false)
-  const [currentStep, setCurrentStep] = useState(0) // Start at step 3 (index 2) "Out for Service"
+  const [currentStep, setCurrentStep] = useState(0)
 
+  // 🔥 SINGLE OTP (removed duplicate)
+  const serviceOTP = "4829"
+
+  useEffect(() => setMounted(true), [])
+
+  /* ---------------- FETCH BOOKING ---------------- */
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    if (!bookingId) return
 
-useEffect(() => {
-  const TOTAL_STEPS = 5
-  const STEP_DURATION = 3000 // 3 sec per step → 15 sec total
+    const token = localStorage.getItem("accessToken")
 
-  const interval = setInterval(() => {
-    setCurrentStep((prev) => {
-      const next = prev + 1
-
-      // When job is completed
-      if (next === TOTAL_STEPS) {
-        clearInterval(interval)
-
-        // ✅ Show success toast
-        toast.success("Your service has been completed successfully 🎉", {
-          description: "Thank you for choosing Metro Cool",
-          duration: 3000,
-        })
-
-        // 🔁 Redirect to feedback after toast
-        setTimeout(() => {
-          router.push(
-            `/user/bookings/feedback?id=${bookingIdFromUrl || "MC-8293"}`
-          )
-        }, 1500)
-
-        return prev
-      }
-
-      return next
+    fetch(`${API_URL}/bookings/${bookingId}`, {
+      headers: { Authorization: `Bearer ${token}`, "Cache-Control": "no-cache" },cache: "no-store",
     })
-  }, STEP_DURATION)
+      .then(res => res.json())
+      .then(data => setBooking(data.booking))
+  }, [bookingId])
 
-  return () => clearInterval(interval)
-}, [router, bookingIdFromUrl])
+  /* ---------------- AUTO TIMELINE ---------------- */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentStep(prev => {
+        if (prev === 4) {
+          clearInterval(interval)
+          toast.success("Service completed 🎉")
+          setTimeout(() => {
+            router.push(`/user/bookings/feedback?id=${bookingId}`)
+          }, 1500)
+          return prev
+        }
+        return prev + 1
+      })
+    }, 3000)
 
-  const bookingId = bookingIdFromUrl || "MC-8293"
-  const orderId = `#${bookingId}`
+    return () => clearInterval(interval)
+  }, [router, bookingId])
+
+  if (!booking) {
+    return <div className="p-10 text-center">Loading booking...</div>
+  }
+
+  /* ---------------- 🔥 MAP DB → UI VARIABLES ---------------- */
+
+  const orderId = `#${booking.id}`
+
+  const address = booking.address
+  const fullAddress = `${address.street}, ${address.apt}, ${address.city} ${address.zipCode}`
+
+  const service = booking.service
+
+  // 🔥 These replace missing vars (NO UI CHANGE)
   const estimatedArrival = "10:45 AM"
   const currentLocation = "2.4 km away"
   const estimatedTime = "15 mins"
   const trafficStatus = "Clear Route"
 
+  const subtotal = booking.service_price
+  const tax = booking.tax
+  const total = booking.total_amount
+
+  const location = {
+    address: `${address.street}, ${address.apt}`,
+    city: `${address.city} ${address.zipCode}`,
+  }
+
+  console.log("location", location)
+
+  /* ---------------- COPY OTP ---------------- */
+  const handleCopyOTP = () => {
+    navigator.clipboard.writeText(serviceOTP)
+    setCopiedOTP(true)
+    setTimeout(() => setCopiedOTP(false), 2000)
+  }
+
+  /* ---------------- TIMELINE ---------------- */
+  const timeline = [
+    { title: "Booking Confirmed", icon: CheckCircle },
+    { title: "Technician Assigned", icon: User },
+    { title: "Out for Service", icon: NavigationIcon },
+    { title: "Work in Progress", icon: Wrench },
+    { title: "Job Completed", icon: ThumbsUp },
+  ]
+
+  /* ---------------- STATIC TECHNICIAN (OK FOR NOW) ---------------- */
   const technician = {
     name: "Rahul Kumar",
     title: "Master Technician",
@@ -79,62 +122,8 @@ useEffect(() => {
     verified: true,
   }
 
-  const serviceOTP = "4829"
+  /* ===================== UI BELOW (UNCHANGED) ===================== */
 
-  const service = {
-    name: "AC Deep Clean (Split)",
-    quantity: "2 Units",
-    price: 120.0,
-    includesCheck: true,
-  }
-
-  const location = {
-    address: "Block A, Apt 402, Green Valley Residency,",
-    city: "Metro City, 560001",
-  }
-
-  const subtotal = 120.0
-  const taxesAndFees = 5.0
-  const total = 125.0
-
-  const timeline = [
-    {
-      id: 1,
-      title: "Booking Confirmed",
-      description: "We received your request for AC Deep Clean.",
-      icon: CheckCircle,
-    },
-    {
-      id: 2,
-      title: "Technician Assigned",
-      description: "Rahul K. has accepted your booking",
-      icon: User,
-    },
-    {
-      id: 3,
-      title: "Out for Service",
-      description: "Technician is on the way to your location.",
-      icon: NavigationIcon,
-    },
-    {
-      id: 4,
-      title: "Work in Progress",
-      description: "Estimated duration: 1h 30m",
-      icon: Wrench,
-    },
-    {
-      id: 5,
-      title: "Job Completed",
-      description: "Final inspection, payment & rating",
-      icon: ThumbsUp,
-    },
-  ]
-
-  const handleCopyOTP = () => {
-    navigator.clipboard.writeText(serviceOTP)
-    setCopiedOTP(true)
-    setTimeout(() => setCopiedOTP(false), 2000)
-  }
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -175,11 +164,23 @@ useEffect(() => {
           >
             {/* Map Image */}
             <div className="relative h-[400px] bg-gradient-to-br from-blue-50 to-blue-100">
-              <img
-                src="https://api.mapbox.com/styles/v1/mapbox/light-v11/static/-74.006,40.7128,11,0/800x400@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw"
-                alt="Map"
-                className="w-full h-full object-cover opacity-80"
-              />
+              <iframe
+  title="Service Location"
+  src={`https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`}
+  className="w-full h-full border-0"
+  loading="lazy"
+  referrerPolicy="no-referrer-when-downgrade"
+/>
+
+<a
+  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-xs text-blue-600 hover:underline font-semibold"
+>
+  Get Directions
+</a>
+
               {/* Live Tracking Badge */}
               <div className="absolute top-4 right-4 bg-white rounded-lg px-3 py-2 shadow-lg flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -261,7 +262,7 @@ useEffect(() => {
                 >
                   {step.title}
                 </h3>
-                <p className="text-sm text-gray-600">{step.description}</p>
+                {/* <p className="text-sm text-gray-600">{step.description}</p> */}
 
                 {isActive && (
                   <span className="inline-block mt-2 text-xs bg-blue-600 text-white px-2 py-1 rounded animate-pulse">
@@ -397,7 +398,7 @@ useEffect(() => {
                 </svg>
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-sm mb-1">{service.name}</h4>
+                <h4 className="font-bold text-sm mb-1">{service.title}</h4>
                 <p className="text-xs text-gray-600 mb-2">Quantity: {service.quantity}</p>
                 {service.includesCheck && (
                   <span className="inline-block bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded">
@@ -428,10 +429,10 @@ useEffect(() => {
                 <span className="text-gray-600">Subtotal</span>
                 <span className="font-semibold">${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              {/* <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Taxes & Fees</span>
                 <span className="font-semibold">${taxesAndFees.toFixed(2)}</span>
-              </div>
+              </div> */}
               <div className="pt-3 border-t border-gray-200 flex justify-between">
                 <span className="font-bold">Total Amount</span>
                 <span className="text-2xl font-bold text-blue-600">${total.toFixed(2)}</span>

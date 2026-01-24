@@ -298,7 +298,7 @@ export default function BookingSuccessPage() {
                 Back to Home
               </Link>
               <Link
-                href="/User/bookings?id=${bookingId}"
+                href={`/user/bookings?id=${bookingId}`}
                 className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-200"
               >
                 View My Bookings

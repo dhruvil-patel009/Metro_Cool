@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   description: "AC Service Platform",
 };
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 export default function RootLayout({
   children,
 }: {

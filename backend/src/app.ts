@@ -11,6 +11,8 @@ import technicianRoutes from "./routes/technician.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import bookingRoutes from "./routes/bookings.routes.js"
+import feedbackRoutes from "./routes/feedback.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 
 
 const app = express();
@@ -29,6 +31,11 @@ app.use(
 );
 
 
+// ✅ Health check
+app.get("/", (_req, res) => {
+  res.send("Metro Cool API running 🚀")
+})
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -43,7 +50,12 @@ app.use("/api/user", userRoutes);
 app.use("/api/technician", technicianRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/bookings", bookingRoutes)
+app.use("/api/feedbacks", feedbackRoutes)
 
+
+// Payment 
+
+app.use("/api/payments", paymentRoutes)
 
 
 // 🔥 Swagger
