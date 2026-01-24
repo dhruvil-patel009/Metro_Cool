@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
+import { use, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { ChevronRight, User, Phone, MapPin, ArrowRight, MessageCircle } from "lucide-react"
@@ -33,13 +33,47 @@ export default function BookingConfirmPage (){
   const [saveAddress, setSaveAddress] = useState(false)
   const [service, setService] = useState<any>(null)
 
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
-  useEffect(() => {
+useEffect(() => {
+  const storedDate = localStorage.getItem("bookingDate")
+  const storedTime = localStorage.getItem("bookingTime")
+
+  if (storedDate) setSelectedDate(storedDate)
+  if (storedTime) setSelectedTimeSlot(storedTime)
+}, [])
+
+const hasFetched = useRef(false)
+
+useEffect(() => {
+  if (hasFetched.current) return
+  hasFetched.current = true
+
+  const token = localStorage.getItem("accessToken")
+
+  fetch(`${API_URL}/user/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  })
+    .then(res => res.json())
+    .then(data => {
+      setFullName(`${data.first_name} ${data.last_name}`)
+      setPhoneNumber(data.phone || "")
+    })
+}, [])
+
+useEffect(() => {
   const stored = localStorage.getItem("bookingService")
+
   if (stored) {
     setService(JSON.parse(stored))
+  } else {
+    const fallback = servicesData.find(s => s.id === id)
+    if (fallback) setService(fallback)
   }
-}, [])
+}, [id])
 
   if (!service) {
     return (
@@ -65,11 +99,55 @@ export default function BookingConfirmPage (){
   const taxes = (serviceFee + estimatedParts) * 0.08
   const total = serviceFee + estimatedParts + taxes
 
-  const handleCompleteBooking = () => {
-    // Handle booking completion
-    router.push(`/User/services/${id}/booking/success`)
-    toast.success("Booking completed successfully!")
+const handleCompleteBooking = async () => {
+  try {
+    const token = localStorage.getItem("accessToken")
+    const id = localStorage.getItem("bookingId")
+    if (!id) {
+  toast.error("Booking ID missing")
+  return
+}
+
+    const res = await fetch(`${API_URL}/bookings/${id}/complete`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+ body: JSON.stringify({
+  bookingDate: selectedDate,
+  timeSlot: selectedTimeSlot,
+  issues: selectedIssues,
+  instructions: additionalInstructions,
+  address: {
+    street: streetAddress,
+    apt: aptSuite,
+    city,
+    zipCode,
+  },
+  pricing: {
+    serviceFee,
+    parts: estimatedParts,
+    tax: taxes,
+    total,
+  },
+}),
+})
+const data = await res.json()
+
+
+if (!res.ok) {
+  throw new Error(data.message || "Booking failed")
+}
+
+    toast.success("Booking completed!")
+    console.log("Booking Id is a ",id)
+    router.push(`/user/services/${id}/booking/success`)
+  } catch (err: any) {
+    toast.error(err.message)
   }
+}
+
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans animate-fade-in">
@@ -77,11 +155,11 @@ export default function BookingConfirmPage (){
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Breadcrumbs */}
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
-          <Link href="/" className="hover:text-blue-600">
+          <Link href="/user" className="hover:text-blue-600">
             Home
           </Link>
           <ChevronRight className="w-4 h-4" />
-          <Link href="/services" className="hover:text-blue-600">
+          <Link href="/user/services" className="hover:text-blue-600">
             Services
           </Link>
           <ChevronRight className="w-4 h-4" />

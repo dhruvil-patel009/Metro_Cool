@@ -69,6 +69,8 @@ const [loading, setLoading] = useState(false)
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
 useEffect(() => {
+        if (!id) return
+
   const month = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
 
   fetch(
@@ -130,46 +132,44 @@ const handleContinueBooking = async () => {
   }
 
   const bookingDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`
+   const token = localStorage.getItem("accessToken")
+    if (!token) {
+      router.push("/login")
+      return
+    }
 
   setLoading(true)
 
-  try {
-const token = localStorage.getItem("accessToken")
+try {
+      const res = await fetch(`${API_URL}/bookings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          serviceId: id,
+          bookingDate,
+          timeSlot: selectedTime,
+        }),
+      })
 
-if (!token) {
-  alert("Please login to book a service")
-  router.push("/login")
-  return
-}
-
-const res = await fetch(`${API_URL}/bookings`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    serviceId: id,
-    bookingDate,
-    timeSlot: selectedTime,
-  }),
-})
-
-    if (!res.ok) {
       const data = await res.json()
-      throw new Error(data.message || "Booking failed")
+      if (!res.ok) throw new Error(data.message)
+
+      // 🔥🔥🔥 SAVE FOR CONFIRM PAGE
+      localStorage.setItem("bookingId", data.booking.id)
+      localStorage.setItem("bookingDate", bookingDate)
+      localStorage.setItem("bookingTime", selectedTime)
+      localStorage.setItem("bookingService", JSON.stringify(service))
+
+      router.push(`/user/services/${data.booking.id}/booking/confirm`)
+    } catch (err: any) {
+      alert(err.message || "Booking failed")
+    } finally {
+      setLoading(false)
     }
-localStorage.setItem(
-  "bookingService",
-  JSON.stringify(service)
-)
-    router.push(`/user/services/${id}/booking/confirm`)
-  } catch (err: any) {
-    alert(err.message || "Date already booked")
-  } finally {
-    setLoading(false)
   }
-}
 
 
     return (
@@ -178,11 +178,11 @@ localStorage.setItem(
             <main className="max-w-fit mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Breadcrumbs */}
                 <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
-                    <Link href="/" className="hover:text-blue-600">
+                    <Link href="/user" className="hover:text-blue-600">
                         Home
                     </Link>
                     <ChevronRight className="w-4 h-4" />
-                    <Link href={`/services/${id}`} className="hover:text-blue-600">
+                    <Link href={`/user/services/${id}`} className="hover:text-blue-600">
                         {service.category}
                     </Link>
                     <ChevronRight className="w-4 h-4" />
@@ -300,51 +300,7 @@ localStorage.setItem(
                         </div>
 
                         {/* Time Slots */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                            {/* Morning */}
-                            <div className="mb-6">
-                                <h3 className="font-bold text-sm uppercase tracking-wider text-gray-500 mb-4">Morning</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    {MORNING_SLOTS.map((time) => (
-                                        <button
-                                            key={time}
-                                            onClick={() => setSelectedTime(time)}
-                                            className={`
-                        px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-all
-                        ${selectedTime === time
-                                                    ? "border-blue-600 bg-blue-600 text-white shadow-md"
-                                                    : "border-gray-200 hover:border-blue-200 hover:bg-blue-50"
-                                                }
-                      `}
-                                        >
-                                            {time}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Afternoon */}
-                            <div>
-                                <h3 className="font-bold text-sm uppercase tracking-wider text-gray-500 mb-4">Afternoon</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    {AFTERNOON_SLOTS.map((time) => (
-                                        <button
-                                            key={time}
-                                            onClick={() => setSelectedTime(time)}
-                                            className={`
-                        px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-all
-                        ${selectedTime === time
-                                                    ? "border-blue-600 bg-blue-600 text-white shadow-md"
-                                                    : "border-gray-200 hover:border-blue-200 hover:bg-blue-50"
-                                                }
-                      `}
-                                        >
-                                            {time}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                    
 
                         {/* Pro Tip */}
                         <div className="bg-blue-50 rounded-lg p-4 flex gap-3">
