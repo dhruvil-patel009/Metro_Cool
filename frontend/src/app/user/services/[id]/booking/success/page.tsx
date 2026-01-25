@@ -292,7 +292,7 @@ export default function BookingSuccessPage() {
               }`}
             >
               <Link
-                href="/"
+                href="/user"
                 className="px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-bold hover:border-gray-400 transition-all"
               >
                 Back to Home

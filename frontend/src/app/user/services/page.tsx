@@ -57,7 +57,7 @@ export default function ServicesPage() {
       <main className="px-4 py-8 md:px-8 lg:px-12 animate-fade-in">
         {/* Breadcrumbs */}
         <nav className="mb-6 flex items-center gap-2 text-sm text-slate-500">
-          <Link href="/" className="hover:text-blue-600 transition-colors">
+          <Link href="/user" className="hover:text-blue-600 transition-colors">
             Home
           </Link>
           <ChevronRight className="h-4 w-4" />

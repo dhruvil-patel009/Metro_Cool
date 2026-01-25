@@ -14,6 +14,11 @@ import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
+import { Worker, Viewer } from "@react-pdf-viewer/core"
+import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout"
+
+import "@react-pdf-viewer/core/lib/styles/index.css"
+import "@react-pdf-viewer/default-layout/lib/styles/index.css"
 
 export default function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>()
@@ -25,6 +30,13 @@ export default function ProductDetailsPage() {
   const [addInstallation, setAddInstallation] = useState(false)
   const [activeTab, setActiveTab] = useState("description")
   const [loading, setLoading] = useState(true)
+
+
+  const brochureLayoutPlugin = defaultLayoutPlugin({
+  sidebarTabs: (defaultTabs) => [
+    defaultTabs[0], // thumbnails
+  ],
+})
 
   /* ---------------- FETCH PRODUCT ---------------- */
   useEffect(() => {
@@ -372,51 +384,41 @@ export default function ProductDetailsPage() {
           </section>
         )}
 
-                {/* ================= BROCHURE / CATALOG ================= */}
-    {product.catalog_pdf && (
-      <div className="rounded-xl border bg-white p-6 shadow-sm mt-12">
+{/* ================= BROCHURE / CATALOG ================= */}
+{product.catalog_pdf && (
+  <div className="mt-12 rounded-xl border bg-white p-6 shadow-sm">
 
-        {/* HEADER */}
-        <h3 className="mb-6 text-lg font-bold text-slate-900">
-          Official Product Brochure
-        </h3>
+    {/* HEADER */}
+    <h3 className="mb-6 text-lg font-bold text-slate-900">
+      Official Product Brochure
+    </h3>
 
-        {/* PREVIEW CARD */}
-        <div className="relative overflow-hidden rounded-lg border bg-slate-100">
-
-          {/* PDF PREVIEW */}
-          <iframe
-            src={product.catalog_pdf}
-            className="h-[420px] w-full"
-            title="Product Brochure"
+    {/* PDF VIEWER */}
+    <div className="overflow-hidden rounded-lg border bg-slate-50">
+      <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
+        <div className="h-[520px]">
+          <Viewer
+            fileUrl={product.catalog_pdf}
+            plugins={[brochureLayoutPlugin]}
           />
-
-          {/* OVERLAY BUTTON */}
-          {/* <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-            <a
-              href={product.catalog_pdf}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-md bg-white px-6 py-3 font-bold shadow hover:bg-slate-100"
-            >
-              View Brochure
-            </a>
-          </div> */}
         </div>
+      </Worker>
+    </div>
 
-        {/* DOWNLOAD BUTTON */}
-        <div className="mt-6 flex justify-center">
-          <a
-            href={product.catalog_pdf}
-            download
-            className="flex items-center gap-2 rounded-md border border-blue-600 px-6 py-3 font-bold text-blue-600 hover:bg-blue-50 transition"
-          >
-            <Download className="h-4 w-4" />
-            Download Brochure
-          </a>
-        </div>
-      </div>
-    )}
+    {/* DOWNLOAD BUTTON */}
+    <div className="mt-6 flex justify-center">
+      <a
+        href={product.catalog_pdf}
+        download
+        className="flex items-center gap-2 rounded-md border border-blue-600 px-6 py-3 font-bold text-blue-600 transition hover:bg-blue-50"
+      >
+        <Download className="h-4 w-4" />
+        Download Brochure
+      </a>
+    </div>
+  </div>
+)}
+
 
       </main>
     </div>

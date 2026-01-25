@@ -16,14 +16,16 @@ export function CTASection() {
             Book your service today or browse our latest collection of energy-efficient air conditioners.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/user/service">
+            <Link href="/user/services">
             <button className="bg-white text-blue-600 px-10 py-4 rounded-md font-bold hover:bg-blue-50 transition-all cursor-pointer">
               Book a Service
             </button>
             </Link>
+             <Link href="/user/products">
             <button className="bg-transparent border border-white/30 text-white px-10 py-4 rounded-md font-bold hover:bg-white/10 transition-all">
               View Products
             </button>
+             </Link>
           </div>
         </div>
       </div>
