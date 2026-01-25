@@ -223,7 +223,6 @@ export const getUsers = async (req: Request, res: Response) => {
         phone,
         email,
         profile_photo,
-        status,
         created_at
       `,
         { count: "exact" }

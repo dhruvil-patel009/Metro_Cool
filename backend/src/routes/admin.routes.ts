@@ -11,6 +11,12 @@ import {
   getTechnicianById,
   deleteTechnician,
   getTechnicianStats,
+  updateUser,
+  deleteUser,
+  toggleUserStatus,
+  getUserById,
+  getUserStats,
+  getUsers,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -102,3 +108,55 @@ router.delete(
 );
 
 export default router;
+
+
+
+/* ================= USERS ================= */
+
+// GET ALL USERS (PAGINATED)
+router.get(
+  "/users",
+  protect,
+  authorize("admin"),
+  getUsers
+)
+
+// GET USER STATS
+router.get(
+  "/users/stats",
+  protect,
+  authorize("admin"),
+  getUserStats
+)
+
+// GET SINGLE USER
+router.get(
+  "/users/:id",
+  protect,
+  authorize("admin"),
+  getUserById
+)
+
+// UPDATE USER (name, phone, status)
+router.patch(
+  "/users/:id",
+  protect,
+  authorize("admin"),
+  updateUser
+)
+
+// TOGGLE USER STATUS (active | inactive | blocked)
+router.patch(
+  "/users/:id/status",
+  protect,
+  authorize("admin"),
+  toggleUserStatus
+)
+
+// DELETE USER
+router.delete(
+  "/users/:id",
+  protect,
+  authorize("admin"),
+  deleteUser
+)

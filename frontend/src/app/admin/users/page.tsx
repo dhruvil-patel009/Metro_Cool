@@ -8,7 +8,7 @@ export default function UsersPage() {
       <div className="p-6 lg:p-8">
         {/* Breadcrumb */}
         <div className="mb-4 flex items-center gap-2 text-sm text-gray-600">
-          <a href="/technician/dashboard" className="hover:text-gray-900">
+          <a href="/admin/dashboard" className="hover:text-gray-900">
             Home
           </a>
           <span>›</span>

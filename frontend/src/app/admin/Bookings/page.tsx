@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { BookingsContent } from "../components/booking-content"
+import BookingsContent  from "../components/booking-content"
 
 export default function BookingsPage() {
   return (

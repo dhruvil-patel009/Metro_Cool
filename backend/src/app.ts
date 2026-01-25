@@ -13,9 +13,14 @@ import productRoutes from "./routes/product.routes.js";
 import bookingRoutes from "./routes/bookings.routes.js"
 import feedbackRoutes from "./routes/feedback.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import cookieParser from "cookie-parser"
+import adminBookingRoutes from "./routes/admin.booking.routes.js";
+
 
 
 const app = express();
+app.use(cookieParser())
+
 
 
 // 🔥 CORS FIX (MOST IMPORTANT)
@@ -44,7 +49,7 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/products", productRoutes);
 
 
-
+app.use("/api/admin", adminBookingRoutes)
 
 app.use("/api/user", userRoutes);
 app.use("/api/technician", technicianRoutes);
