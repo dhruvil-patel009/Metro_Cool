@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function CTASection() {
   return (
     <section className="px-4 sm:px-6 lg:px-8 mb-[80px] relative z-20">
@@ -14,9 +16,11 @@ export function CTASection() {
             Book your service today or browse our latest collection of energy-efficient air conditioners.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button className="bg-white text-blue-600 px-10 py-4 rounded-md font-bold hover:bg-blue-50 transition-all">
+            <Link href="/user/service">
+            <button className="bg-white text-blue-600 px-10 py-4 rounded-md font-bold hover:bg-blue-50 transition-all cursor-pointer">
               Book a Service
             </button>
+            </Link>
             <button className="bg-transparent border border-white/30 text-white px-10 py-4 rounded-md font-bold hover:bg-white/10 transition-all">
               View Products
             </button>

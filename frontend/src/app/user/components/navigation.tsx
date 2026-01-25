@@ -98,9 +98,11 @@ const handleLogout = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200">
+<Link href="/user/services">
+            <button className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200 cursor-pointer">
               Book Service
             </button>
+</Link>
 
             <div className="relative">
               <button
@@ -128,7 +130,7 @@ const handleLogout = () => {
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   <Link
                     href="/user/profile"
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" 
                     onClick={() => setShowProfileDropdown(false)}
                   >
                     <User className="w-4 h-4" />
@@ -136,7 +138,7 @@ const handleLogout = () => {
                   </Link>
                  
                   <div className="border-t border-gray-100 my-2"></div>
-                  <button className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"   onClick={handleLogout}
+                  <button className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full cursor-pointer"   onClick={handleLogout}
 >
                     <LogOut className="w-4 h-4" />
                     Sign Out

@@ -300,12 +300,12 @@ export default function AboutPage() {
               AC done right.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link href="/services">
+              <Link href="/user/services">
                 <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
                   Book a Service Now
                 </Button>
               </Link>
-              <Link href="/contact">
+              <Link href="/user/contact">
                 <Button
                   size="lg"
                   variant="outline"

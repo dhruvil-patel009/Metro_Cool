@@ -63,7 +63,8 @@ export const getMe = async (req: any, res: Response) => {
       role,
       first_name,
       last_name,
-      phone
+      phone,
+      profile_photo
     `)
     .eq("id", userId)
     .eq("role", "user")
@@ -74,4 +75,50 @@ export const getMe = async (req: any, res: Response) => {
   }
 
   res.json(profile)
+}
+
+/**
+ * UPDATE CURRENT USER PROFILE
+ * PUT /api/user/me
+ */
+export const updateMe = async (req: any, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    const userId = req.user.id
+    const { first_name, last_name, phone, profile_photo } = req.body
+
+    // basic validation
+    if (!first_name || !last_name || !phone) {
+      return res.status(400).json({ message: "Missing required fields" })
+    }
+
+    if (phone.length !== 10) {
+      return res.status(400).json({ message: "Phone must be 10 digits" })
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        first_name,
+        last_name,
+        phone,
+        ...(profile_photo && { profile_photo }),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId)
+      .eq("role", "user")
+
+    if (error) {
+      console.error("UPDATE PROFILE ERROR:", error)
+      return res.status(400).json({ message: error.message })
+    }
+
+    res.json({ message: "Profile updated successfully" })
+  } catch (err) {
+    console.error("UPDATE PROFILE ERROR:", err)
+    res.status(500).json({ message: "Server error" })
+  }
 }

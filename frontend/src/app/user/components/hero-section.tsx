@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { CheckCircle2 } from "lucide-react"
 import { heroSlides } from "../lib/data"
+import Link from "next/link"
 
 export function HeroSection() {
   const [current, setCurrent] = useState(0)
@@ -54,12 +55,14 @@ export function HeroSection() {
           <p className="text-xl text-gray-400 leading-relaxed mb-8 max-w-xl">{slide.desc}</p>
 
           <div className="flex flex-wrap gap-4 mb-12">
-            <button className="bg-blue-600 text-white px-8 py-4 rounded-md font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
-              Book Service
-            </button>
-            <button className="bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-md font-bold hover:bg-white/20 transition-all border border-white/10">
+            <Link href="/user/services">
+              <button className="bg-blue-600 text-white px-8 py-4 rounded-md font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 cursor-pointer">
+                Book Service
+              </button>
+            </Link>
+            {/* <button className="bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-md font-bold hover:bg-white/20 transition-all border border-white/10">
               Our Plans
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
@@ -69,9 +72,8 @@ export function HeroSection() {
         {heroSlides.map((_, i) => (
           <span
             key={i}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              current === i ? "bg-blue-600 scale-125" : "bg-gray-500/60"
-            }`}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${current === i ? "bg-blue-600 scale-125" : "bg-gray-500/60"
+              }`}
           />
         ))}
       </div>
