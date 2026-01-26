@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { User, Shield, Bell, Camera, Mail, Plus, MoreVertical } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
@@ -11,49 +11,38 @@ import AddAdminModal from "./add-admin-model"
 
 type SettingsSection = "profile" | "admin" | "notifications"
 
+type Admin = {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  phone: string | null
+  profile_photo: string | null
+  role: "admin"
+  active: boolean
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+
 export default function SettingsContent() {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("accessToken")
+      : null
+
   const [activeSection, setActiveSection] = useState<SettingsSection>("profile")
   const [hasChanges, setHasChanges] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false)
+  const [profileId, setProfileId] = useState<string>("")
 
   const [firstName, setFirstName] = useState("Alex")
   const [lastName, setLastName] = useState("Johnson")
   const [email, setEmail] = useState("alex.admin@comfortAC.com")
   const [roleDescription, setRoleDescription] = useState("Responsible for system configuration and user management.")
 
-  const [admins, setAdmins] = useState([
-    {
-      id: 1,
-      name: "Alex Johnson",
-      email: "alex.admin@comfortAC.com",
-      avatar: "AJ",
-      role: "Super Admin",
-      permissions: "Full system access",
-      status: true,
-      isCurrent: true,
-    },
-    {
-      id: 2,
-      name: "Sarah Miller",
-      email: "sarah.miller@comfortAC.com",
-      avatar: "SM",
-      role: "Operations Manager",
-      permissions: "Technicians, Bookings, Reports",
-      status: true,
-      isCurrent: false,
-    },
-    {
-      id: 3,
-      name: "David Chen",
-      email: "david.c@comfortAC.com",
-      avatar: "DC",
-      role: "Support Agent",
-      permissions: "View-only access",
-      status: false,
-      isCurrent: false,
-    },
-  ])
+  const [admins, setAdmins] = useState<Admin[]>([])
+  
 
   const [notifications, setNotifications] = useState({
     newTechnicianRegistration: true,
@@ -62,32 +51,109 @@ export default function SettingsContent() {
     systemErrors: true,
   })
 
-  const handleSaveChanges = () => {
-    setHasChanges(false)
-    alert("Changes saved successfully!")
-  }
+
 
   const handleCancel = () => {
     setHasChanges(false)
   }
 
-  const toggleAdminStatus = (id: number) => {
-    setAdmins(admins.map((admin) => (admin.id === id ? { ...admin, status: !admin.status } : admin)))
-    setHasChanges(true)
-  }
 
   const handleAddAdmin = (newAdmin: any) => {
     setAdmins([...admins, newAdmin])
     setHasChanges(true)
   }
 
+
+  /* ================= FETCH PROFILE ================= */
+
+  const fetchProfile = async () => {
+    const res = await fetch(`${API_URL}/admin/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const data = await res.json()
+
+    setProfileId(data.id)
+    setFirstName(data.first_name ?? "")
+    setLastName(data.last_name ?? "")
+    setEmail(data.email ?? "")
+    setRoleDescription("System Administrator")
+  }
+
+  /* ================= FETCH ADMINS ================= */
+
+  const fetchAdmins = async () => {
+    const res = await fetch(`${API_URL}/admin/admins`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const json = await res.json()
+
+    // ✅ FIX: normalize response
+    const list = Array.isArray(json)
+      ? json
+      : Array.isArray(json.data)
+      ? json.data
+      : []
+
+    setAdmins(list)
+  }
+
+  /* ================= UPDATE PROFILE ================= */
+
+  const handleSaveChanges = async () => {
+    await fetch(`${API_URL}/admin/profile`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        email,
+      }),
+    })
+
+    setHasChanges(false)
+    alert("Profile updated successfully")
+  }
+
+  /* ================= TOGGLE ADMIN STATUS ================= */
+
+  const toggleAdminStatus = async (adminId: string, current: boolean) => {
+    await fetch(`${API_URL}/admin/admins/${adminId}/status`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ active: !current }),
+    })
+
+    setAdmins((prev) =>
+      prev.map((a) =>
+        a.id === adminId ? { ...a, active: !current } : a
+      )
+    )
+  }
+
+  /* ================= EFFECT ================= */
+
+  useEffect(() => {
+    fetchProfile()
+    fetchAdmins()
+  }, [])
+
+  /* ================= SCROLL ================= */
+
   const scrollToSection = (section: SettingsSection) => {
     setActiveSection(section)
-    const element = document.getElementById(`section-${section}`)
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" })
-    }
+    document
+      .getElementById(`section-${section}`)
+      ?.scrollIntoView({ behavior: "smooth" })
   }
+
 
   return (
     <div className="flex h-full">

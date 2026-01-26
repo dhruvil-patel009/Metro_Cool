@@ -25,7 +25,7 @@ import { useAuthStore } from "@/store/auth.store";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
   { icon: Briefcase, label: "Services", href: "/admin/Services" },
-  { icon: FolderTree, label: "Categories", href: "/admin/Categories" },
+  // { icon: FolderTree, label: "Categories", href: "/admin/Categories" },
   { icon: PackageSearch, label: "Products", href: "/admin/products" },
   { icon: Users, label: "Technicians", href: "/admin/Technician" },
   { icon: UserCircle, label: "Users", href: "/admin/users" },

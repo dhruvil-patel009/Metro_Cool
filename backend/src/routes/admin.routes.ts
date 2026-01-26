@@ -17,6 +17,10 @@ import {
   getUserById,
   getUserStats,
   getUsers,
+  getAdminProfile,
+  updateAdminProfile,
+  getAdmins,
+  createAdmin,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -160,3 +164,18 @@ router.delete(
   authorize("admin"),
   deleteUser
 )
+
+
+
+
+////////////////////////////////////// Admin /////////////////////////////////
+
+router.get("/profile",protect,
+  authorize("admin"), getAdminProfile)
+router.put("/profile", protect,
+  authorize("admin"),updateAdminProfile)
+
+router.get("/admins",protect,
+  authorize("admin"), getAdmins)
+router.post("/admins",protect,
+  authorize("admin"), createAdmin)

@@ -351,3 +351,149 @@ export const toggleUserStatus = async (req: Request, res: Response) => {
 
   res.json({ message: "Status updated" })
 }
+
+
+/////////////////////////////////////////////////// Admin Profile ///////////////////////////////////////
+
+export const getAdminProfile = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" })
+    }
+
+    const userId = req.user.id
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(`
+        id,
+        first_name,
+        last_name,
+        phone,
+        email,
+        profile_photo,
+        role
+      `)
+      .eq("id", userId)
+      .single()
+
+    if (error) throw error
+
+    res.json(data)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Failed to load profile" })
+  }
+}
+
+
+
+export const updateAdminProfile = async (req: Request, res: Response) => {
+  try {
+
+        if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" })
+    }
+    const userId = req.user.id
+    const {
+      first_name,
+      middle_name,
+      last_name,
+      phone,
+      email,
+      profile_photo,
+    } = req.body
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        first_name,
+        middle_name,
+        last_name,
+        phone,
+        email,
+        profile_photo,
+        updated_at: new Date(),
+      })
+      .eq("id", userId)
+
+    if (error) throw error
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Profile update failed" })
+  }
+}
+
+
+export const getAdmins = async (req: Request, res: Response) => {
+  try {
+
+        if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" })
+    }
+    
+    const currentUserId = req.user.id
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(`
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        profile_photo,
+        role
+      `)
+      .eq("role", "admin")
+      .order("created_at")
+
+    if (error) throw error
+
+    const admins = data.map((a) => ({
+      id: a.id,
+      name: `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim(),
+      email: a.email,
+      phone: a.phone,
+      avatar: a.profile_photo,
+      status: a.id === currentUserId ? "current" : "active",
+      isCurrent: a.id === currentUserId,
+    }))
+
+    res.json({ data: admins })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Failed to fetch admins" })
+  }
+}
+
+
+export const createAdmin = async (req: Request, res: Response) => {
+  try {
+    const {
+      id, // auth.users id (already created)
+      first_name,
+      last_name,
+      phone,
+      email,
+    } = req.body
+
+    const { error } = await supabase.from("profiles").insert({
+      id,
+      role: "admin",
+      first_name,
+      last_name,
+      phone,
+      email,
+    })
+
+    if (error) throw error
+
+    res.status(201).json({ success: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Failed to create admin" })
+  }
+}

@@ -11,6 +11,9 @@ declare global {
       };
       file?: Multer.File;
     }
+    interface Request {
+      user?: User
+    }
   }
 }
 
