@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Calendar, Download, Filter, FileText, CheckCircle2, DollarSign, Percent, Clock } from "lucide-react"
+import { Calendar, Download, Filter, FileText, CheckCircle2, DollarSign, Percent, Clock, Mail } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
+import { toast } from "react-toastify"
 
 interface Settlement {
   id: string
@@ -98,9 +99,52 @@ export default function SettlementsContent() {
     console.log("[v0] Marking all settlements as paid")
   }
 
-  const handleGenerateReport = () => {
-    console.log("[v0] Generating settlement report")
-  }
+  // const handleGenerateReport = () => {
+  //   console.log("[v0] Generating settlement report")
+  // }
+
+
+  const handleGenerateReport = async () => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/download`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settlements }),
+    }
+  )
+
+  const blob = await res.blob()
+  const url = window.URL.createObjectURL(blob)
+
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "settlements-report.xlsx"
+  a.click()
+
+  window.URL.revokeObjectURL(url)
+}
+const token = localStorage.getItem("accessToken")
+
+const handleSendEmail = async () => {
+  await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/email`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ REQUIRED
+
+       },
+      body: JSON.stringify({
+        settlements,
+        email: "metrocool@yopmail.com", // 🔥 use logged-in admin email
+      }),
+    }
+  )
+
+  toast.success("Settlement report sent to your email 📧")
+}
+
 
   return (
     <div className="space-y-6">
@@ -205,6 +249,11 @@ export default function SettlementsContent() {
               <FileText className="w-4 h-4 mr-2" />
               Generate Report
             </Button>
+            <Button variant="outline" onClick={handleSendEmail}>
+  <Mail className="w-4 h-4 mr-2" />
+  Send Email
+</Button>
+
             <Button className="bg-cyan-500 hover:bg-cyan-600" onClick={handleMarkAllPaid}>
               <CheckCircle2 className="w-4 h-4 mr-2" />
               Mark All Paid
