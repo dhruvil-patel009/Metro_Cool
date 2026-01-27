@@ -15,14 +15,24 @@ type Admin = {
   id: string
   first_name: string
   last_name: string
+  name:string
   email: string
   phone: string | null
   profile_photo: string | null
-  role: "admin"
+  role: string
   active: boolean
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+
+const getInitials = (
+  first?: string | null,
+  last?: string | null,
+) => {
+  const f = first?.trim()?.charAt(0) ?? ""
+  const l = last?.trim()?.charAt(0) ?? ""
+  return (f + l) || "A"
+}
 
 export default function SettingsContent() {
   const token =
@@ -36,12 +46,18 @@ export default function SettingsContent() {
   const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false)
   const [profileId, setProfileId] = useState<string>("")
 
-  const [firstName, setFirstName] = useState("Alex")
-  const [lastName, setLastName] = useState("Johnson")
-  const [email, setEmail] = useState("alex.admin@comfortAC.com")
-  const [roleDescription, setRoleDescription] = useState("Responsible for system configuration and user management.")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
+  const [roleDescription, setRoleDescription] = useState("System Administrator")
 
   const [admins, setAdmins] = useState<Admin[]>([])
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null)
+  const [phone, setPhone] = useState("")
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+
+
+
   
 
   const [notifications, setNotifications] = useState({
@@ -63,12 +79,27 @@ export default function SettingsContent() {
     setHasChanges(true)
   }
 
+    /* ================= HELPERS ================= */
 
-  /* ================= FETCH PROFILE ================= */
+  const isCurrentAdmin = (adminId: string) =>
+    adminId === profileId
+
+  const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 10)
+
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6)
+    return `${digits.slice(0, 3)} ${digits.slice(3)}`
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+}
+
+
+  /* ---------------- FETCH PROFILE ---------------- */
 
   const fetchProfile = async () => {
     const res = await fetch(`${API_URL}/admin/profile`, {
       headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store", // ✅ FIX
     })
 
     const data = await res.json()
@@ -77,51 +108,76 @@ export default function SettingsContent() {
     setFirstName(data.first_name ?? "")
     setLastName(data.last_name ?? "")
     setEmail(data.email ?? "")
-    setRoleDescription("System Administrator")
+    setPhone(formatPhone(data.phone ?? ""))
+    setProfilePhoto(data.profile_photo ?? null)
   }
 
-  /* ================= FETCH ADMINS ================= */
+  /* ---------------- FETCH ADMINS ---------------- */
 
   const fetchAdmins = async () => {
     const res = await fetch(`${API_URL}/admin/admins`, {
       headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store", // ✅ FIX
     })
 
     const json = await res.json()
 
-    // ✅ FIX: normalize response
-    const list = Array.isArray(json)
-      ? json
-      : Array.isArray(json.data)
-      ? json.data
-      : []
+    if (!Array.isArray(json.data)) {
+      setAdmins([])
+      return
+    }
 
-    setAdmins(list)
+    setAdmins(
+      json.data.map((a: any) => ({
+        id: a.id,
+        first_name: a.name?.split(" ")[0] ?? "",
+        last_name: a.name?.split(" ").slice(1).join(" ") ?? "",
+        email: a.email,
+        phone: a.phone ?? null,
+        profile_photo: a.avatar ?? null,
+        role: a.role,
+        active: a.status !== "inactive",
+      })),
+    )
   }
+
+
 
   /* ================= UPDATE PROFILE ================= */
 
-  const handleSaveChanges = async () => {
-    await fetch(`${API_URL}/admin/profile`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        first_name: firstName,
-        last_name: lastName,
-        email,
-      }),
-    })
+const handleSaveChanges = async () => {
 
-    setHasChanges(false)
-    alert("Profile updated successfully")
-  }
+
+  await fetch(`${API_URL}/admin/profile`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      phone: phone.replace(/\s/g, ""),
+      profile_photo: profilePhoto, // ✅ CORRECT
+    }),
+    
+  })
+ await fetchProfile() // ✅ REFRESH DATA
+    await fetchAdmins()
+  setHasChanges(false)
+  alert("Profile updated successfully")
+}
+
 
   /* ================= TOGGLE ADMIN STATUS ================= */
 
-  const toggleAdminStatus = async (adminId: string, current: boolean) => {
+  const toggleAdminStatus = async (
+    adminId: string,
+    current: boolean,
+  ) => {
+    if (isCurrentAdmin(adminId)) return
+
     await fetch(`${API_URL}/admin/admins/${adminId}/status`, {
       method: "PATCH",
       headers: {
@@ -133,10 +189,43 @@ export default function SettingsContent() {
 
     setAdmins((prev) =>
       prev.map((a) =>
-        a.id === adminId ? { ...a, active: !current } : a
-      )
+        a.id === adminId
+          ? { ...a, active: !current }
+          : a,
+      ),
     )
   }
+
+  /* ================= DELETE ADMIN ================= */
+
+  const deleteAdmin = async (adminId: string) => {
+    if (isCurrentAdmin(adminId)) return
+
+    if (!confirm("Are you sure you want to remove this admin?"))
+      return
+
+    await fetch(`${API_URL}/admin/admins/${adminId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    setAdmins((prev) =>
+      prev.filter((a) => a.id !== adminId),
+    )
+  }
+
+const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  setPhotoFile(file) // ✅ SAVE FILE
+  setProfilePhoto(URL.createObjectURL(file)) // preview
+  setHasChanges(true)
+}
+
+
 
   /* ================= EFFECT ================= */
 
@@ -222,15 +311,35 @@ export default function SettingsContent() {
               <div className="flex gap-6">
                 <div className="flex-shrink-0">
                   <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl font-semibold">
-                      {firstName[0]}
-                      {lastName[0]}
-                    </div>
-                    <button className="absolute bottom-0 right-0 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-full shadow-lg transition-colors">
-                      <Camera className="w-4 h-4" />
-                    </button>
+<div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br  flex items-center justify-center text-white text-2xl font-semibold">
+  {profilePhoto ? (
+    <img
+      src={profilePhoto}
+      alt="Profile"
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    getInitials(firstName, lastName)
+  )}
+</div>
+
+<input
+  type="file"
+  accept="image/*"
+  id="profilePhotoInput"
+  className="hidden"
+  onChange={handleProfilePhotoChange}
+/>
+                    <button
+  onClick={() =>
+    document.getElementById("profilePhotoInput")?.click()
+  }
+  className="absolute bottom-0 right-0 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-full shadow-lg transition-colors"
+>
+  <Camera className="w-4 h-4" />
+</button>
+
                   </div>
-                  <button className="text-cyan-500 text-sm font-medium mt-2 hover:text-cyan-600">Change Photo</button>
                 </div>
 
                 <div className="flex-1 space-y-4">
@@ -259,7 +368,23 @@ export default function SettingsContent() {
                     </div>
                   </div>
 
-                  <div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Phone Number
+                      </label>
+                      <Input
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(formatPhone(e.target.value))
+                          setHasChanges(true)
+                        }}
+                        placeholder="954 458 4785"
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -272,6 +397,7 @@ export default function SettingsContent() {
                         }}
                         className="pl-10 w-full"
                       />
+                    </div>
                     </div>
                   </div>
 
@@ -314,96 +440,119 @@ export default function SettingsContent() {
                         Administrator
                       </th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Role & Permissions
+                        Role 
+                      </th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Phone 
                       </th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Status
+                      </th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Enable
                       </th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {admins.map((admin) => (
-                      <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold ${admin.id === 1 ? "bg-amber-500" : admin.id === 2 ? "bg-blue-500" : "bg-orange-500"
-                                }`}
-                            >
-                              {admin.avatar}
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{admin.name}</div>
-                              <div className="text-sm text-gray-500">{admin.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`inline-block w-1.5 h-1.5 rounded-full ${admin.id === 1 ? "bg-purple-500" : admin.id === 2 ? "bg-blue-500" : "bg-orange-500"
-                                  }`}
-                              ></span>
-                              <span
-                                className={`font-medium ${admin.id === 1
-                                    ? "text-purple-600"
-                                    : admin.id === 2
-                                      ? "text-blue-600"
-                                      : "text-orange-600"
-                                  }`}
-                              >
-                                {admin.role}
-                              </span>
-                            </div>
-                            <div className="text-sm text-gray-500 mt-0.5">{admin.permissions}</div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          {admin.isCurrent ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                              Current User
-                            </span>
-                          ) : (
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${admin.status ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-600"
-                                }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${admin.status ? "bg-green-500" : "bg-gray-400"}`}
-                              ></span>
-                              {admin.status ? "Active" : "Inactive"}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-2">
-                            {!admin.isCurrent && (
-                              <Switch checked={admin.status} onCheckedChange={() => toggleAdminStatus(admin.id)} className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200"
-                              />
-                            )}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                                  <MoreVertical className="w-5 h-5 text-gray-400" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem>View Details</DropdownMenuItem>
-                                {!admin.isCurrent && (
-                                  <DropdownMenuItem className="text-red-600">Remove</DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                 <tbody className="divide-y divide-gray-100">
+  {admins.map((admin) => (
+    <tr key={admin.id} className="hover:bg-gray-50">
+      {/* ADMIN */}
+      <td className="py-4 px-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-white font-semibold">
+  {admin.profile_photo ? (
+    <img
+      src={admin.profile_photo}
+      alt={admin.name}
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    getInitials(admin.first_name, admin.last_name)
+  )}
+</div>
+
+          <div>
+            <div className="font-medium text-gray-900">
+              {admin.first_name} {admin.last_name}
+            </div>
+            <div className="text-sm text-gray-500">
+              {admin.email}
+            </div>
+          </div>
+        </div>
+      </td>
+
+      {/* ROLE */}
+      <td className="py-4 px-4">
+        <span className="font-medium text-cyan-600 capitalize">
+          {admin.role}
+        </span>
+      </td>
+      <td className="py-4 px-4">
+        <span className="font-medium text-black capitalize">
+          {admin.phone}
+        </span>
+      </td>
+
+      {/* STATUS */}
+      <td className="py-4 px-4">
+        <span
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+            admin.active
+              ? "bg-green-50 text-green-700"
+              : "bg-gray-100 text-red-600"
+          }`}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              admin.active ? "bg-green-500" : "bg-red-400"
+            }`}
+          />
+          {admin.active ? "Active" : "Inactive"}
+        </span>
+      </td>
+
+      {/* ACTIONS */}
+      <td className="py-4 px-4">
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={admin.active}
+            disabled={admin.id === profileId}
+            onCheckedChange={() =>
+              toggleAdminStatus(admin.id, admin.active)
+            }
+          />
+          </div>
+</td>
+
+<td className="py-4 px-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1 hover:bg-gray-100 rounded">
+                <MoreVertical className="w-5 h-5 text-gray-400" />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Edit</DropdownMenuItem>
+              {/* <DropdownMenuItem>View Details</DropdownMenuItem> */}
+
+              {admin.id !== profileId && (
+                <DropdownMenuItem className="text-red-600" onClick={() => deleteAdmin(admin.id)}>
+                  Remove
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        
+      </td>
+    </tr>
+  ))}
+</tbody>
+
                 </table>
               </div>
             </section>
@@ -464,7 +613,7 @@ export default function SettingsContent() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-4">
+                {/* <div className="flex items-center justify-between py-4">
                   <div>
                     <h3 className="font-medium text-gray-900">System Errors</h3>
                     <p className="text-sm text-gray-500 mt-0.5">
@@ -480,7 +629,7 @@ export default function SettingsContent() {
                     className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200"
 
                   />
-                </div>
+                </div> */}
               </div>
             </section>
           </div>

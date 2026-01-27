@@ -1,283 +1,221 @@
 "use client"
 
 import { useState } from "react"
-import { X, User, Mail, Phone, Shield, Eye, EyeOff, Sparkles, CheckCircle2 } from "lucide-react"
+import { X, User, Mail, Phone, Camera } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 
-interface AddAdminModalProps {
+interface Props {
   isOpen: boolean
   onClose: () => void
   onAdd: (admin: any) => void
 }
 
-export default function AddAdminModal({ isOpen, onClose, onAdd }: AddAdminModalProps) {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    role: "",
-    password: "",
-    confirmPassword: "",
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+
+/* ---------------- PHONE FORMATTER ---------------- */
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 10)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+}
+
+/* ---------------- FILE → BASE64 ---------------- */
+const toBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
   })
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+
+export default function AddAdminModal({ isOpen, onClose, onAdd }: Props) {
+  const [loading, setLoading] = useState(false)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+
+  const [form, setForm] = useState({
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    phone: "",
+    email: "",
+  })
 
   if (!isOpen) return null
 
-  const generatePassword = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
-    let password = ""
-    for (let i = 0; i < 16; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    setFormData({ ...formData, password, confirmPassword: password })
+  /* ---------------- IMAGE HANDLER ---------------- */
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
   }
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required"
+  /* ---------------- SUBMIT ---------------- */
+  const handleSubmit = async () => {
+    if (!form.first_name || !form.last_name || !form.email) {
+      alert("Please fill all required fields")
+      return
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid"
-    }
+    try {
+      setLoading(true)
 
-    if (!formData.role) {
-      newErrors.role = "Role is required"
-    }
+      let profile_photo_base64: string | null = null
 
-    if (!formData.password) {
-      newErrors.password = "Password is required"
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters"
-    }
+      if (photoFile) {
+        profile_photo_base64 = await toBase64(photoFile)
+      }
 
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match"
-    }
+      const token = localStorage.getItem("accessToken")
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+      const res = await fetch(
+        `${API_URL}/admin/create`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, },
+          body: JSON.stringify({
+            first_name: form.first_name,
+            middle_name: form.middle_name,
+            last_name: form.last_name,
+            email: form.email,
+            phone: form.phone.replace(/\s/g, ""),
+            profile_photo_base64,
+          }),
+        },
+      )
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      const nameParts = formData.fullName.trim().split(" ")
-      const firstName = nameParts[0] || ""
-      const lastName = nameParts.slice(1).join(" ") || ""
-      const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase()
+      if (!res.ok) throw new Error("Create admin failed")
 
-      onAdd({
-        id: Date.now(),
-        name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        avatar: initials,
-        role: formData.role,
-        permissions: getRolePermissions(formData.role),
-        status: true,
-        isCurrent: false,
-      })
-
-      setFormData({
-        fullName: "",
-        email: "",
-        phone: "",
-        role: "",
-        password: "",
-        confirmPassword: "",
-      })
+      const createdAdmin = await res.json()
+      onAdd(createdAdmin)
       onClose()
+    } catch (err) {
+      console.error(err)
+      alert("Failed to create admin")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const getRolePermissions = (role: string) => {
-    switch (role) {
-      case "Super Admin":
-        return "Full system access"
-      case "Operations Manager":
-        return "Technicians, Bookings, Reports"
-      case "Support Agent":
-        return "View-only access"
-      case "Finance Manager":
-        return "Settlements, Reports, Users"
-      default:
-        return "Limited access"
-    }
-  }
-
+  /* ---------------- UI ---------------- */
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 z-50 animate-in fade-in duration-200" onClick={onClose} />
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/40 z-50"
+        onClick={onClose}
+      />
 
       {/* Modal */}
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg animate-in zoom-in-95 fade-in duration-200">
-        <div className="bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl">
           {/* Header */}
-          <div className="flex items-start justify-between p-6 border-b border-gray-200">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Add New Administrator</h2>
-              <p className="text-sm text-gray-500 mt-1">Create a new admin account and assign system permissions.</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
-            >
-              <X className="w-5 h-5" />
+          <div className="flex items-center justify-between p-6 border-b">
+            <h2 className="text-xl font-semibold">Add New Administrator</h2>
+            <button onClick={onClose}>
+              <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
 
-          {/* Form */}
+          {/* Content */}
           <div className="p-6 space-y-5">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="e.g. Jordan Smith"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className={`pl-10 ${errors.fullName ? "border-red-500" : ""}`}
+            {/* Avatar */}
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-8 h-8 text-gray-400" />
+                )}
+              </div>
+
+              <label className="cursor-pointer inline-flex items-center gap-2 text-sm text-cyan-600 font-medium">
+                <Camera className="w-4 h-4" />
+                Upload Photo
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleImageChange}
                 />
-              </div>
-              {errors.fullName && <p className="text-sm text-red-600 mt-1">{errors.fullName}</p>}
+              </label>
             </div>
 
-            {/* Email and Phone */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    type="email"
-                    placeholder="admin@comfortAC.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className={`pl-10 ${errors.email ? "border-red-500" : ""}`}
-                  />
-                </div>
-                {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number <span className="text-gray-400 text-xs">(Optional)</span>
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    type="tel"
-                    placeholder="+1 (555) 123-4567"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
+            {/* Name */}
+            <div className="grid grid-cols-3 gap-3">
+              <Input
+                placeholder="First Name *"
+                value={form.first_name}
+                onChange={(e) =>
+                  setForm({ ...form, first_name: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Middle"
+                value={form.middle_name}
+                onChange={(e) =>
+                  setForm({ ...form, middle_name: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Last Name *"
+                value={form.last_name}
+                onChange={(e) =>
+                  setForm({ ...form, last_name: e.target.value })
+                }
+              />
             </div>
 
-            {/* Role & Permissions */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Role & Permissions</label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                <SelectTrigger className={errors.role ? "border-red-500" : ""}>
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-gray-400" />
-                    <SelectValue placeholder="Select a role..." />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Super Admin">Super Admin</SelectItem>
-                  <SelectItem value="Operations Manager">Operations Manager</SelectItem>
-                  <SelectItem value="Finance Manager">Finance Manager</SelectItem>
-                  <SelectItem value="Support Agent">Support Agent</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.role && <p className="text-sm text-red-600 mt-1">{errors.role}</p>}
-              <p className="text-xs text-gray-500 mt-2">
-                Roles determine which sections of the admin panel are accessible.
-              </p>
+            {/* Email */}
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="email"
+                placeholder="Email Address *"
+                className="pl-10"
+                value={form.email}
+                onChange={(e) =>
+                  setForm({ ...form, email: e.target.value })
+                }
+              />
             </div>
 
-            {/* Account Security */}
-            <div className="border-t border-gray-200 pt-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-gray-900">Account Security</h3>
-                <button
-                  type="button"
-                  onClick={generatePassword}
-                  className="flex items-center gap-1.5 text-sm font-medium text-cyan-600 hover:text-cyan-700 transition-colors"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Generate Strong Password
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className={errors.password ? "border-red-500 pr-10" : "pr-10"}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-                  <div className="relative">
-                    <Input
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && <p className="text-sm text-red-600 mt-1">{errors.confirmPassword}</p>}
-                </div>
-              </div>
+            {/* Phone */}
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="123 478 5478"
+                className="pl-10"
+                value={form.phone}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    phone: formatPhone(e.target.value),
+                  })
+                }
+              />
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
-            <Button variant="outline" onClick={onClose} className="px-6 bg-transparent">
+          <div className="p-6 border-t flex justify-end gap-3 bg-gray-50">
+            <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="bg-cyan-500 hover:bg-cyan-600 text-white px-6">
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Add Admin
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="bg-cyan-500 hover:bg-cyan-600 text-white"
+            >
+              {loading ? "Creating..." : "Create Admin"}
             </Button>
           </div>
         </div>

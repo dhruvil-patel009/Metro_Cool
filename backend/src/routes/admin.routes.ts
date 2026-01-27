@@ -177,5 +177,5 @@ router.put("/profile", protect,
 
 router.get("/admins",protect,
   authorize("admin"), getAdmins)
-router.post("/admins",protect,
+router.post("/create",protect,
   authorize("admin"), createAdmin)

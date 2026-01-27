@@ -419,8 +419,21 @@ export const updateAdminProfile = async (req: Request, res: Response) => {
 
     if (error) throw error
 
-    res.json({ success: true })
-  } catch (err) {
+const { data: updatedProfile } = await supabase
+  .from("profiles")
+  .select(`
+    id,
+    first_name,
+    last_name,
+    phone,
+    email,
+    profile_photo,
+    role
+  `)
+  .eq("id", userId)
+  .single()
+
+res.status(200).json(updatedProfile)  } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Profile update failed" })
   }
@@ -457,6 +470,7 @@ export const getAdmins = async (req: Request, res: Response) => {
       name: `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim(),
       email: a.email,
       phone: a.phone,
+      role: a.role,
       avatar: a.profile_photo,
       status: a.id === currentUserId ? "current" : "active",
       isCurrent: a.id === currentUserId,
@@ -469,31 +483,55 @@ export const getAdmins = async (req: Request, res: Response) => {
   }
 }
 
-
 export const createAdmin = async (req: Request, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" })
+    }
+
     const {
-      id, // auth.users id (already created)
       first_name,
+      middle_name,
       last_name,
       phone,
       email,
+      profile_photo,
     } = req.body
 
-    const { error } = await supabase.from("profiles").insert({
-      id,
-      role: "admin",
-      first_name,
-      last_name,
-      phone,
-      email,
-    })
+    // 1️⃣ Create auth user
+    const { data: authData, error: authError } =
+      await supabase.auth.admin.createUser({
+        email,
+        email_confirm: true,
+      })
+
+    if (authError || !authData.user) throw authError
+
+    const userId = authData.user.id
+
+    // 2️⃣ Insert profile with SAME id
+    const { data, error } = await supabase
+      .from("profiles")
+      .insert({
+        id: userId, // ✅ THIS FIXES YOUR ERROR
+        role: "admin",
+        first_name,
+        middle_name,
+        last_name,
+        phone,
+        email,
+        profile_photo,
+      })
+      .select()
+      .single()
 
     if (error) throw error
 
-    res.status(201).json({ success: true })
+    res.status(201).json(data)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Failed to create admin" })
   }
 }
+
+
