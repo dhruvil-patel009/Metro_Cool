@@ -1,8 +1,10 @@
 import ExcelJS from "exceljs"
 import nodemailer from "nodemailer"
 import { Request, Response } from "express"
+import fs from "fs"
+import path from "path"
 
-/* ---------------- CREATE EXCEL ---------------- */
+/* ================= CREATE EXCEL ================= */
 const generateSettlementExcel = async (settlements: any[]) => {
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet("Settlements")
@@ -36,10 +38,34 @@ const generateSettlementExcel = async (settlements: any[]) => {
   return workbook
 }
 
-/* ---------------- DOWNLOAD EXCEL ---------------- */
-export const downloadSettlementReport = async (req: Request, res: Response) => {
+/* ================= HTML TEMPLATE ================= */
+const getEmailTemplate = (data: {
+  date: string
+  totalBookings: number
+  totalAmount: number
+}) => {
+  const templatePath = path.join(
+    process.cwd(),
+    "templates",
+    "settlement-report.html"
+  )
+
+  let html = fs.readFileSync(templatePath, "utf-8")
+
+  html = html.replace("{{date}}", data.date)
+  html = html.replace("{{totalBookings}}", String(data.totalBookings))
+  html = html.replace("{{totalAmount}}", String(data.totalAmount))
+
+  return html
+}
+
+/* ================= DOWNLOAD EXCEL ================= */
+export const downloadSettlementReport = async (
+  req: Request,
+  res: Response
+) => {
   try {
-    const settlements = req.body.settlements
+    const { settlements } = req.body
 
     const workbook = await generateSettlementExcel(settlements)
 
@@ -54,19 +80,34 @@ export const downloadSettlementReport = async (req: Request, res: Response) => {
 
     await workbook.xlsx.write(res)
     res.end()
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: "Failed to generate report" })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "Failed to download settlement report" })
   }
 }
 
-/* ---------------- EMAIL EXCEL ---------------- */
-export const emailSettlementReport = async (req: Request, res: Response) => {
+/* ================= EMAIL SETTLEMENT ================= */
+export const emailSettlementReport = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { settlements, email } = req.body
 
     const workbook = await generateSettlementExcel(settlements)
-    const buffer = await workbook.xlsx.writeBuffer()
+    const arrayBuffer = await workbook.xlsx.writeBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    const totalAmount = settlements.reduce(
+      (sum: number, s: any) => sum + s.payable,
+      0
+    )
+
+    const html = getEmailTemplate({
+      date: new Date().toLocaleDateString(),
+      totalBookings: settlements.length,
+      totalAmount,
+    })
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -76,22 +117,27 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
       },
     })
 
-    transporter.sendMail({
-          from: `"Metro Cool" <${process.env.MAIL_USER}>`,
-          to: email,
-          subject: "Daily Settlement Report",
-          text: "Please find attached today’s settlement report.",
-          attachments: [
-              {
-                  filename: "settlements-report.xlsx",
-                  content: buffer,
-              },
-          ],
-      })
+    await transporter.sendMail({
+      from: `"Metro Cool" <${process.env.MAIL_USER}>`,
+      to: email,
+      subject: "Daily Settlement Report",
+      html,
+attachments: [
+  {
+    filename: "settlements-report.xlsx", // ✅ correct filename
+    content: buffer,                     // ✅ excel buffer
+    contentType:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  },
+],
+    })
 
-    res.json({ success: true })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: "Failed to send email" })
+    res.json({
+      success: true,
+      message: "Settlement report sent successfully",
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "Failed to send settlement report" })
   }
 }

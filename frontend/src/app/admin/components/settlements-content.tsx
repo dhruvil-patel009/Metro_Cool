@@ -127,22 +127,35 @@ export default function SettlementsContent() {
 const token = localStorage.getItem("accessToken")
 
 const handleSendEmail = async () => {
-  await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/email`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // ✅ REQUIRED
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/email`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ REQUIRED
+        },
+        body: JSON.stringify({
+          settlements,
+          email: "metrocool@yopmail.com",
+        }),
+      }
+    )
 
-       },
-      body: JSON.stringify({
-        settlements,
-        email: "metrocool@yopmail.com", // 🔥 use logged-in admin email
-      }),
+    // ❌ API failed (4xx / 5xx)
+    if (!res.ok) {
+      const errorData = await res.json()
+      throw new Error(errorData?.message || "Failed to send email")
     }
-  )
 
-  toast.success("Settlement report sent to your email 📧")
+    // ✅ Only show success if API actually succeeds
+    toast.success("Settlement report sent to your email 📧")
+
+  } catch (error: any) {
+    console.error("Send email error:", error)
+    toast.error(error.message || "Something went wrong ❌")
+  }
 }
 
 
