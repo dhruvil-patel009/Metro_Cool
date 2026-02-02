@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Star, CheckCircle } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "react-toastify"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
@@ -113,18 +113,15 @@ export default function FeedbackContent() {
         throw new Error("Failed to submit feedback")
       }
 
-      toast.success("Thank you for your feedback! 🎉", {
-        description: "Your feedback helps us improve our service.",
-        duration: 2000,
-      })
+      toast("Thank you for your feedback! 🎉improve Your feedback helps usour service.")
 
+ 
       setTimeout(() => {
         router.push(`/user/bookings/completion?id=${bookingId}`)
       }, 1000)
     } catch (err) {
-      toast.error("Something went wrong", {
-        description: "Please try again later.",
-      })
+      toast("❌ Something went wrong Please try again later.")
+
     } finally {
       setSubmitting(false)
     }

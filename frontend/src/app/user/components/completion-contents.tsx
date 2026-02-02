@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { ArrowLeft, Star, Download, Lock, Copy, Check } from "lucide-react"
 import Link from "next/link"
-import { toast } from "sonner"
+import { toast } from "react-toastify"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
@@ -43,9 +43,7 @@ export default function CompletionContent() {
     // Simulate payment processing
     setTimeout(() => {
       setPaymentConfirmed(true)
-      toast.success("Payment Successful!", {
-        description: `Transaction ID: #TXN-882920`,
-      })
+      toast(`🎉 Payment Successfully! 🎉 Transaction ID: #TXN-882920`)
     }, 1000)
   }
 

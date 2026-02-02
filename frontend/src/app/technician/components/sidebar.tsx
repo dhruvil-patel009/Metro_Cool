@@ -17,7 +17,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/app/lib/utils"
 import { Button } from "@/app/components/ui/button"
 import { useSidebar } from "./sidebar-content"
-import { toast } from "sonner"
+import { toast } from "react-toastify"
 import { useAuthStore } from "@/store/auth.store"
 
 /* -------------------- NAV CONFIG -------------------- */

@@ -15,7 +15,7 @@ import {
 } from "@/app/components/ui/select";
 import { updateService } from "@/app/lib/services.api";
 import { uploadServiceImage } from "@/app/lib/uploadImage";
-import { toast } from "sonner";
+import { toast } from "react-toastify"
 
 
 

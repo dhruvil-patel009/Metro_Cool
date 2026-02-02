@@ -7,7 +7,7 @@ import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Card } from "@/app/components/ui/card"
 import { Wallet, BadgeCheck, BarChart3, User, CreditCard, Phone, Mail, Tag, Lock } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
 import SuccessModal from "./successModel";
 import Link from "next/link";

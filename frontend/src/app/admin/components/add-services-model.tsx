@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/app/components/ui/switch"
 import { Textarea } from "@/app/components/ui/textarea"
 import { createService } from "@/app/lib/services.api";
-import { toast } from "sonner";
+import { toast } from "react-toastify"
 
 
 

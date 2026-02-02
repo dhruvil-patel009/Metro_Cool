@@ -4,7 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "react-toastify"
 
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";

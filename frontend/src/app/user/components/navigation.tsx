@@ -6,7 +6,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { toast } from "react-toastify"
 import Image from "next/image"
 import { useAuthStore } from "@/store/auth.store"
 import logo from '../../../../public/assets/logo.ico'

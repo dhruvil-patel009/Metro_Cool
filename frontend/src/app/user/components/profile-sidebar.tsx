@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { User, FileText, MapPin, CreditCard, Bell, LogOut } from "lucide-react"
 import { cn } from "@/app/lib/utils"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "react-toastify"
 import { useAuthStore } from "@/store/auth.store"
 
 /* ================= API CONFIG ================= */

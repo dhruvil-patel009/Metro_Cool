@@ -5,7 +5,7 @@ import { ArrowLeft, Phone, Edit3, Info, Shield } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
-import { toast } from "sonner"
+import { toast } from "react-toastify"
 import OtpInput from "react-otp-input";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -91,7 +91,6 @@ localStorage.setItem("accessToken", data.session.accessToken);
 
 
 
-      toast.success("Login successful");
 
       /**
        * ✅ ROLE-BASED REDIRECT
@@ -108,12 +107,12 @@ localStorage.setItem("accessToken", data.session.accessToken);
       // localStorage.setItem("accessToken", data.session.accessToken);
       // localStorage.setItem("refreshToken", data.session.refreshToken);
 
-      toast.success("Login successful");
+      toast("🎉 Login Successfully 🎊");
 
       // 🚦 Redirect by role
   
     } catch {
-      toast.error("Server error. Try again.");
+      toast ("❌ Server error. Try again.");
     } finally {
       setLoading(false);
     }

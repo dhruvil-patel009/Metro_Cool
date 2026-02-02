@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner";
+// import { Toaster } from "sonner";
 import AuthProvider from "@/providers/AuthProvider";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 
@@ -37,16 +37,8 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
         </AuthProvider>
 
-        <Toaster position="top-right" richColors closeButton />
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          pauseOnHover
-          theme="light"
-        />
+        {/* <Toaster position="top-right" richColors closeButton /> */}
+        <ToastContainer />
       </body>
     </html>
   );

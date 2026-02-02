@@ -11,7 +11,7 @@ import {
 } from "@/app/components/ui/dropdown-menu"
 import Image from "next/image"
 import { authHeaders } from "../../lib/authHeader"
-import { toast } from "sonner";
+import { toast } from "react-toastify"
 import { Skeleton } from "@/app/components/ui/skeleton"
 import { useRouter } from "next/navigation"
 

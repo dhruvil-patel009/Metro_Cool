@@ -14,7 +14,7 @@ import {
   Copy,
   Shield,
 } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "react-toastify"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
