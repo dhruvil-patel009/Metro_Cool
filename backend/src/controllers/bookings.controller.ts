@@ -36,6 +36,37 @@ export const getBookedDates = async (req: Request, res: Response) => {
 
 }
 
+export const getAllBookings = async (req: any, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(`
+        id,
+        booking_date,
+        time_slot,
+        full_name,
+        phone,
+        address,
+        status,
+        issues
+      `)
+      .order("created_at", { ascending: false })
+
+    if (error) throw error
+
+    res.json({
+      success: true,
+      bookings: data,
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
 
 export const createBooking = async (req: any, res: Response) => {
   try {
@@ -183,6 +214,54 @@ if (profileError || !profile) {
       full_name: `${profile.first_name} ${profile.last_name}`,
       phone: profile.phone,
     },
+      },
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const gettechnicianBookingById = async (req: any, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    const bookingId = req.params.id
+
+    // ✅ REMOVE user_id filter
+    const { data: booking, error } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("id", bookingId)
+      .single()
+
+    if (error || !booking) {
+      return res.status(404).json({ message: "Booking Not Found" })
+    }
+
+    // fetch customer profile
+   const {
+  data: profile,
+  error: profileError,
+} = await supabase
+  .from("profiles")
+  .select("phone, first_name, last_name")
+  .eq("id", booking.user_id)
+  .single()
+
+    if (profileError || !profile) {
+      return res.status(404).json({ message: "User profile not found" })
+    }
+
+    res.json({
+      success: true,
+      booking: {
+        ...booking,
+        user: {
+          full_name: `${profile.first_name} ${profile.last_name}`,
+          phone: profile.phone,
+        },
       },
     })
   } catch (err: any) {

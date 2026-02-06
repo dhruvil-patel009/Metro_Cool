@@ -1,5 +1,7 @@
 // import type { NextConfig } from "next";
 
+import { hostname } from "os";
+
 // const nextConfig: NextConfig = {
 //   /* config options here */
 // };
@@ -22,6 +24,10 @@ const nextConfig = {
         hostname: "img.freepik.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "maps.googleapis.com",
+      }
     ],
   },
 };
