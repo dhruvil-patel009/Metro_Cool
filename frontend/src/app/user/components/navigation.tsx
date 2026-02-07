@@ -15,6 +15,8 @@ import logo from '../../../../public/assets/logo.ico'
 export function Navigation() {
   const pathname = usePathname()
     const [showProfileDropdown, setShowProfileDropdown] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
 
 const router = useRouter()
   const logout = useAuthStore((s) => s.logout);
@@ -64,6 +66,45 @@ const handleLogout = () => {
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
+      {/* MOBILE MENU */}
+{/* MOBILE SLIDER MENU */}
+<div
+  className={cn(
+    "md:hidden fixed left-0 right-0 top-20 z-40 bg-white border-t border-gray-100 shadow-lg transform transition-all duration-300 ease-in-out",
+    isMobileMenuOpen
+      ? "translate-y-0 opacity-100"
+      : "-translate-y-full opacity-0 pointer-events-none"
+  )}
+>
+  <div className="flex flex-col px-4 py-5 space-y-3">
+    {navItems.map((item) => {
+      const isActive = pathname === item.href
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          onClick={() => setIsMobileMenuOpen(false)}
+          className={cn(
+            "text-sm font-medium px-3 py-3 rounded-lg transition-colors",
+            isActive
+              ? "bg-blue-50 text-blue-600"
+              : "text-gray-700 hover:bg-gray-50"
+          )}
+        >
+          {item.label}
+        </Link>
+      )
+    })}
+
+    <Link href="/user/services" onClick={() => setIsMobileMenuOpen(false)}>
+      <button className="w-full bg-blue-600 text-white py-3 rounded-lg text-sm font-semibold hover:bg-blue-700">
+        Book Service
+      </button>
+    </Link>
+  </div>
+</div>
+
+
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex items-center gap-2">
@@ -99,7 +140,7 @@ const handleLogout = () => {
 
           <div className="flex items-center gap-3">
 <Link href="/user/services">
-            <button className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200 cursor-pointer">
+            <button className="bg-blue-600 text-white sm:px-6 px-3 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200 cursor-pointer">
               Book Service
             </button>
 </Link>
@@ -147,9 +188,13 @@ const handleLogout = () => {
               )}
             </div>
 
-            <button className="md:hidden">
-              <Menu className="w-6 h-6 text-gray-600" />
-            </button>
+            <button
+  className="md:hidden"
+  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+>
+  <Menu className="w-6 h-6 text-gray-600" />
+</button>
+
           </div>
         </div>
       </div>

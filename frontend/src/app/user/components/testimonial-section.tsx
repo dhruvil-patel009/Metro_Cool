@@ -19,25 +19,30 @@ export function TestimonialsSection() {
             style={{ transform: `translateX(-${current * 100}%)` }}
           >
             {testimonials.map((item, index) => (
-              <div key={index} className="min-w-full md:min-w-[50%] px-2">
-                <TestimonialCard {...item} />
-              </div>
-            ))}
+  <div
+    key={index}
+    className="w-full md:w-1/2 shrink-0 px-2"
+  >
+    <TestimonialCard {...item} />
+  </div>
+))}
+
           </div>
         </div>
 
         {/* Dotted Indicators */}
         <div className="flex justify-center gap-3 mt-8">
-          {Array.from({ length: Math.ceil(testimonials.length / 2) }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i * 2)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                current === i * 2 ? "bg-blue-600 scale-125" : "bg-gray-400/60"
-              }`}
-            />
-          ))}
-        </div>
+  {Array.from({ length: Math.ceil(testimonials.length / 2) }).map((_, i) => (
+    <button
+      key={i}
+      onClick={() => setCurrent(i)}
+      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+        current === i ? "bg-blue-600 scale-125" : "bg-gray-400/60"
+      }`}
+    />
+  ))}
+</div>
+
       </div>
     </section>
   )

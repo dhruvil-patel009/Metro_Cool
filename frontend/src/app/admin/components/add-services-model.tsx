@@ -137,7 +137,7 @@ toast.error(
           </div>
 
           {/* Modal Body */}
-          <div className="max-h-[60vh] overflow-y-auto p-6">
+          <div className="max-h-[60vh] overflow-y-auto hide-scrollbar p-6">
             <div className="space-y-5">
               {/* Service Image Upload */}
               <div>
@@ -149,10 +149,10 @@ toast.error(
                   onClick={() => fileInputRef.current?.click()}
                   className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all ${
                     isDragging
-                      ? "border-cyan-500 bg-cyan-50"
+                      ? "border-blue-500 bg-blue-50"
                       : serviceImage
                         ? "border-gray-300 bg-gray-50"
-                        : "border-gray-300 bg-gray-50 hover:border-cyan-400 hover:bg-cyan-50/50"
+                        : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50"
                   }`}
                 >
                   {serviceImage ? (
@@ -174,8 +174,8 @@ toast.error(
                     </div>
                   ) : (
                     <>
-                      <Upload className="mb-3 h-10 w-10 text-cyan-500" />
-                      <p className="text-sm font-medium text-cyan-600">Click to upload or drag and drop</p>
+                      <Upload className="mb-3 h-10 w-10 text-blue-500" />
+                      <p className="text-sm font-medium text-blue-600">Click to upload or drag and drop</p>
                       <p className="mt-1 text-xs text-gray-500">SVG, PNG, JPG or GIF (max. 800x400px)</p>
                     </>
                   )}
@@ -197,7 +197,7 @@ toast.error(
                   placeholder="e.g. Annual AC Maintenance"
                   value={serviceName}
                   onChange={(e) => setServiceName(e.target.value)}
-                  className="h-11 border-gray-300 focus-visible:ring-cyan-500 bg-white text-black"
+                  className="h-11 border-gray-300 focus-visible:ring-blue-500 bg-white text-black"
                 />
               </div>
 
@@ -229,7 +229,7 @@ toast.error(
                         placeholder="0.00"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
-                        className="h-11 border-gray-300 pl-9 focus-visible:ring-cyan-500"
+                        className="h-11 border-gray-300 pl-9 focus-visible:ring-blue-500"
                       />
                     </div>
                     <Button
@@ -252,7 +252,7 @@ toast.error(
   value={description}
   onChange={(e) => setDescription(e.target.value)}
   rows={5}
-  className="resize-y border-gray-300 focus-visible:ring-cyan-500 bg-white text-black"
+  className="resize-y border-gray-300 focus-visible:ring-blue-500 bg-white text-black"
 />
               </div>
               {/* Short Description */}
@@ -264,7 +264,7 @@ toast.error(
   onChange={(e) => setShortDescription(e.target.value)}
   rows={3}
   maxLength={160}
-  className="resize-none border-gray-300 focus-visible:ring-cyan-500 bg-white text-black"
+  className="resize-none border-gray-300 focus-visible:ring-blue-500 bg-white text-black"
 />
 <p className="mt-1 text-xs text-gray-400">
   {shortdescription.length}/160 characters
@@ -283,7 +283,7 @@ toast.error(
     max="5"
     value={rating}
     onChange={(e) => setRating(e.target.value)}
-    className="h-11 border-gray-300 focus-visible:ring-cyan-500 bg-white text-black"
+    className="h-11 border-gray-300 focus-visible:ring-blue-500 bg-white text-black"
   />
 </div>
 
@@ -343,13 +343,13 @@ toast.error(
                   <p className="text-xs text-gray-500">Inactive services will be hidden from the catalog.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${isActive ? "text-cyan-600" : "text-gray-400"}`}>
+                  <span className={`text-sm font-medium ${isActive ? "text-blue-600" : "text-gray-400"}`}>
                     {isActive ? "Active" : "Inactive"}
                   </span>
                   <Switch
                     checked={isActive}
                     onCheckedChange={setIsActive}
-                    className="data-[state=checked]:bg-cyan-500 data-[state=unchecked]:bg-gray-400"
+                    className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-400"
                   />
                 </div>
               </div>
@@ -361,7 +361,7 @@ toast.error(
             <Button onClick={handleClose} variant="outline" className="h-10 border-gray-300 bg-transparent bg-white text-black">
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="h-10 bg-cyan-500 hover:bg-cyan-600">
+            <Button onClick={handleSubmit} className="h-10 bg-blue-500 hover:bg-blue-700">
               Create Service
             </Button>
           </div>

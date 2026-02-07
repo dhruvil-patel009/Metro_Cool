@@ -222,7 +222,7 @@ export function ServicesTable({
                     onCheckedChange={() =>
                       handleToggleEnable(service)
                     }
-                    className="data-[state=checked]:bg-cyan-500"
+                    className="data-[state=checked]:bg-blue-500"
                   />
                 </td>
 

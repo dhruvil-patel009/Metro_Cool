@@ -97,7 +97,7 @@ export function Sidebar() {
         {/* HEADER */}
         <div className="flex h-16 items-center justify-between border-b px-4 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-cyan-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-blue-500">
               <div className="h-5 w-5 rounded border-2 border-white" />
             </div>
             {isOpen && (
@@ -133,7 +133,7 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-cyan-50 text-cyan-600"
+                    ? "bg-blue-50 text-blue-600"
                     : "text-gray-700 hover:bg-gray-100"
                 )}
               >

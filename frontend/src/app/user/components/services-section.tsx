@@ -7,7 +7,7 @@ export function ServicesSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <p className="text-blue-600 text-xs font-bold uppercase tracking-[0.2em] mb-3">What We Do</p>
-          <h2 className="text-4xl font-bold">Our Professional Services</h2>
+          <h2 className="text-2xl sm:text-4xl font-bold">Our Professional Services</h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">

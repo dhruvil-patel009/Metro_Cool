@@ -250,7 +250,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         <div className="p-6 space-y-1">
           <button
             onClick={() => scrollToSection("profile")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${activeSection === "profile" ? "bg-cyan-50 text-cyan-600" : "text-gray-700 hover:bg-gray-50"
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${activeSection === "profile" ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
               }`}
           >
             <User className="w-5 h-5" />
@@ -259,7 +259,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
           <button
             onClick={() => scrollToSection("admin")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${activeSection === "admin" ? "bg-cyan-50 text-cyan-600" : "text-gray-700 hover:bg-gray-50"
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${activeSection === "admin" ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
               }`}
           >
             <Shield className="w-5 h-5" />
@@ -268,7 +268,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
           <button
             onClick={() => scrollToSection("notifications")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${activeSection === "notifications" ? "bg-cyan-50 text-cyan-600" : "text-gray-700 hover:bg-gray-50"
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${activeSection === "notifications" ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
               }`}
           >
             <Bell className="w-5 h-5" />
@@ -292,7 +292,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   Cancel
                 </Button>
               )}
-              <Button onClick={handleSaveChanges} className="bg-cyan-500 hover:bg-cyan-600 text-white">
+              <Button onClick={handleSaveChanges} className="bg-blue-500 hover:bg-blue-600 text-white">
                 Save Changes
               </Button>
             </div>
@@ -334,7 +334,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   onClick={() =>
     document.getElementById("profilePhotoInput")?.click()
   }
-  className="absolute bottom-0 right-0 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-full shadow-lg transition-colors"
+  className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full shadow-lg transition-colors"
 >
   <Camera className="w-4 h-4" />
 </button>
@@ -425,7 +425,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </div>
                 <Button
                   onClick={() => setIsAddAdminModalOpen(true)}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white"
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add New Admin
@@ -487,7 +487,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
       {/* ROLE */}
       <td className="py-4 px-4">
-        <span className="font-medium text-cyan-600 capitalize">
+        <span className="font-medium text-blue-600 capitalize">
           {admin.role}
         </span>
       </td>
@@ -576,7 +576,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                       setNotifications({ ...notifications, newTechnicianRegistration: checked })
                       setHasChanges(true)
                     }}
-                    className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200"
+                    className="data-[state=checked]:bg-blue-500     data-[state=unchecked]:bg-gray-200"
 
                   />
                 </div>
@@ -592,7 +592,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                       setNotifications({ ...notifications, newBookingCreated: checked })
                       setHasChanges(true)
                     }}
-                    className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200"
+                    className="data-[state=checked]:bg-blue-500     data-[state=unchecked]:bg-gray-200"
 
                   />
                 </div>
@@ -608,7 +608,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                       setNotifications({ ...notifications, settlementReports: checked })
                       setHasChanges(true)
                     }}
-                    className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200"
+                    className="data-[state=checked]:bg-blue-500     data-[state=unchecked]:bg-gray-200"
 
                   />
                 </div>
@@ -626,7 +626,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                       setNotifications({ ...notifications, systemErrors: checked })
                       setHasChanges(true)
                     }}
-                    className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200"
+                    className="data-[state=checked]:bg-blue-500     data-[state=unchecked]:bg-gray-200"
 
                   />
                 </div> */}

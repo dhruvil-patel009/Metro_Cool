@@ -11,7 +11,7 @@ export default function adminLayout({
 }) {
   return (
 <ProtectedRoute allow={["admin"]}>
-    <div className="h-screen bg-gray-100 overflow-hidden">
+    <div className="h-screen bg-gray-100 overflow-visible">
       <div className="flex h-full">
         {/* SIDEBAR */}
         <Sidebar />
@@ -22,7 +22,9 @@ export default function adminLayout({
           <Header />
 
           {/* CONTENT */}
-            {children}
+           <div className="flex-1 overflow-y-auto hide-scrollbar">
+    {children}
+  </div>
         </div>
       </div>
     </div>

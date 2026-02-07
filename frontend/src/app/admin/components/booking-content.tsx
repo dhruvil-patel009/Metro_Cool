@@ -189,7 +189,7 @@ const filteredBookings = bookings.filter((b) => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Bookings Management</h1>
             <p className="text-gray-600">Track appointments, manage technician schedules, and monitor payments.</p>
           </div>
-          {/* <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
+          {/* <Button className="bg-blue-500 hover:bg-blue-600 text-white">
             <Plus className="w-4 h-4 mr-2" />
             Create Booking
           </Button> */}
@@ -253,7 +253,7 @@ const filteredBookings = bookings.filter((b) => {
     bg-white
     text-gray-900
     border border-gray-200
-    focus:border-cyan-500
+    focus:border-blue-500
     focus:ring-0
     focus:outline-none
   "
@@ -265,7 +265,7 @@ const filteredBookings = bookings.filter((b) => {
               <Select value={dateFilter} onValueChange={setDateFilter}>
                 <SelectTrigger className="bg-white text-black
   border border-gray-200
-  focus:border-cyan-500
+  focus:border-blue-500
   focus:ring-0">
                   <SelectValue placeholder="Date: All time" />
                 </SelectTrigger>
@@ -282,7 +282,7 @@ const filteredBookings = bookings.filter((b) => {
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="bg-white text-black
   border border-gray-200
-  focus:border-cyan-500
+  focus:border-blue-500
   focus:ring-0 ">
                   <SelectValue placeholder="Status: Any" />
                 </SelectTrigger>
@@ -301,7 +301,7 @@ const filteredBookings = bookings.filter((b) => {
               <Select value={paymentFilter} onValueChange={setPaymentFilter}>
                 <SelectTrigger className="bg-white text-black
   border border-gray-200
-  focus:border-cyan-500
+  focus:border-blue-500
   focus:ring-0">
                   <SelectValue placeholder="Payment: All" />
                 </SelectTrigger>
@@ -440,7 +440,7 @@ const filteredBookings = bookings.filter((b) => {
         onClick={() => setPage(p)}
         className={
           p === page
-            ? "bg-cyan-500 text-white"
+            ? "bg-blue-500 text-white"
             : "bg-white text-gray-700"
         }
       >

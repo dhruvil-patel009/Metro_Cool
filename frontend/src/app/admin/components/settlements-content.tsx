@@ -185,8 +185,8 @@ const handleSendEmail = async () => {
                 +5% vs yesterday
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-cyan-600" />
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-blue-600" />
             </div>
           </div>
         </div>
@@ -198,8 +198,8 @@ const handleSendEmail = async () => {
               <p className="text-3xl font-bold text-gray-900">${totalPayable.toLocaleString()}</p>
               <p className="text-sm text-gray-500 mt-2">Ready for disbursement</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-cyan-600" />
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-blue-600" />
             </div>
           </div>
         </div>
@@ -211,8 +211,8 @@ const handleSendEmail = async () => {
               <p className="text-3xl font-bold text-gray-900">${commission.toLocaleString()}</p>
               <p className="text-sm text-gray-500 mt-2">Platform revenue</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-              <Percent className="w-5 h-5 text-cyan-600" />
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <Percent className="w-5 h-5 text-blue-600" />
             </div>
           </div>
         </div>
@@ -267,7 +267,7 @@ const handleSendEmail = async () => {
   Send Email
 </Button>
 
-            <Button className="bg-cyan-500 hover:bg-cyan-600" onClick={handleMarkAllPaid}>
+            <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleMarkAllPaid}>
               <CheckCircle2 className="w-4 h-4 mr-2" />
               Mark All Paid
             </Button>
@@ -327,7 +327,7 @@ const handleSendEmail = async () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-cyan-600">{settlement.bookingId}</span>
+                    <span className="text-sm font-medium text-blue-600">{settlement.bookingId}</span>
                   </td>
                   <td className="px-6 py-4">
                     <div>
@@ -360,7 +360,7 @@ const handleSendEmail = async () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Button variant="ghost" size="sm" className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50">
+                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                       {settlement.status === "Pending" ? "Mark Paid" : "View"}
                     </Button>
                   </td>
@@ -388,7 +388,7 @@ const handleSendEmail = async () => {
             <Button
               variant={currentPage === 1 ? "default" : "outline"}
               size="sm"
-              className={currentPage === 1 ? "bg-cyan-500 hover:bg-cyan-600" : ""}
+              className={currentPage === 1 ? "bg-blue-500 hover:bg-blue-600" : ""}
               onClick={() => setCurrentPage(1)}
             >
               1

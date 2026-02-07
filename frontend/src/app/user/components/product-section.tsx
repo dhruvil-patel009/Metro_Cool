@@ -9,7 +9,8 @@ export function ProductsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <h2 className="text-4xl font-bold mb-2">Featured Products</h2>
+            <h2 className="text-2xl md:text-4xl
+ font-bold mb-2">Featured Products</h2>
             <p className="text-gray-500">Genuine parts and top-rated appliances</p>
           </div>
           <Link href="#" className="text-blue-600 font-bold text-sm flex items-center gap-1">

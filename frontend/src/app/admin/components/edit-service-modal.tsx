@@ -99,7 +99,7 @@ const handleUpdate = async () => {
   /* ---------------- UI ---------------- */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-xl rounded-2xl bg-white shadow-xl">
+      <div className="relative w-full max-w-xl max-h-[90vh] rounded-2xl bg-white shadow-xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b p-6">
           <h2 className="text-xl font-semibold text-gray-900">
@@ -111,7 +111,7 @@ const handleUpdate = async () => {
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-6 space-y-4">
           {/* Image */}
           <label className="mb-2 block text-sm font-medium text-gray-700">Service Image</label>
           <div
@@ -125,7 +125,7 @@ const handleUpdate = async () => {
               />
             ) : (
               <>
-                <Upload className="mx-auto text-cyan-500" />
+                <Upload className="mx-auto text-blue-500" />
                 <p className="text-sm text-gray-500">
                   Click to upload image
                 </p>
@@ -187,13 +187,13 @@ const handleUpdate = async () => {
                   <p className="text-xs text-gray-500">Inactive services will be hidden from the catalog.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${isActive ? "text-cyan-600" : "text-red-400"}`}>
+                  <span className={`text-sm font-medium ${isActive ? "text-blue-600" : "text-red-400"}`}>
                     {isActive ? "Active" : "Inactive"}
                   </span>
                   <Switch
                     checked={isActive}
                     onCheckedChange={setIsActive}
-                    className="data-[state=checked]:bg-cyan-500 data-[state=unchecked]:bg-gray-400"
+                    className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-400"
                   />
                 </div>
               </div>

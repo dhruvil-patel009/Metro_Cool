@@ -6,13 +6,13 @@ import { Avatar, AvatarFallback } from "@/app/components/ui/avatar"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 const bookings = [
-  { id: "#BK-001", userName: "John Doe", initials: "JD", service: "AC Repair", technician: "Mike T.", status: "In Progress", statusColor: "bg-cyan-100 text-cyan-700", payment: "Paid", paymentColor: "text-green-600" },
+  { id: "#BK-001", userName: "John Doe", initials: "JD", service: "AC Repair", technician: "Mike T.", status: "In Progress", statusColor: "bg-blue-100 text-blue-700", payment: "Paid", paymentColor: "text-green-600" },
   { id: "#BK-002", userName: "Sarah Smith", initials: "SS", service: "Duct Cleaning", technician: "Unassigned", technicianColor: "text-gray-400 italic", status: "Pending", statusColor: "bg-orange-100 text-orange-700", payment: "Unpaid", paymentColor: "text-orange-600" },
   { id: "#BK-003", userName: "Robert Fox", initials: "RF", service: "Heating Install", technician: "Alex B.", status: "Completed", statusColor: "bg-green-100 text-green-700", payment: "Paid", paymentColor: "text-green-600" },
   { id: "#BK-004", userName: "Emily W.", initials: "EW", service: "Thermostat Check", technician: "Sarah J.", status: "Cancelled", statusColor: "bg-red-100 text-red-700", payment: "Refunded", paymentColor: "text-gray-600" },
   { id: "#BK-005", userName: "David K.", initials: "DK", service: "Gas Charging", technician: "Mike T.", status: "Completed", statusColor: "bg-green-100 text-green-700", payment: "Paid", paymentColor: "text-green-600" },
   { id: "#BK-006", userName: "Emma L.", initials: "EL", service: "AC Service", technician: "Alex B.", status: "Pending", statusColor: "bg-orange-100 text-orange-700", payment: "Unpaid", paymentColor: "text-orange-600" },
-  { id: "#BK-007", userName: "Chris P.", initials: "CP", service: "Cooling Issue", technician: "Sarah J.", status: "In Progress", statusColor: "bg-cyan-100 text-cyan-700", payment: "Paid", paymentColor: "text-green-600" },
+  { id: "#BK-007", userName: "Chris P.", initials: "CP", service: "Cooling Issue", technician: "Sarah J.", status: "In Progress", statusColor: "bg-blue-100 text-blue-700", payment: "Paid", paymentColor: "text-green-600" },
 ]
 
 const ITEMS_PER_PAGE = 5
