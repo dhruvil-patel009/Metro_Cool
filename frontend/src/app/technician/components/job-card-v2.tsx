@@ -116,7 +116,7 @@ export function JobCardV2({
         {/* ACTION */}
         <div className="mt-8">
           <Link href={`/technician/jobs/${id}`}>
-            <Button className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-8 py-6 rounded-xl font-bold gap-2 text-base transition-all active:scale-95 shadow-lg shadow-cyan-100">
+            <Button className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-8 py-6 rounded-xl font-bold gap-2 text-base transition-all active:scale-95 shadow-lg shadow-cyan-100 cursor-pointer">
               <CheckCircle2 className="w-5 h-5" />
               Accept Job
             </Button>
@@ -125,29 +125,25 @@ export function JobCardV2({
       </div>
 
       {/* MAP SECTION */}
-      <div className="w-full md:w-80 relative overflow-hidden h-48 md:h-auto bg-slate-100">
-        {mapUrl ? (
-          <iframe
-            src={mapUrl}
-            title="Job Location Map"
-            className="w-full h-full border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">
-            Map unavailable
-          </div>
-        )}
+<div className="w-full md:w-80 relative overflow-hidden h-52 md:h-full min-h-[320px] bg-slate-100">
+  {mapUrl ? (
+    <img
+      src={mapUrl}
+      alt="Service"
+      className="absolute inset-0 w-full h-full object-cover object-center"
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center text-slate-400">
+      No Image
+    </div>
+  )}
 
-        {/* DISTANCE BADGE */}
-        {/* <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2 shadow-sm">
-          <MapPin className="w-3.5 h-3.5 text-[#0891b2]" />
-          <span className="text-xs font-bold text-slate-700">
-            {distance} away
-          </span>
-        </div> */}
-      </div>
+  {/* <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2 shadow-sm">
+    <MapPin className="w-3.5 h-3.5 text-[#0891b2]" />
+    <span className="text-xs font-bold text-slate-700">{distance} away</span>
+  </div> */}
+</div>
+
     </motion.div>
   )
 }

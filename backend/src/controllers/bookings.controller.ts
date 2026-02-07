@@ -52,7 +52,15 @@ export const getAllBookings = async (req: any, res: Response) => {
         phone,
         address,
         status,
-        issues
+        issues,
+        instructions,
+        service_id,
+        services (
+          id,
+          title,
+          image_url,
+          price
+        )
       `)
       .order("created_at", { ascending: false })
 

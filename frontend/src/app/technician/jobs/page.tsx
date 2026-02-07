@@ -23,6 +23,13 @@ type Booking = {
   address: Address | string | null
   status: "draft" | "confirmed" | "completed"
   issues?: string[]
+
+   services: {
+    id: string
+    title: string
+    image_url: string
+    price: number
+  }
 }
 
 export default function JobsPage() {
@@ -188,17 +195,16 @@ export default function JobsPage() {
 
               return (
                 <motion.div key={job.id} layout className="space-y-4">
-                 <JobCardV2
+                <JobCardV2
   id={job.id}
-  title={job.issues?.join(", ") || "Service Job"}
+  title={job.services?.title || job.issues?.join(", ") || "Service Job"}
   customer={job.full_name}
   location={getLocationText(job.address)}
   dateTime={`${job.booking_date} • ${job.time_slot}`}
   distance="—"
-  mapUrl={`https://www.google.com/maps?q=${encodeURIComponent(
-    fullAddress
-  )}&output=embed`}
+  mapUrl={job.services?.image_url}
 />
+
 
                 </motion.div>
               )
