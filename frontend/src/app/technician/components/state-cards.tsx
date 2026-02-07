@@ -51,7 +51,7 @@ const stats = [
 
 export function StatCards() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 py-6 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {stats.map((stat) => (
         <Card key={stat.title} className="border-none shadow-sm overflow-hidden group">
           <CardContent className="p-6 relative">

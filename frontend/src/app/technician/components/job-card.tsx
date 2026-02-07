@@ -1,19 +1,19 @@
-import { User, MapPin, Clock, ChevronRight, Play } from "lucide-react"
-import { Badge } from "@/app/components/ui/badge"
-import { Button } from "@/app/components/ui/button"
-import { Card, CardContent } from "@/app/components/ui/card"
-import { cn } from "@/app/lib/utils"
+import { User, MapPin, Clock, ChevronRight, Play } from "lucide-react";
+import { Badge } from "@/app/components/ui/badge";
+import { Button } from "@/app/components/ui/button";
+import { Card, CardContent } from "@/app/components/ui/card";
+import { cn } from "@/app/lib/utils";
 
-export type JobStatus = "in-progress" | "scheduled" | "pending"
+export type JobStatus = "in-progress" | "scheduled" | "pending";
 
 export interface Job {
-  id: string
-  title: string
-  customer: string
-  address: string
-  time: string
-  status: JobStatus
-  image: string
+  id: string;
+  title: string;
+  customer: string;
+  address: string;
+  time: string;
+  status: JobStatus;
+  image: string;
 }
 
 export function JobCard({ job }: { job: Job }) {
@@ -21,7 +21,7 @@ export function JobCard({ job }: { job: Job }) {
     "in-progress": "bg-cyan-50 text-cyan-700 border-cyan-100",
     scheduled: "bg-amber-50 text-amber-700 border-amber-100",
     pending: "bg-slate-100 text-slate-600 border-slate-200",
-  }
+  };
 
   return (
     <Card className="border-none shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
@@ -44,7 +44,10 @@ export function JobCard({ job }: { job: Job }) {
             <div className="flex flex-wrap items-center gap-3">
               <Badge
                 variant="outline"
-                className={cn("uppercase text-[10px] font-bold px-2 py-0.5 tracking-wider", statusStyles[job.status])}
+                className={cn(
+                  "uppercase text-[10px] font-bold px-2 py-0.5 tracking-wider",
+                  statusStyles[job.status],
+                )}
               >
                 {job.status.replace("-", " ")}
               </Badge>
@@ -55,7 +58,7 @@ export function JobCard({ job }: { job: Job }) {
             </div>
 
             <div>
-              <h4 className="text-lg font-bold text-slate-900 group-hover:text-[#0891b2] transition-colors">
+              <h4 className="text-lg font-bold text-slate-900 group-hover:text-blue-500 transition-colors">
                 {job.title}
               </h4>
               <div className="mt-2 space-y-1.5">
@@ -76,7 +79,9 @@ export function JobCard({ job }: { job: Job }) {
               variant={job.status === "in-progress" ? "default" : "outline"}
               className={cn(
                 "rounded-lg font-bold text-xs uppercase tracking-wider px-6 h-10 group-hover:gap-3 transition-all",
-                job.status === "in-progress" ? "bg-[#0891b2] hover:bg-[#0e7490]" : "text-slate-600 border-slate-200",
+                job.status === "in-progress"
+                  ? "bg-blue-600 bg-blue-800"
+                  : "text-slate-600 border-slate-200",
               )}
             >
               View Details
@@ -86,5 +91,5 @@ export function JobCard({ job }: { job: Job }) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

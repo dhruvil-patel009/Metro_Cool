@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Bell,
@@ -19,55 +19,66 @@ import {
   Briefcase,
   User,
   DollarSign,
-} from "lucide-react"
-import { Button } from "@/app/components/ui/button"
-import { motion, AnimatePresence } from "framer-motion"
-import { useState } from "react"
+} from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
-export default function ServiceCompletionReportPage({ params }: { params: { id: string } }) {
-  const [photos, setPhotos] = useState<string[]>(["/proof-of-work-1.jpg"])
-  const [currentStep, setCurrentStep] = useState<"report" | "otp" | "completed">("report")
-  const [otpValues, setOtpValues] = useState<string[]>(["", "", "", "", "", ""])
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [isResending, setIsResending] = useState(false)
+export default function ServiceCompletionReportPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const [photos, setPhotos] = useState<string[]>(["/proof-of-work-1.jpg"]);
+  const [currentStep, setCurrentStep] = useState<
+    "report" | "otp" | "completed"
+  >("report");
+  const [otpValues, setOtpValues] = useState<string[]>([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return
-    if (!/^\d*$/.test(value)) return
+    if (value.length > 1) return;
+    if (!/^\d*$/.test(value)) return;
 
-    const newOtpValues = [...otpValues]
-    newOtpValues[index] = value
-    setOtpValues(newOtpValues)
+    const newOtpValues = [...otpValues];
+    newOtpValues[index] = value;
+    setOtpValues(newOtpValues);
 
     if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-${index + 1}`)
-      nextInput?.focus()
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      nextInput?.focus();
     }
-  }
+  };
 
   const handleVerifyOtp = async () => {
-    const otpCode = otpValues.join("")
-    if (otpCode.length !== 6) return
+    const otpCode = otpValues.join("");
+    if (otpCode.length !== 6) return;
 
-    setIsVerifying(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsVerifying(false)
-    setCurrentStep("completed")
-  }
+    setIsVerifying(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsVerifying(false);
+    setCurrentStep("completed");
+  };
 
   const handleResendCode = async () => {
-    setIsResending(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsResending(false)
-    setOtpValues(["", "", "", "", "", ""])
-    const firstInput = document.getElementById("otp-0")
-    firstInput?.focus()
-  }
+    setIsResending(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setIsResending(false);
+    setOtpValues(["", "", "", "", "", ""]);
+    const firstInput = document.getElementById("otp-0");
+    firstInput?.focus();
+  };
 
   return (
     <div className=" bg-slate-50/50 ">
-    
-
       <main className="max-w-4xl mx-auto p-8 space-y-8">
         <AnimatePresence mode="wait">
           {currentStep === "report" && (
@@ -89,7 +100,9 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
 
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                   <div className="space-y-2">
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Service Completion Report</h1>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+                      Service Completion Report
+                    </h1>
                     <div className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-cyan-50 rounded flex items-center justify-center">
                         <div className="w-2.5 h-2.5 rounded-full border-2 border-[#0891b2]" />
@@ -101,7 +114,9 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                   </div>
                   <div className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full border border-orange-100 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">In Progress</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      In Progress
+                    </span>
                   </div>
                 </div>
               </div>
@@ -113,7 +128,9 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
               >
                 <div className="px-10 py-6 border-b border-slate-50 bg-slate-50/30">
                   <div className="flex items-center justify-between mb-3 text-[10px] font-black uppercase tracking-widest">
-                    <span className="text-[#0891b2]">Step 3 of 4: Report Details</span>
+                    <span className="text-blue-500">
+                      Step 3 of 4: Report Details
+                    </span>
                     <span className="text-slate-400">Next: Verification</span>
                   </div>
                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -129,7 +146,7 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                 <div className="p-10 space-y-10">
                   <div className="space-y-4">
                     <label className="flex items-center gap-3 text-slate-900 font-bold tracking-tight">
-                      <ClipboardList className="w-5 h-5 text-[#0891b2]" />
+                      <ClipboardList className="w-5 h-5 text-blue-500" />
                       Issue Description
                     </label>
                     <textarea
@@ -140,7 +157,7 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
 
                   <div className="space-y-4">
                     <label className="flex items-center gap-3 text-slate-900 font-bold tracking-tight">
-                      <PenTool className="w-5 h-5 text-[#0891b2]" />
+                      <PenTool className="w-5 h-5 text-blue-500" />
                       Fix Applied
                     </label>
                     <textarea
@@ -152,10 +169,12 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <label className="flex items-center gap-3 text-slate-900 font-bold tracking-tight">
-                        <StickyNote className="w-5 h-5 text-[#0891b2]" />
+                        <StickyNote className="w-5 h-5 text-blue-500" />
                         Additional Notes
                       </label>
-                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">(Optional)</span>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                        (Optional)
+                      </span>
                     </div>
                     <textarea
                       placeholder="Any warnings, follow-up recommendations, or customer comments..."
@@ -165,13 +184,15 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
 
                   <div className="space-y-4">
                     <label className="flex items-center gap-3 text-slate-900 font-bold tracking-tight">
-                      <Camera className="w-5 h-5 text-[#0891b2]" />
+                      <Camera className="w-5 h-5 text-blue-500" />
                       Proof of Work
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <button className="aspect-[4/3] rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center gap-2 text-slate-300 hover:border-[#0891b2] hover:text-[#0891b2] transition-all bg-slate-50/50 group">
+                      <button className="aspect-[4/3] rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center gap-2 text-slate-300 hover:border-[#0891b2] hover:text-blue-500 transition-all bg-slate-50/50 group">
                         <Plus className="w-6 h-6 transition-transform group-hover:scale-110" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Add Photo</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest">
+                          Add Photo
+                        </span>
                       </button>
                       {photos.map((src, i) => (
                         <div
@@ -244,7 +265,12 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                       <motion.div
                         initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
-                        transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+                        transition={{
+                          delay: 0.2,
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 15,
+                        }}
                         className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-50 flex items-center justify-center shadow-lg shadow-cyan-100/50"
                       >
                         <Lock className="w-9 h-9 text-cyan-500" />
@@ -265,7 +291,8 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                       transition={{ delay: 0.4 }}
                       className="text-slate-500 text-center leading-relaxed px-4 text-balance"
                     >
-                      Ask the customer for the 6-digit verification code sent to their mobile ending in{" "}
+                      Ask the customer for the 6-digit verification code sent to
+                      their mobile ending in{" "}
                       <span className="font-bold text-slate-900">**89</span>.
                     </motion.p>
                   </div>
@@ -284,11 +311,15 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                           inputMode="numeric"
                           maxLength={1}
                           value={value}
-                          onChange={(e) => handleOtpChange(index, e.target.value)}
+                          onChange={(e) =>
+                            handleOtpChange(index, e.target.value)
+                          }
                           onKeyDown={(e) => {
                             if (e.key === "Backspace" && !value && index > 0) {
-                              const prevInput = document.getElementById(`otp-${index - 1}`)
-                              prevInput?.focus()
+                              const prevInput = document.getElementById(
+                                `otp-${index - 1}`,
+                              );
+                              prevInput?.focus();
                             }
                           }}
                           className="w-12 h-14 text-center text-2xl font-bold text-slate-900 border-2 border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none transition-all hover:border-cyan-300 bg-white shadow-sm"
@@ -303,14 +334,20 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                     >
                       <Button
                         onClick={handleVerifyOtp}
-                        disabled={otpValues.join("").length !== 6 || isVerifying}
+                        disabled={
+                          otpValues.join("").length !== 6 || isVerifying
+                        }
                         className="w-full h-14 bg-cyan-400 hover:bg-cyan-500 text-white rounded-xl font-black text-base gap-2 shadow-lg shadow-cyan-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:shadow-cyan-200 active:scale-[0.98]"
                       >
                         {isVerifying ? (
                           <>
                             <motion.div
                               animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                              transition={{
+                                duration: 1,
+                                repeat: Number.POSITIVE_INFINITY,
+                                ease: "linear",
+                              }}
                             >
                               <RotateCcw className="w-5 h-5" />
                             </motion.div>
@@ -331,7 +368,9 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                       transition={{ delay: 0.9 }}
                       className="flex items-center justify-center gap-2 mt-6 text-sm"
                     >
-                      <span className="text-slate-500">Didn't receive code?</span>
+                      <span className="text-slate-500">
+                        Didn't receive code?
+                      </span>
                       <button
                         onClick={handleResendCode}
                         disabled={isResending}
@@ -341,7 +380,11 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                           <>
                             <motion.div
                               animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                              transition={{
+                                duration: 1,
+                                repeat: Number.POSITIVE_INFINITY,
+                                ease: "linear",
+                              }}
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                             </motion.div>
@@ -367,8 +410,9 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                     <div className="bg-slate-50 rounded-2xl p-4 flex gap-3 border border-slate-100">
                       <AlertCircle className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
                       <p className="text-xs text-slate-500 leading-relaxed text-balance">
-                        By verifying this OTP, you confirm that the job has been completed to the customer's
-                        satisfaction and all safety protocols were followed. This action cannot be undone.
+                        By verifying this OTP, you confirm that the job has been
+                        completed to the customer's satisfaction and all safety
+                        protocols were followed. This action cannot be undone.
                       </p>
                     </div>
                   </motion.div>
@@ -403,20 +447,34 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 12 }}
+                        transition={{
+                          delay: 0.2,
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 12,
+                        }}
                         className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-50 flex items-center justify-center shadow-lg shadow-cyan-100/50 relative"
                       >
                         {/* Success ripple effect */}
                         <motion.div
                           initial={{ scale: 1, opacity: 0.5 }}
                           animate={{ scale: 1.5, opacity: 0 }}
-                          transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: "easeOut" }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Number.POSITIVE_INFINITY,
+                            ease: "easeOut",
+                          }}
                           className="absolute inset-0 rounded-full bg-cyan-400"
                         />
                         <motion.div
                           initial={{ scale: 0, rotate: -90 }}
                           animate={{ scale: 1, rotate: 0 }}
-                          transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 15 }}
+                          transition={{
+                            delay: 0.4,
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 15,
+                          }}
                         >
                           <Check className="w-10 h-10 text-cyan-500 stroke-[3]" />
                         </motion.div>
@@ -437,8 +495,11 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                       transition={{ delay: 0.6 }}
                       className="text-slate-500 text-center text-balance"
                     >
-                      Job ID <span className="font-bold text-slate-900">#{params.id}829</span> has been closed and
-                      synced.
+                      Job ID{" "}
+                      <span className="font-bold text-slate-900">
+                        #{params.id}829
+                      </span>{" "}
+                      has been closed and synced.
                     </motion.p>
                   </div>
 
@@ -454,9 +515,13 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                         <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
                           <Briefcase className="w-5 h-5 text-slate-400" />
                         </div>
-                        <span className="text-slate-600 font-medium">Service Type</span>
+                        <span className="text-slate-600 font-medium">
+                          Service Type
+                        </span>
                       </div>
-                      <span className="font-bold text-slate-900">Emergency Plumbing</span>
+                      <span className="font-bold text-slate-900">
+                        Emergency Plumbing
+                      </span>
                     </motion.div>
 
                     <motion.div
@@ -469,9 +534,13 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                         <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
                           <User className="w-5 h-5 text-slate-400" />
                         </div>
-                        <span className="text-slate-600 font-medium">Customer</span>
+                        <span className="text-slate-600 font-medium">
+                          Customer
+                        </span>
                       </div>
-                      <span className="font-bold text-slate-900">Westside Apartments</span>
+                      <span className="font-bold text-slate-900">
+                        Westside Apartments
+                      </span>
                     </motion.div>
 
                     <motion.div
@@ -484,9 +553,13 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                         <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
                           <DollarSign className="w-5 h-5 text-slate-400" />
                         </div>
-                        <span className="text-slate-600 font-medium">Total Earnings</span>
+                        <span className="text-slate-600 font-medium">
+                          Total Earnings
+                        </span>
                       </div>
-                      <span className="font-bold text-cyan-500 text-xl">$245.00</span>
+                      <span className="font-bold text-cyan-500 text-xl">
+                        $245.00
+                      </span>
                     </motion.div>
                   </div>
 
@@ -497,7 +570,7 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
                     transition={{ delay: 1 }}
                     className="px-8 pb-8 space-y-3"
                   >
-                    <Button className="w-full h-14 bg-cyan-400 hover:bg-cyan-500 text-white rounded-xl font-black text-base gap-2 shadow-lg shadow-cyan-100 transition-all hover:shadow-xl hover:shadow-cyan-200 active:scale-[0.98]" >
+                    <Button className="w-full h-14 bg-cyan-400 hover:bg-cyan-500 text-white rounded-xl font-black text-base gap-2 shadow-lg shadow-cyan-100 transition-all hover:shadow-xl hover:shadow-cyan-200 active:scale-[0.98]">
                       <LayoutGrid className="w-5 h-5" />
                       Go to Dashboard
                     </Button>
@@ -529,5 +602,5 @@ export default function ServiceCompletionReportPage({ params }: { params: { id: 
         </AnimatePresence>
       </main>
     </div>
-  )
+  );
 }

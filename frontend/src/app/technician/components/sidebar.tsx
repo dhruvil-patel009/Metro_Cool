@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import Link from "next/link"
+import Link from "next/link";
 import {
   LayoutDashboard,
   Calendar,
@@ -11,14 +11,14 @@ import {
   Briefcase,
   Menu,
   LogOut,
-} from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
-import { cn } from "@/app/lib/utils"
-import { Button } from "@/app/components/ui/button"
-import { useSidebar } from "./sidebar-content"
-import { toast } from "react-toastify"
-import { useAuthStore } from "@/store/auth.store"
+import { cn } from "@/app/lib/utils";
+import { Button } from "@/app/components/ui/button";
+import { useSidebar } from "./sidebar-content";
+import { toast } from "react-toastify";
+import { useAuthStore } from "@/store/auth.store";
 
 /* -------------------- NAV CONFIG -------------------- */
 
@@ -27,35 +27,34 @@ const navItems = [
   { label: "Schedule", icon: Calendar, href: "/technician/schedule" },
   { label: "Jobs", icon: Briefcase, href: "/technician/jobs" },
   { label: "Earnings", icon: DollarSign, href: "/technician/earnings" },
-]
+];
 
 const systemItems = [
   { label: "Settings", icon: Settings, href: "/technician/profile" },
   { label: "Support", icon: LifeBuoy, href: "/technician/support" },
-]
+];
 
 /* -------------------- COMPONENT -------------------- */
 
 export function Sidebar() {
-  const { isCollapsed, toggle } = useSidebar()
-  const pathname = usePathname()
-  const router = useRouter()
+  const { isCollapsed, toggle } = useSidebar();
+  const pathname = usePathname();
+  const router = useRouter();
   const logout = useAuthStore((s) => s.logout);
 
   /* ---------- ACTIVE ROUTE LOGIC ---------- */
   const isRouteActive = (href: string) => {
     if (href === "/technician") {
-      return pathname === "/technician"
+      return pathname === "/technician";
     }
-    return pathname === href || pathname.startsWith(href + "/")
-  }
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
   /* ---------- LOGOUT HANDLER ---------- */
-const handleLogout = () => {
+  const handleLogout = () => {
     logout(); // ✅ clears token, role, refreshToken, Zustand state
 
     toast.success("Logged out successfully");
-
 
     router.replace("/"); // ✅ correct redirect
   };
@@ -64,14 +63,14 @@ const handleLogout = () => {
     <aside
       className={cn(
         "border-r bg-white h-screen sticky top-0 z-50 flex flex-col transition-all duration-300",
-        isCollapsed ? "w-20" : "w-64"
+        isCollapsed ? "w-20" : "w-64",
       )}
     >
       {/* -------------------- LOGO / TOGGLE -------------------- */}
       <div
         className={cn(
           "flex items-center justify-between p-6",
-          isCollapsed && "px-4"
+          isCollapsed && "px-4",
         )}
       >
         <div className="flex items-center gap-2 overflow-hidden">
@@ -117,7 +116,7 @@ const handleLogout = () => {
 
           <nav className="space-y-1">
             {navItems.map((item) => {
-              const isActive = isRouteActive(item.href)
+              const isActive = isRouteActive(item.href);
 
               return (
                 <Link
@@ -126,15 +125,15 @@ const handleLogout = () => {
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-[#0891b2] text-white"
+                      ? "bg-blue-600 text-white"
                       : "text-muted-foreground hover:bg-slate-100",
-                    isCollapsed && "justify-center px-0"
+                    isCollapsed && "justify-center px-0",
                   )}
                 >
                   <item.icon className="w-4 h-4 shrink-0" />
                   {!isCollapsed && <span>{item.label}</span>}
                 </Link>
-              )
+              );
             })}
           </nav>
         </div>
@@ -149,7 +148,7 @@ const handleLogout = () => {
 
           <nav className="space-y-1">
             {systemItems.map((item) => {
-              const isActive = isRouteActive(item.href)
+              const isActive = isRouteActive(item.href);
 
               return (
                 <Link
@@ -158,15 +157,15 @@ const handleLogout = () => {
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-[#0891b2] text-white"
+                      ? "bg-blue-600 text-white"
                       : "text-muted-foreground hover:bg-slate-100",
-                    isCollapsed && "justify-center px-0"
+                    isCollapsed && "justify-center px-0",
                   )}
                 >
                   <item.icon className="w-4 h-4 shrink-0" />
                   {!isCollapsed && <span>{item.label}</span>}
                 </Link>
-              )
+              );
             })}
           </nav>
         </div>
@@ -178,7 +177,7 @@ const handleLogout = () => {
           onClick={handleLogout}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50",
-            isCollapsed && "justify-center px-0"
+            isCollapsed && "justify-center px-0",
           )}
         >
           <LogOut className="w-4 h-4" />
@@ -186,5 +185,5 @@ const handleLogout = () => {
         </button>
       </div>
     </aside>
-  )
+  );
 }

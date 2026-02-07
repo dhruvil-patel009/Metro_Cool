@@ -1,15 +1,31 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ChevronLeft, ChevronRight, Plus, Search, Filter, Printer, Clock, MapPin, User } from "lucide-react"
-import { Button } from "@/app/components/ui/button"
-import { Input } from "@/app/components/ui/input"
-import { Card } from "@/app/components/ui/card"
-import { Badge } from "@/app/components/ui/badge"
-import { cn } from "@/app/lib/utils"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/select"
+import { useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Search,
+  Filter,
+  Printer,
+  Clock,
+  MapPin,
+  User,
+} from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Card } from "@/app/components/ui/card";
+import { Badge } from "@/app/components/ui/badge";
+import { cn } from "@/app/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/select";
 
-const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const MONTHS = [
   "January",
   "February",
@@ -23,19 +39,19 @@ const MONTHS = [
   "October",
   "November",
   "December",
-]
+];
 
 type Job = {
-  id: string
-  time: string
-  title: string
-  type: string
-  customer: string
-  address: string
-  status: "scheduled" | "in-progress" | "pending"
-  date: string
-  dayLabel?: string
-}
+  id: string;
+  time: string;
+  title: string;
+  type: string;
+  customer: string;
+  address: string;
+  status: "scheduled" | "in-progress" | "pending";
+  date: string;
+  dayLabel?: string;
+};
 
 const upcomingJobs: Job[] = [
   {
@@ -71,7 +87,7 @@ const upcomingJobs: Job[] = [
     date: "2024-10-25",
     dayLabel: "TOMORROW",
   },
-]
+];
 
 const calendarJobs = [
   { date: 13, title: "Inspection", color: "bg-emerald-500" },
@@ -84,72 +100,83 @@ const calendarJobs = [
       { time: "14:00", title: "Filter...", color: "bg-orange-500" },
     ],
   },
-  { date: 25, jobs: [{ time: "10:00", title: "Install", color: "bg-blue-500" }] },
-]
+  {
+    date: 25,
+    jobs: [{ time: "10:00", title: "Install", color: "bg-blue-500" }],
+  },
+];
 
 export default function SchedulePage() {
-  const [currentMonth, setCurrentMonth] = useState(9) // October = 9
-  const [currentYear, setCurrentYear] = useState(2022)
-  const [view, setView] = useState<"month" | "week" | "day">("month")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [serviceFilter, setServiceFilter] = useState("all")
+  const [currentMonth, setCurrentMonth] = useState(9); // October = 9
+  const [currentYear, setCurrentYear] = useState(2022);
+  const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [serviceFilter, setServiceFilter] = useState("all");
 
   const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month + 1, 0).getDate()
-  }
+    return new Date(year, month + 1, 0).getDate();
+  };
 
   const getFirstDayOfMonth = (month: number, year: number) => {
-    const day = new Date(year, month, 1).getDay()
-    return day === 0 ? 6 : day - 1 // Convert Sunday (0) to 6, Monday (1) to 0
-  }
+    const day = new Date(year, month, 1).getDay();
+    return day === 0 ? 6 : day - 1; // Convert Sunday (0) to 6, Monday (1) to 0
+  };
 
   const previousMonth = () => {
     if (currentMonth === 0) {
-      setCurrentMonth(11)
-      setCurrentYear(currentYear - 1)
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
     } else {
-      setCurrentMonth(currentMonth - 1)
+      setCurrentMonth(currentMonth - 1);
     }
-  }
+  };
 
   const nextMonth = () => {
     if (currentMonth === 11) {
-      setCurrentMonth(0)
-      setCurrentYear(currentYear + 1)
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
     } else {
-      setCurrentMonth(currentMonth + 1)
+      setCurrentMonth(currentMonth + 1);
     }
-  }
+  };
 
-  const daysInMonth = getDaysInMonth(currentMonth, currentYear)
-  const firstDay = getFirstDayOfMonth(currentMonth, currentYear)
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+  const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+  const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const previousMonthDays =
     firstDay > 0
-      ? Array.from({ length: firstDay }, (_, i) => getDaysInMonth(currentMonth - 1, currentYear) - firstDay + i + 1)
-      : []
+      ? Array.from(
+          { length: firstDay },
+          (_, i) =>
+            getDaysInMonth(currentMonth - 1, currentYear) - firstDay + i + 1,
+        )
+      : [];
 
   const getJobsForDate = (date: number) => {
-    return calendarJobs.find((job) => job.date === date)
-  }
+    return calendarJobs.find((job) => job.date === date);
+  };
 
   const filteredJobs = upcomingJobs.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.id.includes(searchQuery)
-    const matchesStatus = statusFilter === "all" || job.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+      job.id.includes(searchQuery);
+    const matchesStatus = statusFilter === "all" || job.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <>
       {/* Header Section */}
       <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
         <div className="space-y-2">
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Schedule & Assignments</h1>
-          <p className="text-slate-500 font-medium">Manage your upcoming jobs and appointments.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+            Schedule & Assignments
+          </h1>
+          <p className="text-slate-500 py-2 font-medium">
+            Manage your upcoming jobs and appointments.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -159,7 +186,7 @@ export default function SchedulePage() {
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button className="bg-[#0891b2] hover:bg-[#0e7490] h-11 px-5 rounded-xl font-bold shadow-lg shadow-cyan-500/20 transition-all hover:scale-105">
+          <Button className="bg-blue-600 hover:bg-[#0e7490] h-11 px-5 rounded-xl font-bold shadow-lg shadow-cyan-500/20 transition-all hover:scale-105">
             <Plus className="w-5 h-5 mr-2" />
             New Job
           </Button>
@@ -203,7 +230,9 @@ export default function SchedulePage() {
                     onClick={() => setView(v)}
                     className={cn(
                       "px-4 py-1.5 rounded-md text-sm font-semibold transition-all capitalize",
-                      view === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900",
+                      view === v
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-600 hover:text-slate-900",
                     )}
                   >
                     {v}
@@ -217,7 +246,10 @@ export default function SchedulePage() {
               {/* Day Headers */}
               <div className="grid grid-cols-7 gap-2 mb-2">
                 {DAYS.map((day) => (
-                  <div key={day} className="text-center text-xs font-bold text-slate-500 py-2">
+                  <div
+                    key={day}
+                    className="text-center text-xs font-bold text-slate-500 py-2"
+                  >
                     {day}
                   </div>
                 ))}
@@ -237,8 +269,8 @@ export default function SchedulePage() {
 
                 {/* Current Month Days */}
                 {days.map((day) => {
-                  const jobData = getJobsForDate(day)
-                  const isToday = day === 24
+                  const jobData = getJobsForDate(day);
+                  const isToday = day === 24;
 
                   return (
                     <div
@@ -246,14 +278,16 @@ export default function SchedulePage() {
                       className={cn(
                         "aspect-square rounded-lg flex flex-col items-start justify-start p-2 transition-all hover:shadow-md hover:scale-105 cursor-pointer group relative",
                         isToday
-                          ? "bg-[#0891b2] text-white ring-2 ring-[#0891b2] ring-offset-2"
+                          ? "bg-blue-600 text-white ring-2 ring-[#0891b2] ring-offset-2"
                           : "bg-white border border-slate-200 hover:border-[#0891b2]",
                       )}
                     >
                       <span
                         className={cn(
                           "text-sm font-bold mb-1",
-                          isToday ? "text-white" : "text-slate-900 group-hover:text-[#0891b2]",
+                          isToday
+                            ? "text-white"
+                            : "text-slate-900 group-hover:text-blue-500",
                         )}
                       >
                         {day}
@@ -274,18 +308,21 @@ export default function SchedulePage() {
                       {/* Multiple Events */}
                       {jobData && "jobs" in jobData && (
                         <div className="space-y-0.5 w-full">
-                         {jobData && "jobs" in jobData && jobData.jobs && (
-  <div className="space-y-0.5 w-full">
-    {jobData.jobs.slice(0, 3).map((job, idx) => (
-      <div
-        key={idx}
-        className={cn("text-[8px] font-bold px-1 py-0.5 rounded text-white truncate", job.color)}
-      >
-        {job.time} - {job.title}
-      </div>
-    ))}
-  </div>
-)}
+                          {jobData && "jobs" in jobData && jobData.jobs && (
+                            <div className="space-y-0.5 w-full">
+                              {jobData.jobs.slice(0, 3).map((job, idx) => (
+                                <div
+                                  key={idx}
+                                  className={cn(
+                                    "text-[8px] font-bold px-1 py-0.5 rounded text-white truncate",
+                                    job.color,
+                                  )}
+                                >
+                                  {job.time} - {job.title}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -296,7 +333,7 @@ export default function SchedulePage() {
                         </div>
                       )}
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -308,7 +345,7 @@ export default function SchedulePage() {
           {/* Filter Section */}
           <Card className="p-6 border-slate-200 shadow-sm animate-in fade-in slide-in-from-right-4 duration-700 delay-200">
             <div className="flex items-center gap-2 mb-4">
-              <Filter className="w-4 h-4 text-[#0891b2]" />
+              <Filter className="w-4 h-4 text-blue-500" />
               <h3 className="font-bold text-slate-900">Filter Schedule</h3>
             </div>
 
@@ -353,10 +390,13 @@ export default function SchedulePage() {
           <Card className="p-6 border-slate-200 shadow-sm animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#0891b2]" />
+                <Clock className="w-4 h-4 text-blue-500" />
                 <h3 className="font-bold text-slate-900">Upcoming Jobs</h3>
               </div>
-              <Button variant="link" className="text-[#0891b2] font-semibold text-sm p-0 h-auto hover:underline">
+              <Button
+                variant="link"
+                className="text-blue-500 font-semibold text-sm p-0 h-auto hover:underline"
+              >
                 VIEW ALL
               </Button>
             </div>
@@ -366,10 +406,13 @@ export default function SchedulePage() {
                 <div
                   key={job.id}
                   className={cn(
-                    "p-4 rounded-xl border-l-4 bg-gradient-to-r from-slate-50/50 to-transparent transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group animate-in fade-in slide-in-from-bottom-2 duration-500",
-                    job.status === "in-progress" && "border-[#0891b2] hover:from-cyan-50/50",
-                    job.status === "pending" && "border-yellow-400 hover:from-yellow-50/50",
-                    job.status === "scheduled" && "border-blue-500 hover:from-blue-50/50",
+                    "p-4 rounded-xl border-l-4 border-b-1 bg-gradient-to-r from-slate-50/50 to-transparent transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer group animate-in fade-in slide-in-from-bottom-2 duration-500",
+                    job.status === "in-progress" &&
+                      "border-[#0891b2] hover:from-cyan-50/50",
+                    job.status === "pending" &&
+                      "border-yellow-400 hover:from-yellow-50/50",
+                    job.status === "scheduled" &&
+                      "border-blue-500 hover:from-blue-50/50",
                   )}
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
@@ -379,13 +422,18 @@ export default function SchedulePage() {
                     </div>
                   )}
                   <div className="flex items-start justify-between mb-2">
-                    <span className="text-lg font-bold text-slate-900">{job.time}</span>
+                    <span className="text-lg font-bold text-slate-900">
+                      {job.time}
+                    </span>
                     <Badge
                       className={cn(
                         "text-[10px] font-bold px-2 py-0.5 rounded-md",
-                        job.status === "in-progress" && "bg-cyan-100 text-[#0891b2]",
-                        job.status === "pending" && "bg-yellow-100 text-yellow-700",
-                        job.status === "scheduled" && "bg-blue-100 text-blue-700",
+                        job.status === "in-progress" &&
+                          "bg-cyan-100 text-blue-500",
+                        job.status === "pending" &&
+                          "bg-yellow-100 text-yellow-700",
+                        job.status === "scheduled" &&
+                          "bg-blue-100 text-blue-700",
                       )}
                     >
                       {job.status === "in-progress"
@@ -395,7 +443,7 @@ export default function SchedulePage() {
                           : "Scheduled"}
                     </Badge>
                   </div>
-                  <h4 className="font-bold text-slate-900 mb-3 group-hover:text-[#0891b2] transition-colors">
+                  <h4 className="font-bold text-slate-900 mb-3 group-hover:text-blue-500 transition-colors">
                     {job.title}
                   </h4>
                   <div className="space-y-1.5 text-xs text-slate-600">
@@ -415,5 +463,5 @@ export default function SchedulePage() {
         </div>
       </div>
     </>
-  )
+  );
 }
