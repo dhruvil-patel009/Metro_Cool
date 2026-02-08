@@ -112,7 +112,8 @@ export default function JobDetailsPage() {
   }
 
   if (isWorking) {
-    return <WorkingView onBack={() => setIsWorking(false)} />
+    return <WorkingView onBack={() => setIsWorking(false)} jobId={booking.id} />
+
   }
 
   return (
@@ -133,10 +134,10 @@ export default function JobDetailsPage() {
           </div>
         </div>
 
-        <Button variant="ghost" size="icon" className="relative">
+        {/* <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-        </Button>
+        </Button> */}
       </div>
     </header>
 
@@ -290,7 +291,7 @@ export default function JobDetailsPage() {
       </span>
     </div>
 
-    <div className="relative p-6 bg-amber-50/60 border-l-4 border-amber-400 rounded-r-2xl text-slate-700 italic leading-relaxed">
+    <div className="relative p-6 bg-amber-50/60 border-l-4 border-amber-400 rounded-r-2xl text-slate-700 italic leading-relaxed w-fit break-words">
       <span className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 rounded-l-2xl" />
 
       <p className="font-medium">

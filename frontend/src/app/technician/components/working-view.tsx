@@ -8,66 +8,138 @@ import {
   ImageIcon,
   FileText,
   CheckCircle2,
-  Plus,
-  Headphones,
   User,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { JobStepper } from "./job-stepper";
 import { ServiceChecklist } from "./service-checklist";
 import Link from "next/link";
 
+/* ---------------- TYPES ---------------- */
+
+type Address = {
+  street?: string;
+  apt?: string;
+  city?: string;
+  zipCode?: string;
+};
+
+type Booking = {
+  id: string;
+  booking_date: string;
+  time_slot: string;
+  status?: string;
+  issues?: string[];
+  instructions?: string;
+  address: Address | string | null;
+  user: {
+    full_name: string;
+    phone: string;
+  };
+};
+
+/* ---------------- COMPONENT ---------------- */
+
 export function WorkingView({
   onBack,
-  jobId = "1234",
+  jobId,
 }: {
   onBack: () => void;
-  jobId?: string;
+  jobId: string;
 }) {
-  const [time, setTime] = useState("00:45:12");
+  const router = useRouter();
+
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [seconds, setSeconds] = useState(0);
+
+  /* ---------------- TIMER ---------------- */
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTime = () => {
+    const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  };
+
+  /* ---------------- FETCH BOOKING ---------------- */
+
+  useEffect(() => {
+    const fetchBooking = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings/techjobs/${jobId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            cache: "no-store",
+          }
+        );
+
+        const json = await res.json();
+
+        if (json.success) {
+          setBooking(json.booking);
+
+          // if job already completed redirect to jobs list
+          if (json.booking.status === "completed") {
+            router.push("/technician/jobs");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load job", err);
+      }
+    };
+
+    if (jobId) fetchBooking();
+  }, [jobId, router]);
+
+  /* ---------------- ADDRESS PARSER ---------------- */
+
+  const parseAddress = (address: any): Address | null => {
+    if (!address) return null;
+
+    if (typeof address === "string") {
+      try {
+        return JSON.parse(address);
+      } catch {
+        return null;
+      }
+    }
+
+    return address;
+  };
+
+  const address = parseAddress(booking?.address);
+
+  const fullAddress = address
+    ? [address.street, address.city, address.zipCode]
+        .filter(Boolean)
+        .join(", ")
+    : "";
+
+  if (!booking)
+    return <div className="p-10 text-center">Loading job...</div>;
+
+  /* ---------------- UI ---------------- */
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
-      {/* Top Header/Navigation - Custom for context */}
-      <header className="bg-white border-b border-slate-100 px-8 py-3 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <div className="w-4 h-1 bg-white rounded-full rotate-[-45deg] translate-y-[2px]" />
-                <div className="w-4 h-4 bg-white rounded-sm scale-75 -translate-x-[2px]" />
-              </div>
-              <span className="font-black text-slate-900 text-xl tracking-tight">
-                TechDash
-              </span>
-            </div>
-          </div>
-          <nav className="hidden md:flex items-center gap-8">
-            <span className="text-sm font-bold text-slate-400">Dashboard</span>
-            <span className="text-sm font-bold text-blue-500 border-b-2 border-[#0891b2] pb-1">
-              Schedule
-            </span>
-            <span className="text-sm font-bold text-slate-400">History</span>
-            <span className="text-sm font-bold text-slate-400">Profile</span>
-          </nav>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              className="rounded-full gap-2 font-bold text-slate-600 border-slate-200 bg-transparent"
-            >
-              <Headphones className="w-4 h-4" />
-              Support
-            </Button>
-            <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
-              <img src="/technician-profile.png" alt="User" />
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-7xl mx-auto p-8 space-y-8">
-        {/* Breadcrumb & Title Area */}
+
+        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -75,28 +147,29 @@ export function WorkingView({
               <span className="opacity-30">/</span>
               <span>Schedule</span>
               <span className="opacity-30">/</span>
-              <span className="text-slate-900">Job #1234</span>
+              <span className="text-slate-900">Job #{booking.id}</span>
             </div>
+
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <span className="bg-blue-600/10 text-blue-500 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
                   Active Job
                 </span>
-                <span className="text-xs font-bold text-slate-400">
-                  Updated 2m ago
-                </span>
+                <span className="text-xs font-bold text-slate-400">Live</span>
               </div>
+
               <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-                AC Repair: Unit Failure
+                {booking.issues?.join(", ") || "Service Job"}
               </h1>
+
               <div className="flex items-center gap-2 text-slate-400 font-semibold">
                 <MapPin className="w-5 h-5" />
-                123 Main St, Springfield, IL
+                {fullAddress || "Address unavailable"}
               </div>
             </div>
           </div>
 
-          {/* Time on Site Card */}
+          {/* TIMER */}
           <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center gap-6 min-w-[280px]">
             <div className="w-12 h-12 rounded-2xl bg-cyan-50 flex items-center justify-center">
               <Clock className="w-6 h-6 text-blue-500" />
@@ -106,67 +179,107 @@ export function WorkingView({
                 Time On Site
               </span>
               <p className="text-3xl font-black text-slate-900 tracking-tighter tabular-nums">
-                {time}
+                {formatTime()}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Horizontal Progress Stepper */}
+        {/* STEPPER */}
         <div className="bg-white rounded-[2.5rem] p-8 md:px-12 border border-slate-100 shadow-sm">
           <JobStepper currentStep={2} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Actions Area */}
+
+          {/* LEFT SIDE */}
           <div className="lg:col-span-2 space-y-8">
+
+            {/* ACTION CARD */}
             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm space-y-6">
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                <h3 className="text-xl font-bold text-slate-900">
                   Current Step Actions
                 </h3>
                 <p className="text-slate-400 font-medium">
-                  Ensure all safety checks are completed before finishing the
-                  job.
+                  Ensure all safety checks are completed before finishing the job.
                 </p>
               </div>
 
-              <Link href={`/technician/jobs/${jobId}/reports`}>
-                <Button className="w-full bg-blue-600 hover:bg-[#0e7490] text-white py-8 rounded-2xl font-black text-xl gap-3 shadow-lg shadow-cyan-100 transition-all active:scale-[0.98]">
-                  <CheckCircle2 className="w-6 h-6" />
-                  MARK JOB AS COMPLETED
-                </Button>
+              {/* COMPLETE BUTTON */}
+               <Link href={`/technician/jobs/${jobId}/reports`}>
+              <Button
+                onClick={() =>
+                  router.push(`/technician/jobs/${booking.id}/report`)
+                }
+                className="w-full bg-blue-600 text-white py-8 rounded-2xl font-black text-xl gap-3 hover:bg-blue-700"
+              >
+                <CheckCircle2 className="w-6 h-6" />
+                MARK JOB AS COMPLETED
+              </Button>
               </Link>
 
+              {/* ACTION BUTTONS */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { icon: Phone, label: "Call Client" },
-                  { icon: Navigation, label: "Navigate" },
-                  { icon: ImageIcon, label: "Upload Photo" },
-                  { icon: FileText, label: "Add Notes" },
-                ].map((action) => (
-                  <button
-                    key={action.label}
-                    className="flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-colors group"
-                  >
-                    <action.icon className="w-6 h-6 text-slate-400 group-hover:text-slate-900" />
-                    <span className="text-xs font-bold text-slate-500 group-hover:text-slate-900">
-                      {action.label}
-                    </span>
-                  </button>
-                ))}
+
+                {/* CALL */}
+                <button
+                  onClick={() => {
+                    if (!booking.user.phone) return;
+                    window.location.href = `tel:${booking.user.phone}`;
+                  }}
+                  className="flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100"
+                >
+                  <Phone className="w-6 h-6 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-500">
+                    Call Client
+                  </span>
+                </button>
+
+                {/* NAVIGATE */}
+                <button
+                  onClick={() =>
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                      const { latitude, longitude } = pos.coords;
+                      window.open(
+                        `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${encodeURIComponent(fullAddress)}`
+                      );
+                    })
+                  }
+                  className="flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100"
+                >
+                  <Navigation className="w-6 h-6 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-500">
+                    Navigate
+                  </span>
+                </button>
+
+                <div className="flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                  <ImageIcon className="w-6 h-6 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-500">
+                    Upload Photo
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                  <FileText className="w-6 h-6 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-500">
+                    Add Notes
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Service Checklist */}
+            {/* CHECKLIST */}
             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
               <ServiceChecklist />
             </div>
           </div>
 
-          {/* Right Sidebar Info */}
+          {/* RIGHT SIDEBAR */}
           <div className="space-y-8">
-            {/* Customer Info Card */}
+
+            {/* CUSTOMER */}
             <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900">
@@ -174,88 +287,55 @@ export function WorkingView({
                 </h3>
                 <User className="w-5 h-5 text-slate-300" />
               </div>
+
               <div className="p-6 space-y-4">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     Name
                   </span>
-                  <p className="font-bold text-slate-900">Sarah Jenkins</p>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                    Contact
-                  </span>
-                  <p className="font-bold text-blue-500">(555) 123-4567</p>
-                  <p className="text-sm font-medium text-slate-400">
-                    sarah.j@example.com
+                  <p className="font-bold text-slate-900">
+                    {booking.user.full_name}
                   </p>
                 </div>
+
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                    Customer Since
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Contact
                   </span>
-                  <p className="font-bold text-slate-700">March 2021</p>
+                  <p className="font-bold text-blue-500">
+                    {booking.user.phone}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Location Map Card */}
+            {/* MAP */}
             <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900">Location</h3>
-                <button className="text-xs font-bold text-blue-500 hover:underline">
-                  Open in Maps
-                </button>
               </div>
-              <div className="p-4 space-y-4">
-                <div className="relative aspect-video rounded-2xl overflow-hidden border border-slate-100">
-                  <img
-                    src="/working-location-map.jpg"
-                    alt="Map"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-blue-600 border-4 border-white shadow-lg relative z-10" />
-                    <div className="w-12 h-12 rounded-full bg-blue-600/30 animate-ping absolute" />
-                  </div>
+
+              {fullAddress ? (
+                <iframe
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`}
+                  className="w-full h-64 border-0"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="h-64 flex items-center justify-center text-slate-400">
+                  Address not available
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400">
-                    Gate Code:
-                  </span>
-                  <span className="bg-cyan-50 text-blue-500 px-3 py-1 rounded-full font-black text-sm border border-cyan-100">
-                    #4589
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Technician Notes Card */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-50">
-                <h3 className="text-lg font-bold text-slate-900">
-                  Technician Notes
-                </h3>
-              </div>
-              <div className="p-6 space-y-6">
-                <p className="text-slate-600 font-medium leading-relaxed italic border-l-4 border-slate-100 pl-4">
-                  "Customer reported loud banging noise when unit starts up.
-                  Suspect fan blade issue or loose mount."
+            {/* INSTRUCTIONS */}
+            {booking.instructions && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-2xl break-words">
+                <p className="italic text-slate-700 whitespace-pre-wrap">
+                  {booking.instructions}
                 </p>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="aspect-square rounded-xl overflow-hidden border border-slate-100">
-                    <img
-                      src="/unit-photo-1.jpg"
-                      alt="Notes"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <button className="aspect-square rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center hover:border-slate-300 transition-colors">
-                    <Plus className="w-6 h-6 text-slate-300" />
-                  </button>
-                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
