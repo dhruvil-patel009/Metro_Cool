@@ -23,13 +23,28 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useParams } from "next/navigation";
+
 
 export default function ServiceCompletionReportPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const [photos, setPhotos] = useState<string[]>(["/proof-of-work-1.jpg"]);
+  const routeParams = useParams();
+const jobId = routeParams?.id as string;
+  // -------- FORM DATA ----------
+  const [issueDescription, setIssueDescription] = useState("");
+  const [fixApplied, setFixApplied] = useState("");
+  const [additionalNotes, setAdditionalNotes] = useState("");
+
+  // -------- PHOTO DATA ----------
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photos, setPhotos] = useState<string[]>([]);
+
+  // -------- LOADING ----------
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [currentStep, setCurrentStep] = useState<
     "report" | "otp" | "completed"
   >("report");
@@ -76,6 +91,45 @@ export default function ServiceCompletionReportPage({
     const firstInput = document.getElementById("otp-0");
     firstInput?.focus();
   };
+
+  const submitServiceReport = async () => {
+    if (!issueDescription || !fixApplied) {
+      alert("Please fill Issue & Fix fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const formData = new FormData();
+      formData.append("job_id", jobId);
+      formData.append("issue_description", issueDescription);
+      formData.append("fix_applied", fixApplied);
+      formData.append("additional_notes", additionalNotes);
+
+      photoFiles.forEach((file) => formData.append("photos", file));
+
+      const res = await fetch(
+        "http://localhost:5000/api/service-report/create",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (!data.success) throw new Error();
+
+      // ONLY NOW OPEN OTP SCREEN
+      setCurrentStep("otp");
+    } catch (err) {
+      alert("Report submission failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   return (
     <div className=" bg-slate-50/50 ">
@@ -150,6 +204,8 @@ export default function ServiceCompletionReportPage({
                       Issue Description
                     </label>
                     <textarea
+                      value={issueDescription}
+                      onChange={(e) => setIssueDescription(e.target.value)}
                       placeholder="Describe the diagnosed problem in detail..."
                       className="w-full h-32 p-6 rounded-2xl bg-white border border-slate-200 focus:border-[#0891b2] focus:ring-4 focus:ring-cyan-50 transition-all outline-none text-slate-600 font-medium leading-relaxed resize-none"
                     />
@@ -161,6 +217,8 @@ export default function ServiceCompletionReportPage({
                       Fix Applied
                     </label>
                     <textarea
+                      value={fixApplied}
+                      onChange={(e) => setFixApplied(e.target.value)}
                       placeholder="List parts replaced and repairs performed..."
                       className="w-full h-32 p-6 rounded-2xl bg-white border border-slate-200 focus:border-[#0891b2] focus:ring-4 focus:ring-cyan-50 transition-all outline-none text-slate-600 font-medium leading-relaxed resize-none"
                     />
@@ -177,6 +235,8 @@ export default function ServiceCompletionReportPage({
                       </span>
                     </div>
                     <textarea
+                      value={additionalNotes}
+                      onChange={(e) => setAdditionalNotes(e.target.value)}
                       placeholder="Any warnings, follow-up recommendations, or customer comments..."
                       className="w-full h-24 p-6 rounded-2xl bg-white border border-slate-200 focus:border-[#0891b2] focus:ring-4 focus:ring-cyan-50 transition-all outline-none text-slate-600 font-medium leading-relaxed resize-none"
                     />
@@ -188,12 +248,30 @@ export default function ServiceCompletionReportPage({
                       Proof of Work
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <button className="aspect-[4/3] rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center gap-2 text-slate-300 hover:border-[#0891b2] hover:text-blue-500 transition-all bg-slate-50/50 group">
+                      <label className="aspect-[4/3] rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center gap-2 text-slate-300 hover:border-[#0891b2] hover:text-blue-500 transition-all bg-slate-50/50 group cursor-pointer">
                         <Plus className="w-6 h-6 transition-transform group-hover:scale-110" />
                         <span className="text-[10px] font-bold uppercase tracking-widest">
                           Add Photo
                         </span>
-                      </button>
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            const files = e.target.files;
+                            if (!files) return;
+
+                            const arr = Array.from(files);
+                            setPhotoFiles((prev) => [...prev, ...arr]);
+
+                            const previews = arr.map((file) => URL.createObjectURL(file));
+                            setPhotos((prev) => [...prev, ...previews]);
+                          }}
+                        />
+                      </label>
+
                       {photos.map((src, i) => (
                         <div
                           key={i}
@@ -204,7 +282,13 @@ export default function ServiceCompletionReportPage({
                             alt="Proof"
                             className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           />
-                          <button className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
+                          <button
+                            onClick={() => {
+                              setPhotos((prev) => prev.filter((_, index) => index !== i));
+                              setPhotoFiles((prev) => prev.filter((_, index) => index !== i));
+                            }}
+                            className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                          >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
@@ -222,10 +306,12 @@ export default function ServiceCompletionReportPage({
                     Save Draft
                   </Button>
                   <Button
-                    onClick={() => setCurrentStep("otp")}
+                    // onClick={() => setCurrentStep("otp")}
+                    onClick={submitServiceReport}
+                    disabled={isSubmitting}
                     className="flex-1 bg-cyan-400 hover:bg-cyan-500 text-white h-14 rounded-xl font-black text-lg gap-2 shadow-lg shadow-cyan-100 transition-all active:scale-[0.98] hover:shadow-xl hover:shadow-cyan-200"
                   >
-                    Proceed to OTP Verification
+                    {isSubmitting ? "Submitting..." : "Proceed to OTP Verification"}
                     <ChevronRight className="w-5 h-5" />
                   </Button>
                 </div>
