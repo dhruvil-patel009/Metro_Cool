@@ -74,7 +74,7 @@ export const getAllBookings = async (req: Request, res: Response) => {
         id,
         booking_date,
         time_slot,
-        status,
+        job_status,
         full_name,
         phone,
         total_amount
@@ -103,14 +103,20 @@ export const getAllBookings = async (req: Request, res: Response) => {
       date: b.booking_date,
       time: b.time_slot,
       status:
-        b.status === "pending"
-          ? "Pending"
-          : b.status === "completed"
+        b.job_status === "open"
+          ? "Open"
+          : b.job_status === "assigned"
+          ? "Assigned"
+          : b.job_status === "on_the_way"
+          ? "On the Way"
+          : b.job_status === "working"
+          ? "Working"
+          : b.job_status === "completed"
           ? "Completed"
-          : b.status === "cancelled"
+          : b.job_status === "cancelled"
           ? "Cancelled"
           : "Confirmed",
-      payment: b.status === "completed" ? "Paid" : "Unpaid",
+      payment: b.job_status === "completed" ? "Paid" : "Unpaid",
     }))
 
     res.json({
@@ -162,7 +168,7 @@ export const getAdminBookings = async (req: Request, res: Response) => {
         service_id,
         booking_date,
         time_slot,
-        status,
+        job_status,
         total_amount,
         created_at,
 

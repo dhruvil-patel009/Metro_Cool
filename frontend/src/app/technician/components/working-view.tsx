@@ -30,7 +30,7 @@ type Booking = {
   id: string;
   booking_date: string;
   time_slot: string;
-  status?: string;
+  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed"
   issues?: string[];
   instructions?: string;
   address: Address | string | null;
@@ -53,6 +53,7 @@ export function WorkingView({
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [seconds, setSeconds] = useState(0);
+  const [completing, setCompleting] = useState(false);
 
   /* ---------------- TIMER ---------------- */
 
@@ -94,7 +95,7 @@ export function WorkingView({
           setBooking(json.booking);
 
           // if job already completed redirect to jobs list
-          if (json.booking.status === "completed") {
+          if (json.booking.job_status === "completed") {
             router.push("/technician/jobs");
           }
         }
@@ -126,12 +127,51 @@ export function WorkingView({
 
   const fullAddress = address
     ? [address.street, address.city, address.zipCode]
-        .filter(Boolean)
-        .join(", ")
+      .filter(Boolean)
+      .join(", ")
     : "";
 
   if (!booking)
     return <div className="p-10 text-center">Loading job...</div>;
+
+
+
+  const completeJob = async () => {
+    if (completing) return;
+
+    try {
+      setCompleting(true);
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/tech-jobs/${jobId}/complete`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert("Failed to complete job");
+        setCompleting(false);
+        return;
+      }
+
+      // redirect back to jobs page
+      router.push(`/technician/jobs/${jobId}/reports`);
+
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+      setCompleting(false);
+    }
+  };
+
 
   /* ---------------- UI ---------------- */
 
@@ -207,16 +247,15 @@ export function WorkingView({
               </div>
 
               {/* COMPLETE BUTTON */}
-               <Link href={`/technician/jobs/${jobId}/reports`}>
-              <Button
-                onClick={() =>
-                  router.push(`/technician/jobs/${booking.id}/report`)
-                }
-                className="w-full bg-blue-600 text-white py-8 rounded-2xl font-black text-xl gap-3 hover:bg-blue-700"
-              >
-                <CheckCircle2 className="w-6 h-6" />
-                MARK JOB AS COMPLETED
-              </Button>
+              <Link href={`/technician/jobs/${jobId}/reports`}>
+                <Button
+                  onClick={completeJob}
+                  disabled={completing}
+                  className="w-full bg-blue-600 text-white py-8 rounded-2xl font-black text-xl gap-3 hover:bg-blue-700"
+                >
+                  <CheckCircle2 className="w-6 h-6" />
+                  {completing ? "Completing..." : "MARK JOB AS COMPLETED"}
+                </Button>
               </Link>
 
               {/* ACTION BUTTONS */}

@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 
-export interface AuthRequest extends Request {
-  user?: { id: string };
-}
+// export interface AuthRequest extends Request {
+//   user?: { id: string };
+// }
 
 export const protect = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {

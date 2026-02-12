@@ -17,6 +17,7 @@ import cookieParser from "cookie-parser"
 import adminBookingRoutes from "./routes/admin.booking.routes.js";
 import settlementRoutes from "./routes/settlement.routes.js";
 import serviceReportRoutes from "./routes/service-report.routes.js";
+import technicianJobRoutes from "./routes/technicianJob.routes.js";
 
 
 
@@ -61,6 +62,8 @@ app.use("/api/feedbacks", feedbackRoutes)
 app.use("/api/settlements", settlementRoutes)
 
 app.use("/api/service-report", serviceReportRoutes);
+
+app.use("/api/tech-jobs", technicianJobRoutes);
 
 
 

@@ -73,15 +73,48 @@ const jobId = routeParams?.id as string;
     }
   };
 
-  const handleVerifyOtp = async () => {
-    const otpCode = otpValues.join("");
-    if (otpCode.length !== 6) return;
+const handleVerifyOtp = async () => {
+  const otpCode = otpValues.join("");
+  if (otpCode.length !== 6) return;
 
+  try {
     setIsVerifying(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsVerifying(false);
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/tech-jobs/${jobId}/verify-otp`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          otp: otpCode, // later real SMS validation
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert("OTP verification failed");
+      setIsVerifying(false);
+      return;
+    }
+
+    // SUCCESS → close job
     setCurrentStep("completed");
-  };
+
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  } finally {
+    setIsVerifying(false);
+  }
+};
+
 
   const handleResendCode = async () => {
     setIsResending(true);
@@ -656,10 +689,7 @@ const jobId = routeParams?.id as string;
                     transition={{ delay: 1 }}
                     className="px-8 pb-8 space-y-3"
                   >
-                    <Button className="w-full h-14 bg-cyan-400 hover:bg-cyan-500 text-white rounded-xl font-black text-base gap-2 shadow-lg shadow-cyan-100 transition-all hover:shadow-xl hover:shadow-cyan-200 active:scale-[0.98]">
-                      <LayoutGrid className="w-5 h-5" />
-                      Go to Dashboard
-                    </Button>
+                    Go to Dashboard
                     <Button
                       variant="outline"
                       className="w-full h-14 border-slate-200 rounded-xl font-bold text-slate-600 bg-white gap-2 hover:bg-slate-50 transition-all"

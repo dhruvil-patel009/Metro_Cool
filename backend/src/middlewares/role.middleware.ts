@@ -1,10 +1,13 @@
-import { Response, NextFunction } from "express";
+import { Request,Response, NextFunction } from "express";
 import { supabase } from "../utils/supabase.js";
-import { AuthRequest } from "./auth.middleware.js";
+// import { AuthRequest } from "./auth.middleware.js";
 
 export const authorize =
   (...allowedRoles: ("user" | "technician" | "admin")[]) =>
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
+
+     const userId = req.user.id;
+
     const { data, error } = await supabase
       .from("profiles")
       .select("role")

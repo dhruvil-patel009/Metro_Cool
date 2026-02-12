@@ -51,7 +51,7 @@ export const getAllBookings = async (req: any, res: Response) => {
         full_name,
         phone,
         address,
-        status,
+        job_status,
         issues,
         instructions,
         service_id,
