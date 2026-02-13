@@ -26,6 +26,7 @@ interface JobCardProps {
 
 export function JobCardV2({
   id,
+  job_status,
   title,
   customer,
   location,
@@ -37,47 +38,47 @@ export function JobCardV2({
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
-const [clicked, setClicked] = useState(false);
+  const [clicked, setClicked] = useState(false);
 
-const acceptJob = async () => {
-  // 🚨 Prevent double click + strict mode double call
-  if (clicked) return;
+  const acceptJob = async () => {
+    // 🚨 Prevent double click + strict mode double call
+    if (clicked) return;
 
-  setClicked(true);
-  setLoading(true);
+    setClicked(true);
+    setLoading(true);
 
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/tech-jobs/${id}/accept`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/tech-jobs/${id}/accept`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.message);
+        setClicked(false);
+        setLoading(false);
+        return;
       }
-    );
 
-    const data = await res.json();
+      // redirect after success
+      window.location.href = `/technician/jobs/${id}`;
 
-    if (!data.success) {
-      alert(data.message);
+    } catch (err) {
+      console.error(err);
       setClicked(false);
       setLoading(false);
-      return;
+      alert("Server error");
     }
-
-    // redirect after success
-    window.location.href = `/technician/jobs/${id}`;
-
-  } catch (err) {
-    console.error(err);
-    setClicked(false);
-    setLoading(false);
-    alert("Server error");
-  }
-};
+  };
 
   return (
     <motion.div
@@ -163,38 +164,80 @@ const acceptJob = async () => {
         </div>
 
         {/* ACTION */}
-         <div className="mt-8">
-         <Button
-  onClick={acceptJob}
-  disabled={loading || clicked}
-  className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-8 py-6 rounded-xl font-bold gap-2 text-base transition-all active:scale-95 shadow-lg shadow-cyan-100 cursor-pointer"
->
-  <CheckCircle2 className="w-5 h-5" />
-  {loading ? "Accepting..." : "Accept Job"}
-</Button>
+
+        <div className="mt-8">
+
+          {/* OPEN → Show Accept */}
+          {job_status === "open" && (
+            <Button
+              onClick={acceptJob}
+              disabled={loading || clicked}
+              className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-8 py-6 rounded-xl font-bold gap-2 text-base shadow-lg shadow-cyan-100"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              {loading ? "Accepting..." : "Accept Job"}
+            </Button>
+          )}
+
+          {/* ASSIGNED */}
+          {job_status === "assigned" && (
+            <Link href={`/technician/jobs/${id}`}>
+              <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 rounded-xl font-bold">
+                ON THE WAY
+              </Button>
+            </Link>
+          )}
+
+          {/* ON THE WAY */}
+          {job_status === "on_the_way" && (
+            <Link href={`/technician/jobs/${id}`}>
+              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 rounded-xl font-bold">
+                START WORK
+              </Button>
+            </Link>
+          )}
+
+          {/* WORKING */}
+          {job_status === "working" && (
+            <Link href={`/technician/jobs/${id}`}>
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-6 rounded-xl font-bold">
+                CONTINUE WORK
+              </Button>
+            </Link>
+          )}
+
+          {/* CLOSED → NO ACCEPT BUTTON */}
+          {job_status === "completed" && (
+            <Link href={`/technician/jobs/${id}`}>
+              <Button className="bg-slate-700 hover:bg-slate-800 text-white px-8 py-6 rounded-xl font-bold">
+                VIEW DETAILS
+              </Button>
+            </Link>
+          )}
 
         </div>
+
       </div>
 
       {/* MAP SECTION */}
-<div className="w-full md:w-80 relative overflow-hidden h-52 md:h-full min-h-[320px] bg-slate-100">
-  {mapUrl ? (
-    <img
-      src={mapUrl}
-      alt="Service"
-      className="absolute inset-0 w-full h-full object-cover object-center"
-    />
-  ) : (
-    <div className="w-full h-full flex items-center justify-center text-slate-400">
-      No Image
-    </div>
-  )}
+      <div className="w-full md:w-80 relative overflow-hidden h-52 md:h-full min-h-[320px] bg-slate-100">
+        {mapUrl ? (
+          <img
+            src={mapUrl}
+            alt="Service"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-400">
+            No Image
+          </div>
+        )}
 
-  {/* <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2 shadow-sm">
+        {/* <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2 shadow-sm">
     <MapPin className="w-3.5 h-3.5 text-[#0891b2]" />
     <span className="text-xs font-bold text-slate-700">{distance} away</span>
   </div> */}
-</div>
+      </div>
 
     </motion.div>
   )

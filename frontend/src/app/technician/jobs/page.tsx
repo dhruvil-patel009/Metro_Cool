@@ -6,6 +6,8 @@ import { Input } from "@/app/components/ui/input"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/app/lib/utils"
 import { JobCardV2 } from "../components/job-card-v2"
+import { useSearchParams } from "next/navigation"
+
 
 type Address = {
   street?: string
@@ -35,7 +37,10 @@ type Booking = {
 }
 
 export default function JobsPage() {
-  const [activeTab, setActiveTab] = useState("new")
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get("tab") || "new"
+
+  const [activeTab, setActiveTab] = useState(tabFromUrl)
   const [searchQuery, setSearchQuery] = useState("")
   const [jobs, setJobs] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
@@ -109,6 +114,11 @@ export default function JobsPage() {
     fetchJobs()
   }, [])
 
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [tabFromUrl])
   /* ================= FILTERS ================= */
 
   const tabFilteredJobs = jobs.filter((job) => {
