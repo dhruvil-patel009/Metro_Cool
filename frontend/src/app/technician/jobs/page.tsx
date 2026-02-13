@@ -123,28 +123,42 @@ export default function JobsPage() {
   // }, [])
 
   const fetchJobs = async (): Promise<Booking[]> => {
-    const token = localStorage.getItem("token")
+    try {
+      const token = localStorage.getItem("token")
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        }
+      )
+
+      if (!res.ok) return [];
+
+      const json = await res.json();
+
+      // 🧠 GUARANTEE ARRAY
+      if (!json || !Array.isArray(json.bookings)) {
+        return [];
       }
-    )
 
-    const json = await res.json()
-    return json.bookings || []
-  }
+      return json.bookings;
+    } catch (err) {
+      console.error("Jobs fetch failed:", err);
+      return [];
+    }
+  };
+
 
   const {
     data: jobs = [],
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["technician-jobs"],
+    queryKey: ["technician-all-jobs"],
     queryFn: fetchJobs,
     enabled: mounted,              // ⭐ prevent server crash
     refetchInterval: 5000,         // ⭐ auto live refresh
@@ -158,7 +172,7 @@ export default function JobsPage() {
   }, [tabFromUrl])
   /* ================= FILTERS ================= */
 
-  const tabFilteredJobs = jobs.filter((job) => {
+  const tabFilteredJobs = (jobs ?? []).filter((job) => {
 
     // jobs waiting for technician
     if (activeTab === "new") return job.job_status === "open"

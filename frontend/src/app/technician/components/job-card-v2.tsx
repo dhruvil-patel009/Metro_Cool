@@ -12,6 +12,8 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+
 
 interface JobCardProps {
   id: string
@@ -39,6 +41,9 @@ export function JobCardV2({
   const [loading, setLoading] = useState(false)
 
   const [clicked, setClicked] = useState(false);
+
+  const queryClient = useQueryClient()
+
 
   const acceptJob = async () => {
     // 🚨 Prevent double click + strict mode double call
@@ -70,7 +75,9 @@ export function JobCardV2({
       }
 
       // redirect after success
-      window.location.href = `/technician/jobs/${id}`;
+await queryClient.invalidateQueries({ queryKey: ["technician-jobs"] })
+router.push(`/technician/jobs/${id}`)
+
 
     } catch (err) {
       console.error(err);
