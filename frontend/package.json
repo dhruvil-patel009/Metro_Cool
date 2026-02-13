@@ -19,6 +19,7 @@
     "@react-pdf-viewer/core": "^3.12.0",
     "@react-pdf-viewer/default-layout": "^3.12.0",
     "@supabase/supabase-js": "^2.90.1",
+    "@tanstack/react-query": "^5.90.21",
     "canvas": "^3.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
