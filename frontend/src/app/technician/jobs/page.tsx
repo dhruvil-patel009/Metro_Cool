@@ -21,10 +21,12 @@ type Booking = {
   full_name: string
   phone: string
   address: Address | string | null
-  status: "draft" | "confirmed" | "completed"
+
+  // IMPORTANT CHANGE
+  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed"
   issues?: string[]
 
-   services: {
+  services: {
     id: string
     title: string
     image_url: string
@@ -94,6 +96,7 @@ export default function JobsPage() {
 
         const json = await res.json()
         if (json.success) {
+          console.log("API BOOKINGS:", json.bookings)
           setJobs(json.bookings)
         }
       } catch (err) {
@@ -109,11 +112,25 @@ export default function JobsPage() {
   /* ================= FILTERS ================= */
 
   const tabFilteredJobs = jobs.filter((job) => {
-    if (activeTab === "new") return job.status === "confirmed"
-    if (activeTab === "accepted") return job.status === "draft"
-    if (activeTab === "completed") return job.status === "completed"
+
+    // jobs waiting for technician
+    if (activeTab === "new") return job.job_status === "open"
+
+    // technician accepted & in progress
+    if (activeTab === "accepted")
+      return (
+        job.job_status === "assigned" ||
+        job.job_status === "on_the_way" ||
+        job.job_status === "working"
+      )
+
+    // finished jobs
+    if (activeTab === "completed") return job.job_status === "completed"
+
     return true
   })
+
+
 
   const filteredJobs = tabFilteredJobs.filter(
     (job) =>
@@ -122,10 +139,28 @@ export default function JobsPage() {
   )
 
   const tabs = [
-    { id: "new", label: "New Jobs", count: jobs.filter(j => j.status === "confirmed").length },
-    { id: "accepted", label: "Accepted Jobs", count: jobs.filter(j => j.status === "draft").length },
-    { id: "completed", label: "Completed Jobs", count: jobs.filter(j => j.status === "completed").length },
+    {
+      id: "new",
+      label: "New Jobs",
+      count: jobs.filter(j => j.job_status === "open").length,
+    },
+    {
+      id: "accepted",
+      label: "Accepted Jobs",
+      count: jobs.filter(j =>
+        j.job_status === "assigned" ||
+        j.job_status === "on_the_way" ||
+        j.job_status === "working"
+      ).length,
+    },
+    {
+      id: "completed",
+      label: "Completed Jobs",
+      count: jobs.filter(j => j.job_status === "completed").length,
+    },
   ]
+
+
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
@@ -195,15 +230,16 @@ export default function JobsPage() {
 
               return (
                 <motion.div key={job.id} layout className="space-y-4">
-                <JobCardV2
-  id={job.id}
-  title={job.services?.title || job.issues?.join(", ") || "Service Job"}
-  customer={job.full_name}
-  location={getLocationText(job.address)}
-  dateTime={`${job.booking_date} • ${job.time_slot}`}
-  distance="—"
-  mapUrl={job.services?.image_url}
-/>
+                  <JobCardV2
+                    id={job.id}
+                    job_status={job.job_status}
+                    title={job.services?.title || job.issues?.join(", ") || "Service Job"}
+                    customer={job.full_name}
+                    location={getLocationText(job.address)}
+                    dateTime={`${job.booking_date} • ${job.time_slot}`}
+                    distance="—"
+                    mapUrl={job.services?.image_url}
+                  />
 
 
                 </motion.div>

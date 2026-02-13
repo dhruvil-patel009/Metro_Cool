@@ -10,9 +10,12 @@ import {
 import { Button } from "@/app/components/ui/button"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 interface JobCardProps {
   id: string
+  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed"
   title: string
   customer: string
   location: string
@@ -30,6 +33,52 @@ export function JobCardV2({
   distance,
   mapUrl,
 }: JobCardProps) {
+
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+const [clicked, setClicked] = useState(false);
+
+const acceptJob = async () => {
+  // 🚨 Prevent double click + strict mode double call
+  if (clicked) return;
+
+  setClicked(true);
+  setLoading(true);
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/tech-jobs/${id}/accept`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(data.message);
+      setClicked(false);
+      setLoading(false);
+      return;
+    }
+
+    // redirect after success
+    window.location.href = `/technician/jobs/${id}`;
+
+  } catch (err) {
+    console.error(err);
+    setClicked(false);
+    setLoading(false);
+    alert("Server error");
+  }
+};
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -114,13 +163,16 @@ export function JobCardV2({
         </div>
 
         {/* ACTION */}
-        <div className="mt-8">
-          <Link href={`/technician/jobs/${id}`}>
-            <Button className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-8 py-6 rounded-xl font-bold gap-2 text-base transition-all active:scale-95 shadow-lg shadow-cyan-100 cursor-pointer">
-              <CheckCircle2 className="w-5 h-5" />
-              Accept Job
-            </Button>
-          </Link>
+         <div className="mt-8">
+         <Button
+  onClick={acceptJob}
+  disabled={loading || clicked}
+  className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-8 py-6 rounded-xl font-bold gap-2 text-base transition-all active:scale-95 shadow-lg shadow-cyan-100 cursor-pointer"
+>
+  <CheckCircle2 className="w-5 h-5" />
+  {loading ? "Accepting..." : "Accept Job"}
+</Button>
+
         </div>
       </div>
 
