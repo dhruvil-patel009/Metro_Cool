@@ -1,6 +1,7 @@
 import { DollarSign, CheckCircle2, Clock, Calendar } from "lucide-react"
 import { Card, CardContent } from "@/app/components/ui/card"
 import { cn } from "@/app/lib/utils"
+import dayjs from "dayjs";
 
 const stats = [
   {
@@ -49,7 +50,10 @@ const stats = [
   },
 ]
 
-export function StatCards() {
+export function StatCards({bookings}: any) {
+    const completed = bookings.filter((j:any)=> j.job_status==="completed").length;
+  const pending = bookings.filter((j:any)=> j.job_status==="assigned").length;
+  // const today = bookings.filter((j:any)=> dayjs(j.scheduled_date).isToday()).length;
   return (
     <div className="grid grid-cols-1 py-6 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {stats.map((stat) => (

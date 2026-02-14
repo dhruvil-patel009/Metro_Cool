@@ -331,7 +331,7 @@ export default function JobDetailsPage() {
                 </div>
               </div>
 
-              <div className="bg-slate-50 rounded-2xl p-5 flex items-center gap-4">
+              <div className="rounded-2xl p-5 flex items-center gap-4">
                 {/* <Clock className="w-5 h-5 text-slate-400" />
               <div>
                 <p className="text-xs text-slate-400 font-bold uppercase">
@@ -339,7 +339,7 @@ export default function JobDetailsPage() {
                 </p>
                 <p className="font-bold text-slate-900">{booking.time_slot}</p>
               </div> */}
-              </div>
+            </div>
 
               {/* CUSTOMER NOTES */}
               {booking.instructions && (

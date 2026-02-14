@@ -6,6 +6,10 @@ import { Input } from "@/app/components/ui/input"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/app/lib/utils"
 import { JobCardV2 } from "../components/job-card-v2"
+import { useSearchParams } from "next/navigation"
+import { useQuery } from "@tanstack/react-query"
+
+
 
 type Address = {
   street?: string
@@ -35,10 +39,19 @@ type Booking = {
 }
 
 export default function JobsPage() {
-  const [activeTab, setActiveTab] = useState("new")
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get("tab") || "new"
+
+  const [activeTab, setActiveTab] = useState(tabFromUrl)
   const [searchQuery, setSearchQuery] = useState("")
-  const [jobs, setJobs] = useState<Booking[]>([])
-  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
+
+  /* ---------- FIX SSR LOCALSTORAGE ISSUE ---------- */
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+
 
   /* ================= ADDRESS HELPERS ================= */
 
@@ -79,39 +92,87 @@ export default function JobsPage() {
 
   /* ================= FETCH BOOKINGS ================= */
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const token = localStorage.getItem("token")
+  // useEffect(() => {
+  //   const fetchJobs = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token")
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            cache: "no-store",
-          }
-        )
+  //       const res = await fetch(
+  //         `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //           cache: "no-store",
+  //         }
+  //       )
 
-        const json = await res.json()
-        if (json.success) {
-          console.log("API BOOKINGS:", json.bookings)
-          setJobs(json.bookings)
+  //       const json = await res.json()
+  //       if (json.success) {
+  //         console.log("API BOOKINGS:", json.bookings)
+  //         setJobs(json.bookings)
+  //       }
+  //     } catch (err) {
+  //       console.error("Failed to load jobs", err)
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+
+  //   fetchJobs()
+  // }, [])
+
+  const fetchJobs = async (): Promise<Booking[]> => {
+    try {
+      const token = localStorage.getItem("token")
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
         }
-      } catch (err) {
-        console.error("Failed to load jobs", err)
-      } finally {
-        setLoading(false)
+      )
+
+      if (!res.ok) return [];
+
+      const json = await res.json();
+
+      // 🧠 GUARANTEE ARRAY
+      if (!json || !Array.isArray(json.bookings)) {
+        return [];
       }
+
+      return json.bookings;
+    } catch (err) {
+      console.error("Jobs fetch failed:", err);
+      return [];
     }
+  };
 
-    fetchJobs()
-  }, [])
 
+  const {
+    data: jobs = [],
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ["technician-all-jobs"],
+    queryFn: fetchJobs,
+    enabled: mounted,              // ⭐ prevent server crash
+    refetchInterval: 5000,         // ⭐ auto live refresh
+    staleTime: 2000,
+  })
+
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [tabFromUrl])
   /* ================= FILTERS ================= */
 
-  const tabFilteredJobs = jobs.filter((job) => {
+  const tabFilteredJobs = (jobs ?? []).filter((job) => {
 
     // jobs waiting for technician
     if (activeTab === "new") return job.job_status === "open"
@@ -161,7 +222,7 @@ export default function JobsPage() {
   ]
 
 
-
+  if (!mounted) return null
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       {/* ================= HEADER ================= */}
@@ -221,33 +282,32 @@ export default function JobsPage() {
         ))}
       </div>
 
+      {/* LOADER */}
+      {isLoading && (
+        <div className="py-32 text-center text-slate-400 font-semibold animate-pulse">
+          Loading technician jobs...
+        </div>
+      )}
       {/* ================= JOB LIST ================= */}
       <div className="space-y-8">
         <AnimatePresence mode="popLayout">
-          {!loading &&
-            filteredJobs.map((job) => {
-              const fullAddress = getFullAddress(job.address)
-
-              return (
-                <motion.div key={job.id} layout className="space-y-4">
-                  <JobCardV2
-                    id={job.id}
-                    job_status={job.job_status}
-                    title={job.services?.title || job.issues?.join(", ") || "Service Job"}
-                    customer={job.full_name}
-                    location={getLocationText(job.address)}
-                    dateTime={`${job.booking_date} • ${job.time_slot}`}
-                    distance="—"
-                    mapUrl={job.services?.image_url}
-                  />
-
-
-                </motion.div>
-              )
-            })}
+          {!isLoading && filteredJobs.map((job) => (
+            <motion.div key={job.id} layout className="space-y-4">
+              <JobCardV2
+                id={job.id}
+                job_status={job.job_status}
+                title={job.services?.title || job.issues?.join(", ") || "Service Job"}
+                customer={job.full_name}
+                location={getLocationText(job.address)}
+                dateTime={`${job.booking_date} • ${job.time_slot}`}
+                distance="—"
+                mapUrl={job.services?.image_url}
+              />
+            </motion.div>
+          ))}
         </AnimatePresence>
 
-        {!loading && filteredJobs.length === 0 && (
+        {!isLoading && filteredJobs.length === 0 && (
           <div className="py-20 text-center space-y-4">
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
               <Search className="w-8 h-8 text-slate-300" />

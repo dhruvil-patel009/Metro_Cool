@@ -16,13 +16,28 @@ export const getOpenJobs = async (req: Request, res: Response) => {
 
 /* MY JOBS (accepted jobs) */
 export const getMyJobs = async (req: Request, res: Response) => {
+  try {
   const { data, error } = await supabase
     .from("bookings")
-    .select("*")
-    .eq("technician_id", req.user.id)
-    .neq("job_status", "completed");
+    .select("*,services (*)")
+    // .eq("technician_id", req.user.id)
+    .neq("job_status", "completed")
+    // .order("scheduled_date", { ascending: true });
 
-  if (error) return res.status(500).json({ success: false });
+    if (error) {
+      console.log("SUPABASE ERROR:", error);
+      return res.status(500).json({ success: false });
+    }
 
-  res.json({ success: true, bookings: data });
+  res.json({
+    success: true,
+    serverTime: new Date().toISOString(), // ⭐ IMPORTANT
+    bookings: data,
+  });
+}
+   catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
 };
+

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 // import { Toaster } from "sonner";
 import AuthProvider from "@/providers/AuthProvider";
 import { ToastContainer, toast } from 'react-toastify';
+import Providers from "./providers"
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 
@@ -33,12 +34,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
+        <Providers>
         <AuthProvider>
           <main className="flex-1">{children}</main>
         </AuthProvider>
 
         {/* <Toaster position="top-right" richColors closeButton /> */}
         <ToastContainer />
+        </Providers>
       </body>
     </html>
   );

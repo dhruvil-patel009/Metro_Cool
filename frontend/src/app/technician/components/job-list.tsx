@@ -1,10 +1,11 @@
 "use client";
 
-import { cn } from "@/app/lib/utils";
 
-import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, ArrowRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import dayjs from "dayjs";
+import { JobCard } from "./job-card";
 import { Input } from "@/app/components/ui/input";
+import { ArrowRight, CalendarIcon, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
   DropdownMenu,
@@ -12,60 +13,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
-import { JobCard, type Job } from "./job-card";
+import Link from "next/link";
+export function JobList({ bookings, serverTime }: any) {
 
-const MOCK_JOBS: Job[] = [
-  {
-    id: "1",
-    title: "AC System Maintenance",
-    customer: "John Doe",
-    address: "123 Maple Street, Downtown",
-    time: "09:00 AM - 11:00 AM",
-    status: "in-progress",
-    image: "/ac-unit-maintenance.jpg",
-  },
-  {
-    id: "2",
-    title: "Heater Coil Repair",
-    customer: "Sarah Smith",
-    address: "456 Oak Avenue, Westside",
-    time: "11:30 AM - 01:00 PM",
-    status: "scheduled",
-    image: "/heater-repair.jpg",
-  },
-  {
-    id: "3",
-    title: "HEPA Filter Replacement",
-    customer: "Mike Ross",
-    address: "789 Pine Lane, Suburbs",
-    time: "02:00 PM - 02:45 PM",
-    status: "pending",
-    image: "/filter-replacement.png",
-  },
-];
-
-export function JobList() {
-  const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "in-progress" | "scheduled" | "pending"
   >("all");
+  const serverDate = dayjs(serverTime);
 
-  const filteredJobs = useMemo(() => {
-    return MOCK_JOBS.filter((job) => {
-      const matchesSearch =
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.address.toLowerCase().includes(searchQuery.toLowerCase());
+  const jobsToShow = useMemo(() => {
+    const todayJobs = bookings.filter((job: any) =>
+      dayjs(job.scheduled_date).isSame(serverDate, "day")
+    );
 
-      const matchesStatus =
-        statusFilter === "all" || job.status === statusFilter;
+    if (todayJobs.length > 0) return todayJobs;
 
-      return matchesSearch && matchesStatus;
-    });
-  }, [searchQuery, statusFilter]);
+    // If no today jobs → show latest
+    return bookings
+      .sort(
+        (a: any, b: any) =>
+          dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf()
+      )
+      .slice(0, 5);
+  }, [bookings, serverTime]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 mt-6">
       <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
@@ -118,46 +92,21 @@ export function JobList() {
           <CalendarIcon className="w-5 h-5 text-blue-500" />
           Today's Schedule
         </h3>
-        <Button variant="link" className="text-blue-500 font-bold text-sm">
+        <Link href="/technician/jobs" className="text-sm text-blue-500 font-bold flex items-center gap-1">
+        <Button variant="link" className="text-blue-500 font-bold text-sm cursor-pointer">
           View Full Schedule
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
+        </Link>
       </div>
+{jobsToShow
+  .filter((job: any) => job.job_status === "open")
+  .map((job: any) => (
+    <JobCard key={job.id} job={job} />
+  ))}
 
-      <div className="space-y-4">
-        {filteredJobs.length > 0 ? (
-          filteredJobs.map((job) => <JobCard key={job.id} job={job} />)
-        ) : (
-          <div className="py-20 text-center bg-white rounded-xl border-2 border-dashed border-slate-200">
-            <p className="text-slate-400 font-medium">
-              No jobs found matching your criteria.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+  
 
-function CalendarIcon({ className }: { className?: string }) {
-  return (
-    <div className={cn("bg-cyan-50 rounded", className)}>
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-        <line x1="16" x2="16" y1="2" y2="6" />
-        <line x1="8" x2="8" y1="2" y2="6" />
-        <line x1="3" x2="21" y1="10" y2="10" />
-        <path d="m9 16 2 2 4-4" />
-      </svg>
     </div>
   );
 }

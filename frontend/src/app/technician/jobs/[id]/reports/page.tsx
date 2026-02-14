@@ -9,6 +9,7 @@ import {
   Camera,
   Plus,
   X,
+  LayoutDashboard,
   ChevronRight,
   Save,
   Lock,
@@ -24,6 +25,8 @@ import { Button } from "@/app/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
+
 
 
 export default function ServiceCompletionReportPage({
@@ -32,7 +35,7 @@ export default function ServiceCompletionReportPage({
   params: { id: string };
 }) {
   const routeParams = useParams();
-const jobId = routeParams?.id as string;
+  const jobId = routeParams?.id as string;
   // -------- FORM DATA ----------
   const [issueDescription, setIssueDescription] = useState("");
   const [fixApplied, setFixApplied] = useState("");
@@ -73,47 +76,47 @@ const jobId = routeParams?.id as string;
     }
   };
 
-const handleVerifyOtp = async () => {
-  const otpCode = otpValues.join("");
-  if (otpCode.length !== 6) return;
+  const handleVerifyOtp = async () => {
+    const otpCode = otpValues.join("");
+    if (otpCode.length !== 6) return;
 
-  try {
-    setIsVerifying(true);
+    try {
+      setIsVerifying(true);
 
-    const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/tech-jobs/${jobId}/verify-otp`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          otp: otpCode, // later real SMS validation
-        }),
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/tech-jobs/${jobId}/verify-otp`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            otp: otpCode, // later real SMS validation
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert("OTP verification failed");
+        setIsVerifying(false);
+        return;
       }
-    );
 
-    const data = await res.json();
+      // SUCCESS → close job
+      setCurrentStep("completed");
 
-    if (!data.success) {
-      alert("OTP verification failed");
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    } finally {
       setIsVerifying(false);
-      return;
     }
-
-    // SUCCESS → close job
-    setCurrentStep("completed");
-
-  } catch (err) {
-    console.error(err);
-    alert("Server error");
-  } finally {
-    setIsVerifying(false);
-  }
-};
+  };
 
 
   const handleResendCode = async () => {
@@ -689,14 +692,24 @@ const handleVerifyOtp = async () => {
                     transition={{ delay: 1 }}
                     className="px-8 pb-8 space-y-3"
                   >
-                    Go to Dashboard
-                    <Button
-                      variant="outline"
-                      className="w-full h-14 border-slate-200 rounded-xl font-bold text-slate-600 bg-white gap-2 hover:bg-slate-50 transition-all"
-                    >
-                      <RotateCcw className="w-5 h-5" />
-                      View Completed Jobs
-                    </Button>
+                    <Link href="/technician/jobs">
+                      <Button
+                        variant="outline"
+                        className="w-full h-14 cursor-pointer border-slate-200 rounded-xl font-bold text-slate-600 bg-white gap-2 hover:bg-slate-50 transition-all"
+                      >
+                        <LayoutDashboard className="w-5 h-5" />
+                        Go to Dashboard
+                      </Button>
+                    </Link>
+                    <Link href="/technician/jobs?tab=completed">
+                      <Button
+                        variant="outline"
+                        className="w-full h-14 cursor-pointer border-slate-200 rounded-xl font-bold text-slate-600 bg-white gap-2 hover:bg-slate-50 transition-all"
+                      >
+                        <RotateCcw className="w-5 h-5" />
+                        View Completed Jobs
+                      </Button>
+                    </Link>
                   </motion.div>
 
                   {/* Report issue link */}

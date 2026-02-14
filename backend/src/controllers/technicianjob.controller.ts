@@ -12,12 +12,16 @@ export const acceptJob = async (req: Request, res: Response) => {
       .from("bookings")
       .update({
         job_status: "assigned",
-        // technician_id: technicianId,
+        technician_id: technicianId,
       })
       .eq("id", id)
       .eq("job_status", "open")
       .select();
 
+          if (error) {
+      console.log("SUPABASE ERROR:", error);
+      return res.status(500).json({ success: false });
+    }
     // if no row updated
     // if (!data || data.length === 0) {
 
