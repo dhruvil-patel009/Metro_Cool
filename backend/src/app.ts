@@ -27,25 +27,32 @@ app.use(cookieParser())
 
 
 // 🔥 CORS FIX (MOST IMPORTANT)
+// CORS
+const allowedOrigins = [
+  "https://metro-cool.vercel.app",
+  "https://metro-cool-p3g4.vercel.app",
+  "http://localhost:3000",
+];
+
 app.use(
   cors({
-    origin: [
-      "https://metro-cool.vercel.app",
-      "http://localhost:3000",
-      "https://metro-cool-p3g4.vercel.app"
-    ],
-    credentials: true,               // allow cookies
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: function (origin, callback) {
+      // allow requests with no origin (mobile apps, Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("CORS not allowed"));
+      }
+    },
+    credentials: true,
   })
 );
 
-app.options("*", cors());
+// 🔥 THIS IS THE REAL FIX
+app.options(/.*/, cors());
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
 
 // ✅ Health check
 app.get("/", (_req, res) => {
