@@ -35,9 +35,17 @@ app.use(
       "https://metro-cool-p3g4.vercel.app"
     ],
     credentials: true,               // allow cookies
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
+app.options("*", cors());
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
 
 // ✅ Health check
 app.get("/", (_req, res) => {
