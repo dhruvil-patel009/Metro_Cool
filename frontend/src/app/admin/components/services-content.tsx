@@ -86,7 +86,7 @@ export function ServicesContent() {
               </Button>
               <Button
                 onClick={() => setIsAddServiceModalOpen(true)}
-                className="h-10 bg-blue-500 text-white hover:bg-blue-600"
+                className="h-10 bg-blue-500 text-white hover:bg-blue-700"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add New Service
