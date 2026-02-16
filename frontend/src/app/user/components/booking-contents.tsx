@@ -29,6 +29,8 @@ export default function BookingsContent() {
   const [mounted, setMounted] = useState(false)
   const [copiedOTP, setCopiedOTP] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
+  const [hasRedirected, setHasRedirected] = useState(false)
+
 
   // 🔥 SINGLE OTP (removed duplicate)
   const serviceOTP = "4829"
@@ -36,17 +38,40 @@ export default function BookingsContent() {
   useEffect(() => setMounted(true), [])
 
   /* ---------------- FETCH BOOKING ---------------- */
-  useEffect(() => {
-    if (!bookingId) return
+useEffect(() => {
+  if (!bookingId) return
 
-    const token = localStorage.getItem("accessToken")
+  const token = localStorage.getItem("accessToken")
 
-    fetch(`${API_URL}/bookings/${bookingId}`, {
-      headers: { Authorization: `Bearer ${token}`, "Cache-Control": "no-cache" },cache: "no-store",
-    })
-      .then(res => res.json())
-      .then(data => setBooking(data.booking))
-  }, [bookingId])
+  const fetchBooking = async () => {
+    try {
+      const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache",
+        },
+        cache: "no-store",
+      })
+
+      const data = await res.json()
+
+      if (data?.booking) {
+        setBooking(data.booking)
+      }
+    } catch (err) {
+      console.error("Booking fetch failed", err)
+    }
+  }
+
+  // First load
+  fetchBooking()
+
+  // 🔥 LIVE REFRESH EVERY 3 SECONDS
+  const interval = setInterval(fetchBooking, 3000)
+
+  return () => clearInterval(interval)
+}, [bookingId])
+
 
 /* ---------------- MAP JOB STATUS TO STEP ---------------- */
 const getStepFromStatus = (status: string) => {
@@ -72,8 +97,9 @@ useEffect(() => {
   const step = getStepFromStatus(booking.job_status)
   setCurrentStep(step)
 
-  // Auto redirect when completed
-  if (booking.job_status === "completed") {
+  if (booking.job_status === "completed" && !hasRedirected) {
+    setHasRedirected(true)
+
     toast.success("Service completed 🎉")
 
     setTimeout(() => {
