@@ -48,24 +48,46 @@ export default function BookingsContent() {
       .then(data => setBooking(data.booking))
   }, [bookingId])
 
-  /* ---------------- AUTO TIMELINE ---------------- */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStep(prev => {
-        if (prev === 4) {
-          clearInterval(interval)
-          toast.success("Service completed 🎉")
-          setTimeout(() => {
-            router.push(`/user/bookings/feedback?id=${bookingId}`)
-          }, 1500)
-          return prev
-        }
-        return prev + 1
-      })
-    }, 3000)
+/* ---------------- MAP JOB STATUS TO STEP ---------------- */
+const getStepFromStatus = (status: string) => {
+  switch (status) {
+    case "open":
+      return 0
+    case "assigned":
+      return 1
+    case "on_the_way":
+      return 2
+    case "working":
+      return 3
+    case "completed":
+      return 4
+    default:
+      return 0
+  }
+}
 
-    return () => clearInterval(interval)
-  }, [router, bookingId])
+useEffect(() => {
+  if (!bookingId) return
+
+  const token = localStorage.getItem("accessToken")
+
+  const fetchBooking = () => {
+    fetch(`${API_URL}/bookings/${bookingId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Cache-Control": "no-cache",
+      },
+      cache: "no-store",
+    })
+      .then(res => res.json())
+      .then(data => setBooking(data.booking))
+  }
+
+  fetchBooking()
+  const interval = setInterval(fetchBooking, 5000) // auto refresh every 5 sec
+
+  return () => clearInterval(interval)
+}, [bookingId])
 
   if (!booking) {
     return <div className="p-10 text-center">Loading booking...</div>
