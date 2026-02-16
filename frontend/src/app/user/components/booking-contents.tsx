@@ -67,27 +67,21 @@ const getStepFromStatus = (status: string) => {
 }
 
 useEffect(() => {
-  if (!bookingId) return
+  if (!booking?.job_status) return
 
-  const token = localStorage.getItem("accessToken")
+  const step = getStepFromStatus(booking.job_status)
+  setCurrentStep(step)
 
-  const fetchBooking = () => {
-    fetch(`${API_URL}/bookings/${bookingId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Cache-Control": "no-cache",
-      },
-      cache: "no-store",
-    })
-      .then(res => res.json())
-      .then(data => setBooking(data.booking))
+  // Auto redirect when completed
+  if (booking.job_status === "completed") {
+    toast.success("Service completed 🎉")
+
+    setTimeout(() => {
+      router.push(`/user/bookings/feedback?id=${bookingId}`)
+    }, 1500)
   }
+}, [booking?.job_status])
 
-  fetchBooking()
-  const interval = setInterval(fetchBooking, 5000) // auto refresh every 5 sec
-
-  return () => clearInterval(interval)
-}, [bookingId])
 
   if (!booking) {
     return <div className="p-10 text-center">Loading booking...</div>
