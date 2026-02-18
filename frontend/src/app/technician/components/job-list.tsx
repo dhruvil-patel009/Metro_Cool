@@ -51,7 +51,7 @@ export function JobList({ bookings, serverTime }: any) {
           />
           <Button
             size="icon"
-            className="absolute right-1.5 top-1.5 h-9 w-9 bg-blue-600 hover:bg-[#0e7490]"
+            className="absolute cursor-pointer right-1.5 top-1.5 h-9 w-9 bg-blue-600 hover:bg-blue-800"
           >
             <ArrowRight className="w-4 h-4" />
           </Button>
@@ -61,7 +61,7 @@ export function JobList({ bookings, serverTime }: any) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="h-12 px-6 font-bold border-slate-200 text-slate-700 min-w-[140px] justify-between bg-transparent"
+              className="h-12 px-6 font-bold cursor-pointer border-slate-200 text-slate-700 min-w-[140px] justify-between bg-transparent"
             >
               <SlidersHorizontal className="w-4 h-4 mr-2" />
               {statusFilter === "all"

@@ -87,8 +87,8 @@ export default function OrdersPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50 animate-fade-in">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen animate-fade-in">
+      <div className="max-w-7xl mx-auto">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
           <Link href="/user" className="hover:text-blue-600 transition-colors">

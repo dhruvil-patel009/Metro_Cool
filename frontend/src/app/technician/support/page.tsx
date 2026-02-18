@@ -107,7 +107,7 @@ export default function SupportPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gray-50 p-6 lg:p-8 animate-in fade-in duration-500">
+      <div className="min-h-screen p-6 lg:p-8 animate-in fade-in duration-500">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header Section */}
           <div className="space-y-3 animate-in slide-in-from-top-4 duration-500">

@@ -211,9 +211,10 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                 <button className="p-2.5 bg-white/90 backdrop-blur rounded-full shadow hover:bg-white transition-colors">
                   <Share2 className="w-4 h-4 text-gray-700" />
                 </button>
-                <button className="p-2.5 bg-white/90 backdrop-blur rounded-full shadow hover:bg-white transition-colors">
-                  <Heart className="w-4 h-4 text-gray-700" />
-                </button>
+                <button className="group p-2.5 cursor-pointer bg-white/90 backdrop-blur rounded-full shadow hover:bg-white transition-colors">
+  <Heart className="w-4 h-4 text-gray-700 fill-transparent group-hover:fill-red-500 group-hover:text-red-500 transition-all" />
+</button>
+
               </div>
             </div>
 

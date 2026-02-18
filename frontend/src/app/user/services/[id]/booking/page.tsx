@@ -199,8 +199,8 @@ try {
 
                 {/* Progress Steps */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-8">
-                    <div className="flex items-center justify-between max-w-2xl">
-                        <div className="flex items-center gap-3">
+                    <div className="sm:flex flex-wrap items-center justify-between max-w-2xl">
+                        <div className="flex items-center sm:mb-0 mb-4 gap-3">
                             <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">
                                 <Check className="w-5 h-5" />
                             </div>
@@ -212,7 +212,7 @@ try {
 
                         <div className="hidden sm:block flex-1 h-0.5 bg-blue-600 mx-4"></div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center sm:mb-0 mb-4 gap-3">
                             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
                                 2
                             </div>
@@ -224,7 +224,7 @@ try {
 
                         <div className="hidden sm:block flex-1 h-0.5 bg-gray-200 mx-4"></div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center sm:mb-0 mb-4 gap-3">
                             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 font-bold">
                                 3
                             </div>

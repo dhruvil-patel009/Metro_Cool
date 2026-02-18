@@ -245,7 +245,7 @@ export default function ProductDetailsPage() {
 
         {/* TABS */}
         <div className="mt-12">
-          <div className="mb-6 flex border-b">
+          <div className="mb-6 sm:flex flex-wrap border-b">
             {["description", "specifications", "reviews"].map((tab) => (
               <button
                 key={tab}
