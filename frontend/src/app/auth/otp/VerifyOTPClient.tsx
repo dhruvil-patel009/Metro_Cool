@@ -276,7 +276,7 @@ localStorage.setItem("accessToken", data.session.accessToken);
           <button
             onClick={handleVerify}
             disabled={otp.length !== 6 || loading}
-            className="mb-8 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 py-3.5 text-base font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+            className="mb-8 flex w-full items-center cursor-pointer justify-center gap-2 rounded-lg bg-blue-700 py-3.5 text-base font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
           >
             <Shield className="h-5 w-5" />
             Verify & Login

@@ -163,9 +163,10 @@ export default function ProductsPage() {
                           {product.badge}
                         </span>
                       )}
-                      <button className="p-2.5 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-red-500">
-                        <Heart className="w-5 h-5" />
-                      </button>
+                      <button className="group p-2.5 bg-white/20 backdrop-blur-md cursor-pointer rounded-full text-white hover:bg-white hover:text-red-500 transition">
+  <Heart className="w-5 h-5 fill-none group-hover:fill-red-500 group-hover:stroke-red-500 transition" />
+</button>
+
                     </div>
 
                     {/* DETAILS */}
@@ -206,7 +207,7 @@ export default function ProductsPage() {
                           </div>
                         </div>
 
-                        <button className="bg-blue-600 p-3 rounded-md hover:bg-blue-700">
+                        <button className="bg-blue-600 p-3 rounded-md cursor-pointer hover:bg-blue-700">
                           <ShoppingCart className="w-6 h-6 text-white" />
                         </button>
                       </div>
