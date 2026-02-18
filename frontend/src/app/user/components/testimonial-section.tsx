@@ -36,7 +36,7 @@ export function TestimonialsSection() {
     <button
       key={i}
       onClick={() => setCurrent(i)}
-      className={`w-3 h-3 text-danger rounded-full transition-all duration-300 ${
+      className={`w-3 h-3 rounded-full transition-all duration-300 ${
         current === i ? "bg-blue-600 scale-125" : "bg-gray-400/60"
       }`}
     />
