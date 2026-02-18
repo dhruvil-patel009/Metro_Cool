@@ -32,12 +32,12 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="#story">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button size="lg" className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white">
                 View Our Story
               </Button>
             </Link>
             <Link href="#team">
-              <Button size="lg" variant="outline" className="bg-white/80 backdrop-blur-sm">
+              <Button size="lg" variant="outline" className="bg-white/80 cursor-pointer backdrop-blur-sm">
                 Meet the Team
               </Button>
             </Link>
@@ -246,7 +246,7 @@ export default function AboutPage() {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-1">Sarah Jenkins</h3>
-                  <p className="text-blue-600 text-sm">Operations Manager</p>
+                  <p className="text-blue-600 text-md font-bold">Operations Manager</p>
                 </div>
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function AboutPage() {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-1">David Chen</h3>
-                  <p className="text-blue-600 text-sm">Lead Technician</p>
+                  <p className="text-blue-600 text-md font-bold">Lead Technician</p>
                 </div>
               </div>
             </div>
@@ -270,7 +270,7 @@ export default function AboutPage() {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-1">Marcus Johnson</h3>
-                  <p className="text-blue-600 text-sm">Installation Specialist</p>
+                  <p className="text-blue-600 text-md font-bold">Installation Specialist</p>
                 </div>
               </div>
             </div>
@@ -282,7 +282,7 @@ export default function AboutPage() {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-1">Elena Rodriguez</h3>
-                  <p className="text-blue-600 text-sm">Customer Success</p>
+                  <p className="text-blue-600 text-md font-bold">Customer Success</p>
                 </div>
               </div>
             </div>
@@ -301,7 +301,7 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link href="/user/services">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+                <Button size="lg" className="bg-white cursor-pointer text-blue-600 hover:bg-gray-100">
                   Book a Service Now
                 </Button>
               </Link>
@@ -309,7 +309,7 @@ export default function AboutPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white text-white hover:bg-white/10 bg-transparent"
+                  className="border-white text-white cursor-pointer hover:text-white hover:bg-white/10 bg-transparent"
                 >
                   Contact Support
                 </Button>
