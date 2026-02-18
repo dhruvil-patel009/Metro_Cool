@@ -147,7 +147,7 @@ export default function Page() {
             </div>
           </div>
 
-          <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"               disabled={!isValidPhone || loading}
+          <button className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-700 px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"               disabled={!isValidPhone || loading}
               onClick={handleLogin}>
               {loading ? "Sending OTP..." : "Login Securely"}
             <ArrowRight className="h-5 w-5" />
