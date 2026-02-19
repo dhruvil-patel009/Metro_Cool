@@ -71,7 +71,7 @@ export function Sidebar() {
       {/* MOBILE TOGGLE */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="fixed left-4 top-4 z-50 rounded-lg bg-white p-2 shadow lg:hidden"
+        className="fixed sm:left-4 sm:top-4 left-0 top-2 z-50 rounded-lg bg-white p-2 shadow lg:hidden"
       >
         <Menu className="h-6 w-6" />
       </button>

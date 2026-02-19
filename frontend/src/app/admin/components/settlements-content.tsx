@@ -233,50 +233,68 @@ const handleSendEmail = async () => {
 
       {/* Filters and Actions */}
       <div className="bg-white rounded-xl p-4 border border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Select value={selectedDate} onValueChange={setSelectedDate}>
-              <SelectTrigger className="w-[180px]">
-                <Calendar className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Today, Oct 24">Today, Oct 24</SelectItem>
-                <SelectItem value="Yesterday">Yesterday</SelectItem>
-                <SelectItem value="Last 7 days">Last 7 days</SelectItem>
-                <SelectItem value="Last 30 days">Last 30 days</SelectItem>
-              </SelectContent>
-            </Select>
+  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
-            <Button variant="outline" size="icon">
-              <Filter className="w-4 h-4" />
-            </Button>
+    {/* LEFT SECTION */}
+    <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 w-full lg:w-auto">
+      <Select value={selectedDate} onValueChange={setSelectedDate}>
+        <SelectTrigger className="w-full sm:w-[180px]">
+          <Calendar className="w-4 h-4 mr-2" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Today, Oct 24">Today, Oct 24</SelectItem>
+          <SelectItem value="Yesterday">Yesterday</SelectItem>
+          <SelectItem value="Last 7 days">Last 7 days</SelectItem>
+          <SelectItem value="Last 30 days">Last 30 days</SelectItem>
+        </SelectContent>
+      </Select>
 
-            <Button variant="outline" size="icon">
-              <Download className="w-4 h-4" />
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleGenerateReport}>
-              <FileText className="w-4 h-4 mr-2" />
-              Generate Report
-            </Button>
-            <Button variant="outline" onClick={handleSendEmail}>
-  <Mail className="w-4 h-4 mr-2" />
-  Send Email
-</Button>
-
-            <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleMarkAllPaid}>
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Mark All Paid
-            </Button>
-          </div>
-        </div>
+      <div className="flex gap-2">
+        <Button variant="outline" size="icon">
+          <Filter className="w-4 h-4" />
+        </Button>
+        <Button variant="outline" size="icon">
+          <Download className="w-4 h-4" />
+        </Button>
       </div>
+    </div>
+
+    {/* RIGHT SECTION */}
+    <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full lg:w-auto">
+      <Button
+        variant="outline"
+        className="w-full sm:w-auto"
+        onClick={handleGenerateReport}
+      >
+        <FileText className="w-4 h-4 mr-2" />
+        Generate Report
+      </Button>
+
+      <Button
+        variant="outline"
+        className="w-full sm:w-auto"
+        onClick={handleSendEmail}
+      >
+        <Mail className="w-4 h-4 mr-2" />
+        Send Email
+      </Button>
+
+      <Button
+        className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto"
+        onClick={handleMarkAllPaid}
+      >
+        <CheckCircle2 className="w-4 h-4 mr-2" />
+        Mark All Paid
+      </Button>
+    </div>
+
+  </div>
+</div>
+
 
       {/* Settlements Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -371,7 +389,7 @@ const handleSendEmail = async () => {
         </div>
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="hidden lg:flex px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <p className="text-sm text-gray-600">
             Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of{" "}
             <span className="font-medium">24</span> results
@@ -406,6 +424,131 @@ const handleSendEmail = async () => {
           </div>
         </div>
       </div>
+
+      {/* MOBILE & TABLET CARDS */}
+<div className="lg:hidden p-4 space-y-4">
+  {settlements.map((settlement) => (
+    <div
+      key={settlement.id}
+      className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <img
+            src={settlement.technician.avatar || "/placeholder.svg"}
+            alt={settlement.technician.name}
+            className="w-12 h-12 rounded-full object-cover"
+          />
+          <div>
+            <p className="font-semibold text-gray-900">
+              {settlement.technician.name}
+            </p>
+            <p className="text-xs text-gray-500">
+              Tech ID: {settlement.technician.techId}
+            </p>
+          </div>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-blue-600 hover:bg-blue-50"
+        >
+          {settlement.status === "Pending" ? "Mark Paid" : "View"}
+        </Button>
+      </div>
+
+      {/* Body */}
+      <div className="mt-4 space-y-3 text-sm">
+        <div>
+          <p className="text-gray-500">Booking ID</p>
+          <p className="font-medium text-blue-600">
+            {settlement.bookingId}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-gray-500">Service</p>
+          <p className="font-medium">{settlement.service.name}</p>
+          <p className="text-xs text-gray-500">
+            {settlement.service.category}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-gray-500">Date & Time</p>
+          <p>
+            {settlement.dateTime.date} • {settlement.dateTime.time}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 pt-2">
+          <div>
+            <p className="text-gray-500">Price</p>
+            <p className="font-medium">
+              ${settlement.price.toFixed(2)}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-gray-500">Commission</p>
+            <p className="font-medium text-red-600">
+              -${settlement.commission.toFixed(2)}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-gray-500">Payable</p>
+            <p className="font-bold">
+              ${settlement.payable.toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center pt-2">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              settlement.status === "Paid"
+                ? "bg-green-100 text-green-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
+          >
+            {settlement.status}
+          </span>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+{/* MOBILE & TABLET PAGINATION */}
+<div className="lg:hidden border-t border-gray-200 px-4 py-4 space-y-3">
+  <p className="text-center text-sm text-gray-600">
+    Page <span className="font-medium">{currentPage}</span> of{" "}
+    <span className="font-medium">3</span>
+  </p>
+
+  <div className="flex items-center justify-between gap-3">
+    <Button
+      variant="outline"
+      className="flex-1"
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+    >
+      Previous
+    </Button>
+
+    <Button
+      variant="outline"
+      className="flex-1"
+      disabled={currentPage === 3}
+      onClick={() => setCurrentPage((p) => p + 1)}
+    >
+      Next
+    </Button>
+  </div>
+</div>
+
     </div>
   )
 }

@@ -322,7 +322,7 @@ const fetchRequests = async () => {
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
       <main className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
               <span className="text-sm text-gray-600 font-medium">Total Technicians</span>
@@ -438,7 +438,7 @@ const fetchRequests = async () => {
               </div>
             </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
@@ -584,6 +584,132 @@ const fetchRequests = async () => {
               </tbody>
             </table>
           </div>
+
+          {/* MOBILE & TABLET CARDS */}
+<div className="lg:hidden p-4 space-y-4">
+  {loading ? (
+    [...Array(limit)].map((_, i) => (
+      <Skeleton key={i} className="h-36 w-full rounded-xl" />
+    ))
+  ) : filteredTechnicians.length === 0 ? (
+    <div className="text-center py-8 text-gray-500">
+      No technicians found
+    </div>
+  ) : (
+    filteredTechnicians.map((tech) => (
+      <div
+        key={tech.id}
+        className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Image
+              src={tech.avatar}
+              alt={tech.name}
+              width={48}
+              height={48}
+              className="rounded-full w-12 h-12"
+            />
+            <div>
+              <p className="font-semibold">{tech.name}</p>
+              <p className="text-xs text-gray-500">
+                ID: {tech.techId}
+              </p>
+            </div>
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(`/admin/Technician/${tech.id}`)
+                }
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                View Profile
+              </DropdownMenuItem>
+
+              {tech.status === "Active" ? (
+                <DropdownMenuItem
+                  onClick={() => toggleStatus(tech.id, false)}
+                  className="text-orange-600"
+                >
+                  Deactivate
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => toggleStatus(tech.id, true)}
+                  className="text-green-600"
+                >
+                  Activate
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => handleDelete(tech.id)}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Details */}
+        <div className="mt-3 space-y-3 text-sm">
+          <div>
+            <p className="text-gray-500">Phone</p>
+            <p>{formatPhone(tech.phone)}</p>
+          </div>
+
+          <div>
+            <p className="text-gray-500">Services</p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {tech.services.map((s, i) => (
+                <span
+                  key={i}
+                  className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  tech.status === "Active"
+                    ? "bg-green-500"
+                    : "bg-gray-400"
+                }`}
+              />
+              <span className="font-medium">{tech.status}</span>
+            </div>
+
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                tech.approval === "Approved"
+                  ? "bg-blue-50 text-blue-600"
+                  : "bg-orange-50 text-orange-600"
+              }`}
+            >
+              {tech.approval}
+            </span>
+          </div>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
 
           {/* ===== PAGINATION ===== */}
           <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">

@@ -115,7 +115,100 @@ export function ServicesTable({
   return (
     <>
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="overflow-x-auto">
+      {/* MOBILE & TABLET CARDS */}
+<div className="grid gap-4 p-4 lg:hidden">
+  {currentServices.map((service) => (
+    <div
+      key={service.id}
+      className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex gap-3">
+          <Checkbox
+            checked={selectedServices.includes(service.id)}
+            onCheckedChange={(checked) =>
+              handleSelectService(service.id, checked as boolean)
+            }
+          />
+
+          <img
+            src={service.image_url || "/placeholder.svg"}
+            className="h-14 w-14 rounded-lg object-cover ring-1 ring-gray-200"
+          />
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setEditingService(service)}>
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem>View</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => handleDelete(service.id)}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Content */}
+      <div className="mt-3 space-y-2">
+        <div>
+          <p className="font-semibold text-gray-900">{service.title}</p>
+          <p className="text-xs text-gray-500">
+            ID: {service.service_code}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2 text-sm">
+          <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+            {service.category}
+          </span>
+
+          <span
+            className={cn(
+              "font-medium",
+              service.is_active ? "text-green-600" : "text-red-500"
+            )}
+          >
+            {service.is_active ? "Active" : "Inactive"}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+          <div>
+            <p className="font-semibold">
+              ${service.price.toFixed(2)}
+            </p>
+            <p className="text-xs text-gray-500">
+              {service.pricing_type === "fixed"
+                ? "Fixed Rate"
+                : "Hourly"}
+            </p>
+          </div>
+
+          <Switch
+            checked={service.is_active}
+            onCheckedChange={() =>
+              handleToggleEnable(service)
+            }
+            className="data-[state=checked]:bg-blue-500"
+          />
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full">
           <thead className="border-b bg-gray-50/50">
             <tr>

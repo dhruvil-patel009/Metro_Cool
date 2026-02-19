@@ -29,52 +29,49 @@ export function RecentBookingsTable() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg text-black">Recent Bookings</CardTitle>
+        <CardTitle className="text-lg">Recent Bookings</CardTitle>
       </CardHeader>
 
-      <CardContent>
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <CardContent className="sm:p-6 p-2 pt-0 space-y-4">
+        {/* ================= DESKTOP TABLE ================= */}
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b">
-                <th className="pb-3 text-left text-xs font-semibold text-gray-500">Booking ID</th>
-                <th className="pb-3 text-left text-xs font-semibold text-gray-500">User</th>
-                <th className="pb-3 text-left text-xs font-semibold text-gray-500">Service</th>
-                <th className="pb-3 text-left text-xs font-semibold text-gray-500">Technician</th>
-                <th className="pb-3 text-left text-xs font-semibold text-gray-500">Status</th>
-                <th className="pb-3 text-left text-xs font-semibold text-gray-500">Payment</th>
+              <tr className="border-b text-left text-xs font-semibold text-gray-500">
+                <th className="pb-3">Booking ID</th>
+                <th className="pb-3">User</th>
+                <th className="pb-3">Service</th>
+                <th className="pb-3">Technician</th>
+                <th className="pb-3">Status</th>
+                <th className="pb-3">Payment</th>
               </tr>
             </thead>
 
             <tbody className="divide-y">
-              {currentBookings.map((booking) => (
-                <tr key={booking.id} className="hover:bg-slate-50">
-                  <td className="py-4 font-medium text-slate-900">{booking.id}</td>
+              {currentBookings.map((b) => (
+                <tr key={b.id} className="hover:bg-slate-50">
+                  <td className="py-4 font-medium">{b.id}</td>
 
                   <td className="py-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback>{booking.initials}</AvatarFallback>
+                        <AvatarFallback>{b.initials}</AvatarFallback>
                       </Avatar>
-                      <span className="py-4 font-medium text-slate-900">{booking.userName}</span>
+                      <span className="font-medium">{b.userName}</span>
                     </div>
                   </td>
 
-                  <td className="py-4 font-medium text-slate-900">{booking.service}</td>
-
-                  <td className={`py-4 text-sm ${booking.technicianColor || "text-gray-900"}`}>
-                    {booking.technician}
-                  </td>
+                  <td className="py-4">{b.service}</td>
+                  <td className={`py-4 text-sm ${b.technicianColor || ""}`}>{b.technician}</td>
 
                   <td className="py-4">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${booking.statusColor}`}>
-                      {booking.status}
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${b.statusColor}`}>
+                      {b.status}
                     </span>
                   </td>
 
-                  <td className={`py-4 text-sm font-semibold ${booking.paymentColor}`}>
-                    {booking.payment}
+                  <td className={`py-4 font-semibold ${b.paymentColor}`}>
+                    {b.payment}
                   </td>
                 </tr>
               ))}
@@ -82,29 +79,70 @@ export function RecentBookingsTable() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="mt-4 flex items-center justify-between border-t pt-4">
+        {/* ================= MOBILE & TABLET CARDS ================= */}
+        <div className="grid gap-4 lg:hidden">
+          {currentBookings.map((b) => (
+            <div key={b.id} className="rounded-xl border p-4 shadow-sm space-y-3">
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarFallback>{b.initials}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-semibold">{b.userName}</p>
+                  <p className="text-xs text-gray-500">{b.id}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-gray-500">Service</p>
+                  <p className="font-medium">{b.service}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500">Technician</p>
+                  <p className={`${b.technicianColor || ""}`}>{b.technician}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500">Status</p>
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${b.statusColor}`}>
+                    {b.status}
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-gray-500">Payment</p>
+                  <p className={`font-semibold ${b.paymentColor}`}>{b.payment}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ================= PAGINATION ================= */}
+        <div className="flex items-center justify-between border-t pt-4">
           <p className="text-sm text-gray-600">
             Showing {startIndex + 1}-{Math.min(endIndex, bookings.length)} of {bookings.length}
           </p>
 
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <button
               disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50 text-gray-600"
+              onClick={() => setPage(p => p - 1)}
+              className="rounded-lg border p-2 disabled:opacity-50"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
 
-            <span className="text-sm font-semibold text-gray-600">
+            <span className="text-sm font-semibold">
               Page {page} of {totalPages}
             </span>
 
             <button
               disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50 text-gray-600"
+              onClick={() => setPage(p => p + 1)}
+              className="rounded-lg border p-2 disabled:opacity-50"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

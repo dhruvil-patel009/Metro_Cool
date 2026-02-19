@@ -116,7 +116,7 @@ if (thumbnails.length < 3) {
         <h2 className="text-xl font-bold">Add Product</h2>
 
         {/* BASIC */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
           <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <Input placeholder="Short Description" value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} />
           <Input type="number" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
@@ -133,7 +133,7 @@ if (thumbnails.length < 3) {
         <Textarea placeholder="Full Description" value={description} onChange={(e) => setDescription(e.target.value)} />
 
         {/* JSON FIELDS */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
           <div>
             <p className="font-semibold mb-1">Specifications (JSON)</p>
             <Textarea rows={8} value={specifications} onChange={(e) => setSpecifications(e.target.value)} />
@@ -145,7 +145,7 @@ if (thumbnails.length < 3) {
         </div>
 
         {/* IMAGES */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
           <ImageUpload label="Main Image" onChange={setMainImage} file={mainImage} />
           <MultiImageUpload label="Thumbnails" files={thumbnails} setFiles={setThumbnails} />
           <MultiImageUpload label="Gallery" files={gallery} setFiles={setGallery} />

@@ -33,10 +33,10 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
-      <div className="grid h-16 grid-cols-3 items-center px-6 lg:px-8">
+      <div className="grid h-16 grid-cols-3 items-center pl-11 pr-2 sm:px-6 lg:px-8">
         
         {/* LEFT: PAGE TITLE */}
-        <h1 className="text-3xl font-semibold text-gray-900">
+        <h1 className="sm:text-3xl text-md font-semibold text-gray-900">
           {title}
         </h1>
 
