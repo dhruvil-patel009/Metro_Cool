@@ -201,7 +201,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                 alt={service.title}
                 width={500}
                 height={450}
-                className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-lg">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -324,7 +324,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Total Estimate</p>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-5xl font-black tracking-tighter">
+                      <span className="text-5xl font-black font-semibold tracking-tighter">
                         ${service.price}
                         <span className="text-2xl">.00</span>
                       </span>

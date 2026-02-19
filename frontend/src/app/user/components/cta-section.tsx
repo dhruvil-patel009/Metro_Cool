@@ -22,7 +22,7 @@ export function CTASection() {
             </button>
             </Link>
              <Link href="/user/products">
-            <button className="bg-transparent border border-white/30 text-white px-10 py-4 rounded-md font-bold hover:bg-white/10 transition-all">
+            <button className="bg-transparent border cursor-pointer border-white/30 text-white px-10 py-4 rounded-md font-bold hover:bg-white/10 transition-all">
               View Products
             </button>
              </Link>

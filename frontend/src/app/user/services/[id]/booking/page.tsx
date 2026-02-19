@@ -252,10 +252,10 @@ try {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={handlePreviousMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                    <button onClick={handlePreviousMonth} className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors">
                                         <ChevronLeft className="w-5 h-5" />
                                     </button>
-                                    <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                    <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors">
                                         <ChevronRight className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -286,7 +286,7 @@ try {
       onClick={() => !isBooked && !isPast && setSelectedDay(day)}
       disabled={isBooked || isPast}
       className={`
-        aspect-square p-2 rounded-lg text-sm font-medium transition-all
+        aspect-square p-2 cursor-pointer rounded-lg text-sm font-medium transition-all
         ${day === selectedDay ? "bg-blue-600 text-white shadow-lg scale-105" : "hover:bg-gray-100 text-gray-700"}
         ${isBooked || isPast ? "bg-gray-200 text-gray-400 cursor-not-allowed hover:bg-gray-200" : ""}
       `}
@@ -404,7 +404,7 @@ try {
                             <button
   onClick={handleContinueBooking}
   disabled={loading}
-  className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 flex items-center justify-center gap-2 mb-4 disabled:opacity-60"
+  className="w-full bg-blue-600 text-white py-4 cursor-pointer rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 flex items-center justify-center gap-2 mb-4 disabled:opacity-60"
 >
   {loading ? "Booking..." : "Continue Booking"}
   <ChevronRight className="w-5 h-5" />

@@ -92,7 +92,7 @@ export default function ServicesPage() {
                 />
 
                 <Link
-                  href={`/services/${service.id}`}
+                  href={`/user/services/${service.id}`}
                   className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition-colors hover:bg-black/40"
                 >
                   <ArrowUpRight className="h-5 w-5" />
