@@ -29,9 +29,9 @@ export function ProductCard({ image, title, subtitle, price, badge, oldPrice, di
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        <button className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* <button className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
           <Star className="w-4 h-4 text-gray-400" />
-        </button>
+        </button> */}
       </div>
       <div className="px-4 py-3">
         <h3 className="font-bold text-gray-900 mb-1">{title}</h3>

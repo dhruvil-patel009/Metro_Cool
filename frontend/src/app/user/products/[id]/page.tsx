@@ -125,7 +125,7 @@ export default function ProductDetailsPage() {
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
-                  className={`relative aspect-square rounded-md border bg-white ${
+                  className={`relative aspect-square cursor-pointer rounded-md border bg-white ${
                     i === selectedImage ? "ring-2 ring-blue-600" : ""
                   }`}
                 >
@@ -189,7 +189,7 @@ export default function ProductDetailsPage() {
                     <button
                       key={c}
                       onClick={() => setSelectedCapacity(c)}
-                      className={`flex-1 rounded-md border py-2 text-xs font-bold ${
+                      className={`flex-1 cursor-pointer rounded-md border py-2 text-xs font-bold ${
                         c === selectedCapacity
                           ? "border-blue-600 bg-blue-50 text-blue-600"
                           : ""
@@ -221,10 +221,10 @@ export default function ProductDetailsPage() {
                 </label>
               </div>
 
-              <button className="mb-3 w-full rounded-md bg-blue-600 py-4 font-bold text-white">
+              <button className="mb-3 w-full cursor-pointer rounded-md bg-blue-600 py-4 font-bold text-white">
                 Purchase Now
               </button>
-              <button className="w-full rounded-md border py-4 font-bold">
+              <button className="w-full rounded-md cursor-pointer border py-4 font-bold">
                 Add to Cart
               </button>
 
@@ -245,12 +245,12 @@ export default function ProductDetailsPage() {
 
         {/* TABS */}
         <div className="mt-12">
-          <div className="mb-6 flex border-b">
+          <div className="mb-6 sm:flex flex-wrap border-b">
             {["description", "specifications", "reviews"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-4 text-sm font-bold ${
+                className={`px-6 py-4 cursor-pointer text-sm font-bold ${
                   activeTab === tab
                     ? "border-b-2 border-blue-600 text-blue-600"
                     : "text-slate-500"

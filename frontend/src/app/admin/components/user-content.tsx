@@ -185,7 +185,7 @@ export default function UsersContent() {
       </div>
 
       {/* TABLE */}
-      <div className="rounded-lg border bg-white shadow-sm overflow-x-auto">
+      <div className="hidden lg:block rounded-lg border bg-white shadow-sm overflow-x-auto">
         <table className="w-full min-w-[700px]">
           <thead className="bg-gray-50 text-xs uppercase text-gray-500">
             <tr>
@@ -282,6 +282,60 @@ export default function UsersContent() {
           </div>
         </div>
       </div>
+      {/* MOBILE & TABLET CARDS */}
+<div className="lg:hidden rounded-lg border bg-white shadow-sm p-4 space-y-4">
+  {filteredUsers.map((user, index) => (
+    <div
+      key={user.id}
+      className="rounded-xl border border-gray-200 p-4 shadow-sm"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <img
+            src={user.profile_photo || "/placeholder.svg"}
+            className="h-12 w-12 rounded-full object-cover"
+            alt=""
+          />
+          <div>
+            <p className="font-semibold text-gray-900">
+              {user.first_name} {user.last_name}
+            </p>
+            <p className="text-xs text-gray-500">
+              #{(page - 1) * limit + index + 1}
+            </p>
+          </div>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => deleteUser(user.id)}
+            >
+              Delete User
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Details */}
+      <div className="mt-3 text-sm text-gray-600">
+        <p>
+          <Phone className="inline mr-2 h-4 w-4" />
+          {user.phone}
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
+
     </div>
   )
 }

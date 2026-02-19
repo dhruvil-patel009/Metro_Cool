@@ -55,7 +55,7 @@ export default function adminDashboard() {
 
       <div className="flex flex-1 flex-col">
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-2 lg:p-8">
           {/* Stats Grid */}
           <div className="mb-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {stats.map((stat, index) => (

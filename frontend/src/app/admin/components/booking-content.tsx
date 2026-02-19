@@ -322,7 +322,7 @@ const filteredBookings = bookings.filter((b) => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -461,6 +461,102 @@ const filteredBookings = bookings.filter((b) => {
 
 
       </div>
+      {/* MOBILE & TABLET CARDS */}
+<div className="lg:hidden p-4 space-y-4">
+  {filteredBookings.map((booking) => (
+    <div
+      key={booking.id}
+      className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <img
+            src={booking.user.avatar || "/placeholder.svg"}
+            alt={booking.user.name}
+            className="w-12 h-12 rounded-full object-cover"
+          />
+          <div>
+            <p className="font-semibold text-gray-900">
+              {booking.user.name}
+            </p>
+            <p className="text-xs text-gray-500">
+              {booking.user.type} • {booking.id}
+            </p>
+          </div>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem>Assign Technician</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600">
+              Cancel Booking
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Body */}
+      <div className="mt-3 space-y-3 text-sm">
+        <div>
+          <p className="text-gray-500">Technician</p>
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-6 h-6 ${booking.technician.color} rounded-md flex items-center justify-center text-white text-xs font-medium`}
+            >
+              {booking.technician.initials}
+            </div>
+            <span>{booking.technician.name}</span>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-gray-500">Service</p>
+          <p>{booking.service}</p>
+        </div>
+
+        <div>
+          <p className="text-gray-500">Date & Time</p>
+          <p>
+            {booking.date} • {booking.time}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span
+            className={`px-2.5 py-1 rounded-md text-xs font-medium ${statusColors[booking.status]}`}
+          >
+            {booking.status}
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <div
+              className={`w-1.5 h-1.5 rounded-full ${
+                booking.payment === "Paid"
+                  ? "bg-green-600"
+                  : booking.payment === "Refunded"
+                  ? "bg-red-600"
+                  : "bg-gray-400"
+              }`}
+            />
+            <span
+              className={`font-medium ${paymentColors[booking.payment]}`}
+            >
+              {booking.payment}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
     </div>
   )
 }

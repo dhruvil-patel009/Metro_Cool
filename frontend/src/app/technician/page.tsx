@@ -60,7 +60,7 @@ const todayJobs = bookings.filter((job: any) =>
     <>
       <section className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900">
             Welcome back, {technicianName} 👋
           </h1>
 

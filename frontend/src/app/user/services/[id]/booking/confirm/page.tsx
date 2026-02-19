@@ -242,7 +242,7 @@ if (!res.ok) {
                     <button
                       key={issue.id}
                       onClick={() => toggleIssue(issue.id)}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-all ${
+                      className={`flex items-center justify-center cursor-pointer gap-2 px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-all ${
                         selectedIssues.includes(issue.id)
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-white border-gray-300 text-gray-700 hover:border-blue-300"
@@ -440,7 +440,7 @@ if (!res.ok) {
               {/* Complete Button */}
               <button
                 onClick={handleCompleteBooking}
-                className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 flex items-center justify-center gap-2 mb-3"
+                className="w-full bg-blue-600 cursor-pointer text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 flex items-center justify-center gap-2 mb-3"
               >
                 Complete Booking
                 <ArrowRight className="w-5 h-5" />

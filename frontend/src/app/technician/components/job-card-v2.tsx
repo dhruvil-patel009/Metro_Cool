@@ -95,14 +95,14 @@ router.push(`/technician/jobs/${id}`)
       className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm flex flex-col md:flex-row h-full group transition-shadow hover:shadow-md"
     >
       {/* LEFT BORDER */}
-      <div className="w-2 bg-[#0891b2] shrink-0" />
+      <div className="w-2 bg-blue-600 shrink-0" />
 
       {/* CONTENT */}
       <div className="flex-1 p-6 flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <span className="bg-[#ecfeff] text-[#0891b2] text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
+              <span className="bg-blue-100 text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
                 New Request
               </span>
               <span className="text-xs font-medium text-slate-400">
@@ -118,7 +118,7 @@ router.push(`/technician/jobs/${id}`)
             </Button> */}
           </div>
 
-          <h3 className="text-xl font-bold text-slate-900 mb-6 group-hover:text-[#0891b2] transition-colors">
+          <h3 className="text-xl font-bold text-slate-900 mb-6 transition-colors">
             {title}
           </h3>
 
@@ -179,7 +179,7 @@ router.push(`/technician/jobs/${id}`)
             <Button
               onClick={acceptJob}
               disabled={loading || clicked}
-              className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-8 py-6 rounded-xl font-bold gap-2 text-base shadow-lg shadow-cyan-100"
+              className="bg-blue-600 hover:bg-blue-800 cursor-pointer text-white px-8 py-6 rounded-xl font-bold gap-2 text-base shadow-lg shadow-cyan-100"
             >
               <CheckCircle2 className="w-5 h-5" />
               {loading ? "Accepting..." : "Accept Job"}

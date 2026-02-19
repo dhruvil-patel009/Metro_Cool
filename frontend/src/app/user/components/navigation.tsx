@@ -70,7 +70,7 @@ const handleLogout = () => {
 {/* MOBILE SLIDER MENU */}
 <div
   className={cn(
-    "md:hidden fixed left-0 right-0 top-20 z-40 bg-white border-t border-gray-100 shadow-lg transform transition-all duration-300 ease-in-out",
+    "lg:hidden fixed left-0 right-0 top-20 z-40 bg-white border-t border-gray-100 shadow-lg transform transition-all duration-300 ease-in-out",
     isMobileMenuOpen
       ? "translate-y-0 opacity-100"
       : "-translate-y-full opacity-0 pointer-events-none"
@@ -97,7 +97,7 @@ const handleLogout = () => {
     })}
 
     <Link href="/user/services" onClick={() => setIsMobileMenuOpen(false)}>
-      <button className="w-full bg-blue-600 text-white py-3 rounded-lg text-sm font-semibold hover:bg-blue-700">
+      <button className="w-full bg-blue-600 text-white py-3 rounded-lg text-sm cursor-pointer font-semibold hover:bg-blue-700">
         Book Service
       </button>
     </Link>
@@ -113,7 +113,7 @@ const handleLogout = () => {
                         </Link>
           </div>
 
-          <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
+          <div className="hidden lg:flex items-center space-x-8 text-sm font-medium text-gray-600">
             {navItems.map((item) => {
               const isActive = pathname === item.href
               return (
@@ -148,7 +148,7 @@ const handleLogout = () => {
             <div className="relative">
               <button
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                className="flex cursor-pointer items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
               >
                 <div className="text-right hidden sm:block">
                   <div className="text-sm font-semibold text-gray-900">Alex Johnson</div>
@@ -189,7 +189,7 @@ const handleLogout = () => {
             </div>
 
             <button
-  className="md:hidden"
+  className="lg:hidden"
   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
 >
   <Menu className="w-6 h-6 text-gray-600" />

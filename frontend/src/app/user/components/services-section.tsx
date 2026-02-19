@@ -10,7 +10,7 @@ export function ServicesSection() {
           <h2 className="text-2xl sm:text-4xl font-bold">Our Professional Services</h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           <ServiceCard
             icon={<Wrench className="w-6 h-6 text-blue-600" />}
             title="AC Repair"

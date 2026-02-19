@@ -194,11 +194,11 @@ export default function JobDetailsPage() {
           className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
         >
           <div className="space-y-3">
-            <span className="text-[#0891b2] font-bold text-xs uppercase tracking-wider">
+            <span className="text-blue-600 font-bold text-xs uppercase tracking-wider">
               {booking.issues?.join(", ") || "Service Job"}
             </span>
 
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-slate-900">
               Scheduled Service
             </h2>
 
@@ -220,7 +220,7 @@ export default function JobDetailsPage() {
             <Button
               disabled={updating}
               onClick={markOnTheWay}
-              className="w-full lg:w-auto cursor-pointer bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-black text-lg px-8 py-6 rounded-2xl shadow-lg flex items-center justify-center gap-3"
+              className="w-full lg:w-auto cursor-pointer bg-blue-600 hover:bg-blue-800 text-white font-black text-lg px-8 py-6 rounded-2xl shadow-lg flex items-center justify-center gap-3"
             >
               <Car className="w-6 h-6" />
               {updating ? "Updating..." : "ON THE WAY"}

@@ -224,7 +224,7 @@ export default function JobsPage() {
 
   if (!mounted) return null
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto space-y-8">
       {/* ================= HEADER ================= */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
@@ -265,7 +265,7 @@ export default function JobsPage() {
               className={cn(
                 "px-2 py-0.5 rounded-md text-[10px] font-black",
                 activeTab === tab.id
-                  ? "bg-[#ecfeff] text-[#0891b2]"
+                  ? "bg-blue-100 text-blue-600"
                   : "bg-slate-200 text-slate-500",
               )}
             >

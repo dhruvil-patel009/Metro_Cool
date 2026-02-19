@@ -181,12 +181,12 @@ export default function SchedulePage() {
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            className="h-11 px-5 rounded-xl font-semibold border-slate-200 hover:bg-slate-50 transition-all hover:scale-105 bg-transparent"
+            className="h-11 px-5 rounded-xl font-semibold cursor-pointer border-slate-200 hover:bg-slate-50 transition-all hover:scale-105 bg-transparent"
           >
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button className="bg-blue-600 hover:bg-[#0e7490] h-11 px-5 rounded-xl font-bold shadow-lg shadow-cyan-500/20 transition-all hover:scale-105">
+          <Button className="bg-blue-600 hover:bg-blue-800 cursor-pointer h-11 px-5 rounded-xl font-bold shadow-lg shadow-cyan-500/20 transition-all hover:scale-105">
             <Plus className="w-5 h-5 mr-2" />
             New Job
           </Button>
@@ -278,8 +278,8 @@ export default function SchedulePage() {
                       className={cn(
                         "aspect-square rounded-lg flex flex-col items-start justify-start p-2 transition-all hover:shadow-md hover:scale-105 cursor-pointer group relative",
                         isToday
-                          ? "bg-blue-600 text-white ring-2 ring-[#0891b2] ring-offset-2"
-                          : "bg-white border border-slate-200 hover:border-[#0891b2]",
+                          ? "bg-blue-600 text-white ring-2 ring-blue-600 ring-offset-2"
+                          : "bg-white border border-slate-200 hover:border-blue-600",
                       )}
                     >
                       <span
@@ -328,7 +328,7 @@ export default function SchedulePage() {
 
                       {/* Today Badge */}
                       {isToday && (
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-cyan-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
                           Today
                         </div>
                       )}
