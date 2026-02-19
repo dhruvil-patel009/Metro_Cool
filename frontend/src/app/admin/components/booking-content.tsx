@@ -235,7 +235,7 @@ const filteredBookings = bookings.filter((b) => {
               <Wallet className="w-5 h-5 text-purple-600" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">$12,450</div>
+          <div className="text-3xl font-bold text-gray-900">₹12,450</div>
         </div>
       </div>
 
