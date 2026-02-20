@@ -43,7 +43,7 @@ export default function EarningsPage() {
   return (
     <AppLayout>
       <div className="min-h-screen">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl">
           {/* Header Section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>

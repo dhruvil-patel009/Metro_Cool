@@ -107,7 +107,7 @@ export default function SupportPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen p-6 lg:p-8 animate-in fade-in duration-500">
+      <div className="min-h-screen animate-in fade-in duration-500">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header Section */}
           <div className="space-y-3 animate-in slide-in-from-top-4 duration-500">
@@ -143,7 +143,7 @@ export default function SupportPage() {
                 </div>
                 <Button
                   onClick={() => setShowTicketDialog(true)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                  className="w-full bg-blue-600 cursor-pointer hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                 >
                   <Send className="h-4 w-4" />
                   Submit Request
@@ -172,7 +172,7 @@ export default function SupportPage() {
                 <Button
                   onClick={handleStartChat}
                   variant="outline"
-                  className="w-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all bg-transparent"
+                  className="w-full border-gray-300 hover:bg-gray-50 cursor-pointer hover:border-gray-400 transition-all bg-transparent"
                 >
                   <MessageSquare className="h-4 w-4" />
                   Start Chat
@@ -198,7 +198,7 @@ export default function SupportPage() {
                 <Button
                   onClick={handleCallNow}
                   variant="outline"
-                  className="w-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all bg-transparent"
+                  className="w-full border-gray-300 hover:bg-gray-50 cursor-pointer hover:border-gray-400 transition-all bg-transparent"
                 >
                   <Phone className="h-4 w-4" />
                   Call Now
@@ -213,7 +213,7 @@ export default function SupportPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">Common Questions</h2>
-                <Button variant="link" className="text-cyan-600 hover:text-cyan-700">
+                <Button variant="link" className="text-blue-600 cursor-pointer hover:text-blue-800">
                   View all
                 </Button>
               </div>
@@ -251,7 +251,7 @@ export default function SupportPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">Recent Tickets</h2>
-                <Button variant="link" className="text-cyan-600 hover:text-cyan-700">
+                <Button variant="link" className="text-blue-600 cursor-pointer hover:text-blue-800">
                   View history
                 </Button>
               </div>

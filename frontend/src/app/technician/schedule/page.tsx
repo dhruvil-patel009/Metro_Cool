@@ -171,7 +171,7 @@ export default function SchedulePage() {
       {/* Header Section */}
       <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
         <div className="space-y-2">
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
             Schedule & Assignments
           </h1>
           <p className="text-slate-500 py-2 font-medium">
