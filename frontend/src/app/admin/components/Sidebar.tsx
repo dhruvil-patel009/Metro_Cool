@@ -6,12 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
-  FolderTree,
   Users,
   UserCircle,
   Calendar,
   CreditCard,
-  FileText,
   Settings,
   LogOut,
   Menu,

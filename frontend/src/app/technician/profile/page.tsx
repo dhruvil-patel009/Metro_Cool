@@ -59,8 +59,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100/50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen">
+      <div className="max-w-7xl">
         {/* Header */}
         <div className="mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
