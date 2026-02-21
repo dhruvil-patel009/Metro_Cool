@@ -7,28 +7,9 @@ import { cn } from "@/app/lib/utils"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import { useAuthStore } from "@/store/auth.store"
+import { apiFetch } from "@/app/lib/api"
 
-/* ================= API CONFIG ================= */
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
 
-async function apiRequest<T>(url: string): Promise<T> {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken") ||
-      localStorage.getItem("token")
-      : null
-
-  const res = await fetch(`${API_BASE}${url}`, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-  })
-
-  if (!res.ok) throw new Error("Failed to fetch user")
-  return res.json()
-}
 
 export function ProfileSidebar() {
   const pathname = usePathname()
@@ -56,7 +37,7 @@ export function ProfileSidebar() {
       }
 
       // 🔄 2. Fetch fresh data from API
-      const data = await apiRequest<any>("/user/me")
+      const data = await apiFetch<any>("/user/me")
 
       setName(`${data.first_name ?? ""} ${data.last_name ?? ""}`.trim())
       setImage(

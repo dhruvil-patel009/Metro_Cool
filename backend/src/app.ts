@@ -26,38 +26,42 @@ app.use(cookieParser())
 
 
 
-// 🔥 CORS FIX (MOST IMPORTANT)
-// CORS
+/* =========================
+   🔥 CORS (VERY IMPORTANT)
+========================= */
+
 const allowedOrigins = [
+  "http://localhost:3000",
   "https://metro-cool.vercel.app",
   "https://metro-cool-p3g4.vercel.app",
-  "http://localhost:3000",
+  "https://www.metro-cool.com/"
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (mobile apps, Postman)
-      if (!origin) return callback(null, true);
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // allow Postman / mobile apps / server requests
+    if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("CORS not allowed"));
-      }
-    },
-    credentials: true,
-  })
-);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-// 🔥 THIS IS THE REAL FIX
-app.options(/.*/, cors());
+app.use(cors(corsOptions));
 
+/* =========================
+   HEALTH CHECK
+========================= */
 
-// ✅ Health check
 app.get("/", (_req, res) => {
-  res.send("Metro Cool API running 🚀")
-})
+  res.send("Metro Cool API running 🚀");
+});
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));

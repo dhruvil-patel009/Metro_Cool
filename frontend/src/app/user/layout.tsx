@@ -19,7 +19,7 @@ const hideLayout =
     return (
         <>
              {!hideLayout && <Navigation />}
-      <ProtectedRoute allow={["user"]}>
+      <ProtectedRoute>
         {children}
       </ProtectedRoute>
       {!hideLayout && <Footer />}

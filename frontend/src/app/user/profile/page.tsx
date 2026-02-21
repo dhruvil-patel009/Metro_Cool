@@ -13,35 +13,8 @@ import {
   Trash2,
 } from "lucide-react"
 import { ProfileSidebar } from "../components/profile-sidebar"
+import { apiFetch } from "@/app/lib/api"
 
-/* ================= API CONFIG ================= */
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
-
-async function apiRequest<T>(url: string, options?: RequestInit): Promise<T> {
-  if (!API_BASE) throw new Error("API base URL missing")
-
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken") ||
-      localStorage.getItem("token")
-      : null
-
-  const res = await fetch(`${API_BASE}${url}`, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    ...options,
-  })
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || err.message || "Unauthorized")
-  }
-
-  return res.json()
-}
 
 
 export default function ProfilePage() {
@@ -56,7 +29,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await apiRequest<any>("/user/me")
+        const data = await apiFetch<any>("/user/me")
 
         // 🔥 REAL DATA FROM SUPABASE
         setFirstName(data.first_name ?? "")
@@ -106,7 +79,7 @@ export default function ProfilePage() {
         return
       }
 
-      await apiRequest("/user/me", {
+      await apiFetch("/user/me", {
         method: "PUT",
         body: JSON.stringify({
           first_name: firstName,

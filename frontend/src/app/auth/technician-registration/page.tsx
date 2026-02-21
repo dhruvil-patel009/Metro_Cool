@@ -24,6 +24,8 @@ export default function TechnicianRegistration() {
     lastName: '',
     phone: '',
     email: '',
+    mpin: '',
+    confirmMpin: '',
     experienceYears: '',
     promoCode: '',
       services: [] as string[],
@@ -91,6 +93,16 @@ const handleSubmit = async (e: React.FormEvent) => {
     return;
   }
 
+  if (form.mpin !== form.confirmMpin) {
+    toast.error("MPIN mismatch");
+    return;
+  }
+
+  if (!/^\d{4}$/.test(form.mpin)) {
+    toast.error("MPIN must be 4 digits");
+    return;
+  }
+
   try {
     setLoading(true);
 
@@ -101,6 +113,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     formData.append('lastName', form.lastName);
     formData.append('phone', form.phone);
     formData.append('email', form.email);
+    formData.append("mpin", form.mpin);
     formData.append('experienceYears', form.experienceYears);
     formData.append('promoCode', form.promoCode);
     formData.append('services', JSON.stringify(form.services));
@@ -300,6 +313,82 @@ const handleServiceRemove = (service: string) => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Account Security (MPIN) */}
+<div className="space-y-6">
+  <div>
+    <h3 className="text-xxl font-semibold text-black uppercase tracking-wider mb-4 bolder">
+      Account Security
+    </h3>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      {/* MPIN */}
+      <div className="space-y-2">
+        <label htmlFor="mpin" className="text-sm font-medium text-gray-900">
+          Create 4-Digit MPIN
+        </label>
+
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+
+          <Input
+            id="mpin"
+            name="mpin"
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="Enter 4 digit MPIN"
+            value={form.mpin}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                mpin: e.target.value.replace(/\D/g, "")
+              })
+            }
+            className="pl-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Confirm MPIN */}
+      <div className="space-y-2">
+        <label htmlFor="confirmMpin" className="text-sm font-medium text-gray-900">
+          Confirm MPIN
+        </label>
+
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+
+          <Input
+            id="confirmMpin"
+            name="confirmMpin"
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="Re-enter MPIN"
+            value={form.confirmMpin}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                confirmMpin: e.target.value.replace(/\D/g, "")
+              })
+            }
+            className="pl-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+            required
+          />
+        </div>
+      </div>
+
+    </div>
+
+    {/* Helper text */}
+    <p className="text-xs text-gray-500 mt-2">
+      This MPIN will be used to login into the app. Keep it secure 🔐
+    </p>
+  </div>
+</div>
                 </div>
 
                 {/* Professional Info */}

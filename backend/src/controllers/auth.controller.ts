@@ -1,8 +1,9 @@
 // controllers/auth.controller.ts
 import { Request, Response } from "express";
 import { supabase } from "../utils/supabase.js";
-
-const TEMP_OTP = process.env.TEMP_OTP || "123456";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { transporter } from "../utils/mailer.js";
 
 
 export const register = async (req: Request, res: Response) => {
@@ -17,6 +18,7 @@ export const register = async (req: Request, res: Response) => {
       lastName,
       phone,
       email,
+      mpin,   // ⭐ NEW
       experienceYears,
       promoCode,
       services // ⚠️ STRING from multipart/form-data
@@ -55,6 +57,14 @@ export const register = async (req: Request, res: Response) => {
     if (!phone || !email || !firstName || !lastName) {
       return res.status(400).json({
         error: "Missing required fields"
+      });
+    }
+/* ======================================================
+       3️⃣ MPIN VALIDATION
+    ====================================================== */
+    if (!mpin || !/^\d{4}$/.test(mpin)) {
+      return res.status(400).json({
+        error: "MPIN must be exactly 4 digits"
       });
     }
 
@@ -136,6 +146,7 @@ export const register = async (req: Request, res: Response) => {
         .getPublicUrl(path).data.publicUrl;
     }
 
+    const mpinHash = await bcrypt.hash(mpin, 10);
     /* ======================================================
        6️⃣ INSERT PROFILE
     ====================================================== */
@@ -149,7 +160,8 @@ export const register = async (req: Request, res: Response) => {
         last_name: lastName,
         phone,
         email,
-        profile_photo: profilePhotoUrl
+        profile_photo: profilePhotoUrl,
+        mpin_hash: mpinHash   // ⭐ NEW
       })
       .select()
       .single();
@@ -233,100 +245,114 @@ export const register = async (req: Request, res: Response) => {
 
 
 
-
 /**
- * STEP 1 — LOGIN WITH PHONE (SEND OTP)
+ * STEP 1 — LOGIN WITH MPIN
  */
-export const loginWithPhone = async (req: Request, res: Response) => {
-  const { phone } = req.body;
+export const loginWithMpin = async (req: Request, res: Response) => {
+  try {
+    const { identifier, mpin } = req.body;
 
-  if (!phone) {
-    return res.status(400).json({ error: "Phone required" });
-  }
-
-  const { data:user } = await supabase
-    .from("profiles")
-    .select("id, role")
-    .eq("phone", phone)
-    .single();
-
-  if (!user) {
-    return res.status(404).json({ error: "User not registered" });
-  }
-
-    const otp = TEMP_OTP; // DEV MODE
-
-
-  res.json({
-    message: "OTP sent (DEV MODE)",
-    otp, 
-    role: user.role
-  });
-};
-
-
-/**
- * STEP 2 — VERIFY OTP & LOGIN (NO PASSWORD)
- */
-export const verifyPhoneOtp = async (req: Request, res: Response) => {
-  const { phone, otp } = req.body;
-
-  if (!phone || !otp) {
-    return res.status(400).json({ error: "Phone & OTP required" });
-  }
-
-  if (otp !== TEMP_OTP) {
-    return res.status(401).json({ error: "Invalid OTP" });
-  }
-
-  // Fetch full user profile
-  const { data: user , error } = await supabase
-    .from("profiles")
-    .select(`
-      id,
-      role,
-      first_name,
-      middle_name,
-      last_name,
-      phone,
-      email,
-      created_at
-    `)
-    .eq("phone", phone)
-    .single();
-
-  if (error || !user ) {
-    return res.status(404).json({ error: "User not found" });
-  }
-
-  // 🔥 MOCK SESSION DATA (DEV MODE)
-  const issuedAt = Math.floor(Date.now() / 1000); // now (seconds)
-  const expiresIn = 60 * 60; // 1 hour
-  const expiresAt = issuedAt + expiresIn;
-
-  res.json({
-    message: "Login successful (DEV MODE)",
-    session: {
-      accessToken: `dev-token-${user .id}`,
-      refreshToken: `dev-refresh-${user .id}`,
-      tokenType: "bearer",
-      issuedAt,
-      expiresIn,
-      expiresAt
-    },
-    user: {
-      id: user .id,
-      role: user .role,
-      firstName: user .first_name,
-      middleName: user .middle_name,
-      lastName: user .last_name,
-      phone: user .phone,
-      email: user .email,
-      createdAt: user .created_at
+    if (!identifier || !mpin) {
+      return res.status(400).json({
+        error: "Phone/Email and MPIN required"
+      });
     }
-  });
+
+    // Find user by phone OR email
+    const { data: user, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .or(`phone.eq.${identifier},email.eq.${identifier}`)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Compare MPIN
+    const isMatch = await bcrypt.compare(mpin, user.mpin_hash);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid MPIN" });
+    }
+
+    // Create JWT
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      message: "Login successful",
+      accessToken: token,
+      user: {
+        id: user.id,
+        role: user.role,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        phone: user.phone,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
 
+// Forgot MPIN - send reset link to email (if email exists)
+
+export const forgotMpin = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const { data: user } = await supabase
+    .from("profiles")
+    .select("id,email")
+    .eq("email", email)
+    .single();
+
+  if (!user) return res.status(404).json({ error: "Email not registered" });
+
+  const resetToken = jwt.sign(
+    { id: user.id },
+    process.env.JWT_SECRET!,
+    { expiresIn: "15m" }
+  );
+
+  const resetLink = `${process.env.FRONTEND_URL}/reset-mpin/${resetToken}`;
+
+  await transporter.sendMail({
+    to: email,
+    subject: "Reset MPIN",
+    html: `<h2>Reset your MPIN</h2>
+           <a href="${resetLink}">Click here to reset MPIN</a>`
+  });
+
+  res.json({ message: "Reset link sent to email" });
+};
+
+// Reset MPIN - verify token and update MPIN hash
+export const resetMpin = async (req: Request, res: Response) => {
+  const { token, mpin } = req.body;
+
+  if (!/^\d{4}$/.test(mpin))
+    return res.status(400).json({ error: "MPIN must be 4 digits" });
+
+  try {
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+
+    const newHash = await bcrypt.hash(mpin, 10);
+
+    await supabase
+      .from("profiles")
+      .update({ mpin_hash: newHash })
+      .eq("id", decoded.id);
+
+    res.json({ message: "MPIN reset successful" });
+  } catch {
+    res.status(400).json({ error: "Invalid or expired token" });
+  }
+};
 
 /**
  * LOGOUT (ALL ROLES)

@@ -1,72 +1,59 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-export type Role = "user" | "technician" | "admin";
-
-export interface User {
+type User = {
   id: string;
-  firstName: string;
-  lastName: string;
-  role: Role;
-  phone: string;
-  email?: string;
-}
+  role: string;
+  firstName?: string;
+  lastName?: string;
+};
 
-interface AuthState {
-  token: string | null;
-  role: Role | null;
+type AuthState = {
   user: User | null;
+  token: string | null;
   hydrated: boolean;
 
-  setAuth: (token: string, user: User) => void;
-  hydrate: () => void;
+  login: (user: User, token: string) => void;
   logout: () => void;
-}
+  hydrate: () => void;
+};
 
-export const useAuthStore = create<AuthState>((set) => ({
-  token: null,
-  role: null,
-  user: null,
-  hydrated: false,
-
-  // ✅ SAVE TOKEN + USER
-  setAuth: (token, user) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", user.role);
-    localStorage.setItem("user", JSON.stringify(user));
-
-    set({
-      token,
-      role: user.role,
-      user,
-    });
-  },
-
-  // ✅ RESTORE SESSION ON REFRESH
-  hydrate: () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role") as Role | null;
-    const userRaw = localStorage.getItem("user");
-
-    set({
-      token,
-      role,
-      user: userRaw ? JSON.parse(userRaw) : null,
-      hydrated: true,
-    });
-  },
-
-  // ✅ LOGOUT CLEAN
-  logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("user");
-    localStorage.removeItem("refreshToken");
-
-    set({
-      token: null,
-      role: null,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
       user: null,
-      hydrated: true,
-    });
-  },
-}));
+      token: null,
+      hydrated: false,
+
+      login: (user, token) => {
+        set({
+          user,
+          token,
+        });
+      },
+
+      logout: () => {
+        set({
+          user: null,
+          token: null,
+        });
+        localStorage.removeItem("auth-storage");
+      },
+
+      hydrate: () => set({ hydrated: true }),
+    }),
+    {
+      name: "auth-storage",
+
+      // ⭐⭐⭐ THIS IS THE IMPORTANT PART
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+      }),
+
+      onRehydrateStorage: () => (state) => {
+        state?.hydrate();
+      },
+    }
+  )
+);

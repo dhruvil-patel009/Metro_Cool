@@ -9,10 +9,14 @@ export default function AuthProvider({
   children: React.ReactNode;
 }) {
   const hydrate = useAuthStore((s) => s.hydrate);
+  const setHydrate = useAuthStore((s) => s.hydrate);
 
-  useEffect(() => {
-    hydrate();
-  }, []);
+
+ useEffect(() => {
+    setHydrate();
+  }, [setHydrate]);
+
+  if (!hydrate) return null;
 
   return <>{children}</>;
 }

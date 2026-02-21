@@ -25,6 +25,8 @@ export default function CustomerRegistrationPage() {
     lastName: "",
     phone: "",
     email: "",
+    mpin: "",
+    confirmMpin: "",
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -64,6 +66,15 @@ export default function CustomerRegistrationPage() {
       return;
     }
 
+    if (form.mpin !== form.confirmMpin) {
+      toast.error("MPIN does not match");
+      return;
+    }
+
+    if (!/^\d{4}$/.test(form.mpin)) {
+      toast.error("MPIN must be exactly 4 digits");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -73,9 +84,10 @@ export default function CustomerRegistrationPage() {
       formData.append("lastName", form.lastName);
       formData.append("phone", form.phone);
       formData.append("email", form.email);
+      formData.append("mpin", form.mpin);
 
       if (imageFile) {
-        formData.append("profileImage", imageFile); // MUST MATCH BACKEND
+        formData.append("profile_photo", imageFile); // MUST MATCH BACKEND
       }
 
       const res = await fetch(
@@ -217,6 +229,34 @@ export default function CustomerRegistrationPage() {
               />
             </div>
           </div>
+
+          <div>
+  <div className="flex items-center gap-2 mb-4">
+    <h2 className="text-lg font-semibold">Security</h2>
+  </div>
+
+  <div className="grid grid-cols-2 gap-4">
+    <Input
+      name="mpin"
+      type="password"
+      maxLength={4}
+      placeholder="Enter 4-digit MPIN"
+      value={form.mpin}
+      onChange={handleChange}
+      required
+    />
+
+    <Input
+      name="confirmMpin"
+      type="password"
+      maxLength={4}
+      placeholder="Confirm MPIN"
+      value={form.confirmMpin}
+      onChange={handleChange}
+      required
+    />
+  </div>
+</div>
 
           {/* Submit */}
           <Button
