@@ -10,7 +10,7 @@ export default function adminLayout({
   children: React.ReactNode;
 }) {
   return (
-<ProtectedRoute allow={["admin"]}>
+<ProtectedRoute>
     <div className="h-screen bg-gray-100 overflow-visible">
       <div className="flex h-full">
         {/* SIDEBAR */}

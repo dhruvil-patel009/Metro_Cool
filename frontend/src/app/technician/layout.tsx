@@ -39,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-     <ProtectedRoute allow={["technician"]}>
+     <ProtectedRoute>
       <SidebarProvider>
         <div className="flex h-screen">
           <Sidebar />
