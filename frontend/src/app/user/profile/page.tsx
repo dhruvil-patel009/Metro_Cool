@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { ProfileSidebar } from "../components/profile-sidebar"
 import { apiFetch } from "@/app/lib/api"
+import { UserMeResponse } from "../types/user"
 
 
 
@@ -29,7 +30,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await apiFetch<any>("/user/me")
+        const data = await apiFetch<UserMeResponse>("/user/me")
 
         // 🔥 REAL DATA FROM SUPABASE
         setFirstName(data.first_name ?? "")

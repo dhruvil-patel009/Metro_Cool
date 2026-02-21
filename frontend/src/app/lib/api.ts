@@ -7,7 +7,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 /**
  * Universal API Fetch (ALWAYS sends JWT automatically)
  */
-export async function apiFetch(url: string, options: RequestInit = {}) {
+export async function apiFetch<T>(url: string, options: RequestInit = {}) {
 
   // 🔥 DO NOT read from zustand here
   // Always read from localStorage (NextJS timing issue)

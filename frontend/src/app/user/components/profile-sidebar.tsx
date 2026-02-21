@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import { useAuthStore } from "@/store/auth.store"
 import { apiFetch } from "@/app/lib/api"
+import { UserMeResponse } from "../types/user"
 
 
 
@@ -37,7 +38,7 @@ export function ProfileSidebar() {
       }
 
       // 🔄 2. Fetch fresh data from API
-      const data = await apiFetch<any>("/user/me")
+      const data = await apiFetch<UserMeResponse>("/user/me")
 
       setName(`${data.first_name ?? ""} ${data.last_name ?? ""}`.trim())
       setImage(
