@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { Calendar, ChevronRight, ChevronLeft, Info, MessageCircle, Check } from "lucide-react"
 import { servicesData } from "../../../lib/services-data"
+import { formatINR } from "@/app/lib/currency"
 
 // Generate calendar days for the current month
 function generateCalendarDays(year: number, month: number) {
@@ -388,15 +389,15 @@ try {
                             <div className="space-y-3 mb-6">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600">Subtotal</span>
-                                    <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                                    <span className="font-semibold">{formatINR(subtotal.toFixed(2))}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600">Tax & Fees</span>
-                                    <span className="font-semibold">${taxAndFees.toFixed(2)}</span>
+                                    <span className="font-semibold">{formatINR(taxAndFees.toFixed(2))}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-lg font-bold pt-3 border-t border-gray-100">
                                     <span>Total</span>
-                                    <span className="text-blue-600">${total.toFixed(2)}</span>
+                                    <span className="text-blue-600">{formatINR(total.toFixed(2))}</span>
                                 </div>
                             </div>
 

@@ -27,7 +27,7 @@ app.use(cookieParser())
 
 
 /* =========================
-   🔥 CORS (VERY IMPORTANT)
+   🔥 CORS (FINAL FIX)
 ========================= */
 
 const allowedOrigins = [
@@ -40,21 +40,34 @@ const allowedOrigins = [
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // allow Postman / mobile apps / server requests
     if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS not allowed"));
-    }
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization"
+  ],
+  optionsSuccessStatus: 204
 };
 
-app.use(cors(corsOptions));
+app.use(cors(corsOptions))
+
+// ⭐ REAL PREVENTION FOR PREFLIGHT LOOP
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204)
+  }
+  next()
+})
+
+
+
 
 /* =========================
    HEALTH CHECK
@@ -95,6 +108,8 @@ app.use("/api/payments", paymentRoutes)
 
 // 🔥 Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
 
 
 export default app;

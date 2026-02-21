@@ -41,27 +41,37 @@ export default function BookingsContent() {
 useEffect(() => {
   if (!bookingId) return
 
+
+const fetchBooking = async () => {
   const token = localStorage.getItem("accessToken")
-
-  const fetchBooking = async () => {
-    try {
-      const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Cache-Control": "no-cache",
-        },
-        cache: "no-store",
-      })
-
-      const data = await res.json()
-
-      if (data?.booking) {
-        setBooking(data.booking)
-      }
-    } catch (err) {
-      console.error("Booking fetch failed", err)
-    }
+  if (!token) {
+    router.replace("/auth/login")
+    return
   }
+
+  try {
+    const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      credentials: "include",
+    })
+
+    // ⭐ THIS IS THE REAL FIX
+    if (res.status === 401) {
+      localStorage.removeItem("accessToken")
+      router.replace("/auth/login")
+      return
+    }
+
+    const data = await res.json()
+    if (data?.booking) setBooking(data.booking)
+
+  } catch (err) {
+    console.error("Booking fetch failed", err)
+  }
+}
 
   // First load
   fetchBooking()

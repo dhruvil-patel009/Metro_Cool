@@ -250,39 +250,57 @@ export const register = async (req: Request, res: Response) => {
  */
 export const loginWithMpin = async (req: Request, res: Response) => {
   try {
-    const { identifier, mpin } = req.body;
+    let { identifier, mpin } = req.body;
 
+    /* ---------------- VALIDATION ---------------- */
     if (!identifier || !mpin) {
       return res.status(400).json({
         error: "Phone/Email and MPIN required"
       });
     }
 
-    // Find user by phone OR email
-    const { data: user, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .or(`phone.eq.${identifier},email.eq.${identifier}`)
-      .single();
+    // normalize
+    identifier = String(identifier).trim().toLowerCase();
+    mpin = String(mpin);
+
+    if (!/^\d{4}$/.test(mpin)) {
+      return res.status(400).json({
+        error: "MPIN must be 4 digits"
+      });
+    }
+
+    /* ---------------- FIND USER ---------------- */
+    let query = supabase.from("profiles").select("*");
+
+    // if only digits → phone login
+    if (/^\d+$/.test(identifier)) {
+      query = query.eq("phone", identifier);
+    } else {
+      // email login (case insensitive)
+      query = query.ilike("email", identifier);
+    }
+
+    const { data: user, error } = await query.single();
 
     if (error || !user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Compare MPIN
+    /* ---------------- MPIN CHECK ---------------- */
     const isMatch = await bcrypt.compare(mpin, user.mpin_hash);
 
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid MPIN" });
     }
 
-    // Create JWT
+    /* ---------------- JWT ---------------- */
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
 
+    /* ---------------- RESPONSE ---------------- */
     return res.json({
       message: "Login successful",
       accessToken: token,
@@ -295,7 +313,9 @@ export const loginWithMpin = async (req: Request, res: Response) => {
         email: user.email
       }
     });
+
   } catch (err) {
+    console.error("LOGIN ERROR:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 };

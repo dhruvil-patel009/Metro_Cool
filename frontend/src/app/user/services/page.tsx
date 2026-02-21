@@ -5,6 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ChevronRight, ArrowUpRight } from "lucide-react"
 import { getServices, ServiceDTO } from "../lib/services.api"
+import { formatINR } from "@/app/lib/currency"
 
 type UIService = {
   id: string
@@ -34,9 +35,9 @@ export default function ServicesPage() {
           originalPrice: service.price + 20, // UI only
           shortDescription: service.short_description,
           thumbnailImage: service.image_url || "/placeholder.svg",
-           rating: service.rating ?? 0,
-            badge: service.badge || undefined,
-            badgeColor: service.badge_color || "#2563eb",
+          rating: service.rating ?? 0,
+          badge: service.badge || undefined,
+          badgeColor: service.badge_color || "#2563eb",
         }))
 
         setServices(mapped)
@@ -100,11 +101,11 @@ export default function ServicesPage() {
 
                 {service.badge && (
                   <div
-    className="absolute top-4 left-4 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"
-    style={{ backgroundColor: service.badgeColor }}
-  >
-    {service.badge}
-  </div>
+                    className="absolute top-4 left-4 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"
+                    style={{ backgroundColor: service.badgeColor }}
+                  >
+                    {service.badge}
+                  </div>
                 )}
               </div>
 
@@ -125,10 +126,10 @@ export default function ServicesPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-1">
                     <span className="text-lg font-bold text-slate-900">
-                      ${service.price}
+                      {formatINR(service.price)}
                     </span>
                     <span className="text-xs text-gray-400 line-through">
-                      ${service.originalPrice}
+                      {formatINR(service.originalPrice)}
                     </span>
                   </div>
 

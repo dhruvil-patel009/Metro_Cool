@@ -7,34 +7,37 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
 /**
  * Universal API Fetch (ALWAYS sends JWT automatically)
  */
-export async function apiFetch<T = any>(
-  url: string,
-  options: RequestInit = {}
-): Promise<T> {
+export async function apiFetch(url: string, options: RequestInit = {}) {
 
-  // ✅ Read token from Zustand (NOT localStorage)
-  const token = useAuthStore.getState().token;
+  // 🔥 DO NOT read from zustand here
+  // Always read from localStorage (NextJS timing issue)
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("accessToken") && localStorage.getItem("token")
+      : null;
 
   const res = await fetch(`${API_BASE}${url}`, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    credentials: "include",
   });
-
-  // If token expired → auto logout
-  if (res.status === 401) {
-    useAuthStore.getState().logout();
-    window.location.href = "/auth/login";
-    throw new Error("Session expired. Please login again.");
-  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "API request failed");
+
+    // auto logout if token invalid
+    if (res.status === 401) {
+      localStorage.removeItem("auth-storage");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("token");
+      window.location.href = "/auth/login";
+    }
+
+    throw new Error(err.error || "API Error");
   }
 
   return res.json();

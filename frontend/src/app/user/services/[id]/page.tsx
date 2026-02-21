@@ -31,6 +31,7 @@ import {
   likeService,
 } from "../../lib/services.api"
 import { Card } from "@/app/components/ui/card"
+import { formatINR } from "@/app/lib/currency"
 
 const iconMap = {
   SearchCheck,
@@ -326,10 +327,11 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Total Estimate</p>
                     <div className="flex items-baseline gap-2">
                       <span className="text-5xl font-black font-semibold tracking-tighter">
-                        ${service.price}
+                          {formatINR(service.price)}
+
                         <span className="text-2xl">.00</span>
                       </span>
-                      <span className="text-gray-400 line-through text-lg">${service.originalPrice}.00</span>
+                      <span className="text-gray-400 line-through text-lg">{formatINR(service.originalPrice)}</span>
                     </div>
                     <p className="text-[10px] text-gray-400 mt-1">Taxes & fees included</p>
                   </div>

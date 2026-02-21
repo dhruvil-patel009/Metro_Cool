@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation"
 import { ChevronRight, User, Phone, MapPin, ArrowRight, MessageCircle } from "lucide-react"
 import { toast } from "react-toastify"
 import { servicesData } from "../../../../lib/services-data"
+import { formatINR } from "@/app/lib/currency"
 
 const ISSUE_OPTIONS = [
   { id: "not-cooling", label: "Not Cooling", icon: "❄️" },
@@ -421,19 +422,19 @@ if (!res.ok) {
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Service Fee</span>
-                  <span className="font-semibold">${serviceFee.toFixed(2)}</span>
+                  <span className="font-semibold">{formatINR(serviceFee.toFixed(2))}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Est. Parts</span>
-                  <span className="font-semibold">${estimatedParts.toFixed(2)}</span>
+                  <span className="font-semibold">{formatINR(estimatedParts.toFixed(2))}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Taxes (8%)</span>
-                  <span className="font-semibold">${taxes.toFixed(2)}</span>
+                  <span className="font-semibold">{formatINR(taxes.toFixed(2))}</span>
                 </div>
                 <div className="flex items-center justify-between text-lg font-bold pt-3 border-t border-gray-200">
                   <span>Total</span>
-                  <span className="text-blue-600">${total.toFixed(2)}</span>
+                  <span className="text-blue-600">{formatINR(total.toFixed(2))}</span>
                 </div>
               </div>
 
