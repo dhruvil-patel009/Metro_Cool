@@ -34,7 +34,8 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://metro-cool.vercel.app",
   "https://metro-cool-p3g4.vercel.app",
-  "https://www.metro-cool.com/"
+  "https://metro-cool.com",
+  "https://www.metro-cool.com"
 ];
 
 const corsOptions: cors.CorsOptions = {
