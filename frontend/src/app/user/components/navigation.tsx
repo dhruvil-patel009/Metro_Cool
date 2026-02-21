@@ -16,44 +16,22 @@ export function Navigation() {
   const pathname = usePathname()
     const [showProfileDropdown, setShowProfileDropdown] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const user = useAuthStore((s) => s.user);
 
 
 const router = useRouter()
   const logout = useAuthStore((s) => s.logout);
 
 
-// const handleLogout = async () => {
-//   try {
-//     await fetch(
-//       `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`,
-//       {
-//         method: "POST",
-//         credentials: "include", // important if cookies are used
-//       }
-//     )
-
-//     // 🔹 Clear client-side session (if stored)
-//     localStorage.removeItem("session")
-//     localStorage.removeItem("user")
-
-//     toast.success("Logged out successfully")
-
-//     setShowProfileDropdown(false)
-
-//     router.push("/")
-//   } catch (error) {
-//     toast.error("Logout failed. Try again.")
-//   }
-// }
 
 const handleLogout = () => {
     logout(); // ✅ clears token, role, refreshToken, Zustand state
 
-    toast.success("Logged out successfully");
-
+    
     setShowProfileDropdown(false);
-
+    
     router.replace("/"); // ✅ correct redirect
+    toast.success("Logged out successfully");
   };
 
   const navItems = [
@@ -151,8 +129,14 @@ const handleLogout = () => {
                 className="flex cursor-pointer items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
               >
                 <div className="text-right hidden sm:block">
-                  <div className="text-sm font-semibold text-gray-900">Alex Johnson</div>
-                  <div className="text-xs text-gray-500">Gold Member</div>
+                  <div className="text-right hidden sm:block">
+  <div className="text-sm font-semibold text-gray-900">
+    {user?.firstName + " " + user?.lastName || "Guest"}
+  </div>
+  <div className="text-xs text-gray-500 capitalize">
+    {user?.role || "Visitor"}
+  </div>
+</div>
                 </div>
                 <div className="relative">
                  <Image

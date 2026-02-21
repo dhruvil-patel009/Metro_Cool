@@ -4,6 +4,7 @@ import { supabase } from "../utils/supabase.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { transporter } from "../utils/mailer.js";
+import path from "path/win32";
 
 
 export const register = async (req: Request, res: Response) => {
@@ -252,6 +253,9 @@ export const loginWithMpin = async (req: Request, res: Response) => {
   try {
     let { identifier, mpin } = req.body;
 
+        let profilePhotoUrl: string | null = null;
+
+
     /* ---------------- VALIDATION ---------------- */
     if (!identifier || !mpin) {
       return res.status(400).json({
@@ -310,8 +314,8 @@ export const loginWithMpin = async (req: Request, res: Response) => {
         firstName: user.first_name,
         lastName: user.last_name,
         phone: user.phone,
-        email: user.email
-      }
+        email: user.email,
+        profile_photo: user.profile_photo      }
     });
 
   } catch (err) {

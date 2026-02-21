@@ -8,6 +8,8 @@ type User = {
   lastName?: string;
   email?: string;
   phone?: string;
+  profile_photo?: string | null
+
 };
 
 type AuthState = {

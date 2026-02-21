@@ -1,9 +1,25 @@
+"use client"
+
 import { Search, Bell, ChevronRight } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
+import { useAuthStore } from "@/store/auth.store";
+
 
 export function Header() {
+
+  const user = useAuthStore((s) => s.user);
+  const fullName = user
+    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
+    : "Guest";
+
+  const initials = user
+    ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
+    : "G";
+
+  const profileImage = user?.profile_photo || "";
+
   return (
     <header className="h-16 border-b bg-white flex items-center justify-between px-8 sticky top-0 z-10">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -28,12 +44,25 @@ export function Header() {
 
         <div className="flex items-center gap-3 pl-4 border-l">
           <div className="text-right">
-            <p className="text-sm font-bold leading-none">Alex Johnson</p>
-            <p className="text-[11px] text-muted-foreground mt-1">Senior Technician</p>
+            <div className="text-sm font-semibold text-gray-900">
+              {fullName}
+            </div>
+            <div className="text-xs text-gray-500 capitalize">
+              {user?.role ?? "Visitor"}
+            </div>
           </div>
           <Avatar className="h-9 w-9 border-2 border-slate-100">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>AJ</AvatarFallback>
+            {profileImage ? (
+              <AvatarImage
+                src={profileImage}
+                alt={fullName}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <AvatarFallback className="bg-blue-600 text-white font-semibold">
+                {initials}
+              </AvatarFallback>
+            )}
           </Avatar>
         </div>
       </div>

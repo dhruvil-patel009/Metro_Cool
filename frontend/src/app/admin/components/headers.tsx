@@ -2,7 +2,7 @@
 
 import { Search, Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import { NotificationsDropdown } from "../components/notification-dropdown";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -19,7 +19,7 @@ const pageTitles: Record<string, string> = {
 
 export function Header() {
   const pathname = usePathname();
-    const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user);
 
 
   const title =
@@ -27,14 +27,16 @@ export function Header() {
     pageTitles["/" + pathname.split("/")[1]] ||
     "admin";
 
-    const fullName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim();
+  const fullName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim();
   const initials =
     `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
+
+  const profileImage = user?.profile_photo || "";
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
       <div className="grid h-16 grid-cols-3 items-center pl-11 pr-2 sm:px-6 lg:px-8">
-        
+
         {/* LEFT: PAGE TITLE */}
         <h1 className="sm:text-3xl text-md font-semibold text-gray-900">
           {title}
@@ -52,7 +54,7 @@ export function Header() {
           </div>
         </div>
 
-{/* Right Side - Notifications & Profile */}
+        {/* Right Side - Notifications & Profile */}
         <div className="ml-auto flex items-center gap-4">
           {/* Notification Bell */}
           <NotificationsDropdown />
@@ -63,8 +65,18 @@ export function Header() {
               <p className="text-sm font-semibold text-gray-900">{fullName || "Admin User"}</p>
               <p className="text-xs text-gray-500">{user?.role}</p>
             </div>
-            <Avatar className="h-10 w-10 border-2 border-cyan-500">
-              <AvatarFallback className="bg-cyan-100 text-cyan-700">{initials || "AD"}</AvatarFallback>
+            <Avatar className="h-9 w-9 border-2 border-slate-100">
+              {profileImage ? (
+                <AvatarImage
+                  src={profileImage}
+                  alt={fullName}
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <AvatarFallback className="bg-blue-600 text-white font-semibold">
+                  {initials}
+                </AvatarFallback>
+              )}
             </Avatar>
           </div>
         </div>
