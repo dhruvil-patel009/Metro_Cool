@@ -248,13 +248,13 @@ export default function JobsPage() {
       </div>
 
       {/* ================= TABS ================= */}
-      <div className="flex items-center gap-2 bg-slate-50/50 p-1.5 rounded-2xl border border-slate-100 w-fit">
+      <div className="flex items-center gap-2 bg-slate-50/50 sm:p-1.5 p-1 rounded-2xl border border-slate-100 w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold transition-all relative",
+              "flex items-center gap-2.5 sm:px-6 px-2 py-3 rounded-xl text-sm font-bold transition-all relative",
               activeTab === tab.id
                 ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-100"
                 : "text-slate-500 hover:text-slate-700",

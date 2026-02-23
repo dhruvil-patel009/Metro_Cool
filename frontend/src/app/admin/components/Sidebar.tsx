@@ -67,12 +67,14 @@ export function Sidebar() {
   return (
     <>
       {/* MOBILE TOGGLE */}
-      <button
-        onClick={() => setIsMobileOpen(true)}
-        className="fixed sm:left-4 sm:top-4 left-0 top-2 z-50 rounded-lg bg-white p-2 shadow lg:hidden"
-      >
-        <Menu className="h-6 w-6" />
-      </button>
+      {!isMobileOpen && (
+  <button
+    onClick={() => setIsMobileOpen(true)}
+    className="fixed sm:left-4 sm:top-4 left-0 top-2 z-50 rounded-lg bg-white p-2 shadow lg:hidden"
+  >
+    <Menu className="h-6 w-6" />
+  </button>
+)}
 
       {/* MOBILE OVERLAY */}
       {isMobileOpen && (
@@ -144,7 +146,7 @@ export function Sidebar() {
 
         {/* LOGOUT (ALWAYS AT BOTTOM) */}
         <div className="border-t p-3 shrink-0">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"           onClick={handleLogout}
+          <button className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"           onClick={handleLogout}
 >
             <LogOut className="h-5 w-5" />
             {isOpen && <span>Logout</span>}

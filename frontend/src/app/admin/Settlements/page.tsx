@@ -5,7 +5,7 @@ export default function SettlementsPage() {
   return (
 
         <div className="flex-1 overflow-auto bg-gray-50">
-      <div className="p-6 lg:p-8">
+      <div className="py-6 px-2 sm:px-8 sm:py-8">
         {/* Breadcrumb */}
         <div className="mb-4 flex items-center gap-2 text-sm text-gray-600">
           <a href="/admin/dashboard" className="hover:text-gray-900">

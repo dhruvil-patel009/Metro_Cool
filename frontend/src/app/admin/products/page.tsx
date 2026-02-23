@@ -10,7 +10,7 @@ export default function ProductsPage() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="lg:px-6 lg:py-6 py-6 px-2 space-y-6">
       <div className="flex justify-between">
         <h1 className="text-2xl font-bold">Products</h1>
         <Button onClick={() => setOpen(true)}>Add Product</Button>

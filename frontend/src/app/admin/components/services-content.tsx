@@ -31,7 +31,7 @@ export function ServicesContent() {
   return (
     <div className="flex min-h-screen bg-gray-50/50">
       <div className="flex flex-1 flex-col">
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="flex-1 py-8 px-2 lg:px-8 lg:py-8">
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">

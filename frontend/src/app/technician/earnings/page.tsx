@@ -81,7 +81,7 @@ export default function EarningsPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-6 mb-8">
             {/* Total Earnings Card */}
             <Card className="p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 group">
               <div className="flex items-start justify-between mb-4">
@@ -142,9 +142,55 @@ export default function EarningsPage() {
               </Button>
             </div>
 
+            <div className="md:hidden space-y-4">
+  {visibleHistory.map((item, index) => (
+    <div
+      key={item.id}
+      className="border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 bg-white"
+      style={{
+        animation: `fadeIn 0.3s ease-out ${index * 0.05}s both`,
+      }}
+    >
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-xs font-semibold text-slate-500 uppercase">
+          Job ID
+        </span>
+        <span className="font-medium text-slate-900">{item.id}</span>
+      </div>
+
+      <div className="mb-2">
+        <span className="text-xs font-semibold text-slate-500 uppercase">
+          Service
+        </span>
+        <div className="mt-1">
+          <div className="font-medium text-slate-900">{item.service}</div>
+          <div className="text-sm text-slate-500">{item.category}</div>
+        </div>
+      </div>
+
+      <div className="flex justify-between mb-2">
+        <span className="text-xs font-semibold text-slate-500 uppercase">
+          Date
+        </span>
+        <span className="text-slate-600">{item.date}</span>
+      </div>
+
+      <div className="flex justify-between items-center pt-2 border-t">
+        <span className="text-xs font-semibold text-slate-500 uppercase">
+          Amount
+        </span>
+        <span className="font-semibold text-cyan-600">
+          ${item.amount.toFixed(2)}
+        </span>
+      </div>
+    </div>
+  ))}
+</div>
+
+
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full hidden md:table">
                 <thead>
                   <tr className="border-b border-slate-200">
                     <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -192,6 +238,8 @@ export default function EarningsPage() {
                 </tbody>
               </table>
             </div>
+
+
 
             {/* Show More Button */}
             <div className="flex justify-center mt-6">

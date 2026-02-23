@@ -11,9 +11,9 @@ export function ProductsSection() {
           <div className="m-auto">
             <h2 className="text-2xl md:text-4xl
  font-bold mb-2">Featured Products</h2>
-            <p className="text-gray-500">Genuine parts and top-rated appliances</p>
+            <p className="text-gray-500 text-center">Genuine parts and top-rated appliances</p>
           </div>
-          <Link href="#" className="text-blue-600 font-bold text-sm flex items-center gap-1">
+          <Link href="/user/products" className="text-blue-600 font-bold text-sm flex items-center gap-1">
             View All <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

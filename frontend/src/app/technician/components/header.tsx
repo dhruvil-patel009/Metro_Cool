@@ -21,15 +21,15 @@ export function Header() {
   const profileImage = user?.profile_photo || "";
 
   return (
-    <header className="h-16 border-b bg-white flex items-center justify-between px-8 sticky top-0 z-10">
+    <header className="h-16 border-b bg-white flex items-center lg:justify-between justify-start pl-10 pr-2 sticky top-0 z-10">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>Dashboard</span>
-        <ChevronRight className="w-4 h-4" />
-        <span className="font-medium text-foreground">Overview</span>
+        <span className="mx-2 text-lg text-black lg:text-lg font-medium">Dashboard</span>
+        <ChevronRight className="w-4 h-4 hidden md:block" />
+        <span className="font-medium hidden md:block text-foreground">Overview</span>
       </div>
 
-      <div className="flex items-center gap-6">
-        <div className="relative w-96">
+      <div className="flex items-center sm:gap-6">
+        <div className="relative w-full max-w-lg">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             className="pl-10 bg-slate-50 border-none h-10 ring-offset-0 focus-visible:ring-1 focus-visible:ring-slate-200"
@@ -42,8 +42,8 @@ export function Header() {
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
         </Button>
 
-        <div className="flex items-center gap-3 pl-4 border-l">
-          <div className="text-right">
+        <div className="flex items-center gap-3 sm:pl-4">
+          <div className="text-right hidden lg:block">
             <div className="text-sm font-semibold text-gray-900">
               {fullName}
             </div>

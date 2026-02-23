@@ -46,7 +46,7 @@ export default function RootLayout({
 
           <div className="flex flex-1 flex-col">
             <Header />
-            <main className="flex-1 p-8 overflow-auto">
+            <main className="flex-1 sm:py-8 sm:px-8 py-8 px-2 overflow-auto">
               {children}
             </main>
           </div>

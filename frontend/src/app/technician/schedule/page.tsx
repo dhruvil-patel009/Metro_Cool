@@ -178,7 +178,7 @@ export default function SchedulePage() {
             Manage your upcoming jobs and appointments.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center lg:mb-0 mb-4 gap-3">
           <Button
             variant="outline"
             className="h-11 px-5 rounded-xl font-semibold cursor-pointer border-slate-200 hover:bg-slate-50 transition-all hover:scale-105 bg-transparent"
@@ -256,7 +256,7 @@ export default function SchedulePage() {
               </div>
 
               {/* Calendar Days */}
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid sm:grid-cols-7 grid-cols-3 gap-2">
                 {/* Previous Month Days */}
                 {previousMonthDays.map((day, idx) => (
                   <div

@@ -128,7 +128,7 @@ export default function SupportPage() {
           </div>
 
           {/* Support Options Cards */}
-          <div className="grid gap-6 md:grid-cols-3 animate-in slide-in-from-bottom-4 duration-500 delay-200">
+          <div className="grid gap-6 lg:grid-cols-3 md:grid-cols-2 animate-in slide-in-from-bottom-4 duration-500 delay-200">
             {/* Raise a Ticket */}
             <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer border-gray-200">
               <CardContent className="pt-6 space-y-4">
@@ -257,7 +257,8 @@ export default function SupportPage() {
               </div>
               <Card className="border-gray-200">
                 <CardContent className="p-0">
-                  <div className="overflow-x-auto">
+
+                  <div className="overflow-x-auto hidden md:block">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200 bg-gray-50">
@@ -295,6 +296,60 @@ export default function SupportPage() {
                       </tbody>
                     </table>
                   </div>
+                  
+                   {/* Mobile + Tablet Card Layout */}
+  <div className="md:hidden space-y-4">
+    {recentTickets.map((ticket, index) => (
+      <div
+        key={ticket.id}
+        className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200"
+        style={{ animationDelay: `${index * 50}ms` }}
+      >
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase">
+            Ticket ID
+          </span>
+          <span className="text-sm font-semibold text-gray-900">
+            {ticket.id}
+          </span>
+        </div>
+
+        <div className="mb-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase">
+            Subject
+          </span>
+          <p className="text-sm text-gray-700 mt-1">
+            {ticket.subject}
+          </p>
+        </div>
+
+        <div className="flex justify-between mb-3">
+          <div>
+            <span className="text-xs font-semibold text-gray-500 uppercase">
+              Date
+            </span>
+            <p className="text-sm text-gray-600 mt-1">
+              {ticket.date}
+            </p>
+          </div>
+
+          <div className="text-right">
+            <span className="text-xs font-semibold text-gray-500 uppercase">
+              Status
+            </span>
+            <div className="mt-1">
+              <Badge className={getStatusColor(ticket.status)}>
+                {getStatusText(ticket.status)}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+
+
                 </CardContent>
               </Card>
             </div>
