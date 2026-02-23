@@ -426,7 +426,7 @@ const handleSendEmail = async () => {
       </div>
 
       {/* MOBILE & TABLET CARDS */}
-<div className="lg:hidden p-4 space-y-4">
+<div className="lg:hidden lg:p-4 p-2 space-y-4">
   {settlements.map((settlement) => (
     <div
       key={settlement.id}

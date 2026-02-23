@@ -152,7 +152,7 @@ const joinedDate = data.created_at
       </div>
 
       {/* MAIN */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto sm:px-6 px-2 py-8">
         {/* PROFILE */}
         <div className="bg-white rounded-xl p-6 mb-8 shadow-sm">
           <div className="flex gap-6 items-center">
@@ -162,12 +162,12 @@ const joinedDate = data.created_at
     alt="Profile"
     width={120}
     height={120}
-    className="rounded-full border w-42 h-42 "
+    className="rounded-full border sm:w-42 sm:h-42 "
   />
 
   {/* STATUS DOT */}
   <span
-    className={`absolute bottom-4 right-2 w-6 h-6 rounded-full border-2 border-white ${
+    className={`absolute sm:bottom-4 sm:right-2 bottom-3 right-0 w-6 h-6 rounded-full border-2 border-white ${
       technician.status === "Active"
         ? "bg-green-500"
         : "bg-red-500"
@@ -177,7 +177,7 @@ const joinedDate = data.created_at
 
 
             <div>
-              <h1 className="text-3xl font-bold">
+              <h1 className="sm:text-3xl text-xl font-bold">
                 {technician.firstName} {technician.middleName}{" "}
                 {technician.lastName}
               </h1>

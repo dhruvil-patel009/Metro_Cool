@@ -321,7 +321,7 @@ const fetchRequests = async () => {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
-      <main className="p-6 space-y-6">
+      <main className="lg:py-6 lg:px-6 py-6 px-2 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
@@ -586,7 +586,7 @@ const fetchRequests = async () => {
           </div>
 
           {/* MOBILE & TABLET CARDS */}
-<div className="lg:hidden p-4 space-y-4">
+<div className="lg:hidden lg:p-4 p-2 space-y-4">
   {loading ? (
     [...Array(limit)].map((_, i) => (
       <Skeleton key={i} className="h-36 w-full rounded-xl" />
