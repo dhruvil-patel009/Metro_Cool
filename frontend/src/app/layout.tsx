@@ -7,6 +7,7 @@ import Providers from "./providers"
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,11 +18,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Metro Cool",
-  description: "AC Service Platform",
-};
 
+
+export const metadata: Metadata = {
+  title: "Metro Cool - AC Repair & AC Service in Ahmedabad",
+  description:
+  "Metro Cool provides professional AC repair, AC installation, AC gas filling, and AC maintenance services in Ahmedabad. Same day doorstep service at affordable price.",
+  keywords: [
+    "AC repair Ahmedabad",
+    "AC service Ahmedabad",
+    "AC installation Ahmedabad",
+    "AC gas filling Ahmedabad",
+    "Split AC repair Ahmedabad",
+    "Window AC repair Ahmedabad",
+  ],
+  authors: [{ name: "Metro Cool" }],
+  openGraph: {
+    title: "Metro Cool AC Service Ahmedabad",
+    description:
+    "Professional Air Conditioner repair and installation service in Ahmedabad.",
+    url: "https://metro-cool.com",
+    siteName: "Metro Cool",
+    locale: "en_IN",
+    type: "website",
+  },
+};
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 export default function RootLayout({
