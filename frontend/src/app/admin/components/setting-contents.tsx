@@ -245,8 +245,8 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
 
   return (
-    <div className="flex h-full">
-      <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
+    <div className="flex flex-col lg:flex-row h-full">
+      <div className="w-full lg:w-64 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex-shrink-0 overflow-x-auto lg:overflow-y-auto">
         <div className="p-6 space-y-1">
           <button
             onClick={() => scrollToSection("profile")}
@@ -278,8 +278,8 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="p-8">
-          <div className="flex items-center justify-between mb-2">
+        <div className="lg:px-8 lg:py-8 py-8 px-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
               <p className="text-gray-500 mt-1">
@@ -299,7 +299,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           </div>
 
           <div className="mt-8 space-y-8">
-            <section id="section-profile" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <section id="section-profile" className="bg-white rounded-xl shadow-sm border border-gray-200 sm:px-6 sm:py-6 px-4 py-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
@@ -308,7 +308,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </span>
               </div>
 
-              <div className="flex gap-6">
+              <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-shrink-0">
                   <div className="relative">
 <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br  flex items-center justify-center text-white text-2xl font-semibold">
@@ -343,7 +343,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </div>
 
                 <div className="flex-1 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">First Name</label>
                       <Input
@@ -369,7 +369,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   </div>
 
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Phone Number
@@ -417,7 +417,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               </div>
             </section>
 
-            <section id="section-admin" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <section id="section-admin" className="bg-white rounded-xl shadow-sm border border-gray-200 sm:px-6 sm:py-6 px-4 py-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">Administrator Accounts</h2>
@@ -432,7 +432,111 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </Button>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="md:hidden space-y-4">
+  {admins.map((admin) => (
+    <div
+      key={admin.id}
+      className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-white font-semibold">
+          {admin.profile_photo ? (
+            <img
+              src={admin.profile_photo}
+              alt={admin.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            getInitials(admin.first_name, admin.last_name)
+          )}
+        </div>
+
+        <div>
+          <div className="font-semibold text-gray-900">
+            {admin.first_name} {admin.last_name}
+          </div>
+          <div className="text-sm text-gray-500">
+            {admin.email}
+          </div>
+        </div>
+      </div>
+
+      {/* Details */}
+      <div className="space-y-3 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-500 font-medium">Role</span>
+          <span className="text-blue-600 capitalize font-medium">
+            {admin.role}
+          </span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-gray-500 font-medium">Phone</span>
+          <span className="text-black capitalize">
+            {admin.phone}
+          </span>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="text-gray-500 font-medium">Status</span>
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+              admin.active
+                ? "bg-green-50 text-green-700"
+                : "bg-gray-100 text-red-600"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                admin.active ? "bg-green-500" : "bg-red-400"
+              }`}
+            />
+            {admin.active ? "Active" : "Inactive"}
+          </span>
+        </div>
+
+        <div className="flex justify-between items-center pt-3 border-t">
+          <span className="text-gray-500 font-medium">Enable</span>
+          <Switch
+            checked={admin.active}
+            disabled={admin.id === profileId}
+            onCheckedChange={() =>
+              toggleAdminStatus(admin.id, admin.active)
+            }
+          />
+        </div>
+
+        <div className="flex justify-between items-center pt-2">
+          <span className="text-gray-500 font-medium">Actions</span>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1 hover:bg-gray-100 rounded">
+                <MoreVertical className="w-5 h-5 text-gray-400" />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Edit</DropdownMenuItem>
+
+              {admin.id !== profileId && (
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={() => deleteAdmin(admin.id)}
+                >
+                  Remove
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200">
@@ -557,7 +661,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               </div>
             </section>
 
-            <section id="section-notifications" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <section id="section-notifications" className="bg-white rounded-xl shadow-sm border border-gray-200 sm:px-6 sm:py-6 px-4 py-6">
               <div className="mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Notification Preferences</h2>
               </div>

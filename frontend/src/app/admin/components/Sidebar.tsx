@@ -67,12 +67,14 @@ export function Sidebar() {
   return (
     <>
       {/* MOBILE TOGGLE */}
-      <button
-        onClick={() => setIsMobileOpen(true)}
-        className="fixed sm:left-4 sm:top-4 left-0 top-2 z-50 rounded-lg bg-white p-2 shadow lg:hidden"
-      >
-        <Menu className="h-6 w-6" />
-      </button>
+      {!isMobileOpen && (
+  <button
+    onClick={() => setIsMobileOpen(true)}
+    className="fixed sm:left-4 sm:top-4 left-0 top-2 z-50 rounded-lg bg-white p-2 shadow lg:hidden"
+  >
+    <Menu className="h-6 w-6" />
+  </button>
+)}
 
       {/* MOBILE OVERLAY */}
       {isMobileOpen && (
