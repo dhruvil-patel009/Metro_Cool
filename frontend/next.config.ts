@@ -32,4 +32,9 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = {
+  siteUrl: "https://www.metro-cool.com",
+  generateRobotsTxt: true,
+  changefreq: "weekly",
+  priority: 0.7,
+};
