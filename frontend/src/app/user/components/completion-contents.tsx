@@ -56,73 +56,6 @@ const copyOTP = () => {
   setTimeout(() => setCopied(false), 2000)
 }
 
-//   const handleRazorpay = async () => {
-//   const token = localStorage.getItem("accessToken")
-
-//   const res = await fetch(`${API_URL}/payments/razorpay-order`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${token}`,
-//     },
-//     body: JSON.stringify({
-//       booking_id: booking.id,
-//       amount: booking.total_amount,
-//     }),
-//   })
-
-
-//   useEffect(() => {
-//   if (!bookingId) return
-
-//   const token = localStorage.getItem("accessToken")
-
-//   fetch(`${API_URL}/bookings/${bookingId}`, {
-//     headers: {
-//       Authorization: `Bearer ${token}`,
-//     },
-//     cache: "no-store",
-//   })
-//     .then(res => res.json())
-//     .then(data => setBooking(data.booking))
-// }, [bookingId])
-
-
-//   const { orderId, key } = await res.json()
-
-//   const options = {
-//     key,
-//     amount: booking.total_amount * 100,
-//     currency: "INR",
-//     name: "Metro Cool",
-//     description: "AC Service Payment",
-//     order_id: orderId,
-//     method: {
-//       upi: true, // 👈 force UPI
-//     },
-//     handler: async (response: any) => {
-//       const verifyRes = await fetch(`${API_URL}/payments/verify`, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${token}`,
-//         },
-//         body: JSON.stringify({
-//           booking_id: booking.id,
-//           ...response,
-//         }),
-//       })
-
-//       const data = await verifyRes.json()
-//       setOtp(data.closure_otp)
-//       setPaymentConfirmed(true)
-//     },
-//   }
-
-//   // @ts-ignore
-//   const rzp = new window.Razorpay(options)
-//   rzp.open()
-// }
 
 const handleRazorpay = async () => {
   if (paymentMethod !== "upi") return
@@ -151,6 +84,21 @@ const handleRazorpay = async () => {
     description: "AC Service Payment",
     order_id: orderId,
     method: { upi: true },
+    modal: {
+  ondismiss: async function () {
+    await fetch(`${API_URL}/payments/verify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        booking_id: bookingId,
+        status: "cancelled",
+      }),
+    })
+  }
+},
     handler: async (response: any) => {
       const verifyRes = await fetch(`${API_URL}/payments/verify`, {
         method: "POST",
@@ -175,6 +123,16 @@ const handleRazorpay = async () => {
   rzp.open()
 }
 
+const downloadInvoice = async () => {
+  const token = localStorage.getItem("accessToken")
+
+  const res = await fetch(`${API_URL}/payments/invoice/${bookingId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  const data = await res.json()
+  window.open(data.invoice_url, "_blank")
+}
 
 
 useEffect(() => {
@@ -520,7 +478,7 @@ const handleCashPayment = async () => {
                       </button>
                     </div>
 
-                    <button className="w-full py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                    <button  onClick={downloadInvoice} className="w-full py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
                       <Download className="w-4 h-4" />
                       Download Receipt
                     </button>
