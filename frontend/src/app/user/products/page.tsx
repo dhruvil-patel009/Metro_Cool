@@ -1,5 +1,6 @@
 "use client"
 
+import Head from "next/head"
 import { ShoppingCart, ChevronDown, Star, Heart } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -54,6 +55,35 @@ export default function ProductsPage() {
       Number(product.price) <= priceRange.max
   )
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Air Conditioners",
+    itemListElement: filteredProducts.map((product, index) => ({
+      "@type": "Product",
+      position: index + 1,
+      name: product.title,
+      image: product.main_image,
+      description: product.short_desc,
+      sku: product.id,
+      brand: {
+        "@type": "Brand",
+        name: product.brand,
+      },
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "USD",
+        price: Number(product.price),
+        availability: "https://schema.org/InStock",
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: Number(product.rating || 0),
+        reviewCount: product.review_count || 0,
+      },
+    })),
+  }
+
   /* ---------------- LOADING ---------------- */
   if (loading) {
     return (
@@ -70,6 +100,48 @@ export default function ProductsPage() {
 
   /* ---------------- UI ---------------- */
   return (
+    <>
+    <Head>
+        <title>Buy Air Conditioners Online | Best AC Prices & Brands</title>
+
+        <meta
+          name="description"
+          content="Shop the best air conditioners online. Compare top brands, ratings, prices and get fast delivery. Premium AC units at unbeatable prices."
+        />
+
+        <meta
+          name="keywords"
+          content="air conditioners, buy AC online, split AC, inverter AC, best AC brands, affordable air conditioner"
+        />
+
+        <link rel="canonical" href="https://www.yoursite.com/products" />
+
+        {/* Open Graph */}
+        <meta property="og:title" content="Buy Air Conditioners Online" />
+        <meta
+          property="og:description"
+          content="Browse top rated air conditioners with best prices and fast shipping."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.yoursite.com/products" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="Best Air Conditioners Online"
+        />
+        <meta
+          name="twitter:description"
+          content="Compare and shop premium air conditioners with fast delivery."
+        />
+
+        {/* JSON-LD */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </Head>
     <div className="min-h-screen bg-[#F8FAFC]">
       <main className="container mx-auto px-4 py-6 animate-fade-in">
 
@@ -220,5 +292,6 @@ export default function ProductsPage() {
         </div>
       </main>
     </div>
+    </>
   )
 }

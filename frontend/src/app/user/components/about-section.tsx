@@ -3,8 +3,38 @@ import { AboutCard } from "./ui/about-card"
 import Link from 'next/link'
 
 export function AboutSection() {
+  const aboutSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "MetroCool",
+        url: "https://www.metrocool.com",
+        description:
+          "MetroCool provides professional AC repair, installation and industrial cooling services with certified technicians and advanced booking technology.",
+        foundingDate: "2016",
+        parentOrganization: {
+          "@type": "Organization",
+          name: "Comfort AC Solutions",
+        },
+      },
+      {
+        "@type": "AboutPage",
+        name: "About MetroCool",
+        url: "https://www.metrocool.com/user/about",
+        description:
+          "Learn about MetroCool's journey from Comfort AC Solutions to a modern digital AC service platform.",
+      },
+    ],
+  }
   return (
     <section className="py-24 bg-white overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(aboutSchema),
+        }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:grid lg:grid-cols-2 lg:gap-24 items-center">
           <div>

@@ -2,8 +2,42 @@ import { Snowflake, Facebook, Twitter } from "lucide-react"
 import Link from "next/link"
 
 export function Footer() {
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "Metro Cool",
+        url: "https://www.metrocool.com",
+        logo: "https://www.metrocool.com/logo.png",
+        description:
+          "Metro Cool provides professional AC repair, installation, maintenance and cooling solutions.",
+        sameAs: [
+          "https://facebook.com/metrocool",
+          "https://twitter.com/metrocool"
+        ]
+      },
+      {
+        "@type": "LocalBusiness",
+        name: "Metro Cool Services",
+        url: "https://www.metrocool.com",
+        description:
+          "Trusted AC repair, AC installation, gas refill and annual maintenance services.",
+        areaServed: {
+          "@type": "Country",
+          name: "United States"
+        }
+      }
+    ]
+  }
   return (
     <footer className="bg-[#f4f4f4] pt-40 pb-12 border-t border-gray-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationSchema),
+        }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-4 gap-12 mb-20">
           <div className="col-span-1 md:col-span-1">

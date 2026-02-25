@@ -1,8 +1,32 @@
 import Link from "next/link";
 
 export function CTASection() {
+  const ctaSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "AC Repair and Installation Services",
+    provider: {
+      "@type": "LocalBusiness",
+      name: "Metro Cool",
+      url: "https://www.metrocool.com",
+    },
+    areaServed: {
+      "@type": "Country",
+      name: "United States",
+    },
+    description:
+      "Book professional AC repair, installation or browse energy-efficient air conditioners from Metro Cool.",
+  };
   return (
-    <section className="px-4 sm:px-6 lg:px-8 mb-[80px] relative z-20">
+    <section className="px-4 sm:px-6 lg:px-8 mb-[80px] relative z-20" aria-labelledby="cta-heading"
+      itemScope
+      itemType="https://schema.org/Service">
+        <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(ctaSchema),
+        }}
+      />
       <div className="max-w-7xl mx-auto bg-blue-600 rounded-lg py-20 px-8 text-center relative overflow-hidden shadow-2xl shadow-blue-500/20">
         {/* Grid pattern background */}
         <div

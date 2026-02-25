@@ -1,12 +1,74 @@
+import type { Metadata } from "next"
 import { Button } from "@/app/components/ui/button"
 import { Check, Zap, BadgeCheck, Clock, Users, TrendingUp, Sprout } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
+export const metadata: Metadata = {
+  title: "About Metro Cool | Best AC Repair & Installation Services Since 2010",
+  description:
+    "Metro Cool provides expert AC repair, installation, and maintenance services since 2010. 24/7 emergency support, certified technicians, and transparent pricing.",
+  keywords: [
+    "AC repair services",
+    "air conditioning installation",
+    "HVAC maintenance",
+    "emergency AC repair",
+    "Metro Cool",
+    "AC technicians near me",
+  ],
+  metadataBase: new URL("https://www.metrocool.com"),
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About Metro Cool | Trusted AC Experts",
+    description:
+      "Certified AC repair and installation experts providing 24/7 emergency services with 15+ years experience.",
+    url: "https://www.metrocool.com/about",
+    siteName: "Metro Cool",
+    images: [
+      {
+        url: "/assets/ac-technician-installing-air-conditioning-unit.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Professional AC technician installing air conditioning unit",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Metro Cool | AC Experts Since 2010",
+    description:
+      "Trusted AC repair and installation services with certified technicians and emergency support.",
+    images: ["/assets/ac-technician-installing-air-conditioning-unit.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+}
+
 export default function AboutPage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: "Metro Cool",
+    image: "https://www.metrocool.com/assets/ac-technician-installing-air-conditioning-unit.jpg",
+    url: "https://www.metrocool.com",
+    telephone: "+1-000-000-0000",
+    description:
+      "Metro Cool offers professional AC repair, installation and maintenance services with 24/7 emergency support.",
+    openingHours: "Mo-Su 00:00-23:59",
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       {/* Hero Section */}
       <section className="relative h-[600px] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
         <div className="absolute inset-0">

@@ -42,10 +42,26 @@ const handleLogout = () => {
     { href: "/user/contact", label: "Contact" },
   ]
 
+  const navigationSchema = {
+    "@context": "https://schema.org",
+    "@type": "SiteNavigationElement",
+    name: "Main Navigation",
+    url: "https://www.metrocool.com",
+  }
+
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
+    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100" role="navigation"
+      aria-label="Main Website Navigation"
+      itemScope
+      itemType="https://schema.org/SiteNavigationElement">
       {/* MOBILE MENU */}
 {/* MOBILE SLIDER MENU */}
+<script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(navigationSchema),
+        }}
+      />
 <div
   className={cn(
     "lg:hidden fixed left-0 right-0 top-20 z-40 bg-white border-t border-gray-100 shadow-lg transform transition-all duration-300 ease-in-out",

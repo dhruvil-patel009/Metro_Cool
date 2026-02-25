@@ -18,6 +18,39 @@ export function HeroSection() {
 
   const slide = heroSlides[current]
 
+  const heroSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: "Metro Cool",
+    url: "https://www.metrocool.com",
+    description:
+      "Professional AC repair, installation and energy-efficient air conditioning services.",
+    areaServed: {
+      "@type": "Country",
+      name: "United States",
+    },
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Air Conditioning Services",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "AC Repair",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "AC Installation",
+          },
+        },
+      ],
+    },
+  }
+
   return (
     <section
       className="relative min-h-[700px] flex items-center overflow-hidden transition-all duration-1000"
@@ -26,7 +59,17 @@ export function HeroSection() {
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
+      aria-label="Metro Cool AC Repair and Installation Hero Section"
+      itemScope
+      itemType="https://schema.org/LocalBusiness"
     >
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(heroSchema),
+        }}
+      />
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/60" />
 

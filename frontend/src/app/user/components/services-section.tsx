@@ -2,8 +2,54 @@ import { Wrench, Settings } from "lucide-react"
 import { ServiceCard } from "./ui/services-card"
 
 export function ServicesSection() {
+  const servicesSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    provider: {
+      "@type": "LocalBusiness",
+      name: "Metro Cool",
+      url: "https://www.metrocool.com",
+    },
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Air Conditioning Services",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "AC Repair",
+            description:
+              "Fast diagnostics and expert fixes for all AC brands. Restore cooling comfort instantly.",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "AC Installation",
+            description:
+              "Professional AC installation with secure mounting and leakage checks included.",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "AC Maintenance",
+            description:
+              "Regular AC servicing to improve efficiency, deep cleaning and gas refilling services.",
+          },
+        },
+      ],
+    },
+  }
   return (
     <section className="py-24 bg-[#f9fafb]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(servicesSchema) }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <p className="text-blue-600 text-xs font-bold uppercase tracking-[0.2em] mb-3">What We Do</p>
