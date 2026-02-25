@@ -5,37 +5,37 @@ import { products } from "../lib/data"
 
 export function ProductsSection() {
 
-  const productsSchema = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "Featured Air Conditioning Products",
-    itemListElement: products.map((product, index) => ({
-      "@type": "Product",
-      position: index + 1,
-      name: product.title,
-      image: product.image,
-      description: product.description,
-      brand: {
-        "@type": "Brand",
-        name: product.brand || "Metro Cool",
-      },
-      offers: {
-        "@type": "Offer",
-        priceCurrency: "USD",
-        price: product.price,
-        availability: "https://schema.org/InStock",
-      },
-    })),
-  }
+  // const productsSchema = {
+  //   "@context": "https://schema.org",
+  //   "@type": "ItemList",
+  //   name: "Featured Air Conditioning Products",
+  //   itemListElement: products.map((product, index) => ({
+  //     "@type": "Product",
+  //     position: index + 1,
+  //     name: product.title,
+  //     image: product.image,
+  //     description: product.description,
+  //     brand: {
+  //       "@type": "Brand",
+  //       name: product.brand || "Metro Cool",
+  //     },
+  //     offers: {
+  //       "@type": "Offer",
+  //       priceCurrency: "USD",
+  //       price: product.price,
+  //       availability: "https://schema.org/InStock",
+  //     },
+  //   })),
+  // }
 
   return (
     <section className="py-8 bg-white" aria-labelledby="featured-products-heading">
-       <script
+       {/* <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(productsSchema),
         }}
-      />
+      /> */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-12">
           <div className="m-auto">
