@@ -1,5 +1,6 @@
 // import type { NextConfig } from "next";
 
+import { NextConfig } from "next/dist/server/config-shared";
 import { hostname } from "os";
 
 // const nextConfig: NextConfig = {
@@ -10,7 +11,7 @@ import { hostname } from "os";
 
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig  = {
   images: {
     domains: ["nlimsceezdxwkykpzlbv.supabase.co"],
     remotePatterns: [
@@ -32,9 +33,4 @@ const nextConfig = {
   },
 };
 
-module.exports = {
-  siteUrl: "https://www.metro-cool.com",
-  generateRobotsTxt: true,
-  changefreq: "weekly",
-  priority: 0.7,
-};
+export default nextConfig;
