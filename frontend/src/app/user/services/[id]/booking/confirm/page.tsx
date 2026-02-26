@@ -34,6 +34,9 @@ export default function BookingConfirmPage (){
   const [saveAddress, setSaveAddress] = useState(false)
   const [service, setService] = useState<any>(null)
 
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([])
+const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
 useEffect(() => {
@@ -42,6 +45,48 @@ useEffect(() => {
 
   if (storedDate) setSelectedDate(storedDate)
   if (storedTime) setSelectedTimeSlot(storedTime)
+}, [])
+
+const applyAddress = (addr: any) => {
+  setSelectedAddressId(addr.id)
+
+  setFullName(addr.full_name || "")
+  setPhoneNumber(addr.phone || "")
+  setStreetAddress(addr.street || "")
+  setAptSuite(addr.apartment || "")
+  setCity(addr.city || "")
+  setZipCode(addr.postal_code || "")
+}
+
+useEffect(() => {
+  const fetchAddresses = async () => {
+    const token = localStorage.getItem("accessToken")
+    if (!token) return
+
+    try {
+      const res = await fetch(`${API_URL}/addresses`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
+
+      setSavedAddresses(data.addresses)
+
+      // AUTO SELECT DEFAULT ADDRESS ⭐
+      const defaultAddress = data.addresses.find((a: any) => a.is_default)
+
+      if (defaultAddress) {
+        applyAddress(defaultAddress)
+      }
+    } catch (err) {
+      console.error("Address load failed", err)
+    }
+  }
+
+  fetchAddresses()
 }, [])
 
 const hasFetched = useRef(false)
@@ -270,113 +315,69 @@ if (!res.ok) {
             </div>
 
             {/* Service Location */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-start gap-3 mb-6">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                  <MapPin className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Service Location</h3>
-                  <p className="text-sm text-gray-500">Where should our technician arrive?</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="John Doe"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                      />
+            <div className="bg-white rounded-xl border p-6 mb-6">
+                  <div className="flex items-start gap-3 mb-6">
+                    <MapPin className="w-6 h-6 text-green-600"/>
+                    <div>
+                      <h3 className="font-bold text-lg">Service Location</h3>
+                      <p className="text-sm text-gray-500">Select a saved address</p>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="(555) 123-4567"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                      />
+            
+                  {/* SAVED ADDRESSES */}
+                  {savedAddresses.length > 0 && (
+                    <div className="mb-6 space-y-3">
+                      {savedAddresses.map(addr => {
+            
+                        const formatted =
+                          `${addr.street}, ${addr.apartment ?? ""}, ${addr.city}, ${addr.state} ${addr.postal_code}`
+            
+                        return (
+                          <button
+                            key={addr.id}
+                            type="button"
+                            onClick={() => applyAddress(addr)}
+                            className={`w-full text-left border rounded-lg p-4 transition ${
+                              selectedAddressId === addr.id
+                                ? "border-blue-600 bg-blue-50"
+                                : "border-gray-200 hover:border-blue-300"
+                            }`}
+                          >
+                            <p className="font-semibold">
+                              {addr.label}
+                              {addr.is_default && (
+                                <span className="ml-2 text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                                  Default
+                                </span>
+                              )}
+                            </p>
+            
+                            <p className="text-sm">{addr.full_name}</p>
+                            <p className="text-xs text-gray-500">{formatted}</p>
+                            <p className="text-xs text-gray-500">{addr.phone}</p>
+                          </button>
+                        )
+                      })}
+            
+                      <Link
+                        href="/user/profile/addresses"
+                        className="block text-center border-2 border-dashed rounded-lg p-4 text-sm font-semibold text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                      >
+                        + Add / Manage Addresses
+                      </Link>
                     </div>
+                  )}
+            
+                  {/* MANUAL INPUT (still allowed) */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <input value={fullName} onChange={e=>setFullName(e.target.value)} placeholder="Full Name" className="border rounded-lg px-3 py-2"/>
+                    <input value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} placeholder="Phone" className="border rounded-lg px-3 py-2"/>
+                    <input value={streetAddress} onChange={e=>setStreetAddress(e.target.value)} placeholder="Street" className="border rounded-lg px-3 py-2 md:col-span-2"/>
+                    <input value={aptSuite} onChange={e=>setAptSuite(e.target.value)} placeholder="Apartment" className="border rounded-lg px-3 py-2"/>
+                    <input value={city} onChange={e=>setCity(e.target.value)} placeholder="City" className="border rounded-lg px-3 py-2"/>
+                    <input value={zipCode} onChange={e=>setZipCode(e.target.value)} placeholder="Zip Code" className="border rounded-lg px-3 py-2"/>
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Street Address</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      value={streetAddress}
-                      onChange={(e) => setStreetAddress(e.target.value)}
-                      placeholder="123 Main St"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Apt, Suite, Unit <span className="text-gray-400 font-normal">(Optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={aptSuite}
-                      onChange={(e) => setAptSuite(e.target.value)}
-                      placeholder="Apt 4B"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="City"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Zip Code</label>
-                    <input
-                      type="text"
-                      value={zipCode}
-                      onChange={(e) => setZipCode(e.target.value)}
-                      placeholder="10001"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                  <button
-                    onClick={() => setSaveAddress(!saveAddress)}
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                      saveAddress ? "bg-blue-600 border-blue-600" : "border-gray-300"
-                    }`}
-                  >
-                    {saveAddress && (
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                  <label className="text-sm text-gray-700">Save this address for future bookings</label>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Booking Summary Sidebar */}

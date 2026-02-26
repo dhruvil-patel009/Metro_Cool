@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
   MapPin,
@@ -23,8 +23,12 @@ export default function BookingsContent() {
   const router = useRouter()
 
   // 🔥 GET BOOKING ID
-  const bookingId = searchParams.get("id")
+const bookingIdRef = useRef<string | null>(null)
+if (!bookingIdRef.current) {
+  bookingIdRef.current = searchParams.get("id")
+}
 
+const bookingId = bookingIdRef.current
   const [booking, setBooking] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const [copiedOTP, setCopiedOTP] = useState(false)
@@ -41,48 +45,56 @@ export default function BookingsContent() {
 useEffect(() => {
   if (!bookingId) return
 
-
-const fetchBooking = async () => {
-  const token = localStorage.getItem("accessToken")
-  if (!token) {
-    router.replace("/auth/login")
-    return
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      credentials: "include",
-    })
-
-    // ⭐ THIS IS THE REAL FIX
-    if (res.status === 401) {
-      localStorage.removeItem("accessToken")
+  const fetchBooking = async () => {
+    const token = localStorage.getItem("accessToken")
+    if (!token) {
       router.replace("/auth/login")
       return
     }
 
-    const data = await res.json()
-    if (data?.booking) setBooking(data.booking)
+    try {
+      const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      })
 
-  } catch (err) {
-    console.error("Booking fetch failed", err)
+      if (res.status === 401) {
+        localStorage.removeItem("accessToken")
+        router.replace("/auth/login")
+        return
+      }
+
+      const data = await res.json()
+
+      // 🔥 Prevent unnecessary rerender loop
+      setBooking((prev: { job_status: any }) => {
+        if (!prev) return data.booking
+        if (prev.job_status === data.booking.job_status) return prev
+        return data.booking
+      })
+
+    } catch (err) {
+      console.error("Booking fetch failed", err)
+    }
   }
-}
 
-  // First load
+  // first call
   fetchBooking()
 
-  // 🔥 LIVE REFRESH EVERY 3 SECONDS
-  const interval = setInterval(fetchBooking, 3000)
+  // prevent multiple intervals
+  if (!pollingRef.current) {
+    pollingRef.current = setInterval(fetchBooking, 3000)
+  }
 
-  return () => clearInterval(interval)
+  return () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
+    }
+  }
 }, [bookingId])
 
-
+const pollingRef = useRef<NodeJS.Timeout | null>(null)
 /* ---------------- MAP JOB STATUS TO STEP ---------------- */
 const getStepFromStatus = (status: string) => {
   switch (status) {
@@ -132,6 +144,16 @@ useEffect(() => {
 
   const service = booking.service
 
+  /* ---------------- TECHNICIAN FROM BOOKING ---------------- */
+const technician = booking?.technician || null
+
+// show technician only after assigned
+const showTechnician =
+  booking?.job_status === "assigned" ||
+  booking?.job_status === "on_the_way" ||
+  booking?.job_status === "working" ||
+  booking?.job_status === "completed"
+
   // 🔥 These replace missing vars (NO UI CHANGE)
   const estimatedArrival = "10:45 AM"
   const currentLocation = "2.4 km away"
@@ -156,6 +178,11 @@ useEffect(() => {
     setTimeout(() => setCopiedOTP(false), 2000)
   }
 
+  // call now button 
+  const handleCallTechnician = () => {
+  if (!technician?.phone) return
+  window.location.href = `tel:${technician.phone}`
+}
   /* ---------------- TIMELINE ---------------- */
   const timeline = [
     { title: "Booking Confirmed", icon: CheckCircle },
@@ -164,15 +191,6 @@ useEffect(() => {
     { title: "Work in Progress", icon: Wrench },
     { title: "Job Completed", icon: ThumbsUp },
   ]
-
-  /* ---------------- STATIC TECHNICIAN (OK FOR NOW) ---------------- */
-  const technician = {
-    name: "Rahul Kumar",
-    title: "Master Technician",
-    image: "/technician-working-on-ac-unit.jpg",
-    jobsCompleted: "120+ Jobs completed",
-    verified: true,
-  }
 
   /* ===================== UI BELOW (UNCHANGED) ===================== */
 
@@ -332,7 +350,7 @@ useEffect(() => {
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
           {/* Estimated Arrival Card */}
-          <div
+          {/* <div
             className={`bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-5 border border-blue-200 transition-all duration-700 delay-100 ${
               mounted ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
             }`}
@@ -350,17 +368,16 @@ useEffect(() => {
               </div>
             </div>
             <p className="text-sm text-green-700 font-semibold mt-1">On Time</p>
-          </div>
+          </div> */}
 
           {/* Technician Card */}
-          <div
-            className={`bg-white rounded-2xl shadow-sm border border-gray-200 p-6 transition-all duration-700 delay-200 ${
-              mounted ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
-            }`}
-          >
+          {showTechnician && technician && (
+<div className={`bg-white rounded-2xl shadow-sm border border-gray-200 p-6 transition-all duration-700 delay-200 ${
+  mounted ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+}`}>
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your Professional</p>
-              {technician.verified && (
+              {technician && (
                 <div className="flex items-center gap-1 text-blue-600">
                   <Shield className="w-4 h-4" />
                   <span className="text-xs font-bold">Verified</span>
@@ -372,19 +389,22 @@ useEffect(() => {
             <div className="flex flex-col items-center text-center mb-6">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border-4 border-blue-100">
                 <img
-                  src={technician.image || "/placeholder.svg"}
-                  alt={technician.name}
+                  src={technician.avatar || "/placeholder.svg"}
+                  alt={technician.full_name || technician.name}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-1">{technician.name}</h3>
-              <p className="text-blue-600 font-semibold text-sm mb-2">{technician.title}</p>
-              <p className="text-xs text-gray-600">{technician.jobsCompleted}</p>
+              <h3 className="text-xl font-bold mb-1">{technician.full_name || technician.name}</h3>
+              <p className="text-blue-600 font-semibold text-sm mb-2">AC Service Technician</p>
+              <p className="text-xs text-gray-600">{technician.experience_years
+  ? `${technician.experience_years}+ Years Experience`
+  : "Verified Professional"}</p>
             </div>
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-all">
+              <button   onClick={handleCallTechnician}
+ className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-all">
                 <Phone className="w-4 h-4" />
                 Call Now
               </button>
@@ -394,9 +414,9 @@ useEffect(() => {
               </button>
             </div>
           </div>
-
+)}
           {/* OTP Card */}
-          <div
+          {/* <div
             className={`bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 text-white transition-all duration-700 delay-300 ${
               mounted ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
             }`}
@@ -414,7 +434,6 @@ useEffect(() => {
               </button>
             </div>
 
-            {/* OTP Display */}
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
               <div className="flex justify-center gap-3">
                 {serviceOTP.split("").map((digit, index) => (
@@ -427,11 +446,11 @@ useEffect(() => {
                 ))}
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Service Summary */}
           <div
-            className={`bg-white rounded-2xl shadow-sm border border-gray-200 p-6 transition-all duration-700 delay-400 ${
+            className={`bg-white rounded-2xl shadow-sm border mt-24 border-gray-200 p-6 transition-all duration-700 delay-400 ${
               mounted ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
             }`}
           >

@@ -169,11 +169,8 @@ export const getBookingById = async (req: any, res: Response) => {
     const bookingId = req.params.id
     const userId = req.user.id
 
-    // 1️⃣ Fetch booking
-    const {
-      data: booking,
-      error: bookingError,
-    } = await supabase
+    /* ---------------- FETCH BOOKING ---------------- */
+    const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .select("*")
       .eq("id", bookingId)
@@ -184,11 +181,8 @@ export const getBookingById = async (req: any, res: Response) => {
       return res.status(404).json({ message: "Booking Not Found" })
     }
 
-    // 2️⃣ Fetch related service
-    const {
-      data: service,
-      error: serviceError,
-    } = await supabase
+    /* ---------------- FETCH SERVICE ---------------- */
+    const { data: service, error: serviceError } = await supabase
       .from("services")
       .select("id, title, rating, price, image_url")
       .eq("id", booking.service_id)
@@ -198,30 +192,56 @@ export const getBookingById = async (req: any, res: Response) => {
       return res.status(404).json({ message: "Service Not Found" })
     }
 
-    // 3️⃣ Fetch user profile
-const {
-  data: profile,
-  error: profileError,
-} = await supabase
-  .from("profiles")
-  .select("phone, first_name, last_name")
-  .eq("id", userId)
-  .single()
+    /* ---------------- FETCH USER PROFILE ---------------- */
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("phone, first_name, last_name")
+      .eq("id", userId)
+      .single()
 
-if (profileError || !profile) {
-  return res.status(404).json({ message: "User profile not found" })
-}
+    if (profileError || !profile) {
+      return res.status(404).json({ message: "User profile not found" })
+    }
 
-    // 4️⃣ Merge & return
+    /* ---------------- FETCH TECHNICIAN ⭐ MAIN FIX ---------------- */
+    let technician = null
+
+    if (booking.technician_id) {
+      const { data: tech, error: techError } = await supabase
+        .from("profiles")
+        .select(`
+          id,
+          first_name,
+          last_name,
+          phone,
+          avatar
+        `)
+        .eq("id", booking.technician_id)
+        .eq("role", "technician")
+        .single()
+
+      if (!techError && tech) {
+        technician = {
+          id: tech.id,
+          full_name: `${tech.first_name} ${tech.last_name}`,
+          phone: tech.phone,
+          avatar: tech.avatar,
+          experience_years: 3, // optional placeholder
+        }
+      }
+    }
+
+    /* ---------------- FINAL RESPONSE ---------------- */
     res.json({
       success: true,
       booking: {
         ...booking,
         service,
+        technician,
         user: {
-      full_name: `${profile.first_name} ${profile.last_name}`,
-      phone: profile.phone,
-    },
+          full_name: `${profile.first_name} ${profile.last_name}`,
+          phone: profile.phone,
+        },
       },
     })
   } catch (err: any) {

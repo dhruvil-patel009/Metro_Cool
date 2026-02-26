@@ -1,11 +1,11 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { Calendar, ChevronRight, ChevronLeft, Info, MessageCircle, Check } from "lucide-react"
-import { servicesData } from "../../../lib/services-data"
 import { formatINR } from "@/app/lib/currency"
+import { getServiceById } from "@/app/user/lib/services.api"
 
 // Generate calendar days for the current month
 function generateCalendarDays(year: number, month: number) {
@@ -16,132 +16,129 @@ function generateCalendarDays(year: number, month: number) {
 
     const days = []
 
-    // Add empty slots for days before the first day of the month
-    for (let i = 0; i < startingDayOfWeek; i++) {
-        days.push(null)
-    }
-
-    // Add actual days
-    for (let i = 1; i <= daysInMonth; i++) {
-        days.push(i)
-    }
+    for (let i = 0; i < startingDayOfWeek; i++) days.push(null)
+    for (let i = 1; i <= daysInMonth; i++) days.push(i)
 
     return days
 }
 
 const MONTH_NAMES = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December",
 ]
 
-const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-
-const MORNING_SLOTS = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM"]
-const AFTERNOON_SLOTS = ["12:00 PM", "02:00 PM", "04:00 PM", "05:30 PM"]
+const DAY_NAMES = ["Su","Mo","Tu","We","Th","Fr","Sa"]
 
 export default function BookingPage() {
-    const router = useRouter()
-      const params = useParams<{ id: string }>()
 
-  const id = params?.id
-    
-  // const service = servicesData.find((s) => s.id === id)
+  const router = useRouter()
+  const params = useParams<{ id: string }>()
+  const id = params?.id as string
 
-  const service = servicesData[0] // temporary fallback
-    const [currentDate] = useState(new Date())
-    const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth())
-    const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
-    const [selectedDay, setSelectedDay] = useState(5)
-    const [selectedTime, setSelectedTime] = useState("10:00 AM")
+  /* ---------------- SERVICE STATE ---------------- */
+  const [service, setService] = useState<any>(null)
+  const [serviceLoading, setServiceLoading] = useState(true)
 
-    const [blockedDates, setBlockedDates] = useState<string[]>([])
-const [loading, setLoading] = useState(false)
+  /* ---------------- CALENDAR STATE ---------------- */
+  const [currentDate] = useState(new Date())
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth())
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
+  const [selectedDay, setSelectedDay] = useState<number>(5)
+  const [selectedTime, setSelectedTime] = useState("10:00 AM")
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+  const [blockedDates, setBlockedDates] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
 
-useEffect(() => {
-        if (!id) return
+  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
-  const month = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
+  /* ---------------- FETCH SERVICE (MAIN FIX) ---------------- */
+  useEffect(() => {
+    if (!id) return
 
-  fetch(
-    `${API_URL}/bookings/dates?serviceId=${id}&month=${month}`
-  )
-    .then(res => res.json())
-    .then(data => {
-      setBlockedDates(data.dates || [])
-    })
-    .catch(() => {
-      setBlockedDates([])
-    })
-}, [selectedMonth, selectedYear, id])
+    async function loadService() {
+      try {
+        const data = await getServiceById(id)
 
-
-    if (!service) {
-        return (
-            <div className="min-h-screen bg-white">
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="text-center">
-                        <h1 className="text-2xl font-bold mb-2">Service Not Found</h1>
-                        <Link href="/user/services" className="text-blue-600 hover:underline">
-                            Return to Services
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        )
+        setService({
+          ...data,
+          // handle snake_case from backend
+          price: data.price,
+          originalPrice: data.original_price ?? data.originalPrice ?? data.price + 20,
+        })
+      } catch (err) {
+        setService(null)
+      } finally {
+        setServiceLoading(false)
+      }
     }
 
-    const calendarDays = generateCalendarDays(selectedYear, selectedMonth)
+    loadService()
+  }, [id])
 
-    const handlePreviousMonth = () => {
-        if (selectedMonth === 0) {
-            setSelectedMonth(11)
-            setSelectedYear(selectedYear - 1)
-        } else {
-            setSelectedMonth(selectedMonth - 1)
-        }
-    }
+  /* ---------------- BLOCKED DATES ---------------- */
+  useEffect(() => {
+    if (!id) return
 
-    const handleNextMonth = () => {
-        if (selectedMonth === 11) {
-            setSelectedMonth(0)
-            setSelectedYear(selectedYear + 1)
-        } else {
-            setSelectedMonth(selectedMonth + 1)
-        }
-    }
+    const month = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
 
-    const subtotal = service.price
-    const taxAndFees = 2.5
-    const total = subtotal + taxAndFees
+    fetch(`${API_URL}/bookings/dates?serviceId=${id}&month=${month}`)
+      .then(res => res.json())
+      .then(data => setBlockedDates(data.dates || []))
+      .catch(() => setBlockedDates([]))
+  }, [selectedMonth, selectedYear, id])
 
-const handleContinueBooking = async () => {
-  if (!selectedDay) {
-    alert("Please select a date")
-    return
+  /* ---------------- LOADING ---------------- */
+  if (serviceLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    )
   }
 
-  const bookingDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`
-   const token = localStorage.getItem("accessToken")
+  if (!service) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        Service Not Found
+      </div>
+    )
+  }
+
+  const calendarDays = generateCalendarDays(selectedYear, selectedMonth)
+
+  const handlePreviousMonth = () => {
+      if (selectedMonth === 0) {
+          setSelectedMonth(11)
+          setSelectedYear(selectedYear - 1)
+      } else setSelectedMonth(selectedMonth - 1)
+  }
+
+  const handleNextMonth = () => {
+      if (selectedMonth === 11) {
+          setSelectedMonth(0)
+          setSelectedYear(selectedYear + 1)
+      } else setSelectedMonth(selectedMonth + 1)
+  }
+
+  const subtotal = Number(service?.price || 0)
+  const taxAndFees = 2.5
+  const total = subtotal + taxAndFees
+
+  /* ---------------- BOOKING ---------------- */
+  const handleContinueBooking = async () => {
+
+    const bookingDate =
+      `${selectedYear}-${String(selectedMonth+1).padStart(2,"0")}-${String(selectedDay).padStart(2,"0")}`
+
+    const token = localStorage.getItem("accessToken")
     if (!token) {
       router.push("/login")
       return
     }
 
-  setLoading(true)
+    setLoading(true)
 
-try {
+    try {
       const res = await fetch(`${API_URL}/bookings`, {
         method: "POST",
         headers: {
@@ -158,21 +155,20 @@ try {
       const data = await res.json()
       if (!res.ok) throw new Error(data.message)
 
-      // 🔥🔥🔥 SAVE FOR CONFIRM PAGE
       localStorage.setItem("bookingId", data.booking.id)
       localStorage.setItem("bookingDate", bookingDate)
       localStorage.setItem("bookingTime", selectedTime)
       localStorage.setItem("bookingService", JSON.stringify(service))
 
+      // ✅ FIXED REDIRECT
       router.push(`/user/services/${data.booking.id}/booking/confirm`)
-    } catch (err: any) {
+
+    } catch (err:any) {
       alert(err.message || "Booking failed")
     } finally {
       setLoading(false)
     }
   }
-
-
     return (
         <div className="min-h-screen bg-gray-50 font-sans animate-fade-in">
 

@@ -43,12 +43,12 @@ export default function NotFoundPage() {
           >
             Back to Home
           </Link>
-          <Link
+          {/* <Link
             href="/contact"
             className="px-8 py-4 border-2 border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors duration-300"
           >
             Contact Support
-          </Link>
+          </Link> */}
         </div>
 
         {/* Floating icons */}
