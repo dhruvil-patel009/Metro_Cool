@@ -196,7 +196,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
             </div>
 
             {/* Hero Image */}
-            <div className="relative rounded-md overflow-hidden mb-12 shadow-2xl group">
+            <div className="relative rounded-md overflow-hidden mb-12 group">
               <Image
                 src={service.image_url || "/placeholder.svg"}
                 alt={service.title}
