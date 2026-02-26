@@ -63,7 +63,7 @@ export function AboutSection() {
               </p>
             </div>
           <Link href="user/about">
-            <button className="bg-blue-600 text-white px-8 py-4 rounded-full font-bold flex items-center gap-3 hover:bg-black transition-all cursor-pointer" >
+            <button className="bg-blue-600 text-white px-8 py-4 rounded-full font-bold flex items-center gap-3 hover:bg-blue-900 transition-all cursor-pointer" >
               Read full story <ArrowRight className="w-4 h-4" />
             </button>
             </Link>
