@@ -38,7 +38,7 @@ export function Header() {
       <div className="grid h-16 grid-cols-3 items-center pl-11 pr-2 sm:px-6 lg:px-8">
 
         {/* LEFT: PAGE TITLE */}
-        <h1 className="sm:text-3xl lg:ml-4 lg:pl-10 md:ml-4 md:pl-10 sm:ml-0 sm:pl-0 ml-0 pl-0 text-md font-semibold text-gray-900">
+        <h1 className="ml-0 pl-0 sm:ml-0 sm:pl-0 md:ml-4 md:pl-10 lg:ml-0 lg:pl-0 sm:text-3xl text-md font-semibold text-gray-900">
           {title}
         </h1>
 
