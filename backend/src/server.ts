@@ -2,6 +2,7 @@
 import "dotenv/config";
 import http from "http";
 import app from "./app.js";
+import "../src/jobs/settlement.cron.js"
 
 const PORT = Number(process.env.PORT) || 5000;
 

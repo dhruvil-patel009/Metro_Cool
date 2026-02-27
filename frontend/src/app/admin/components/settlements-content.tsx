@@ -1,163 +1,150 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Calendar, Download, Filter, FileText, CheckCircle2, DollarSign, Percent, Clock, Mail } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { toast } from "react-toastify"
 
 interface Settlement {
-  id: string
-  technician: {
-    name: string
-    techId: string
-    avatar: string
-  }
-  bookingId: string
-  service: {
-    name: string
-    category: string
-  }
-  dateTime: {
-    date: string
-    time: string
-  }
-  price: number
-  commission: number
-  payable: number
-  status: "Pending" | "Paid"
+id: string
+technician: {
+name: string
+techId: string
+avatar?: string
+}
+bookingId: string
+service: {
+name: string
+category: string
+}
+dateTime: {
+date: string
+time: string
+}
+price: number
+commission: number
+payable: number
+status: "Pending" | "Paid"
 }
 
 export default function SettlementsContent() {
-  const [selectedDate, setSelectedDate] = useState("Today, Oct 24")
-  const [currentPage, setCurrentPage] = useState(1)
 
-  const settlements: Settlement[] = [
-    {
-      id: "#BK-8892",
-      technician: { name: "John Doe", techId: "T-404", avatar: "/thoughtful-man-portrait.png" },
-      bookingId: "#BK-8892",
-      service: { name: "AC Repair", category: "Maintenance" },
-      dateTime: { date: "Oct 24", time: "02:30 PM" },
-      price: 150.0,
-      commission: 30.0,
-      payable: 120.0,
-      status: "Pending",
-    },
-    {
-      id: "#BK-8893",
-      technician: { name: "Sarah Smith", techId: "T-412", avatar: "/woman-portrait.png" },
-      bookingId: "#BK-8893",
-      service: { name: "Thermostat Install", category: "Installation" },
-      dateTime: { date: "Oct 24", time: "01:15 PM" },
-      price: 80.0,
-      commission: 16.0,
-      payable: 64.0,
-      status: "Paid",
-    },
-    {
-      id: "#BK-8894",
-      technician: { name: "Mike Ross", techId: "T-309", avatar: "/professional-man.png" },
-      bookingId: "#BK-8894",
-      service: { name: "Vent Cleaning", category: "Cleaning" },
-      dateTime: { date: "Oct 24", time: "11:00 AM" },
-      price: 250.0,
-      commission: 50.0,
-      payable: 200.0,
-      status: "Pending",
-    },
-    {
-      id: "#BK-8895",
-      technician: { name: "David Chen", techId: "T-552", avatar: "/technician-male.jpg" },
-      bookingId: "#BK-8895",
-      service: { name: "Emergency Repair", category: "Repair" },
-      dateTime: { date: "Oct 24", time: "09:45 AM" },
-      price: 450.0,
-      commission: 90.0,
-      payable: 360.0,
-      status: "Pending",
-    },
-    {
-      id: "#BK-8896",
-      technician: { name: "Emily Davis", techId: "T-221", avatar: "/technician-female.jpg" },
-      bookingId: "#BK-8896",
-      service: { name: "Filter Replacement", category: "Maintenance" },
-      dateTime: { date: "Oct 24", time: "08:30 AM" },
-      price: 60.0,
-      commission: 12.0,
-      payable: 48.0,
-      status: "Paid",
-    },
-  ]
+const [selectedDate, setSelectedDate] = useState("Today, Oct 24")
+const [currentPage, setCurrentPage] = useState(1)
+const [settlements, setSettlements] = useState<Settlement[]>([])
+const [loading, setLoading] = useState(true)
 
-  const totalServiceValue = 1200.0
-  const totalPayable = 960.0
-  const commission = 240.0
-  const pendingPayouts = 3
+/* ================= FETCH FROM BACKEND ================= */
 
-  const handleMarkAllPaid = () => {
-    console.log("[v0] Marking all settlements as paid")
-  }
-
-  // const handleGenerateReport = () => {
-  //   console.log("[v0] Generating settlement report")
-  // }
-
-
-  const handleGenerateReport = async () => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/download`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ settlements }),
-    }
-  )
-
-  const blob = await res.blob()
-  const url = window.URL.createObjectURL(blob)
-
-  const a = document.createElement("a")
-  a.href = url
-  a.download = "settlements-report.xlsx"
-  a.click()
-
-  window.URL.revokeObjectURL(url)
-}
+useEffect(() => {
+const fetchSettlements = async () => {
+try {
 const token = localStorage.getItem("accessToken")
 
-const handleSendEmail = async () => {
-  try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/email`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements`,
       {
-        method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ REQUIRED
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          settlements,
-          email: "metrocool@yopmail.com",
-        }),
       }
     )
 
-    // ❌ API failed (4xx / 5xx)
-    if (!res.ok) {
-      const errorData = await res.json()
-      throw new Error(errorData?.message || "Failed to send email")
-    }
+    const data = await res.json()
+    setSettlements(data.settlements || [])
+    setLoading(false)
 
-    // ✅ Only show success if API actually succeeds
-    toast.success("Settlement report sent to your email 📧")
-
-  } catch (error: any) {
-    console.error("Send email error:", error)
-    toast.error(error.message || "Something went wrong ❌")
+  } catch (err) {
+    console.error(err)
+    toast.error("Failed to load settlements")
   }
 }
 
+fetchSettlements()
+
+}, [])
+
+/* ================= STATS ================= */
+
+const totalServiceValue = settlements.reduce((a, s) => a + s.price, 0)
+const totalPayable = settlements.reduce((a, s) => a + s.payable, 0)
+const commission = settlements.reduce((a, s) => a + s.commission, 0)
+const pendingPayouts = settlements.filter(s => s.status === "Pending").length
+
+/* ================= MARK ALL PAID ================= */
+
+const handleMarkAllPaid = async () => {
+const token = localStorage.getItem("accessToken")
+
+await fetch(
+  `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/mark-all-paid`,
+  {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  }
+)
+
+toast.success("All technicians marked paid")
+location.reload()
+
+}
+
+/* ================= EXCEL DOWNLOAD ================= */
+
+const handleGenerateReport = async () => {
+const token = localStorage.getItem("accessToken")
+
+const res = await fetch(
+  `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/download`,
+  { headers: { Authorization: `Bearer ${token}` } }
+)
+
+const blob = await res.blob()
+const url = window.URL.createObjectURL(blob)
+
+const a = document.createElement("a")
+a.href = url
+a.download = "settlements.xlsx"
+a.click()
+
+}
+
+/* ================= EMAIL ================= */
+
+const handleSendEmail = async () => {
+const token = localStorage.getItem("accessToken")
+
+await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/email`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({ email: "metrocool@yopmail.com" }),
+})
+
+toast.success("Daily settlement email sent 📧")
+
+}
+
+/* ================= MARK SINGLE PAID ================= */
+
+const markPaid = async (paymentId: string) => {
+const token = localStorage.getItem("accessToken")
+
+await fetch(
+  `${process.env.NEXT_PUBLIC_API_BASE_URL}/settlements/mark-paid/${paymentId}`,
+  {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  }
+)
+
+toast.success("Technician payout marked paid")
+location.reload()
+
+}
 
   return (
     <div className="space-y-6">
