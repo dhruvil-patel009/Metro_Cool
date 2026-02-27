@@ -332,7 +332,7 @@ export const forgotMpin = async (req: Request, res: Response) => {
   const { data: user } = await supabase
     .from("profiles")
     .select("id,email")
-    .eq("email", email)
+    .eq("email", email.toLowerCase().trim())
     .single();
 
   if (!user) return res.status(404).json({ error: "Email not registered" });
