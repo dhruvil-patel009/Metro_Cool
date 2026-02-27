@@ -22,7 +22,7 @@ export const subscribeToPush = async () => {
     subscription = await sw.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+        process.env.VAPID_PUBLIC_KEY!
       ),
     })
   }
