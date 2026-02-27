@@ -1,5 +1,7 @@
 import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
+import { subscriptions } from "../routes/push.routes.js"
+import { sendPushNotification } from "../utils/push.js"
 
 export const getBookedDates = async (req: Request, res: Response) => {
   const { serviceId, month } = req.query
@@ -298,4 +300,33 @@ export const gettechnicianBookingById = async (req: any, res: Response) => {
 }
 
 
+export const notifyBookingUpdate = async (booking: any) => {
+
+  let message = ""
+
+  switch (booking.job_status) {
+    case "assigned":
+      message = "Technician assigned 👨‍🔧"
+      break
+    case "on_the_way":
+      message = "Technician is on the way 🚗"
+      break
+    case "working":
+      message = "Work started 🔧"
+      break
+    case "completed":
+      message = "Service completed 🎉"
+      break
+  }
+
+  const payload = {
+    title: "AC Service Update",
+    body: message,
+    url: `http://localhost:3000/user/bookings?id=${booking.id}`
+  }
+
+  for (const sub of subscriptions) {
+    await sendPushNotification(sub, payload)
+  }
+}
 

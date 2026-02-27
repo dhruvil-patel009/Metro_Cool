@@ -20,6 +20,7 @@ import serviceReportRoutes from "./routes/service-report.routes.js";
 import technicianJobRoutes from "./routes/technicianJob.routes.js";
 import userOrdersRoutes from "./routes/userOrders.routes.js";
 import addressRoutes from "./routes/address.routes.js";
+import pushRoutes from "./routes/push.routes.js";
 
 
 
@@ -104,6 +105,8 @@ app.use("/api/users", userOrdersRoutes)
 
 app.use("/api/addresses", addressRoutes)
 
+
+app.use("/api/push", pushRoutes)
 
 
 // Payment 

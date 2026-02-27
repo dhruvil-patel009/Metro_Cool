@@ -15,6 +15,7 @@ import {
   Shield,
 } from "lucide-react"
 import { toast } from "react-toastify"
+import { subscribeToPush } from "@/app/lib/push-notification"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
@@ -40,6 +41,11 @@ const bookingId = bookingIdRef.current
   const serviceOTP = "4829"
 
   useEffect(() => setMounted(true), [])
+
+
+  useEffect(() => {
+  subscribeToPush()
+}, [])
 
   /* ---------------- FETCH BOOKING ---------------- */
 useEffect(() => {
