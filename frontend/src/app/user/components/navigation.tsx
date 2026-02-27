@@ -155,11 +155,12 @@ const handleLogout = () => {
 </div>
                 </div>
                 <div className="relative">
-                 <Image
-  src={user?.profile_photo || "/assets/default-profile.png"}
+<Image
+  src={user?.profile_photo || "/assets/profile.png"}
   alt="Profile"
   width={40}
   height={40}
+  unoptimized
   className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
 />
 
