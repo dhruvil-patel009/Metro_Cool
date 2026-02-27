@@ -342,6 +342,76 @@ export function ServicesTable({
         </table>
       </div>
 
+      {/* ---------------- PAGINATION ---------------- */}
+{totalPages > 1 && (
+  <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+
+    {/* INFO */}
+    <div className="text-sm text-gray-500">
+      Showing{" "}
+      <span className="font-semibold text-gray-700">
+        {startIndex + 1}
+      </span>{" "}
+      to{" "}
+      <span className="font-semibold text-gray-700">
+        {Math.min(endIndex, filteredServices.length)}
+      </span>{" "}
+      of{" "}
+      <span className="font-semibold text-gray-700">
+        {filteredServices.length}
+      </span>{" "}
+      services
+    </div>
+
+    {/* CONTROLS */}
+    <div className="flex items-center gap-2">
+
+      {/* PREVIOUS */}
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={currentPage === 1}
+        onClick={() => setCurrentPage((p) => p - 1)}
+      >
+        Previous
+      </Button>
+
+      {/* PAGE NUMBERS */}
+      <div className="flex items-center gap-1">
+        {Array.from({ length: totalPages }).map((_, i) => {
+          const page = i + 1;
+
+          return (
+            <Button
+              key={page}
+              size="sm"
+              variant={currentPage === page ? "default" : "outline"}
+              className={
+                currentPage === page
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  : ""
+              }
+              onClick={() => setCurrentPage(page)}
+            >
+              {page}
+            </Button>
+          );
+        })}
+      </div>
+
+      {/* NEXT */}
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={currentPage === totalPages}
+        onClick={() => setCurrentPage((p) => p + 1)}
+      >
+        Next
+      </Button>
+    </div>
+  </div>
+)}
+
     </div>
       {editingService && (
   <EditServiceModal
