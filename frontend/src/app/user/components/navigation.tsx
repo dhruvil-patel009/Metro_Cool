@@ -156,7 +156,7 @@ const handleLogout = () => {
                 </div>
                 <div className="relative">
                  <Image
-  src="/assets/profile.png"
+  src={user?.profile_photo || "/assets/default-profile.png"}
   alt="Profile"
   width={40}
   height={40}
