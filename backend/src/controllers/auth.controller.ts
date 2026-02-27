@@ -343,7 +343,7 @@ export const forgotMpin = async (req: Request, res: Response) => {
     { expiresIn: "15m" }
   );
 
-  const resetLink = `${process.env.FRONTEND_URL}/reset-mpin/${resetToken}`;
+  const resetLink = `${process.env.FRONTEND_URL}/auth/reset-mpin/${resetToken}`;
 
   await transporter.sendMail({
     to: email,
