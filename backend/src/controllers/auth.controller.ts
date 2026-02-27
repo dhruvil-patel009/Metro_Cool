@@ -343,14 +343,101 @@ export const forgotMpin = async (req: Request, res: Response) => {
     { expiresIn: "15m" }
   );
 
-  const resetLink = `${process.env.FRONTEND_URL}/auth/reset-mpin/${resetToken}`;
+const resetLink = `${process.env.FRONTEND_URL}/auth/reset-mpin/${resetToken}`;
 
-  await transporter.sendMail({
-    to: email,
-    subject: "Reset MPIN",
-    html: `<h2>Reset your MPIN</h2>
-           <a href="${resetLink}">Click here to reset MPIN</a>`
-  });
+const LOGO = "https://nlimsceezdxwkykpzlbv.supabase.co/storage/v1/object/public/images/logo.ico";
+
+await transporter.sendMail({
+  to: email,
+  subject: "Reset your MPIN • AC Marketplace",
+  html: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reset MPIN</title>
+</head>
+
+<body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8;padding:30px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- CARD -->
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:#0f172a;padding:24px;text-align:center;">
+              <img src="${LOGO}" alt="AC Marketplace" width="140" style="display:block;margin:auto;" />
+            </td>
+          </tr>
+
+          <!-- CONTENT -->
+          <tr>
+            <td style="padding:32px;">
+
+              <h2 style="margin:0;color:#111827;">Reset your MPIN 🔐</h2>
+
+              <p style="color:#4b5563;font-size:15px;line-height:24px;margin-top:12px;">
+                We received a request to reset the MPIN for your <b>AC Marketplace</b> account.
+                Click the button below to set a new MPIN.
+              </p>
+
+              <!-- BUTTON -->
+              <div style="text-align:center;margin:32px 0;">
+                <a href="${resetLink}"
+                   style="background:#2563eb;color:#ffffff;text-decoration:none;
+                          padding:14px 28px;border-radius:8px;
+                          font-weight:bold;font-size:16px;
+                          display:inline-block;">
+                  Reset MPIN
+                </a>
+              </div>
+
+              <!-- EXPIRY -->
+              <p style="color:#6b7280;font-size:14px;">
+                ⏳ This link will expire in <b>15 minutes</b> for security reasons.
+              </p>
+
+              <!-- SECURITY WARNING -->
+              <p style="color:#6b7280;font-size:14px;line-height:22px;">
+                If you did not request this, please ignore this email.
+                Your account remains safe and no changes were made.
+              </p>
+
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;" />
+
+              <!-- FALLBACK LINK -->
+              <p style="color:#9ca3af;font-size:12px;word-break:break-all;">
+                If the button doesn't work, copy and paste this link into your browser:
+                <br/><br/>
+                <a href="${resetLink}" style="color:#2563eb;">${resetLink}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;">
+              © ${new Date().getFullYear()} AC Marketplace <br/>
+              Ahmedabad, India 🇮🇳
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+`,
+});
 
   res.json({ message: "Reset link sent to email" });
 };
