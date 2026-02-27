@@ -8,15 +8,14 @@ import { toast } from "react-toastify"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
-
 declare global {
   interface Window {
     Razorpay: any
   }
 }
 
-
 export default function CompletionContent() {
+
   const searchParams = useSearchParams()
   const router = useRouter()
   const bookingId = searchParams.get("id") || "MC-8293"
@@ -26,67 +25,66 @@ export default function CompletionContent() {
   const [copied, setCopied] = useState(false)
   const [booking, setBooking] = useState<any>(null)
   const [serviceOTP, setServiceOTP] = useState<string | null>(null)
+  const [checkingPayment, setCheckingPayment] = useState(false)
 
-  // const serviceOTP = "4829"
-
+  /* ---------------- LOAD RAZORPAY SCRIPT ---------------- */
   useEffect(() => {
-  const script = document.createElement("script")
-  script.src = "https://checkout.razorpay.com/v1/checkout.js"
-  script.async = true
-  document.body.appendChild(script)
+    const script = document.createElement("script")
+    script.src = "https://checkout.razorpay.com/v1/checkout.js"
+    script.async = true
+    document.body.appendChild(script)
 
-  return () => {
-    document.body.removeChild(script)
+    return () => {
+      document.body.removeChild(script)
+    }
+  }, [])
+
+  /* ---------------- COPY OTP ---------------- */
+  const copyOTP = () => {
+    if (!serviceOTP) return
+    navigator.clipboard.writeText(serviceOTP)
+    setCopied(true)
+    toast.success("OTP copied to clipboard!")
+    setTimeout(() => setCopied(false), 2000)
   }
-}, [])
-  const handlePayment = () => {
-    // Simulate payment processing
-    setTimeout(() => {
-      setPaymentConfirmed(true)
-      toast(`🎉 Payment Successfully! 🎉 Transaction ID: #TXN-882920`)
-    }, 1000)
+
+  /* ---------------- WAIT FOR WEBHOOK CONFIRMATION ---------------- */
+  const waitForPaymentConfirmation = async () => {
+    const token = localStorage.getItem("accessToken")
+    setCheckingPayment(true)
+
+    const interval = setInterval(async () => {
+
+      const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      const data = await res.json()
+
+      if (data?.booking?.payment_status === "paid") {
+
+        setServiceOTP(data.booking.closure_otp)
+        setPaymentConfirmed(true)
+        setBooking(data.booking)
+
+        clearInterval(interval)
+        setCheckingPayment(false)
+
+        toast.success("Payment Confirmed 🎉")
+      }
+
+    }, 3000)
   }
 
-const copyOTP = () => {
-  if (!serviceOTP) return   // ⬅️ guard
+  /* ---------------- RAZORPAY PAYMENT ---------------- */
+  const handleRazorpay = async () => {
 
-  navigator.clipboard.writeText(serviceOTP)
-  setCopied(true)
-  toast.success("OTP copied to clipboard!")
-  setTimeout(() => setCopied(false), 2000)
-}
+    if (paymentMethod !== "upi") return
 
+    const token = localStorage.getItem("accessToken")
 
-const handleRazorpay = async () => {
-  if (paymentMethod !== "upi") return
-
-  const token = localStorage.getItem("accessToken")
-
-  const res = await fetch(`${API_URL}/payments/razorpay-order`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      booking_id: bookingId,
-      amount: 150,
-    }),
-  })
-
-  const { orderId, key } = await res.json()
-
-  const options = {
-    key,
-    amount: 150 * 100,
-    currency: "INR",
-    name: "Metro Cool",
-    description: "AC Service Payment",
-    order_id: orderId,
-    method: { upi: true },
-    modal: {
-  ondismiss: async function () {
-    await fetch(`${API_URL}/payments/verify`, {
+    // 1️⃣ Create order
+    const res = await fetch(`${API_URL}/payments/razorpay-order`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -94,68 +92,95 @@ const handleRazorpay = async () => {
       },
       body: JSON.stringify({
         booking_id: bookingId,
-        status: "cancelled",
+        amount: 150,
       }),
     })
+
+    const { orderId, key } = await res.json()
+
+    const options = {
+      key,
+      amount: 150 * 100,
+      currency: "INR",
+      name: "Metro Cool",
+      description: "AC Service Payment",
+      order_id: orderId,
+      method: { upi: true },
+
+      // 🚨 IMPORTANT: DO NOT MARK SUCCESS HERE
+      handler: async (response: any) => {
+
+        // 2️⃣ Only signature verification
+        await fetch(`${API_URL}/payments/verify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            booking_id: bookingId,
+            ...response,
+          }),
+        })
+
+        toast.info("Confirming payment...")
+
+        // 3️⃣ WAIT FOR WEBHOOK
+        waitForPaymentConfirmation()
+      },
+
+      modal: {
+        ondismiss: function () {
+          toast.info("Payment cancelled")
+        }
+      }
+    }
+
+    const rzp = new window.Razorpay(options)
+    rzp.open()
   }
-},
-    handler: async (response: any) => {
-      const verifyRes = await fetch(`${API_URL}/payments/verify`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          booking_id: bookingId,
-          ...response,
-        }),
+
+  /* ---------------- DOWNLOAD INVOICE ---------------- */
+  const downloadInvoice = async () => {
+    const token = localStorage.getItem("accessToken")
+
+    const res = await fetch(`${API_URL}/payments/invoice/${bookingId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const data = await res.json()
+    window.open(data.invoice_url, "_blank")
+  }
+
+  /* ---------------- FETCH BOOKING ---------------- */
+  useEffect(() => {
+    if (!bookingId) return
+
+    const token = localStorage.getItem("accessToken")
+
+    fetch(`${API_URL}/bookings/${bookingId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setBooking(data.booking)
+
+        // if already paid (page refresh case)
+        if (data.booking?.payment_status === "paid") {
+          setServiceOTP(data.booking.closure_otp)
+          setPaymentConfirmed(true)
+        }
       })
+      .catch(() => toast.error("Failed to load booking"))
 
-      const data = await verifyRes.json()
-      setServiceOTP(data.closure_otp)
-      setPaymentConfirmed(true)
-      toast.success("Payment successful")
-    },
+  }, [bookingId])
+
+  /* ---------------- CASH PAYMENT ---------------- */
+  const handleCashPayment = async () => {
+    setPaymentConfirmed(true)
+    setServiceOTP("4829")
+    toast.success("Marked as Cash Payment")
   }
-
-  const rzp = new window.Razorpay(options)
-  rzp.open()
-}
-
-const downloadInvoice = async () => {
-  const token = localStorage.getItem("accessToken")
-
-  const res = await fetch(`${API_URL}/payments/invoice/${bookingId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-
-  const data = await res.json()
-  window.open(data.invoice_url, "_blank")
-}
-
-
-useEffect(() => {
-  if (!bookingId) return
-
-  const token = localStorage.getItem("accessToken")
-
-  fetch(`${API_URL}/bookings/${bookingId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then(res => res.json())
-    .then(data => setBooking(data.booking))
-    .catch(() => toast.error("Failed to load booking"))
-}, [bookingId])
-
-const handleCashPayment = async () => {
-  setPaymentConfirmed(true)
-  setServiceOTP("4829") // or fetch from backend
-  toast.success("Marked as Cash Payment")
-}
-
 
 
   return (

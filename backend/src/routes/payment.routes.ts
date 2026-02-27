@@ -1,12 +1,24 @@
 import express from "express"
-
-import { createRazorpayOrder, razorpayWebhook, verifyRazorpayPayment } from "../controllers/payment.controller.js"
+import {
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  razorpayWebhook,
+} from "../controllers/payment.controller.js"
 import { protect } from "../middlewares/auth.middleware.js"
 
 const router = express.Router()
 
+// create order
 router.post("/razorpay-order", protect, createRazorpayOrder)
+
+// only signature verify
 router.post("/verify", protect, verifyRazorpayPayment)
-router.post("/webhook", express.raw({ type: "application/json" }), razorpayWebhook)
+
+// 🚨 CRITICAL — RAW BODY REQUIRED FOR RAZORPAY
+router.post(
+  "/webhook",
+  express.raw({ type: "*/*" }),
+  razorpayWebhook
+)
 
 export default router

@@ -22,7 +22,7 @@ export default function Dashboard() {
 const bookings = data?.bookings ?? [];
 const serverTime = data?.serverTime ?? new Date().toISOString();
 
-
+console.log("DATA:", data);
 
 if (isLoading || !data) {
   return (
@@ -51,9 +51,10 @@ const todayJobs = bookings.filter((job: any) =>
 );
 
 
-  const technicianName =
-  data?.bookings?.[0]?.technician_name ||
-  localStorage.getItem("tech_name") ||
+const authStorage = JSON.parse(localStorage.getItem("auth-storage") || "{}");
+
+const technicianName =
+  authStorage?.state?.user?.firstName ||
   "Technician";
 
   return (

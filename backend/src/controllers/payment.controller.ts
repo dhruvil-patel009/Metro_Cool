@@ -5,23 +5,21 @@ import { supabase } from "../utils/supabase.js"
 import { uploadInvoice } from "../utils/uploadInvoice.js"
 import { generateInvoice } from "../utils/generateInvoice.js"
 
-
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 })
 
+/* ---------------- CREATE ORDER ---------------- */
 export const createRazorpayOrder = async (req: Request, res: Response) => {
-  const { booking_id, amount } = req.body
-
   try {
+    const { booking_id, amount } = req.body
+
     const order = await razorpay.orders.create({
       amount: Math.round(Number(amount) * 100),
       currency: "INR",
       receipt: booking_id,
-      notes: {
-        booking_id: booking_id,
-      },
+      notes: { booking_id },
     })
 
     res.json({
@@ -29,22 +27,20 @@ export const createRazorpayOrder = async (req: Request, res: Response) => {
       key: process.env.RAZORPAY_KEY_ID,
     })
   } catch (err) {
+    console.log(err)
     res.status(500).json({ error: "Failed to create order" })
   }
 }
 
-
-
+/* ---------------- VERIFY (ONLY SIGNATURE CHECK) ---------------- */
 export const verifyRazorpayPayment = async (req: Request, res: Response) => {
   try {
     const {
-      booking_id,
       razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
     } = req.body
 
-    // verify signature only
     const generatedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -57,42 +53,46 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       })
     }
 
-    // DO NOT INSERT PAYMENT HERE ❌
-    // webhook will handle it
-
+    // DO NOT INSERT DB HERE
     return res.json({
       success: true,
-      message: "Payment verified. Awaiting confirmation...",
+      message: "Payment verified. Waiting for confirmation...",
     })
-
-  } catch (error) {
-    return res.status(500).json({ error: "Verification failed" })
+  } catch {
+    res.status(500).json({ error: "Verification failed" })
   }
 }
 
+/* ---------------- WEBHOOK (REAL PAYMENT CONFIRMATION) ---------------- */
 export const razorpayWebhook = async (req: any, res: Response) => {
   try {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET!
 
-    const shasum = crypto.createHmac("sha256", secret)
-    shasum.update(req.body)
-    const digest = shasum.digest("hex")
+    /* -------- SIGNATURE VALIDATION (MOST IMPORTANT) -------- */
+    const body = req.body // Buffer
 
-    if (digest !== req.headers["x-razorpay-signature"]) {
-      return res.status(400).send("Invalid webhook signature")
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(body)
+      .digest("hex")
+
+    const receivedSignature = req.headers["x-razorpay-signature"]
+
+    if (expectedSignature !== receivedSignature) {
+      console.log("❌ Invalid webhook signature")
+      return res.status(400).send("Invalid signature")
     }
 
-    const event = JSON.parse(req.body.toString())
+    const event = JSON.parse(body.toString())
 
     if (event.event !== "payment.captured") {
       return res.json({ status: "ignored" })
     }
 
     const payment = event.payload.payment.entity
+    const booking_id = payment.notes.booking_id
 
-    const booking_id = payment.notes?.booking_id || payment.order_id
-
-    /* ---------------- FIND BOOKING ---------------- */
+    /* -------- FIND BOOKING -------- */
     const { data: booking } = await supabase
       .from("bookings")
       .select("*")
@@ -101,23 +101,29 @@ export const razorpayWebhook = async (req: any, res: Response) => {
 
     if (!booking) return res.json({ status: "booking not found" })
 
-    /* ---------------- GENERATE OTP ---------------- */
+    /* -------- PREVENT DUPLICATE WEBHOOK -------- */
+    const { data: existing } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("razorpay_payment_id", payment.id)
+      .single()
+
+    if (existing) return res.json({ status: "already processed" })
+
+    /* -------- GENERATE OTP -------- */
     const closureOTP = Math.floor(1000 + Math.random() * 9000).toString()
 
-    /* ---------------- INSERT PAYMENT ---------------- */
+    /* -------- INSERT PAYMENT -------- */
     const { data: insertedPayment } = await supabase
       .from("payments")
       .insert({
         booking_id,
         user_id: booking.user_id,
-
         razorpay_order_id: payment.order_id,
         razorpay_payment_id: payment.id,
-
-        amount: Number(payment.amount) / 100,
+        amount: payment.amount / 100,
         currency: payment.currency,
         payment_method: payment.method,
-
         status: "captured",
         closure_otp: closureOTP,
         raw_payload: payment,
@@ -125,7 +131,7 @@ export const razorpayWebhook = async (req: any, res: Response) => {
       .select()
       .single()
 
-    /* ---------------- UPDATE BOOKING ---------------- */
+    /* -------- UPDATE BOOKING -------- */
     await supabase
       .from("bookings")
       .update({
@@ -134,11 +140,11 @@ export const razorpayWebhook = async (req: any, res: Response) => {
       })
       .eq("booking_id", booking_id)
 
-    /* ---------------- GENERATE INVOICE ---------------- */
+    /* -------- GENERATE INVOICE -------- */
     const invoicePath = await generateInvoice({
       booking_id,
       payment_id: payment.id,
-      amount: Number(payment.amount) / 100,
+      amount: payment.amount / 100,
       customer_name: booking.customer_name,
       service_name: booking.service_name,
       otp: closureOTP,
@@ -151,8 +157,8 @@ export const razorpayWebhook = async (req: any, res: Response) => {
       .update({ invoice_url: invoiceUrl })
       .eq("id", insertedPayment.id)
 
+    console.log("✅ PAYMENT STORED SUCCESSFULLY")
     res.json({ status: "ok" })
-
   } catch (err) {
     console.log("WEBHOOK ERROR", err)
     res.status(500).send("Webhook error")
