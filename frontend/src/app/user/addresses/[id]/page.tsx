@@ -95,7 +95,9 @@ try {
 
 }
 
-if (loading) return <div className="p-10 text-center">Loading...</div>
+if (loading) return <div className="loader-wrapper">
+  <div className="loader"></div>
+</div>
 
 return ( <div className="min-h-screen bg-gray-50 py-10"> <div className="max-w-2xl mx-auto px-4">
 

@@ -14,7 +14,9 @@ export default function SettlementsPage() {
           <span>›</span>
           <span className="text-gray-900">Settlement</span>
         </div>
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<div className="loader-wrapper">
+  <div className="loader"></div>
+</div>}>
             <SettlementsContent />
           </Suspense>
 

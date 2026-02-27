@@ -88,9 +88,9 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
   ========================= */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
+      <div className="loader-wrapper">
+  <div className="loader"></div>
+</div>
     )
   }
 

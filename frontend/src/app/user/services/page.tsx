@@ -47,9 +47,12 @@ export default function ServicesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500">
-        Loading services...
-      </div>
+      // <div className="min-h-screen flex items-center justify-center text-slate-500">
+      //   Loading services...
+      // </div>
+      <div className="loader-wrapper">
+  <div className="loader"></div>
+</div>
     )
   }
 

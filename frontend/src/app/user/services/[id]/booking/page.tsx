@@ -90,9 +90,9 @@ export default function BookingPage() {
   /* ---------------- LOADING ---------------- */
   if (serviceLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
+      <div className="loader-wrapper">
+  <div className="loader"></div>
+</div>
     )
   }
 

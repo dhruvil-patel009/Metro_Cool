@@ -15,7 +15,9 @@ export default function UsersPage() {
           <span className="text-gray-900">Users</span>
         </div>
 
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className="loader-wrapper">
+  <div className="loader"></div>
+</div>}>
           <UsersContent />
         </Suspense>
       </div>

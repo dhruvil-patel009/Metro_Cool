@@ -72,9 +72,9 @@ export default function ProductDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center font-semibold">
-        Loading product...
-      </div>
+      <div className="loader-wrapper">
+  <div className="loader"></div>
+</div>
     )
   }
 
