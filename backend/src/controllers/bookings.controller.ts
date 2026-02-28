@@ -300,6 +300,43 @@ export const gettechnicianBookingById = async (req: any, res: Response) => {
 }
 
 
+export const updateJobStatus = async (req: any, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    const bookingId = req.params.id
+    const { job_status } = req.body
+
+    /* 1️⃣ update booking */
+    const { data: booking, error } = await supabase
+      .from("bookings")
+      .update({
+        job_status,
+        technician_id: req.user.id
+      })
+      .eq("id", bookingId)
+      .select()
+      .single()
+
+    if (error || !booking) {
+      return res.status(404).json({ message: "Booking not found" })
+    }
+
+    /* 2️⃣ 🔔 SEND PUSH NOTIFICATION */
+    await notifyBookingUpdate(booking)
+
+    res.json({
+      success: true,
+      booking
+    })
+
+  } catch (err: any) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
 export const notifyBookingUpdate = async (booking: any) => {
 
   let message = ""
@@ -312,21 +349,31 @@ export const notifyBookingUpdate = async (booking: any) => {
       message = "Technician is on the way 🚗"
       break
     case "working":
-      message = "Work started 🔧"
+      message = "Service started 🔧"
       break
     case "completed":
       message = "Service completed 🎉"
       break
   }
 
+  const { data: subs } = await supabase
+    .from("push_subscriptions")
+    .select("*")
+
   const payload = {
-    title: "AC Service Update",
+    title: "Metro Cool Service Update",
     body: message,
-    url: `http://localhost:3000/user/bookings?id=${booking.id}`
+    url: `https://www.metro-cool.com/user/bookings?id=${booking.id}`
   }
 
-  for (const sub of subscriptions) {
-    await sendPushNotification(sub, payload)
+  for (const s of subs || []) {
+    await sendPushNotification({
+      endpoint: s.endpoint,
+      keys: {
+        p256dh: s.p256dh,
+        auth: s.auth
+      }
+    }, payload)
   }
 }
 

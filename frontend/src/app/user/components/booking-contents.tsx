@@ -47,6 +47,15 @@ const bookingId = bookingIdRef.current
   subscribeToPush()
 }, [])
 
+useEffect(() => {
+  console.log("Notification permission:", Notification.permission)
+
+  navigator.serviceWorker.ready.then(async (reg) => {
+    const sub = await reg.pushManager.getSubscription()
+    console.log("Subscription:", sub)
+  })
+}, [])
+
   /* ---------------- FETCH BOOKING ---------------- */
 useEffect(() => {
   if (!bookingId) return

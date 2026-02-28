@@ -6,8 +6,9 @@ const router = Router()
 export let subscriptions: any[] = []
 
 router.post("/subscribe", (req, res) => {
-  const subscription = req.body
-  subscriptions.push(subscription)
+  console.log("SUBSCRIBED USER 🔔")
+  console.log(req.body)
+  subscriptions.push(req.body)
   res.json({ success: true })
 })
 
