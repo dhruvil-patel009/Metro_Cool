@@ -363,7 +363,7 @@ export const notifyBookingUpdate = async (booking: any) => {
   const payload = {
     title: "Metro Cool Service Update",
     body: message,
-    url: `https://www.metro-cool.com/user/bookings?id=${booking.id}`
+    url: `https://www.metro-cool.com/bookings?id=${booking.id}`
   }
 
   for (const s of subs || []) {

@@ -46,21 +46,34 @@ export const useAuthStore = create<AuthState>()(
       },
 
       /* ================= LOGOUT ================= */
-      logout: () => {
-        localStorage.removeItem("accessToken"); // ⭐ IMPORTANT
-  localStorage.removeItem("auth-storage");
-        set({
-          user: null,
-          token: null,
-        });
+  //     logout: () => {
+  //       localStorage.removeItem("accessToken"); // ⭐ IMPORTANT
+  // localStorage.removeItem("auth-storage");
+  //       set({
+  //         user: null,
+  //         token: null,
+  //       });
 
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("auth-storage");
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("token");
-        }
-      },
+  //       if (typeof window !== "undefined") {
+  //         localStorage.removeItem("auth-storage");
+  //         localStorage.removeItem("accessToken");
+  //         localStorage.removeItem("token");
+  //       }
+  //     },
 
+  logout: () => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth-storage");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("token");
+  }
+
+  set({
+    user: null,
+    token: null,
+    hydrated: true, // ⭐ IMPORTANT
+  });
+},
       /* ================= HYDRATE ================= */
       hydrate: () => {
         if (typeof window !== "undefined") {

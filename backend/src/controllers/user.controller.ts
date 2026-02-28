@@ -3,7 +3,7 @@ import { supabase } from "../utils/supabase.js";
 
 /**
  * GET CURRENT USER PROFILE
- * GET /api/user/me
+ * GET /api/(public)/me
  */
 export const getMyProfile = async (req: Request, res: Response) => {
   try {
@@ -79,7 +79,7 @@ export const getMe = async (req: any, res: Response) => {
 
 /**
  * UPDATE CURRENT USER PROFILE
- * PUT /api/user/me
+ * PUT /api/(public)/me
  */
 export const updateMe = async (req: any, res: Response) => {
   try {
