@@ -108,6 +108,7 @@ app.use("/api/addresses", addressRoutes)
 
 app.use("/api/push", pushRoutes)
 
+app.use("/api/technicians", technicianRoutes)
 
 // Payment 
 

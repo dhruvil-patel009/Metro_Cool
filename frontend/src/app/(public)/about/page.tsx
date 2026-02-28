@@ -3,6 +3,7 @@ import { Button } from "@/app/components/ui/button"
 import { Check, Zap, BadgeCheck, Clock, Users, TrendingUp, Sprout } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import TeamSection from "./TeamSection"
 
 export const metadata: Metadata = {
   title: "About Metro Cool | Best AC Repair & Installation Services Since 2010",
@@ -62,6 +63,8 @@ export default function AboutPage() {
       "Metro Cool offers professional AC repair, installation and maintenance services with 24/7 emergency support.",
     openingHours: "Mo-Su 00:00-23:59",
   }
+
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -288,69 +291,9 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section id="team" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12 animate-fade-in">
-            <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-2">Meet the Experts</h2>
-              <p className="text-gray-600">The people behind the perfect temperature</p>
-            </div>
-            <Link href="/contact" className="text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-2">
-              Join our team <span>→</span>
-            </Link>
-          </div>
+       
+         <TeamSection />
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="group animate-fade-in">
-              <div className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-                <div className="aspect-[3/4] relative bg-gray-200">
-                  <Image src="/assets/professional-woman-technician-smiling.jpg" alt="Sarah Jenkins" fill className="object-cover" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">Sarah Jenkins</h3>
-                  <p className="text-blue-600 text-md font-bold">Operations Manager</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="group animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              <div className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-                <div className="aspect-[3/4] relative bg-gray-200">
-                  <Image src="/assets/professional-man-technician-confident.jpg" alt="David Chen" fill className="object-cover" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">David Chen</h3>
-                  <p className="text-blue-600 text-md font-bold">Lead Technician</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="group animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              <div className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-                <div className="aspect-[3/4] relative bg-gray-200">
-                  <Image src="/assets/professional-man-with-glasses-technician.jpg" alt="Marcus Johnson" fill className="object-cover" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">Marcus Johnson</h3>
-                  <p className="text-blue-600 text-md font-bold">Installation Specialist</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="group animate-fade-in" style={{ animationDelay: "0.3s" }}>
-              <div className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-                <div className="aspect-[3/4] relative bg-gray-200">
-                  <Image src="/assets/smiling-professional-woman.png" alt="Elena Rodriguez" fill className="object-cover" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">Elena Rodriguez</h3>
-                  <p className="text-blue-600 text-md font-bold">Customer Success</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20">

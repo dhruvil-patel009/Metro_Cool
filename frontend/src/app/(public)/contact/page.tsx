@@ -151,9 +151,9 @@ export default function ContactPage() {
                       href="tel:+15550123456"
                       className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
                     >
-                      +1 (555) 012-3456
+                      +91 982 489 7099
                     </a>
-                    <p className="text-sm text-gray-500 mt-1">Mon-Fri 8am-6pm</p>
+                    <p className="text-sm text-gray-500 mt-1">Mon-Fri 9am - 9pm</p>
                   </div>
                 </div>
 
@@ -164,10 +164,11 @@ export default function ContactPage() {
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Email</p>
                     <a
-                      href="mailto:support@metrocool.com"
+                      href="mailto:metrocool.official@gmail.com"
                       className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors break-all"
                     >
-                      support@metrocool.com
+                      metrocool.official@gmail.com
+
                     </a>
                     <p className="text-sm text-gray-500 mt-1">Online support 24/7</p>
                   </div>
@@ -179,8 +180,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Office</p>
-                    <p className="text-lg font-semibold text-gray-900">123 Cooling Blvd, Suite 400</p>
-                    <p className="text-lg font-semibold text-gray-900">Metro City, ST 90210</p>
+                    <p className="text-lg font-semibold text-gray-900">GF-6, Radhe Chamber, Kansas County, </p>
+                    <p className="text-lg font-semibold text-gray-900">B/h, Vastral, Ahmedabad, Gujarat 382418</p>
                   </div>
                 </div>
               </div>
@@ -189,13 +190,12 @@ export default function ContactPage() {
             {/* Map */}
             <div className="bg-white rounded-2xl shadow-lg p-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               <div className="relative h-64 rounded-lg overflow-hidden bg-gray-200">
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{
-                    backgroundImage:
-                      "url('https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/-73.935242,40.730610,12,0/600x400@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw')",
-                  }}
-                />
+                <iframe
+  src="https://maps.google.com/maps?q=GF-6%2C%20Radhe%20Chamber%2C%20Kansas%20County%2C%20Vastral%2C%20Ahmedabad%2C%20Gujarat%20382418&t=&z=15&ie=UTF8&iwloc=&output=embed"
+  className="absolute inset-0 w-full h-full border-0"
+  loading="lazy"
+  referrerPolicy="no-referrer-when-downgrade"
+/>
                 <button className="absolute bottom-4 right-4 bg-white hover:bg-gray-50 text-gray-900 font-semibold px-4 py-2 rounded-lg shadow-lg transition-colors flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   Get Directions

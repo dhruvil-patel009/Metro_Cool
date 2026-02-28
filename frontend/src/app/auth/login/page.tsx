@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useAuthStore } from "@/store/auth.store";
 import GuestGuard from "@/app/components/GuestGuard";
+import Link from "next/link";
 
 export default function Page() {
   const router = useRouter();
@@ -101,6 +102,7 @@ export default function Page() {
           </div>
 
           <div className="relative z-10">
+            <Link href="/" className="flex items-center gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white/10 backdrop-blur-sm">
                 <div className="h-6 w-6 rounded border-2 border-white" />
@@ -109,6 +111,7 @@ export default function Page() {
                 AC Marketplace
               </span>
             </div>
+            </Link>
           </div>
 
           <div className="relative z-10 mt-auto">
