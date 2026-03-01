@@ -4,6 +4,7 @@ import crypto from "crypto"
 import { supabase } from "../utils/supabase.js"
 import { uploadInvoice } from "../utils/uploadInvoice.js"
 import { generateInvoice } from "../utils/generateInvoice.js"
+import { env } from "../config/env.js"
 
 const razorpay = new Razorpay({
 key_id: process.env.RAZORPAY_KEY_ID!,
@@ -25,6 +26,9 @@ export const createRazorpayOrder = async (req: Request, res: Response) => {
       amount: Math.round(amount * 100), // paise
       currency: "INR",
       receipt: booking_id,
+      notes: {
+    booking_id: booking_id
+  },
       payment_capture: true,
     })
 
@@ -83,24 +87,27 @@ THIS IS WHERE PAYMENT IS ACTUALLY STORED
 export const razorpayWebhook = async (req: Request, res: Response) => {
   try {
 
-    const secret = process.env.RAZORPAY_WEBHOOK_SECRET!
+const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET
+    const signature = req.headers["x-razorpay-signature"]
 
-    const shasum = crypto.createHmac("sha256", secret)
-    shasum.update(JSON.stringify(req.body))
-    const digest = shasum.digest("hex")
+    const expected = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(req.body) // <-- RAW BODY (BUFFER)
+      .digest("hex")
 
-    const signature = req.headers["x-razorpay-signature"] as string
-
-    if (digest !== signature) {
-      return res.status(400).json({ message: "Invalid signature" })
+    if (signature !== expected) {
+      console.log("❌ Webhook signature mismatch")
+      return res.status(400).send("Invalid signature")
     }
 
-    const event = req.body.event
+    const payload = JSON.parse(req.body.toString())
 
-    if (event === "payment.captured") {
+    if (payload.event === "payment.captured") {
 
-      const payment = req.body.payload.payment.entity
-      const bookingId = payment.notes?.booking_id || payment.receipt
+      const payment = payload.payload.payment.entity
+      const bookingId = payment.notes.booking_id
+
+      console.log("✅ Payment received for:", bookingId)
 
       await supabase
         .from("bookings")
@@ -109,15 +116,13 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
           closure_otp: Math.floor(1000 + Math.random() * 9000).toString()
         })
         .eq("id", bookingId)
-
-      console.log("Payment captured → DB updated")
     }
 
-    res.json({ status: "ok" })
+    res.status(200).send("OK")
 
   } catch (err) {
-    console.log(err)
-    res.status(500).json({ message: "Webhook error" })
+    console.log("Webhook error:", err)
+    res.status(500).send("Webhook failure")
   }
 }
 

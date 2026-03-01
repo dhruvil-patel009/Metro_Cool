@@ -28,13 +28,7 @@ import serviceDetailsRoutes from "./routes/serviceDetails.routes.js";
 const app = express();
 app.use(cookieParser())
 
-
-app.use("/api/payments/webhook",
-  express.raw({ type: "application/json" })
-)
-  
-
-
+app.use("/api/payments/webhook", express.raw({ type: "*/*" }))
 
 /* =========================
    🔥 CORS (FINAL FIX)
@@ -88,9 +82,16 @@ app.get("/", (_req, res) => {
 });
 
 app.use((req, res, next) => {
+
+  // ⭐⭐⭐ DO NOT PARSE RAZORPAY WEBHOOK
+if (req.originalUrl.startsWith("/api/payments/webhook")) {
+  return next();
+}
+
   if (req.headers["content-type"]?.includes("multipart/form-data")) {
-    return next(); // 🔥 skip body parser for file uploads
+    return next();
   }
+
   express.json({ limit: "10mb" })(req, res, next);
 });
 
