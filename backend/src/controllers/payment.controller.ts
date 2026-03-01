@@ -87,89 +87,42 @@ THIS IS WHERE PAYMENT IS ACTUALLY STORED
 export const razorpayWebhook = async (req: Request, res: Response) => {
   try {
 
-    // 1️⃣ ensure raw body exists
-    if (!req.body) {
-      console.log("❌ No raw body received")
-      return res.status(400).send("No body")
-    }
+const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET
+    const signature = req.headers["x-razorpay-signature"]
 
-    const rawBody =
-      Buffer.isBuffer(req.body)
-        ? req.body
-        : Buffer.from(JSON.stringify(req.body))
-
-    const signature = req.headers["x-razorpay-signature"] as string
-
-    if (!signature) {
-      console.log("❌ Missing signature header")
-      return res.status(400).send("Missing signature")
-    }
-
-    // 2️⃣ verify signature
     const expected = crypto
-      .createHmac("sha256", env.RAZORPAY_WEBHOOK_SECRET)
-      .update(rawBody)
+      .createHmac("sha256", webhookSecret)
+      .update(req.body) // <-- RAW BODY (BUFFER)
       .digest("hex")
 
-    if (expected !== signature) {
-      console.log("❌ Signature mismatch")
+    if (signature !== expected) {
+      console.log("❌ Webhook signature mismatch")
       return res.status(400).send("Invalid signature")
     }
 
-    // 3️⃣ parse payload safely
-    let payload: any
-    try {
-      payload = JSON.parse(rawBody.toString())
-    } catch (e) {
-      console.log("❌ JSON parse failed")
-      return res.status(400).send("Invalid JSON")
-    }
+    const payload = JSON.parse(req.body.toString())
 
-    console.log("📩 Webhook event:", payload.event)
-
-    // 4️⃣ handle payment
     if (payload.event === "payment.captured") {
 
-      const payment = payload?.payload?.payment?.entity
+      const payment = payload.payload.payment.entity
+      const bookingId = payment.notes.booking_id
 
-      if (!payment) {
-        console.log("❌ No payment entity")
-        return res.status(200).send("ok")
-      }
+      console.log("✅ Payment received for:", bookingId)
 
-      const bookingId = payment?.notes?.booking_id
-
-      if (!bookingId) {
-        console.log("❌ booking_id missing in notes")
-        return res.status(200).send("ok")
-      }
-
-      console.log("✅ Updating booking:", bookingId)
-
-      const otp = Math.floor(1000 + Math.random() * 9000).toString()
-
-      const { error } = await supabase
+      await supabase
         .from("bookings")
         .update({
           payment_status: "completed",
-          closure_otp: otp,
+          closure_otp: Math.floor(1000 + Math.random() * 9000).toString()
         })
         .eq("id", bookingId)
-
-      if (error) {
-        console.log("❌ Supabase error:", error)
-        return res.status(500).send("DB update failed")
-      }
-
-      console.log("🎉 Booking updated successfully")
     }
 
-    return res.status(200).send("OK")
+    res.status(200).send("OK")
 
   } catch (err) {
-    console.log("💥 WEBHOOK CRASH:", err)
-    return res.status(200).send("OK") 
-    // IMPORTANT: Always return 200 to Razorpay
+    console.log("Webhook error:", err)
+    res.status(500).send("Webhook failure")
   }
 }
 
