@@ -208,48 +208,48 @@ export const getServiceDetails = async (req: Request, res: Response) => {
  * Get Service Includes
  */
 
-export const getServiceIncludes = async (req: Request, res: Response) => {
-  const { type } = req.params;
+// export const getServiceIncludes = async (req: Request, res: Response) => {
+//   const { type } = req.params;
 
-  const { data } = await supabase
-    .from("service_includes")
-    .select("*")
-    .eq("service_type", type);
+//   const { data } = await supabase
+//     .from("service_includes")
+//     .select("*")
+//     .eq("service_type", type);
 
-  res.json(data);
-};
+//   res.json(data);
+// };
 
 
 /**
  * Get Service Faqs
  */
 
-export const getServiceFaqs = async (req: Request, res: Response) => {
-  const { type } = req.params;
+// export const getServiceFaqs = async (req: Request, res: Response) => {
+//   const { type } = req.params;
 
-  const { data } = await supabase
-    .from("service_faqs")
-    .select("*")
-    .eq("service_type", type);
+//   const { data } = await supabase
+//     .from("service_faqs")
+//     .select("*")
+//     .eq("service_type", type);
 
-  res.json(data);
-};
+//   res.json(data);
+// };
 
 
 /**
  * Get Service Addons
  */ 
 
-export const getServiceAddons = async (req: Request, res: Response) => {
-  const { type } = req.params;
+// export const getServiceAddons = async (req: Request, res: Response) => {
+//   const { type } = req.params;
 
-  const { data } = await supabase
-    .from("service_addons")
-    .select("*")
-    .eq("service_type", type);
+//   const { data } = await supabase
+//     .from("service_addons")
+//     .select("*")
+//     .eq("service_type", type);
 
-  res.json(data);
-};
+//   res.json(data);
+// };
 
 /**
  * Like Services
@@ -284,4 +284,56 @@ export const getPublicServiceById = async (req: Request, res: Response) => {
   }
 
   res.json(data);
+};
+
+
+
+export const getFullServiceDetails = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    /* 1️⃣ MAIN SERVICE */
+    const { data: service, error: serviceError } = await supabase
+      .from("services")
+      .select("*")
+      .eq("id", id)
+      .eq("is_active", true)
+      .single();
+
+    if (serviceError || !service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    /* 2️⃣ WHAT'S INCLUDED */
+    const { data: includes } = await supabase
+      .from("service_includes")
+      .select("*")
+      .eq("service_id", id)
+      .order("created_at");
+
+    /* 3️⃣ ADDONS */
+    const { data: addons } = await supabase
+      .from("service_addons")
+      .select("*")
+      .eq("service_id", id)
+      .order("created_at");
+
+    /* 4️⃣ FAQ */
+    const { data: faqs } = await supabase
+      .from("service_faqs")
+      .select("*")
+      .eq("service_id", id)
+      .order("created_at");
+
+    res.json({
+      service,
+      includes,
+      addons,
+      faqs,
+    });
+
+  } catch (err) {
+    console.error("SERVICE DETAILS ERROR:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 };

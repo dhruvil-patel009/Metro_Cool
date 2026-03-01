@@ -19,6 +19,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { ServicesTable } from "./services-table";
 import { AddServiceModal } from "../components/add-services-model";
+import Link from "next/link";
 
 export function ServicesContent() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,24 +58,14 @@ export function ServicesContent() {
               </div>
 
               {/* ✅ CATEGORY VALUES MATCH BACKEND */}
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger className="h-10 w-full sm:w-[200px] text-black">
-                  <div className="flex items-center gap-2">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    <SelectValue placeholder="All Categories" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="AC">AC</SelectItem>
-                  <SelectItem value="Heating">Heating</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Smart Home">Smart Home</SelectItem>
-                </SelectContent>
-              </Select>
+              <Link href="/admin/Services/content" className="text-sm text-gray-600 hover:text-gray-900">
+             <Button
+                className="h-10 bg-blue-500 text-white hover:bg-blue-700"
+                >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Content
+              </Button>
+                </Link>
             </div>
 
             <div className="flex items-center gap-2">

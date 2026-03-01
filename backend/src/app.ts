@@ -21,6 +21,8 @@ import technicianJobRoutes from "./routes/technicianJob.routes.js";
 import userOrdersRoutes from "./routes/userOrders.routes.js";
 import addressRoutes from "./routes/address.routes.js";
 import pushRoutes from "./routes/push.routes.js";
+import serviceContentRoutes from "./routes/serviceContent.routes.js";
+import serviceDetailsRoutes from "./routes/serviceDetails.routes.js";
 
 
 
@@ -92,7 +94,8 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/products", productRoutes);
-
+app.use("/api/service-content", serviceContentRoutes);
+app.use("/api/service-details", serviceDetailsRoutes);
 
 
 app.use("/api/admin", adminBookingRoutes)

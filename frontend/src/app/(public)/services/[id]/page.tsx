@@ -23,15 +23,10 @@ import {
   CheckCircle2,
   ThumbsUp,
 } from "lucide-react"
-import {
-  getServiceById,
-  getServiceIncludes,
-  getServiceAddons,
-  getServiceFaqs,
-  likeService,
-} from "../../lib/services.api"
+
 import { Card } from "@/app/components/ui/card"
 import { formatINR } from "@/app/lib/currency"
+import { getFullServiceDetails } from "../../lib/serviceDetails.api"
 
 const iconMap = {
   SearchCheck,
@@ -44,7 +39,17 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
   const { id } = use(params)
   const [service, setService] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([])
 
+
+  const toggleAddon = (id: string) => {
+    setSelectedAddons(prev =>
+      prev.includes(id)
+        ? prev.filter(a => a !== id)
+        : [...prev, id]
+    )
+  }
 
   /* =========================
      FETCH ALL DATA (NO UI CHANGE)
@@ -52,28 +57,39 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     async function load() {
       try {
-        const main = await getServiceById(id)
+        const data = await getFullServiceDetails(id)
 
-        const [includes, addons, faqs] = await Promise.all([
-          getServiceIncludes(main.category),
-          getServiceAddons(main.category),
-          getServiceFaqs(main.category),
-        ])
+        const main = data.service
 
         setService({
           ...main,
 
-          /* 🔑 map backend → UI fields */
-          longDescription: main.long_description,
-          originalPrice:
-            main.original_price ??
-            main.originalPrice ??
-            main.price + 20,
-          included: Array.isArray(includes) ? includes : [],
-          addons: Array.isArray(addons) ? addons : [],
-          faqs: Array.isArray(faqs) ? faqs : [],
+          longDescription: main.description,
+          originalPrice: main.original_price ?? main.price + 20,
+
+          included: data.includes || [],
+          addons: data.addons || [],
+          faqs: data.faqs || [],
+
+          duration: main.duration_minutes
+            ? `${main.duration_minutes} mins`
+            : "60–90 mins",
+
+          expertise: "Certified Technician",
+          warranty: "30 Day Service Warranty",
+          reviews: main.review_count ?? 120,
+
+          discount:
+            main.original_price
+              ? Math.round(
+                ((main.original_price - main.price) /
+                  main.original_price) *
+                100
+              ) + "%"
+              : "10%",
         })
       } catch (e) {
+        console.error(e)
         setService(null)
       } finally {
         setLoading(false)
@@ -89,8 +105,8 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
   if (loading) {
     return (
       <div className="loader-wrapper">
-  <div className="loader"></div>
-</div>
+        <div className="loader"></div>
+      </div>
     )
   }
 
@@ -209,12 +225,12 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                 <span className="text-xs font-bold">Available</span>
               </div>
               <div className="absolute top-6 right-6 flex gap-2">
-                <button className="p-2.5 bg-white/90 backdrop-blur rounded-full shadow hover:bg-white transition-colors">
+                {/* <button className="p-2.5 bg-white/90 backdrop-blur cursor-pointer rounded-full shadow hover:bg-white transition-colors">
                   <Share2 className="w-4 h-4 text-gray-700" />
-                </button>
-                <button className="group p-2.5 cursor-pointer bg-white/90 backdrop-blur rounded-full shadow hover:bg-white transition-colors">
-  <Heart className="w-4 h-4 text-gray-700 fill-transparent group-hover:fill-red-500 group-hover:text-red-500 transition-all" />
-</button>
+                </button> */}
+                {/* <button className="group p-2.5 cursor-pointer bg-white/90 backdrop-blur rounded-full shadow hover:bg-white transition-colors">
+                  <Heart className="w-4 h-4 text-gray-700 fill-transparent group-hover:fill-red-500 group-hover:text-red-500 transition-all" />
+                </button> */}
 
               </div>
             </div>
@@ -225,24 +241,46 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                 <span className="w-1.5 h-8 bg-[#0060ff] rounded-full"></span>
                 What&apos;s Included
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {service.included.map((item: any, i: number) => {
                   const Icon =
                     iconMap[item.icon as keyof typeof iconMap] || SearchCheck
                   return (
-                    <Card key={i}>
-                      <div
-                        className={`w-12 h-12 rounded-md flex items-center justify-center ${item.color}`}
-                      >
-                        <Icon className="w-6 h-6" />
+                    <div
+                      key={i}
+                      className="
+    flex items-start gap-4 
+    p-5 
+    rounded-2xl 
+    border border-gray-200 
+    bg-white 
+    hover:shadow-md 
+    hover:border-blue-100
+    transition-all duration-200
+  "
+                    >
+                      {/* ICON BOX */}
+                      <div className="
+    min-w-[52px] min-h-[52px]
+    rounded-xl
+    bg-blue-50
+    text-[#0060ff]
+    flex items-center justify-center
+  ">
+                        <Icon className="w-6 h-6" strokeWidth={2.2} />
                       </div>
-                      <div>
-                        <h3 className="font-bold mb-1">{item.title}</h3>
-                        <p className="text-xs text-gray-400">
+
+                      {/* TEXT */}
+                      <div className="flex flex-col">
+                        <h3 className="font-semibold text-gray-900 text-[15px] leading-tight">
+                          {item.title}
+                        </h3>
+
+                        <p className="text-gray-500 text-sm leading-relaxed mt-1 max-w-[260px]">
                           {item.description}
                         </p>
                       </div>
-                    </Card>
+                    </div>
                   )
                 })}
               </div>
@@ -255,42 +293,95 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   <span className="w-1.5 h-8 bg-[#0060ff] rounded-full"></span>
                   Enhance Your Service
                 </h2>
-                <div className="space-y-4">
-                  {service.addons.map((addon: any, i: number) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-4 rounded-md bg-white border border-gray-100 hover:border-blue-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-16 h-16 rounded-md overflow-hidden">
-                          <Image
-                            src={addon.image || "/placeholder.svg"}
-                            alt={addon.title}
-                            fill
-                            className="object-cover"
-                          />
+                <div className="space-y-5">
+                  {service.addons.map((addon: any) => {
+                    const isSelected = selectedAddons.includes(addon.id)
+
+                    return (
+                      <div
+                        key={addon.id}
+                        onClick={() => toggleAddon(addon.id)}
+                        className={`
+          flex items-center justify-between
+          rounded-2xl
+          border
+          p-4 sm:p-5
+          cursor-pointer
+          transition-all duration-200
+          ${isSelected
+                            ? "border-[#0060ff] bg-blue-50/40 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-blue-200 hover:shadow-sm"
+                          }
+        `}
+                      >
+                        {/* LEFT */}
+                        <div className="flex items-center gap-4 sm:gap-5">
+
+                          {/* IMAGE */}
+                          <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0">
+                            <Image
+                              src={addon.image || "/placeholder.svg"}
+                              alt={addon.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+
+                          {/* TEXT */}
+                          <div className="max-w-[240px] sm:max-w-md">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold text-gray-900 text-[15px]">
+                                {addon.title}
+                              </h3>
+
+                              {addon.badge && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-[#0060ff] uppercase tracking-wide">
+                                  {addon.badge}
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                              {addon.description}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-bold">{addon.title}</h3>
-                            {addon.badge && (
-                              <span className="text-[8px] bg-blue-50 text-[#0060ff] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter">
-                                {addon.badge}
-                              </span>
+
+                        {/* RIGHT */}
+                        <div className="flex items-center gap-4 sm:gap-6">
+
+                          {/* PRICE */}
+                          <span className="font-semibold text-gray-900 text-[15px]">
+                            +{formatINR(addon.price)}
+                          </span>
+
+                          {/* CUSTOM CHECKBOX */}
+                          <div
+                            className={`
+              w-6 h-6 rounded-md border-2 flex items-center justify-center transition
+              ${isSelected
+                                ? "bg-[#0060ff] border-[#0060ff]"
+                                : "border-gray-300 bg-white"
+                              }
+            `}
+                          >
+                            {isSelected && (
+                              <svg
+                                className="w-4 h-4 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
                             )}
                           </div>
-                          <p className="text-[10px] text-gray-400 leading-tight max-w-[180px]">{addon.description}</p>
+
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="font-bold text-gray-900">{addon.price}</span>
-                        <input
-                          type="checkbox"
-                          className="w-5 h-5 rounded border-gray-300 text-[#0060ff] focus:ring-[#0060ff]"
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -302,16 +393,63 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   <span className="w-1.5 h-8 bg-[#0060ff] rounded-full"></span>
                   Common Questions
                 </h2>
-                <div className="space-y-3">
-                  {service.faqs.map((faq: any, i: number) => (
-                    <div
-                      key={i}
-                      className="group p-5 rounded-md bg-white border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-                    >
-                      <span className="font-semibold text-gray-700">{faq.question}</span>
-                      <ChevronDown className="w-5 h-5 text-gray-400 transition-transform group-hover:translate-y-0.5" />
-                    </div>
-                  ))}
+                <div className="space-y-4">
+                  {service.faqs.map((faq: any, i: number) => {
+                    const isOpen = openFaq === i
+
+                    return (
+                      <div
+                        key={i}
+                        className="
+          rounded-2xl
+          border border-gray-200
+          bg-white
+          transition-all duration-200
+        "
+                      >
+                        {/* QUESTION */}
+                        <button
+                          onClick={() => setOpenFaq(isOpen ? null : i)}
+                          className="
+            w-full
+            flex items-center justify-between
+            text-left
+            px-6 py-5
+            font-semibold
+            text-gray-800
+            hover:bg-gray-50
+            rounded-2xl
+          "
+                        >
+                          <span className="text-[15px]">
+                            {faq.question}
+                          </span>
+
+                          <ChevronDown
+                            className={`
+              w-5 h-5 text-gray-400
+              transition-transform duration-300
+              ${isOpen ? "rotate-180 text-[#0060ff]" : ""}
+            `}
+                          />
+                        </button>
+
+                        {/* ANSWER */}
+                        <div
+                          className={`
+            grid transition-all duration-300 ease-in-out
+            ${isOpen ? "grid-rows-[1fr] opacity-100 mt-2" : "grid-rows-[0fr] opacity-0"}
+          `}
+                        >
+                          <div className="overflow-hidden">
+                            <p className="px-6 pb-6 text-sm text-gray-500 leading-relaxed">
+                              {faq.answer}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -327,7 +465,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Total Estimate</p>
                     <div className="flex items-baseline gap-2">
                       <span className="text-5xl font-black font-semibold tracking-tighter">
-                          {formatINR(service.price)}
+                        {formatINR(service.price)}
 
                         <span className="text-2xl">.00</span>
                       </span>
