@@ -23,12 +23,13 @@ import addressRoutes from "./routes/address.routes.js";
 import pushRoutes from "./routes/push.routes.js";
 import serviceContentRoutes from "./routes/serviceContent.routes.js";
 import serviceDetailsRoutes from "./routes/serviceDetails.routes.js";
+import webhookHandlerRoutes from "./routes/webhookHandler.routes.js";
 
 
 const app = express();
+app.use("/api/payments/webhook", express.raw({ type: "*/*" }))
 app.use(cookieParser())
 
-app.use("/api/payments/webhook", express.raw({ type: "*/*" }))
 
 /* =========================
    🔥 CORS (FINAL FIX)
@@ -128,7 +129,7 @@ app.use("/api/technicians", technicianRoutes)
 
 // Payment 
 
-app.use("/api/payments", paymentRoutes)
+app.use("/api/payments", webhookHandlerRoutes)
 
 
 // 🔥 Swagger
