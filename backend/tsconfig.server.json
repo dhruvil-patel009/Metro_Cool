@@ -7,11 +7,15 @@
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+
+    "typeRoots": [
+      "./src/types",
+      "./node_modules/@types"
+    ],
+
     "types": ["node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["api", "dist", "node_modules"]
+  "exclude": ["node_modules", "dist", "api"]
 }
