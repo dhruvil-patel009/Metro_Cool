@@ -3,6 +3,8 @@ import {
   createRazorpayOrder,
   verifyRazorpayPayment,
   razorpayWebhook,
+  markCashPayment,
+  getInvoice,
 } from "../controllers/payment.controller.js"
 import { protect } from "../middlewares/auth.middleware.js"
 
@@ -20,5 +22,8 @@ router.post(
   express.raw({ type: "*/*" }),
   razorpayWebhook
 )
+
+router.post("/cash", protect, markCashPayment)
+router.get("/invoice/:bookingId", protect, getInvoice)
 
 export default router

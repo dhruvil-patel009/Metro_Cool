@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { ArrowLeft, Star, Download, Lock, Copy, Check } from "lucide-react"
-import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Star, Download, Lock, Copy, Check } from "lucide-react"
 import { toast } from "react-toastify"
+import { formatINR } from "@/app/lib/currency"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
@@ -17,9 +17,16 @@ declare global {
 export default function CompletionContent() {
 
   const searchParams = useSearchParams()
-  const router = useRouter()
-  const bookingId = searchParams.get("id") || "MC-8293"
 
+  /* ---------------- STABLE BOOKING ID ---------------- */
+  const [bookingId, setBookingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const id = searchParams.get("id")
+    if (id) setBookingId(id)
+  }, [])
+
+  /* ---------------- STATES ---------------- */
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "cash" | null>(null)
   const [paymentConfirmed, setPaymentConfirmed] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -27,63 +34,112 @@ export default function CompletionContent() {
   const [serviceOTP, setServiceOTP] = useState<string | null>(null)
   const [checkingPayment, setCheckingPayment] = useState(false)
 
+  /* ---------------- REFS ---------------- */
+  const fetchedRef = useRef(false)
+  const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const razorpayOpened = useRef(false)
+
   /* ---------------- LOAD RAZORPAY SCRIPT ---------------- */
   useEffect(() => {
+    if (document.getElementById("razorpay-script")) return
     const script = document.createElement("script")
+    script.id = "razorpay-script"
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.async = true
     document.body.appendChild(script)
-
-    return () => {
-      document.body.removeChild(script)
-    }
   }, [])
 
-  /* ---------------- COPY OTP ---------------- */
-  const copyOTP = () => {
-    if (!serviceOTP) return
-    navigator.clipboard.writeText(serviceOTP)
-    setCopied(true)
-    toast.success("OTP copied to clipboard!")
-    setTimeout(() => setCopied(false), 2000)
-  }
+  /* ---------------- FETCH BOOKING ---------------- */
+  useEffect(() => {
+    if (!bookingId || fetchedRef.current) return
+    fetchedRef.current = true
 
-  /* ---------------- WAIT FOR WEBHOOK CONFIRMATION ---------------- */
+    const token = localStorage.getItem("accessToken")
+
+    fetch(`${API_URL}/bookings/${bookingId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setBooking(data.booking)
+
+        if (data.booking?.payment_status === "completed") {
+          setServiceOTP(data.booking.closure_otp)
+          setPaymentConfirmed(true)
+        }
+      })
+      .catch(() => toast.error("Failed to load booking"))
+  }, [bookingId])
+
+  /* ---------------- POLLING ---------------- */
   const waitForPaymentConfirmation = async () => {
+    if (!bookingId) return
+    if (pollingRef.current) return
+
     const token = localStorage.getItem("accessToken")
     setCheckingPayment(true)
 
-    const interval = setInterval(async () => {
-
+    pollingRef.current = setInterval(async () => {
       const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
       const data = await res.json()
 
-      if (data?.booking?.payment_status === "paid") {
-
+      if (data?.booking?.payment_status === "completed") {
         setServiceOTP(data.booking.closure_otp)
         setPaymentConfirmed(true)
         setBooking(data.booking)
 
-        clearInterval(interval)
+        clearInterval(pollingRef.current!)
+        pollingRef.current = null
         setCheckingPayment(false)
 
         toast.success("Payment Confirmed 🎉")
       }
-
     }, 3000)
   }
 
-  /* ---------------- RAZORPAY PAYMENT ---------------- */
+  /* ---------------- CLEANUP ---------------- */
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
+  }, [])
+
+ /* ---------------- DYNAMIC DATA (FIXED FOR YOUR API RESPONSE) ---------------- */
+
+const serviceName = booking?.service?.title || "-"
+const serviceAmount = Number(booking?.total_amount || 0)
+const serviceRef = booking?.id || "-"
+const technicianId = booking?.technician_id || "-"
+const technicianName = booking?.technician?.full_name || "Assigned Technician"
+
+const serviceDate = booking?.booking_date
+  ? new Date(booking.booking_date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+  : "-"
+
+const serviceTime = booking?.time_slot || ""
+
+const fullDateTime = serviceDate + (serviceTime ? ` at ${serviceTime}` : "")
+
+const serviceImage = booking?.service?.image_url || "/assets/technician-working-on-ac-unit.jpg"
+
+  /* ---------------- RAZORPAY ---------------- */
   const handleRazorpay = async () => {
 
+    if (!bookingId || !serviceAmount) return
     if (paymentMethod !== "upi") return
+    if (razorpayOpened.current) return
+
+    razorpayOpened.current = true
 
     const token = localStorage.getItem("accessToken")
 
-    // 1️⃣ Create order
     const res = await fetch(`${API_URL}/payments/razorpay-order`, {
       method: "POST",
       headers: {
@@ -92,25 +148,23 @@ export default function CompletionContent() {
       },
       body: JSON.stringify({
         booking_id: bookingId,
-        amount: 150,
+        amount: serviceAmount,
       }),
     })
 
     const { orderId, key } = await res.json()
 
+    console.log("RAZORPAY ORDER:", { orderId, key })
     const options = {
       key,
-      amount: 150 * 100,
+      amount: serviceAmount * 100,
       currency: "INR",
       name: "Metro Cool",
-      description: "AC Service Payment",
+      description: serviceName,
       order_id: orderId,
       method: { upi: true },
 
-      // 🚨 IMPORTANT: DO NOT MARK SUCCESS HERE
       handler: async (response: any) => {
-
-        // 2️⃣ Only signature verification
         await fetch(`${API_URL}/payments/verify`, {
           method: "POST",
           headers: {
@@ -124,13 +178,12 @@ export default function CompletionContent() {
         })
 
         toast.info("Confirming payment...")
-
-        // 3️⃣ WAIT FOR WEBHOOK
         waitForPaymentConfirmation()
       },
 
       modal: {
         ondismiss: function () {
+          razorpayOpened.current = false
           toast.info("Payment cancelled")
         }
       }
@@ -140,10 +193,44 @@ export default function CompletionContent() {
     rzp.open()
   }
 
-  /* ---------------- DOWNLOAD INVOICE ---------------- */
-  const downloadInvoice = async () => {
+  /* ---------------- CASH ---------------- */
+  const handleCashPayment = async () => {
+    if (!bookingId) return
+
     const token = localStorage.getItem("accessToken")
 
+    const res = await fetch(`${API_URL}/payments/cash`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ booking_id: bookingId }),
+    })
+
+    if (!res.ok) {
+      toast.error("Cash payment failed")
+      return
+    }
+
+    toast.success("Cash payment recorded")
+    waitForPaymentConfirmation()
+  }
+
+  /* ---------------- OTP COPY ---------------- */
+  const copyOTP = () => {
+    if (!serviceOTP) return
+    navigator.clipboard.writeText(serviceOTP)
+    setCopied(true)
+    toast.success("OTP copied to clipboard!")
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  /* ---------------- INVOICE ---------------- */
+  const downloadInvoice = async () => {
+    if (!bookingId) return
+
+    const token = localStorage.getItem("accessToken")
     const res = await fetch(`${API_URL}/payments/invoice/${bookingId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -152,36 +239,14 @@ export default function CompletionContent() {
     window.open(data.invoice_url, "_blank")
   }
 
-  /* ---------------- FETCH BOOKING ---------------- */
-  useEffect(() => {
-    if (!bookingId) return
-
-    const token = localStorage.getItem("accessToken")
-
-    fetch(`${API_URL}/bookings/${bookingId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => res.json())
-      .then(data => {
-        setBooking(data.booking)
-
-        // if already paid (page refresh case)
-        if (data.booking?.payment_status === "paid") {
-          setServiceOTP(data.booking.closure_otp)
-          setPaymentConfirmed(true)
-        }
-      })
-      .catch(() => toast.error("Failed to load booking"))
-
-  }, [bookingId])
-
-  /* ---------------- CASH PAYMENT ---------------- */
-  const handleCashPayment = async () => {
-    setPaymentConfirmed(true)
-    setServiceOTP("4829")
-    toast.success("Marked as Cash Payment")
+  /* ---------------- LOADING SCREEN ---------------- */
+  if (!booking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-gray-600">
+        Loading service details...
+      </div>
+    )
   }
-
 
   return (
     <main className="min-h-screen bg-gray-50 py-8 px-4">
@@ -206,7 +271,7 @@ export default function CompletionContent() {
               </div>
               <div className="flex items-center gap-2 bg-yellow-50 text-yellow-700 px-4 py-2 rounded-lg border border-yellow-200">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <span className="font-semibold text-sm">Payment Pending</span>
+                <span className="font-semibold text-sm">{paymentConfirmed ? "Payment Completed" : "Payment Pending"}</span>
               </div>
             </div>
 
@@ -216,14 +281,14 @@ export default function CompletionContent() {
                 <div className="relative">
                   <div className="w-20 h-20 rounded-2xl overflow-hidden bg-yellow-400">
                     <img
-                      src="/assets/technician-working-on-ac-unit.jpg"
-                      alt="Rahul Sharma"
+                      src={serviceImage}
+                      alt={technicianName}
                       className="w-full h-full object-cover"
                     />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900">Rahul Sharma</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{technicianName}</h3>
                   <p className="text-sm text-gray-600">Senior AC Technician • Metro Cool Pro</p>
                   <div className="flex items-center gap-4 mt-2">
                     <div className="flex items-center gap-1">
@@ -234,7 +299,7 @@ export default function CompletionContent() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-gray-500 mb-1">ID: T-8821</div>
+                  <div className="text-sm text-gray-500 mb-1">ID: {technicianId}</div>
                   <button className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -252,11 +317,11 @@ export default function CompletionContent() {
               <div className="grid md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
                 <div>
                   <div className="text-sm text-gray-500 uppercase tracking-wide mb-1">Service Reference</div>
-                  <div className="font-bold text-gray-900">#SR-99281</div>
+                  <div className="font-bold text-gray-900">#{serviceRef}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-500 uppercase tracking-wide mb-1">Completion Time</div>
-                  <div className="font-bold text-gray-900">Oct 14, 2023 at 2:30 PM</div>
+                  <div className="font-bold text-gray-900">{fullDateTime}</div>
                 </div>
                 <div className="md:col-span-2">
                   <div className="text-sm text-gray-500 uppercase tracking-wide mb-1">Service Type</div>
@@ -271,7 +336,7 @@ export default function CompletionContent() {
                         />
                       </svg>
                     </div>
-                    <span className="font-semibold text-gray-900">AC Deep Cleaning (Split Unit) + Gas Refill</span>
+                    <span className="font-semibold text-gray-900">{serviceName}</span>
                   </div>
                 </div>
               </div>
@@ -308,7 +373,7 @@ export default function CompletionContent() {
 
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-lg font-bold text-gray-900">Total Payable</span>
-                  <span className="text-2xl font-bold text-blue-600">₹1,299.00</span>
+                  <span className="text-2xl font-bold text-blue-600">{formatINR(serviceAmount)}</span>
                 </div>
               </div>
             </div>
@@ -331,7 +396,7 @@ export default function CompletionContent() {
 
                 <div className="mb-6">
                   <div className="text-sm text-gray-500 mb-2">Total Amount</div>
-                  <div className="text-4xl font-bold text-gray-900">₹1,299</div>
+                  <div className="text-4xl font-bold text-gray-900">{formatINR(serviceAmount)}</div>
                 </div>
 
                 <div className="mb-6">
@@ -415,7 +480,7 @@ export default function CompletionContent() {
       : "bg-blue-600 hover:bg-blue-700"
   }`}
 >
-  Pay ₹150
+Pay {formatINR(serviceAmount)}
 </button>
 
                 <div className="flex items-center justify-center gap-2 mt-4">
@@ -483,7 +548,7 @@ export default function CompletionContent() {
                         Share OTP with Technician
                       </div>
                       <p className="text-sm text-blue-700 mb-3">
-                        This code closes the service request <span className="font-semibold">#SR-99281</span>
+                        This code closes the service request <span className="font-semibold">#{serviceRef.slice(0,8)}</span>
                       </p>
                       <button
                         onClick={copyOTP}

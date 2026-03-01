@@ -25,9 +25,14 @@ import serviceContentRoutes from "./routes/serviceContent.routes.js";
 import serviceDetailsRoutes from "./routes/serviceDetails.routes.js";
 
 
-
 const app = express();
 app.use(cookieParser())
+
+
+app.use("/api/payments/webhook",
+  express.raw({ type: "application/json" })
+)
+  
 
 
 

@@ -17,6 +17,7 @@ import {
 import { toast } from "react-toastify"
 import { subscribeToPush } from "@/app/lib/push-notification"
 import AuthGuard from "@/app/components/AuthGuard"
+import { formatINR } from "@/app/lib/currency"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
@@ -487,7 +488,7 @@ export default function BookingsContent() {
                   )}
                 </div>
                 <div>
-                  <p className="font-bold text-lg">${service.price.toFixed(2)}</p>
+                  <p className="font-bold text-lg">{formatINR(service.price.toFixed(2))}</p> 
                 </div>
               </div>
 
@@ -507,15 +508,15 @@ export default function BookingsContent() {
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                  <span className="font-semibold">{formatINR(subtotal.toFixed(2))}</span>
                 </div>
                 {/* <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Taxes & Fees</span>
-                <span className="font-semibold">${taxesAndFees.toFixed(2)}</span>
+                <span className="font-semibold">{formatINR(taxesAndFees.toFixed(2))}</span>
               </div> */}
                 <div className="pt-3 border-t border-gray-200 flex justify-between">
                   <span className="font-bold">Total Amount</span>
-                  <span className="text-2xl font-bold text-blue-600">${total.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-blue-600">{formatINR(total.toFixed(2))}</span>
                 </div>
               </div>
 
