@@ -24,6 +24,7 @@ import pushRoutes from "./routes/push.routes.js";
 import serviceContentRoutes from "./routes/serviceContent.routes.js";
 import serviceDetailsRoutes from "./routes/serviceDetails.routes.js";
 import webhookHandlerRoutes from "./routes/webhookHandler.routes.js";
+import "./types/index.js";
 
 
 const app = express();
