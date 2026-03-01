@@ -2,7 +2,9 @@
 # Node dependencies
 # ===============================
 node_modules/
-
+api/**/*.js
+api/**/*.map
+dist
 # npm lock file
 package-lock.json
 # ===============================
