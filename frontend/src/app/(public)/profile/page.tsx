@@ -30,7 +30,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await apiFetch<UserMeResponse>("/me")
+        const data = await apiFetch<UserMeResponse>("/user/me")
 
         // 🔥 REAL DATA FROM SUPABASE
         setFirstName(data.first_name ?? "")
