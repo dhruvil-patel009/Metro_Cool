@@ -34,6 +34,7 @@ export default function AddAdminModal({ isOpen, onClose, onAdd }: Props) {
   const [loading, setLoading] = useState(false)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const onlyDigits = (value: string) => value.replace(/\D/g, "").slice(0, 4)
 
   const [form, setForm] = useState({
     first_name: "",
@@ -41,6 +42,8 @@ export default function AddAdminModal({ isOpen, onClose, onAdd }: Props) {
     last_name: "",
     phone: "",
     email: "",
+    mpin: "",
+    confirm_mpin: "",
   })
 
   if (!isOpen) return null
@@ -60,6 +63,20 @@ export default function AddAdminModal({ isOpen, onClose, onAdd }: Props) {
       alert("Please fill all required fields")
       return
     }
+    if (!form.mpin || !form.confirm_mpin) {
+    alert("Please enter MPIN")
+    return
+  }
+
+  if (form.mpin.length !== 4) {
+    alert("MPIN must be 4 digits")
+    return
+  }
+
+  if (form.mpin !== form.confirm_mpin) {
+    alert("MPIN and Confirm MPIN do not match")
+    return
+  }
 
     try {
       setLoading(true)
@@ -84,6 +101,7 @@ export default function AddAdminModal({ isOpen, onClose, onAdd }: Props) {
             email: form.email,
             phone: form.phone.replace(/\s/g, ""),
             profile_photo_base64,
+            mpin: form.mpin,   // <-- ADD THIS
           }),
         },
       )
@@ -203,6 +221,31 @@ export default function AddAdminModal({ isOpen, onClose, onAdd }: Props) {
                 }
               />
             </div>
+
+            {/* MPIN */}
+<div className="grid grid-cols-2 gap-3">
+  <Input
+    type="password"
+    inputMode="numeric"
+    placeholder="MPIN (4 digits) *"
+    value={form.mpin}
+    maxLength={4}
+    onChange={(e) =>
+      setForm({ ...form, mpin: onlyDigits(e.target.value) })
+    }
+  />
+
+  <Input
+    type="password"
+    inputMode="numeric"
+    placeholder="Confirm MPIN *"
+    value={form.confirm_mpin}
+    maxLength={4}
+    onChange={(e) =>
+      setForm({ ...form, confirm_mpin: onlyDigits(e.target.value) })
+    }
+  />
+</div>
           </div>
 
           {/* Footer */}

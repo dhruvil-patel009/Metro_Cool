@@ -80,12 +80,19 @@ app.get("/", (_req, res) => {
   res.send("Metro Cool API running 🚀");
 });
 
-app.use(express.json({ limit: "10mb" }));
+app.use((req, res, next) => {
+  if (req.headers["content-type"]?.includes("multipart/form-data")) {
+    return next(); // 🔥 skip body parser for file uploads
+  }
+  express.json({ limit: "10mb" })(req, res, next);
+});
+
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/products", productRoutes);
+
 
 
 app.use("/api/admin", adminBookingRoutes)

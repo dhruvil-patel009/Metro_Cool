@@ -21,6 +21,7 @@ import {
   updateAdminProfile,
   getAdmins,
   createAdmin,
+  deleteAdmin,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -179,3 +180,5 @@ router.get("/admins",protect,
   authorize("admin"), getAdmins)
 router.post("/create",protect,
   authorize("admin"), createAdmin)
+
+router.delete("/admins/:adminId", protect, deleteAdmin);  

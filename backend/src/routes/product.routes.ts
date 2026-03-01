@@ -19,7 +19,7 @@ router.get("/:id", getProductById);
 
 /* ADMIN */
 router.post(
-  "/",
+  "/create",
   protect,
   authorize("admin"),
   upload.fields([
@@ -33,5 +33,6 @@ router.post(
 
 router.put("/:id", protect, authorize("admin"), updateProduct);
 router.delete("/:id", protect, authorize("admin"), deleteProduct);
+router.post("/products/create", createProduct);
 
 export default router;

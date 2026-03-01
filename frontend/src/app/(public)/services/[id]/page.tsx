@@ -202,7 +202,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                 alt={service.title}
                 width={500}
                 height={450}
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-105 w-auto"
               />
               <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-lg">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>

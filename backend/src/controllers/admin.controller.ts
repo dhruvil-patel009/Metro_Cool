@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { supabase } from "../utils/supabase.js";
+import bcrypt from "bcrypt";
+
 
 /* ================= GET ALL TECHNICIANS (PAGINATED) ================= */
 
@@ -355,6 +357,7 @@ export const toggleUserStatus = async (req: Request, res: Response) => {
 
 /////////////////////////////////////////////////// Admin Profile ///////////////////////////////////////
 
+
 export const getAdminProfile = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
@@ -386,15 +389,16 @@ export const getAdminProfile = async (req: Request, res: Response) => {
   }
 }
 
-
+/////////////////////////////////////////////////// UPDATE PROFILE + CHANGE MPIN ///////////////////////////////////////
 
 export const updateAdminProfile = async (req: Request, res: Response) => {
   try {
-
-        if (!req.user) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" })
     }
+
     const userId = req.user.id
+
     const {
       first_name,
       middle_name,
@@ -402,8 +406,10 @@ export const updateAdminProfile = async (req: Request, res: Response) => {
       phone,
       email,
       profile_photo,
+      mpin, // ⭐ NEW (optional)
     } = req.body
 
+    // 1️⃣ Update profile table
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -419,34 +425,50 @@ export const updateAdminProfile = async (req: Request, res: Response) => {
 
     if (error) throw error
 
-const { data: updatedProfile } = await supabase
-  .from("profiles")
-  .select(`
-    id,
-    first_name,
-    last_name,
-    phone,
-    email,
-    profile_photo,
-    role
-  `)
-  .eq("id", userId)
-  .single()
+    // 2️⃣ If MPIN provided → update Supabase password
+    if (mpin) {
+      if (mpin.length !== 4) {
+        return res.status(400).json({ error: "MPIN must be 4 digits" })
+      }
 
-res.status(200).json(updatedProfile)  } catch (err) {
+      const { error: passwordError } =
+        await supabase.auth.admin.updateUserById(userId, {
+          password: mpin,
+        })
+
+      if (passwordError) throw passwordError
+    }
+
+    // 3️⃣ Return updated profile
+    const { data: updatedProfile } = await supabase
+      .from("profiles")
+      .select(`
+        id,
+        first_name,
+        last_name,
+        phone,
+        email,
+        profile_photo,
+        role
+      `)
+      .eq("id", userId)
+      .single()
+
+    res.status(200).json(updatedProfile)
+  } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Profile update failed" })
   }
 }
 
+/////////////////////////////////////////////////// GET ADMINS ///////////////////////////////////////
 
 export const getAdmins = async (req: Request, res: Response) => {
   try {
-
-        if (!req.user) {
+    if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" })
     }
-    
+
     const currentUserId = req.user.id
 
     const { data, error } = await supabase
@@ -483,10 +505,12 @@ export const getAdmins = async (req: Request, res: Response) => {
   }
 }
 
+/////////////////////////////////////////////////// CREATE ADMIN (WITH MPIN) ///////////////////////////////////////
+
 export const createAdmin = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" })
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     const {
@@ -496,24 +520,50 @@ export const createAdmin = async (req: Request, res: Response) => {
       phone,
       email,
       profile_photo,
-    } = req.body
+      mpin,
+    } = req.body;
 
-    // 1️⃣ Create auth user
+    /* ---------------- MPIN VALIDATION ---------------- */
+    if (!mpin || !/^\d{4}$/.test(mpin)) {
+      return res.status(400).json({
+        error: "MPIN must be exactly 4 digits",
+      });
+    }
+
+    /* ---------------- DUPLICATE CHECK ---------------- */
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (existing) {
+      return res.status(400).json({ error: "Admin already exists" });
+    }
+
+    /* ---------------- CREATE AUTH USER (ONLY FOR ID) ---------------- */
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         email,
         email_confirm: true,
-      })
+      });
 
-    if (authError || !authData.user) throw authError
+    if (authError || !authData?.user) {
+      return res.status(400).json({
+        error: authError?.message || "Failed to create user",
+      });
+    }
 
-    const userId = authData.user.id
+    const userId = authData.user.id;
 
-    // 2️⃣ Insert profile with SAME id
+    /* ---------------- HASH MPIN ---------------- */
+    const mpinHash = await bcrypt.hash(mpin, 10);
+
+    /* ---------------- INSERT PROFILE ---------------- */
     const { data, error } = await supabase
       .from("profiles")
       .insert({
-        id: userId, // ✅ THIS FIXES YOUR ERROR
+        id: userId,
         role: "admin",
         first_name,
         middle_name,
@@ -521,17 +571,57 @@ export const createAdmin = async (req: Request, res: Response) => {
         phone,
         email,
         profile_photo,
+        mpin_hash: mpinHash,   // ⭐ CRITICAL
       })
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
+    if (error) throw error;
 
-    res.status(201).json(data)
+    return res.status(201).json({
+      message: "Admin created successfully",
+      admin: data,
+    });
+
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: "Failed to create admin" })
+    console.error("CREATE ADMIN ERROR:", err);
+    return res.status(500).json({ error: "Failed to create admin" });
   }
-}
+};
 
+export const deleteAdmin = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
+    const { adminId } = req.params;
+
+    // prevent self delete
+    if (adminId === req.user.id) {
+      return res.status(400).json({
+        error: "You cannot delete your own account",
+      });
+    }
+
+    /* ---------------- 1️⃣ DELETE PROFILE ---------------- */
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", adminId);
+
+    if (profileError) throw profileError;
+
+    /* ---------------- 2️⃣ DELETE AUTH USER (CRITICAL) ---------------- */
+    const { error: authError } =
+      await supabase.auth.admin.deleteUser(adminId);
+
+    if (authError) throw authError;
+
+    return res.json({ message: "Admin removed successfully" });
+
+  } catch (err) {
+    console.error("DELETE ADMIN ERROR:", err);
+    return res.status(500).json({ error: "Failed to delete admin" });
+  }
+};

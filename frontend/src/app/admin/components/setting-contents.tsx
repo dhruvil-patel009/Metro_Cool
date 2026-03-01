@@ -198,23 +198,40 @@ const handleSaveChanges = async () => {
 
   /* ================= DELETE ADMIN ================= */
 
-  const deleteAdmin = async (adminId: string) => {
+const deleteAdmin = async (adminId: string) => {
+  try {
     if (isCurrentAdmin(adminId)) return
 
     if (!confirm("Are you sure you want to remove this admin?"))
       return
 
-    await fetch(`${API_URL}/admin/admins/${adminId}`, {
+    const res = await fetch(`${API_URL}/admin/admins/${adminId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
 
-    setAdmins((prev) =>
-      prev.filter((a) => a.id !== adminId),
-    )
+    const data = await res.json()
+
+    if (!res.ok) {
+      alert(data?.error || "Failed to delete admin")
+      return
+    }
+
+    // ✅ remove locally
+    setAdmins(prev => prev.filter(a => a.id !== adminId))
+
+    // ⭐ VERY IMPORTANT — sync with database
+    await fetchAdmins()
+
+    alert("Admin removed successfully")
+
+  } catch (err) {
+    console.error(err)
+    alert("Something went wrong while deleting admin")
   }
+}
 
 const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0]
@@ -246,7 +263,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
   return (
     <div className="flex flex-col lg:flex-row h-full">
-      <div className="w-full lg:w-64 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex-shrink-0 overflow-x-auto lg:overflow-y-auto">
+      {/* <div className="w-full lg:w-64 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex-shrink-0 overflow-x-auto lg:overflow-y-auto">
         <div className="p-6 space-y-1">
           <button
             onClick={() => scrollToSection("profile")}
@@ -275,7 +292,7 @@ const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             <span className="font-medium">Notifications</span>
           </button>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex-1 overflow-y-auto">
         <div className="lg:px-8 lg:py-8 py-8 px-2">

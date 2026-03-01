@@ -2,6 +2,7 @@ import { apiFetch } from "@/app/lib/api";
 
 /* ================= TYPES ================= */
 
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 export interface Product {
   id: string;
   title: string;
@@ -32,11 +33,18 @@ export const getProductById = async (id: string): Promise<Product> => {
 
 /* ================= CREATE ================= */
 
-export const createProduct = async (payload: FormData) => {
-  return apiFetch("/products", {
+export const createProduct = async (formData: FormData) => {
+  const token = localStorage.getItem("accessToken");
+
+  const res = await fetch(`${API_URL}/products/create`, {
     method: "POST",
-    body: payload, // ✅ FormData
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
   });
+
+  return res.json();
 };
 
 

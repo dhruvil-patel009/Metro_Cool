@@ -4,26 +4,26 @@ import { Request } from "express";
 
 const storage = multer.memoryStorage();
 
-const fileFilter = (
-  _req: Request,
-  file: Express.Multer.File,
-  cb: multer.FileFilterCallback
-) => {
+
   // Allowed types
+const fileFilter: multer.Options["fileFilter"] = (req, file, cb) => {
   const allowedMimeTypes = [
     "image/jpeg",
     "image/png",
-    "image/jpg",
-    "application/pdf"
+    "image/webp",
+    "image/jpg",   // fallback
+    "application/pdf",
   ];
 
-  if (!allowedMimeTypes.includes(file.mimetype)) {
-    return cb(
-      new Error("Only JPG, PNG images or PDF files are allowed")
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        `Invalid file type: ${file.mimetype}. Only JPG, PNG, WEBP or PDF allowed`
+      )
     );
   }
-
-  cb(null, true);
 };
 
 export const upload = multer({
