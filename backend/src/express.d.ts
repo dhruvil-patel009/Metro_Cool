@@ -20,35 +20,21 @@
 // export {};
 
 
-// import "express";
+import "express";
 
-// declare global {
-//   namespace Express {
-//     interface UserPayload {
-//       id: string;
-//       // role?: "user" | "technician" | "admin";
-//       role?: string;
-//       email?: string;
-//     }
-
-//     interface Request {
-//       user: UserPayload;
-//     }
-//   }
-// }
-
-// export {};
-
-// src/express.d.ts
-
-import { Request } from "express-serve-static-core";
-
-declare module "express-serve-static-core" {
-  interface Request {
-    user?: {
+declare global {
+  namespace Express {
+    interface UserPayload {
       id: string;
+      // role?: "user" | "technician" | "admin";
       role?: string;
       email?: string;
-    };
+    }
+
+    interface Request {
+      user: UserPayload;
+    }
   }
 }
+
+export {};
