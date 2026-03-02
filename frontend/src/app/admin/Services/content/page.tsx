@@ -97,7 +97,7 @@ body: JSON.stringify({ service_ids:serviceIds, ...faq })
 };
 
   return (
-    <div className="p-10 space-y-10 max-w-3xl">
+    <div className="px-4 py-8 sm:px-6 lg:px-10 bg-white space-y-10 max-w-sm sm:max-w-3xl lg:max-w-7xl mx-auto">
       <h1 className="text-2xl font-bold">Service Content Manager</h1>
 
       {/* SELECT SERVICE */}
