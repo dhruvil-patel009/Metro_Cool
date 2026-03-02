@@ -195,8 +195,8 @@ if (thumbnails.length < 3) {
 
         {/* ACTIONS */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit}>Create Product</Button>
+          <Button variant="outline" className="cursor-pointer" onClick={onClose}>Cancel</Button>
+          <Button className="bg-blue-600 hover:bg-blue-900 cursor-pointer" onClick={handleSubmit}>Create Product</Button>
         </div>
       </div>
     </div>

@@ -13,7 +13,7 @@ export default function ProductsPage() {
     <div className="lg:px-6 lg:py-6 py-6 px-2 space-y-6">
       <div className="flex justify-between">
         <h1 className="text-2xl font-bold">Products</h1>
-        <Button onClick={() => setOpen(true)}>Add Product</Button>
+        <Button className="bg-blue-600 hover:bg-blue-900 cursor-pointer" onClick={() => setOpen(true)}>Add Product</Button>
       </div>
 
       <ProductsTable />

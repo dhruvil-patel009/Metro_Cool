@@ -118,7 +118,7 @@ export function NotificationsDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative rounded-lg p-2 transition-colors hover:bg-gray-100"
       >
-        <Bell className="h-5 w-5 text-gray-600" />
+        <Bell className="h-8 w-8 text-gray-600" />
         {unreadCount > 0 && (
           <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white">
             {unreadCount}

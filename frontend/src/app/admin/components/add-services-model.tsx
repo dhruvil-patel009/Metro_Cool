@@ -361,7 +361,7 @@ toast.error(
             <Button onClick={handleClose} variant="outline" className="h-10 border-gray-300 bg-transparent bg-white text-black">
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="h-10 bg-blue-500 hover:bg-blue-700">
+            <Button onClick={handleSubmit} className="h-10 bg-blue-500 cursor-pointer hover:bg-blue-700">
               Create Service
             </Button>
           </div>

@@ -69,15 +69,15 @@ export function ServicesContent() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
+              {/* <Button variant="outline" size="icon">
                 <Download className="h-4 w-4 text-gray-600" />
               </Button>
               <Button variant="outline" size="icon">
                 <Printer className="h-4 w-4 text-gray-600" />
-              </Button>
+              </Button> */}
               <Button
                 onClick={() => setIsAddServiceModalOpen(true)}
-                className="h-10 bg-blue-500 text-white hover:bg-blue-700"
+                className="h-10 cursor-pointer bg-blue-500 text-white hover:bg-blue-700"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add New Service

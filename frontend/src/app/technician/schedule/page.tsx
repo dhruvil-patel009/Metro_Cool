@@ -395,7 +395,7 @@ export default function SchedulePage() {
               </div>
               <Button
                 variant="link"
-                className="text-blue-500 font-semibold text-sm p-0 h-auto hover:underline"
+                className="text-blue-500 cursor-pointer font-semibold text-sm p-0 h-auto hover:underline"
               >
                 VIEW ALL
               </Button>

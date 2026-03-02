@@ -195,7 +195,7 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   {/* Profile Image */}
                   <div className="md:col-span-2 flex items-center gap-6">
                     <div className="relative">
-                      <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-3xl flex items-center justify-center">
                         <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center shadow-sm overflow-hidden">
                           <img
   key={profileImage}
