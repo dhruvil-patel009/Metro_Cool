@@ -2,14 +2,15 @@ import { Request, Response } from "express";
 import { supabase } from "../utils/supabase.js";
 import { uploadFileToSupabase } from "../utils/uploadToSupabase.js";
 
-/* ---------------- CREATE PRODUCT ---------------- */
+/* =========================================================
+   CREATE PRODUCT
+========================================================= */
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const {
       title,
       shortDesc,
       description,
-      price,
       oldPrice,
       rating,
       reviewCount,
@@ -18,18 +19,19 @@ export const createProduct = async (req: Request, res: Response) => {
       inStock,
       category,
       brand,
-      capacity,
       specifications,
       features,
+      capacityPrices, // <-- NEW
     } = req.body;
 
-    if (!title || !price) {
-      return res.status(400).json({ error: "Title & price required" });
+    if (!title) {
+      return res.status(400).json({ error: "Title required" });
     }
 
     const files = req.files as any;
 
-    /* ---------- FILE UPLOADS ---------- */
+    /* ---------- Upload Files ---------- */
+
     const mainImage = files?.mainImage
       ? await uploadFileToSupabase(files.mainImage[0], "main")
       : null;
@@ -42,11 +44,8 @@ export const createProduct = async (req: Request, res: Response) => {
         )
       : [];
 
-    if (thumbnails.length < 3) {
-      return res
-        .status(400)
-        .json({ error: "Minimum 3 thumbnail images required" });
-    }
+    if (thumbnails.length < 3)
+      return res.status(400).json({ error: "Minimum 3 thumbnails required" });
 
     const galleryImages = files?.gallery
       ? await Promise.all(
@@ -60,27 +59,41 @@ export const createProduct = async (req: Request, res: Response) => {
       ? await uploadFileToSupabase(files.catalog[0], "catalog")
       : null;
 
-    /* ---------- INSERT PRODUCT ---------- */
+    /* ---------- Parse JSON ---------- */
+    let parsedCapacityPrices: any[] = [];
+    if (capacityPrices) {
+      try {
+        parsedCapacityPrices = JSON.parse(capacityPrices);
+      } catch {
+        return res.status(400).json({ error: "Invalid capacityPrices JSON" });
+      }
+    }
+
+    /* ---------- Base price (lowest capacity price) ---------- */
+    const basePrice =
+      parsedCapacityPrices.length > 0
+        ? Math.min(...parsedCapacityPrices.map((c) => Number(c.price)))
+        : 0;
+
+    /* ---------- Insert ---------- */
     const { data, error } = await supabase
       .from("products")
       .insert({
         title,
         short_desc: shortDesc,
         description,
-        price,
-        old_price: oldPrice,
-        rating,
-        review_count: reviewCount,
+        price: basePrice, // shown in listing cards
+        rating: Number(req.body.rating || 0),
+        review_count: Number(req.body.reviewCount || 0),
+        old_price: Number(req.body.oldPrice || 0),
         badge,
         badge_color: badgeColor,
         in_stock: inStock === "true",
         category,
         brand,
-        capacity,
-
         specifications: specifications ? JSON.parse(specifications) : [],
         features: features ? JSON.parse(features) : [],
-
+        capacity_prices: parsedCapacityPrices, // ⭐ MAIN CHANGE
         main_image: mainImage,
         thumbnail_images: thumbnails,
         gallery_images: galleryImages,
@@ -91,17 +104,16 @@ export const createProduct = async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    res.status(201).json({
-      message: "Product created successfully",
-      product: data,
-    });
+    res.status(201).json({ message: "Product created", product: data });
   } catch (err: any) {
+    console.log(err);
     res.status(500).json({ error: err.message });
-    console.log("Product not insert",err.message)
   }
 };
 
-/* ---------------- GET ALL ---------------- */
+/* =========================================================
+   GET ALL PRODUCTS
+========================================================= */
 export const getProducts = async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("products")
@@ -109,10 +121,13 @@ export const getProducts = async (_req: Request, res: Response) => {
     .order("created_at", { ascending: false });
 
   if (error) return res.status(400).json({ error: error.message });
+
   res.json(data);
 };
 
-/* ---------------- GET ONE ---------------- */
+/* =========================================================
+   GET PRODUCT BY ID
+========================================================= */
 export const getProductById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
@@ -123,15 +138,23 @@ export const getProductById = async (req: Request, res: Response) => {
     .single();
 
   if (error) return res.status(404).json({ error: "Product not found" });
+
   res.json(data);
 };
 
-/* ---------------- UPDATE ---------------- */
+/* =========================================================
+   UPDATE PRODUCT
+========================================================= */
 export const updateProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const payload = {
+    let parsedCapacityPrices;
+    if (req.body.capacityPrices) {
+      parsedCapacityPrices = JSON.parse(req.body.capacityPrices);
+    }
+
+    const payload: any = {
       ...req.body,
       specifications: req.body.specifications
         ? JSON.parse(req.body.specifications)
@@ -139,6 +162,7 @@ export const updateProduct = async (req: Request, res: Response) => {
       features: req.body.features
         ? JSON.parse(req.body.features)
         : undefined,
+      capacity_prices: parsedCapacityPrices,
       updated_at: new Date(),
     };
 
@@ -151,16 +175,15 @@ export const updateProduct = async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    res.json({
-      message: "Product updated successfully",
-      product: data,
-    });
+    res.json({ message: "Product updated", product: data });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
 };
 
-/* ---------------- DELETE ---------------- */
+/* =========================================================
+   DELETE
+========================================================= */
 export const deleteProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
 

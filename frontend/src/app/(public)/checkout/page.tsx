@@ -1,10 +1,12 @@
 "use client"
 
+import { useCart } from "@/app/context/CartContext";
 import { useState } from "react"
 
 export default function CheckoutPage() {
   const [selectedDate, setSelectedDate] = useState("Oct 25")
   const [paymentMethod, setPaymentMethod] = useState("upi")
+  const { cart, total } = useCart();
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -115,26 +117,27 @@ export default function CheckoutPage() {
             Order Summary
           </h2>
 
-          <div className="flex gap-4 border-b pb-4">
-            <img
-              src="https://via.placeholder.com/80"
-              alt="product"
-              className="w-20 h-20 rounded-md border"
-            />
-            <div>
-              <h4 className="font-medium">
-                Metro Cool Inverter Split AC - 1.5 Ton
-              </h4>
-              <p className="text-blue-600 font-semibold">
-                $450.00
-              </p>
-            </div>
-          </div>
+{/* ⭐ REAL ORDER ITEMS */}
+{cart.map((item) => (
+  <div key={item.id + item.capacity} className="flex gap-4 border-b pb-4">
+    <img
+      src={item.image}
+      className="w-20 h-20 rounded-md border"
+    />
+    <div>
+      <h4 className="font-medium">{item.title}</h4>
+      <p className="text-xs text-gray-500">{item.capacity}</p>
+      <p className="text-blue-600 font-semibold">
+        ₹{item.price} × {item.qty}
+      </p>
+    </div>
+  </div>
+))}
 
           <div className="space-y-3 text-sm mt-4">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>$450.00</span>
+              <span>₹{total}</span>
             </div>
 
             <div className="flex justify-between">
@@ -144,17 +147,17 @@ export default function CheckoutPage() {
 
             <div className="flex justify-between">
               <span>Installation</span>
-              <span>$50.00</span>
+              <span>₹50.00</span>
             </div>
 
             <div className="flex justify-between">
               <span>Tax</span>
-              <span>$12.50</span>
+              <span>₹12.50</span>
             </div>
 
             <div className="flex justify-between text-lg font-semibold border-t pt-3">
               <span>Total</span>
-              <span className="text-blue-600">$512.50</span>
+              <span className="text-blue-600">₹{total + 50 + 12.5}</span>
             </div>
           </div>
 

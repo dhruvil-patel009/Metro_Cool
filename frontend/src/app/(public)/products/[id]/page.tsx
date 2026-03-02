@@ -22,6 +22,9 @@ import "@react-pdf-viewer/core/lib/styles/index.css"
 import "@react-pdf-viewer/default-layout/lib/styles/index.css"
 import { useRouter } from "next/navigation"
 import { formatINR } from "@/app/lib/currency"
+import { useCart } from "@/app/context/CartContext"
+import { FaTrashAlt } from 'react-icons/fa';
+
 
 export default function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>()
@@ -35,6 +38,7 @@ export default function ProductDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const router = useRouter()
+  const [showCartWarning, setShowCartWarning] = useState(false);
 
 
   const brochureLayoutPlugin = defaultLayoutPlugin({
@@ -42,6 +46,10 @@ export default function ProductDetailsPage() {
     defaultTabs[0], // thumbnails
   ],
 })
+
+// ⭐ NEW
+const { cart, addToCart, removeFromCart, updateQty, total } = useCart();
+
 
   /* ---------------- FETCH PRODUCT ---------------- */
   useEffect(() => {
@@ -51,7 +59,8 @@ export default function ProductDetailsPage() {
       .then((res) => res.json())
       .then((data) => {
         setProduct(data)
-        setSelectedCapacity(data.capacity || "1.5 Ton")
+        // ⭐ automatically pick first available capacity
+setSelectedCapacity(data.capacity_prices?.[0]?.capacity);
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -97,6 +106,15 @@ export default function ProductDetailsPage() {
     ...(product.thumbnail_images || []),
     ...(product.gallery_images || []),
   ].filter(Boolean)
+
+// ⭐ SAFE PRICE CALCULATION (NEW)
+const selectedPrice = product
+  ? (
+      product.capacity_prices?.find(
+        (c: any) => c.capacity === selectedCapacity
+      )?.price ?? product.price
+    )
+  : 0;
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -177,11 +195,11 @@ export default function ProductDetailsPage() {
 
               <div className="mb-6 flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-blue-600">
-                  {formatINR(product.price.toFixed(2))}
+                  {formatINR(selectedPrice)}
                 </span>
                 {product.old_price && (
                   <span className="text-sm line-through text-slate-400">
-                    {formatINR(product.old_price.toFixed(2))}
+                    {formatINR(product.old_price)}
                   </span>
                 )}
               </div>
@@ -227,13 +245,40 @@ export default function ProductDetailsPage() {
               </div> */}
 
               <button
-  onClick={() => router.push("/checkout")}
-  className="mb-3 w-full cursor-pointer rounded-md bg-blue-600 py-4 font-bold text-white hover:bg-blue-700 transition"
+  onClick={() => {
+  addToCart({
+    id: product.id,
+    title: product.title,
+    image: images[0],
+    capacity: selectedCapacity,
+    price: selectedPrice,
+    qty: 1,
+  });
+
+  router.push("/checkout");
+}}
+  disabled={!product.in_stock}
+className={`mb-3 w-full cursor-pointer rounded-md py-4 font-bold transition
+  ${
+    !product.in_stock
+      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+      : "bg-blue-600 text-white hover:bg-blue-700"
+  }`}
 >
   Buy Now
 </button>
               <button
-        onClick={() => setIsCartOpen(true)}
+        onClick={() => {
+  addToCart({
+    id: product.id,
+    title: product.title,
+    image: images[0],
+    capacity: selectedCapacity,
+    price: selectedPrice,
+    qty: 1,
+  });
+  setIsCartOpen(true);
+}}
         className="w-full rounded-md cursor-pointer border py-4 font-bold"
       >
         Add to Cart
@@ -272,80 +317,81 @@ export default function ProductDetailsPage() {
         </div>
 
         {/* Cart Items */}
-        <div className="px-5 space-y-6 overflow-y-auto h-[60%]">
+{/* ⭐ REAL CART ITEMS */}
+<div className="px-5 space-y-6 overflow-y-auto h-[60%]">
+  {cart.length === 0 ? (
+    <p className="text-center text-gray-400 mt-10">Your cart is empty</p>
+  ) : (
+    cart.map((item) => (
+      <div key={item.id + item.capacity} className="flex gap-4">
+        <img
+          src={item.image}
+          className="w-20 h-20 rounded-md border"
+        />
 
-          {/* Item 1 */}
-          <div className="flex gap-4">
-            <img
-              src={images[selectedImage]}
-              alt="product"
-              className="w-20 h-20 rounded-md border"
-            />
-            
-            <div className="flex-1">
-              <h4 className="font-semibold text-sm">
-                MetroCool Inverter Split AC - 1.5 Ton
-              </h4>
-              <p className="text-xs text-gray-500">Capacity: 1.5 Ton</p>
+        <div className="flex-1">
+          <h4 className="font-semibold text-sm">{item.title}</h4>
+          <p className="text-xs text-gray-500">Capacity: {item.capacity}</p>
+          <p className="text-xs text-gray-400">
+  Unit Price: ₹{item.price}
+</p>
 
-              {/* Quantity */}
-              <div className="flex items-center gap-3 mt-3">
-                <div className="flex items-center border rounded-md">
-                  <button className="px-3 py-1">
-                    <Minus size={14} />
-                  </button>
-                  <span className="px-3">1</span>
-                  <button className="px-3 py-1">
-                    <Plus size={14} />
-                  </button>
-                </div>
+          {/* Quantity */}
+          <div className="flex items-center gap-3 mt-3">
+            <div className="flex items-center border rounded-md">
+              <button
+  className="px-3 py-1"
+  onClick={() => {
+    if (item.qty === 1) {
+      removeFromCart(item.id, item.capacity);
+    } else {
+      updateQty(item.id, item.capacity, item.qty - 1);
+    }
+  }}
+>
+  <Minus size={14} />
+</button>
 
-                <span className="ml-auto font-semibold text-blue-600">
-                  $500.00
-                </span>
-              </div>
+              <span className="px-3">{item.qty}</span>
+
+              <button
+                className="px-3 py-1"
+                onClick={() =>
+                  updateQty(item.id, item.capacity, item.qty + 1)
+                }
+              >
+                <Plus size={14} />
+              </button>
             </div>
+
+            <span className="ml-auto font-semibold text-blue-600">
+              ₹{item.price * item.qty}
+            </span>
           </div>
-
-          {/* Item 2 */}
-          <div className="flex gap-4">
-            <img
-              src={images[selectedImage]}
-              alt="product"
-              className="w-20 h-20 rounded-md border"
-            />
-            <div className="flex-1">
-              <h4 className="font-semibold text-sm">
-                PureAir Smart Purifier
-              </h4>
-              <p className="text-xs text-gray-500">Color: Arctic White</p>
-
-              <div className="flex items-center gap-3 mt-3">
-                <div className="flex items-center border rounded-md">
-                  <button className="px-3 py-1">
-                    <Minus size={14} />
-                  </button>
-                  <span className="px-3">1</span>
-                  <button className="px-3 py-1">
-                    <Plus size={14} />
-                  </button>
-                </div>
-
-                <span className="ml-auto font-semibold text-blue-600">
-                  $199.00
-                </span>
-              </div>
-            </div>
-          </div>
-
         </div>
+          <button
+  onClick={() => removeFromCart(item.id, item.capacity)}
+  className="text-xs text-red-500 hover:underline mt-1"
+>
+  <FaTrashAlt className="text-red-500 h-5 w-5 cursor-pointer" />
+</button>
+      </div>
+    ))
+  )}
+</div>
 
         {/* Bottom Checkout Section */}
         <div className="absolute bottom-0 w-full border-t bg-white p-5 space-y-4">
 
+{/* ⭐ CART EMPTY TOOLTIP */}
+{showCartWarning && (
+  <div className="mb-3 text-center text-sm bg-red-100 text-red-600 py-2 rounded-md animate-pulse">
+    Please add a product first 🛒
+  </div>
+)}
           <div className="flex justify-between text-sm">
             <span>Subtotal</span>
-            <span>$699.00</span>
+            <span>₹{total}</span>
           </div>
 
           <div className="flex justify-between text-sm">
@@ -355,12 +401,31 @@ export default function ProductDetailsPage() {
 
           <div className="flex justify-between font-semibold text-lg">
             <span>Total</span>
-            <span>$699.00</span>
+            <span>₹{total}</span>
           </div>
 
-          <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
-            Checkout Now →
-          </button>
+<button
+onClick={() => {
+  if (cart.length === 0) {
+    setShowCartWarning(true);
+
+    // auto hide tooltip
+    setTimeout(() => setShowCartWarning(false), 2000);
+    return;
+  }
+
+  setIsCartOpen(false);
+  router.push("/checkout");
+}}
+className={`w-full py-3 rounded-lg font-semibold transition
+  ${
+    cart.length === 0
+      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+      : "bg-blue-600 text-white hover:bg-blue-700"
+  }`}
+>
+  Checkout Now →
+</button>
 
           <p className="text-center text-xs text-gray-400">
             Secure encrypted checkout
