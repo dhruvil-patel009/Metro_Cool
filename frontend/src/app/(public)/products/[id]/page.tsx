@@ -21,6 +21,7 @@ import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout"
 import "@react-pdf-viewer/core/lib/styles/index.css"
 import "@react-pdf-viewer/default-layout/lib/styles/index.css"
 import { useRouter } from "next/navigation"
+import { formatINR } from "@/app/lib/currency"
 
 export default function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>()
@@ -176,11 +177,11 @@ export default function ProductDetailsPage() {
 
               <div className="mb-6 flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-blue-600">
-                  ${Number(product.price).toFixed(2)}
+                  {formatINR(product.price.toFixed(2))}
                 </span>
                 {product.old_price && (
                   <span className="text-sm line-through text-slate-400">
-                    ${Number(product.old_price).toFixed(2)}
+                    {formatINR(product.old_price.toFixed(2))}
                   </span>
                 )}
               </div>
@@ -206,7 +207,7 @@ export default function ProductDetailsPage() {
               </div>
 
               {/* INSTALLATION */}
-              <div className="mb-6 rounded-md border bg-slate-50 p-4">
+              {/* <div className="mb-6 rounded-md border bg-slate-50 p-4">
                 <label className="flex gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -223,7 +224,7 @@ export default function ProductDetailsPage() {
                     </p>
                   </div>
                 </label>
-              </div>
+              </div> */}
 
               <button
   onClick={() => router.push("/checkout")}

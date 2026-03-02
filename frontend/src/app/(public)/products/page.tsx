@@ -4,6 +4,7 @@ import Head from "next/head"
 import { ShoppingCart, ChevronDown, Star, Heart } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { formatINR } from "@/app/lib/currency"
 
 export default function ProductsPage() {
   /* ---------------- STATE ---------------- */
@@ -271,11 +272,11 @@ export default function ProductsPage() {
                         <div>
                           {product.old_price && (
                             <span className="text-xs text-white/40 line-through">
-                              ${Number(product.old_price).toFixed(2)}
+                              {formatINR(product.old_price.toFixed(2))}
                             </span>
                           )}
                           <div className="text-2xl font-bold text-white">
-                            ${Number(product.price).toFixed(2)}
+                            {formatINR(product.price.toFixed(2))}
                           </div>
                         </div>
 
