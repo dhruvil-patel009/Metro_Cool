@@ -7,6 +7,7 @@ import {
   Shield,
   Truck,
   ChevronRight,
+  X,  Plus, Minus,
   Heart,
   Download,
 } from "lucide-react"
@@ -19,6 +20,7 @@ import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout"
 
 import "@react-pdf-viewer/core/lib/styles/index.css"
 import "@react-pdf-viewer/default-layout/lib/styles/index.css"
+import { useRouter } from "next/navigation"
 
 export default function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>()
@@ -30,6 +32,8 @@ export default function ProductDetailsPage() {
   const [addInstallation, setAddInstallation] = useState(false)
   const [activeTab, setActiveTab] = useState("description")
   const [loading, setLoading] = useState(true)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const router = useRouter()
 
 
   const brochureLayoutPlugin = defaultLayoutPlugin({
@@ -221,12 +225,147 @@ export default function ProductDetailsPage() {
                 </label>
               </div>
 
-              <button className="mb-3 w-full cursor-pointer rounded-md bg-blue-600 py-4 font-bold text-white">
-                Purchase Now
-              </button>
-              <button className="w-full rounded-md cursor-pointer border py-4 font-bold">
-                Add to Cart
-              </button>
+              <button
+  onClick={() => router.push("/checkout")}
+  className="mb-3 w-full cursor-pointer rounded-md bg-blue-600 py-4 font-bold text-white hover:bg-blue-700 transition"
+>
+  Buy Now
+</button>
+              <button
+        onClick={() => setIsCartOpen(true)}
+        className="w-full rounded-md cursor-pointer border py-4 font-bold"
+      >
+        Add to Cart
+      </button>
+
+      {/* Overlay */}
+      {isCartOpen && (
+        <div
+          onClick={() => setIsCartOpen(false)}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity"
+        />
+      )}
+
+      {/* Cart Drawer */}
+      <div
+        className={`fixed top-0 right-0 h-full bg-white z-50 shadow-xl transition-transform duration-300 ease-in-out
+        w-full sm:w-[420px]
+        ${isCartOpen ? "translate-x-0" : "translate-x-full"}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b">
+          <div className="flex items-center gap-2 font-semibold text-lg">
+            <ShoppingCart size={20} />
+            Your Cart
+          </div>
+          <button className="cursor-pointer" onClick={() => setIsCartOpen(false)}>
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Success Message */}
+        <div className="p-4">
+          <div className="bg-green-100 text-green-700 rounded-lg p-3 text-sm">
+            ✓ Item added to cart
+          </div>
+        </div>
+
+        {/* Cart Items */}
+        <div className="px-5 space-y-6 overflow-y-auto h-[60%]">
+
+          {/* Item 1 */}
+          <div className="flex gap-4">
+            <img
+              src={images[selectedImage]}
+              alt="product"
+              className="w-20 h-20 rounded-md border"
+            />
+            
+            <div className="flex-1">
+              <h4 className="font-semibold text-sm">
+                MetroCool Inverter Split AC - 1.5 Ton
+              </h4>
+              <p className="text-xs text-gray-500">Capacity: 1.5 Ton</p>
+
+              {/* Quantity */}
+              <div className="flex items-center gap-3 mt-3">
+                <div className="flex items-center border rounded-md">
+                  <button className="px-3 py-1">
+                    <Minus size={14} />
+                  </button>
+                  <span className="px-3">1</span>
+                  <button className="px-3 py-1">
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                <span className="ml-auto font-semibold text-blue-600">
+                  $500.00
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Item 2 */}
+          <div className="flex gap-4">
+            <img
+              src={images[selectedImage]}
+              alt="product"
+              className="w-20 h-20 rounded-md border"
+            />
+            <div className="flex-1">
+              <h4 className="font-semibold text-sm">
+                PureAir Smart Purifier
+              </h4>
+              <p className="text-xs text-gray-500">Color: Arctic White</p>
+
+              <div className="flex items-center gap-3 mt-3">
+                <div className="flex items-center border rounded-md">
+                  <button className="px-3 py-1">
+                    <Minus size={14} />
+                  </button>
+                  <span className="px-3">1</span>
+                  <button className="px-3 py-1">
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                <span className="ml-auto font-semibold text-blue-600">
+                  $199.00
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Bottom Checkout Section */}
+        <div className="absolute bottom-0 w-full border-t bg-white p-5 space-y-4">
+
+          <div className="flex justify-between text-sm">
+            <span>Subtotal</span>
+            <span>$699.00</span>
+          </div>
+
+          <div className="flex justify-between text-sm">
+            <span>Shipping</span>
+            <span className="text-green-600 font-medium">FREE</span>
+          </div>
+
+          <div className="flex justify-between font-semibold text-lg">
+            <span>Total</span>
+            <span>$699.00</span>
+          </div>
+
+          <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+            Checkout Now →
+          </button>
+
+          <p className="text-center text-xs text-gray-400">
+            Secure encrypted checkout
+          </p>
+        </div>
+      </div>
 
               <div className="mt-6 grid grid-cols-2 gap-4 border-t pt-6">
                 <div className="flex gap-2">
