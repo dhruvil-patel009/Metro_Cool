@@ -134,25 +134,25 @@ export default function CompletionContent() {
 /* ---------------- RAZORPAY ---------------- */
 
 const loadRazorpay = () => {
-  return new Promise<boolean>((resolve) => {
+  return new Promise<void>((resolve, reject) => {
+
     if (typeof window === "undefined") {
-      resolve(false)
+      reject("Window not available")
       return
     }
 
-    // If already loaded
-    if (window.Razorpay) {
-      resolve(true)
+    if (window.Razorpay && typeof window.Razorpay === "function") {
+      resolve()
       return
     }
 
-    // Prevent duplicate script
     const existingScript = document.querySelector(
       'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
     )
 
     if (existingScript) {
-      resolve(true)
+      existingScript.addEventListener("load", () => resolve())
+      existingScript.addEventListener("error", () => reject())
       return
     }
 
@@ -160,8 +160,15 @@ const loadRazorpay = () => {
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.async = true
 
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
+    script.onload = () => {
+      if (window.Razorpay && typeof window.Razorpay === "function") {
+        resolve()
+      } else {
+        reject("Razorpay failed to initialize")
+      }
+    }
+
+    script.onerror = () => reject("Script load failed")
 
     document.body.appendChild(script)
   })
@@ -169,19 +176,26 @@ const loadRazorpay = () => {
 
 const handleRazorpay = async () => {
 
-  if (razorpayOpened.current) return  // ✅ prevent double open
+  if (razorpayOpened.current) return
   razorpayOpened.current = true
 
-  const loaded = await loadRazorpay()
-
-  if (!loaded) {
-    toast.error("Failed to load payment gateway")
+  try {
+    await loadRazorpay()
+  } catch (err) {
+    console.error(err)
+    toast.error("Payment gateway failed to load")
     razorpayOpened.current = false
     return
   }
 
-  if (!bookingId) {
-    toast.error("Booking ID missing")
+  if (!window.Razorpay || typeof window.Razorpay !== "function") {
+    toast.error("Razorpay not available")
+    razorpayOpened.current = false
+    return
+  }
+
+  if (!bookingId || !booking?.total_amount) {
+    toast.error("Invalid booking details")
     razorpayOpened.current = false
     return
   }
@@ -189,16 +203,14 @@ const handleRazorpay = async () => {
   const parsedAmount = parseFloat(booking.total_amount)
 
   if (!parsedAmount || isNaN(parsedAmount)) {
-    toast.error("Invalid amount")
+    toast.error("Invalid payment amount")
     razorpayOpened.current = false
     return
   }
 
-  const finalAmount = Math.round(parsedAmount * 100)
-
   const token = localStorage.getItem("accessToken")
 
-  const res = await fetch(`${API_URL}/payments/razorpay-order`, {
+  const orderRes = await fetch(`${API_URL}/payments/razorpay-order`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -210,21 +222,21 @@ const handleRazorpay = async () => {
     }),
   })
 
-  const data = await res.json()
+  const orderData = await orderRes.json()
 
-  if (!res.ok || !data.orderId || !data.key) {
+  if (!orderRes.ok || !orderData.orderId || !orderData.key) {
     toast.error("Order creation failed")
     razorpayOpened.current = false
     return
   }
 
   const options = {
-    key: data.key,
-    amount: finalAmount,
+    key: orderData.key,
+    order_id: orderData.orderId,
+    amount: Math.round(parsedAmount * 100),
     currency: "INR",
-    order_id: data.orderId,
     name: "Metro Cool",
-    description: booking.service.title,
+    description: booking.service?.title || "Service Payment",
 
     handler: async function (response: any) {
 
@@ -249,6 +261,8 @@ const handleRazorpay = async () => {
       }
     }
   }
+
+  console.log("Opening Razorpay with:", options)
 
   const rzp = new window.Razorpay(options)
   rzp.open()
