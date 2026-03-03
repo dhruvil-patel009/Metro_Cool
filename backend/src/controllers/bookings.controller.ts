@@ -1,7 +1,6 @@
 import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
-import { currentSubscription } from "../pushStore.js"
-import { sendPush } from "../utils/push.js"
+
 
 export const getBookedDates = async (req: Request, res: Response) => {
   const { serviceId, month } = req.query
@@ -301,7 +300,6 @@ export const gettechnicianBookingById = async (req: any, res: Response) => {
 
 
 export const updateJobStatus = async (req: any, res: Response) => {
-  console.log("upadted job status ")
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" })
@@ -321,8 +319,7 @@ export const updateJobStatus = async (req: any, res: Response) => {
     .select()
     .single()
     
-  console.log("notifyBookingUpdate called 🚀", booking.job_status)
-    await notifyBookingUpdate(booking)
+
     if (error || !booking) {
       return res.status(404).json({ message: "Booking not found" })
     }
@@ -339,38 +336,38 @@ export const updateJobStatus = async (req: any, res: Response) => {
   }
 }
 
-export const notifyBookingUpdate = async (booking: any) => {
+// export const notifyBookingUpdate = async (booking: any) => {
 
-  if (!currentSubscription) {
-    console.log("No subscription available")
-    return
-  }
+//   if (!currentSubscription) {
+//     console.log("No subscription available")
+//     return
+//   }
 
-  let message = ""
+//   let message = ""
 
-  switch (booking.job_status) {
-    case "assigned":
-      message = "Technician assigned 👨‍🔧"
-      break
-    case "on_the_way":
-      message = "Technician is on the way 🚗"
-      break
-    case "working":
-      message = "Service started 🔧"
-      break
-    case "completed":
-      message = "Service completed 🎉"
-      break
-    default:
-      message = "Booking updated"
-  }
+//   switch (booking.job_status) {
+//     case "assigned":
+//       message = "Technician assigned 👨‍🔧"
+//       break
+//     case "on_the_way":
+//       message = "Technician is on the way 🚗"
+//       break
+//     case "working":
+//       message = "Service started 🔧"
+//       break
+//     case "completed":
+//       message = "Service completed 🎉"
+//       break
+//     default:
+//       message = "Booking updated"
+//   }
 
-  const payload = {
-    title: "Metro Cool Service Update",
-    body: message,
-    url: `https://www.metro-cool.com/bookings?id=${booking.id}`
-  }
+//   const payload = {
+//     title: "Metro Cool Service Update",
+//     body: message,
+//     url: `https://www.metro-cool.com/bookings?id=${booking.id}`
+//   }
 
-  await sendPush(currentSubscription, payload)
-}
+//   await sendPush(currentSubscription, payload)
+// }
 

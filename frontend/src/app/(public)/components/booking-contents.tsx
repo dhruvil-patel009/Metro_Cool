@@ -37,6 +37,7 @@ export default function BookingsContent() {
   const [copiedOTP, setCopiedOTP] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [hasRedirected, setHasRedirected] = useState(false)
+  const previousStatusRef = useRef<string | null>(null)
 
 
   // 🔥 SINGLE OTP (removed duplicate)
@@ -133,6 +134,15 @@ export default function BookingsContent() {
   useEffect(() => {
     if (!booking?.job_status) return
 
+    if (
+    previousStatusRef.current &&
+    previousStatusRef.current !== booking.job_status
+  ) {
+    showLocalNotification(booking.job_status)
+  }
+
+  previousStatusRef.current = booking.job_status
+
     const step = getStepFromStatus(booking.job_status)
     setCurrentStep(step)
 
@@ -151,6 +161,37 @@ export default function BookingsContent() {
   if (!booking) {
     return <div className="p-10 text-center">Loading booking...</div>
   }
+
+  const showLocalNotification = (status: string) => {
+  let message = ""
+
+  switch (status) {
+    case "assigned":
+      message = "Technician assigned 👨‍🔧"
+      break
+    case "on_the_way":
+      message = "Technician is on the way 🚗"
+      break
+    case "working":
+      message = "Service started 🔧"
+      break
+    case "completed":
+      message = "Service completed 🎉"
+      break
+    default:
+      message = "Booking updated"
+  }
+
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission()
+  }
+
+  if (Notification.permission === "granted") {
+    new Notification("Metro Cool Service Update", {
+      body: message,
+    })
+  }
+}
 
   /* ---------------- 🔥 MAP DB → UI VARIABLES ---------------- */
 
