@@ -13,7 +13,6 @@ router.put("/:id/complete", protect, completeBooking)
 router.get("/:id",protect, getBookingById) // ✅ ADD
 router.get("/techjobs/:id",protect, gettechnicianBookingById) // ✅ ADD
 
-router.patch("/bookings/:id/status", updateJobStatus)
-
+router.put("/:id/status", protect, updateJobStatus)
 
 export default router

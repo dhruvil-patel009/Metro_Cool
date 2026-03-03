@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
-import { subscriptions } from "../routes/push.routes.js"
-import { sendPushNotification } from "../utils/push.js"
+import { currentSubscription } from "../pushStore.js"
+import { sendPush } from "../utils/push.js"
 
 export const getBookedDates = async (req: Request, res: Response) => {
   const { serviceId, month } = req.query
@@ -301,6 +301,7 @@ export const gettechnicianBookingById = async (req: any, res: Response) => {
 
 
 export const updateJobStatus = async (req: any, res: Response) => {
+  console.log("upadted job status ")
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" })
@@ -311,21 +312,22 @@ export const updateJobStatus = async (req: any, res: Response) => {
 
     /* 1️⃣ update booking */
     const { data: booking, error } = await supabase
-      .from("bookings")
-      .update({
-        job_status,
-        technician_id: req.user.id
-      })
-      .eq("id", bookingId)
-      .select()
-      .single()
-
+    .from("bookings")
+    .update({
+      job_status,
+      technician_id: req.user.id
+    })
+    .eq("id", bookingId)
+    .select()
+    .single()
+    
+  console.log("notifyBookingUpdate called 🚀", booking.job_status)
+    await notifyBookingUpdate(booking)
     if (error || !booking) {
       return res.status(404).json({ message: "Booking not found" })
     }
 
     /* 2️⃣ 🔔 SEND PUSH NOTIFICATION */
-    await notifyBookingUpdate(booking)
 
     res.json({
       success: true,
@@ -338,6 +340,11 @@ export const updateJobStatus = async (req: any, res: Response) => {
 }
 
 export const notifyBookingUpdate = async (booking: any) => {
+
+  if (!currentSubscription) {
+    console.log("No subscription available")
+    return
+  }
 
   let message = ""
 
@@ -354,11 +361,9 @@ export const notifyBookingUpdate = async (booking: any) => {
     case "completed":
       message = "Service completed 🎉"
       break
+    default:
+      message = "Booking updated"
   }
-
-  const { data: subs } = await supabase
-    .from("push_subscriptions")
-    .select("*")
 
   const payload = {
     title: "Metro Cool Service Update",
@@ -366,14 +371,6 @@ export const notifyBookingUpdate = async (booking: any) => {
     url: `https://www.metro-cool.com/bookings?id=${booking.id}`
   }
 
-  for (const s of subs || []) {
-    await sendPushNotification({
-      endpoint: s.endpoint,
-      keys: {
-        p256dh: s.p256dh,
-        auth: s.auth
-      }
-    }, payload)
-  }
+  await sendPush(currentSubscription, payload)
 }
 

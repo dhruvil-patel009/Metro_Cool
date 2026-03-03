@@ -10,8 +10,8 @@
     "start": "node dist/server.js"
   },
   "engines": {
-  "node": "24.x"
-},
+    "node": "24.x"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

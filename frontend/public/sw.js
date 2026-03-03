@@ -11,12 +11,23 @@ self.addEventListener("push", function (event) {
 
   if (!event.data) return
 
-  const data = event.data.json()
+  let data
+
+  try {
+    data = event.data.json()
+  } catch (err) {
+    // fallback if plain text push
+    data = {
+      title: "Metro Cool",
+      body: event.data.text(),
+      url: "/"
+    }
+  }
 
   const options = {
     body: data.body,
-    icon: "/icon.png",
-    badge: "/icon.png",
+    icon: "/profile.png",
+    badge: "/profile.png",
     vibrate: [200, 100, 200],
     data: { url: data.url }
   }

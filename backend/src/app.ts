@@ -20,10 +20,10 @@ import serviceReportRoutes from "./routes/service-report.routes.js";
 import technicianJobRoutes from "./routes/technicianJob.routes.js";
 import userOrdersRoutes from "./routes/userOrders.routes.js";
 import addressRoutes from "./routes/address.routes.js";
-import pushRoutes from "./routes/push.routes.js";
 import serviceContentRoutes from "./routes/serviceContent.routes.js";
 import serviceDetailsRoutes from "./routes/serviceDetails.routes.js";
 import webhookHandlerRoutes from "./routes/webhookHandler.routes.js";
+import pushRoutes from "./routes/push.routes.js";
 
 
 const app = express();
@@ -124,7 +124,6 @@ app.use("/api/addresses", addressRoutes)
 
 
 app.use("/api/push", pushRoutes)
-
 app.use("/api/technicians", technicianRoutes)
 
 // Payment 
