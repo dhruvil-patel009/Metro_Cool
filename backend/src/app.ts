@@ -27,7 +27,7 @@ import pushRoutes from "./routes/push.routes.js";
 
 
 const app = express();
-app.use("/api/payments/webhook", express.raw({ type: "*/*" }))
+// app.use("/api/payments/webhook", express.raw({ type: "*/*" }))
 app.use(cookieParser())
 
 
@@ -82,19 +82,22 @@ app.get("/", (_req, res) => {
   res.send("Metro Cool API running 🚀");
 });
 
-app.use((req, res, next) => {
+// app.use((req, res, next) => {
 
-  // ⭐⭐⭐ DO NOT PARSE RAZORPAY WEBHOOK
-if (req.originalUrl.startsWith("/api/payments/webhook")) {
-  return next();
-}
+//   // ⭐⭐⭐ DO NOT PARSE RAZORPAY WEBHOOK
+// if (req.originalUrl.startsWith("/api/payments/webhook")) {
+//   return next();
+// }
 
-  if (req.headers["content-type"]?.includes("multipart/form-data")) {
-    return next();
-  }
+//   if (req.headers["content-type"]?.includes("multipart/form-data")) {
+//     return next();
+//   }
 
-  express.json({ limit: "10mb" })(req, res, next);
-});
+//   express.json({ limit: "10mb" })(req, res, next);
+// });
+
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -128,7 +131,7 @@ app.use("/api/technicians", technicianRoutes)
 
 // Payment 
 
-app.use("/api/payments", webhookHandlerRoutes)
+app.use("/api/payments", paymentRoutes)
 
 
 // 🔥 Swagger

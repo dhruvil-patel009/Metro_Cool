@@ -12,6 +12,7 @@ import { hostname } from "os";
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig  = {
+  reactStrictMode: false,   // ✅ MUST be inside object
   images: {
     domains: ["nlimsceezdxwkykpzlbv.supabase.co"],
     remotePatterns: [

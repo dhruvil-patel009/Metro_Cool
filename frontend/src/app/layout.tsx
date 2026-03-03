@@ -71,7 +71,9 @@ export const metadata: Metadata = {
   },
 };
 
-{/* <script src="https://checkout.razorpay.com/v1/checkout.js"></script> */}
+{/* <script src="https://checkout.razorpay.com/v1/checkout.js"></script> */ }
+
+
 
 export default function RootLayout({
   children,
@@ -93,16 +95,13 @@ export default function RootLayout({
     areaServed: "Ahmedabad",
     priceRange: "₹₹",
   };
- return (
+  return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         {/* Razorpay (Correct way) */}
-        {/* <Script
-          src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="afterInteractive"
-        /> */}
+
 
         {/* Local Business Schema for Google */}
         <Script
