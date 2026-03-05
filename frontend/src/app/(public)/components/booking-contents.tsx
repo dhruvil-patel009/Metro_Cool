@@ -21,6 +21,10 @@ import { formatINR } from "@/app/lib/currency"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
+interface ExtendedNotificationOptions extends NotificationOptions {
+  vibrate?: number[]
+}
+
 export default function BookingsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -162,7 +166,8 @@ export default function BookingsContent() {
     return <div className="p-10 text-center">Loading booking...</div>
   }
 
-  const showLocalNotification = (status: string) => {
+const showLocalNotification = async (status: string) => {
+
   let message = ""
 
   switch (status) {
@@ -182,15 +187,17 @@ export default function BookingsContent() {
       message = "Booking updated"
   }
 
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission()
-  }
+  const reg = await navigator.serviceWorker.ready
 
-  if (Notification.permission === "granted") {
-    new Notification("Metro Cool Service Update", {
+  reg.showNotification(
+    "Metro Cool Service Update",
+    {
       body: message,
-    })
-  }
+      icon: "/profile.png",
+      badge: "/profile.png",
+      vibrate: [200, 100, 200],
+    } as any
+  )
 }
 
   /* ---------------- 🔥 MAP DB → UI VARIABLES ---------------- */

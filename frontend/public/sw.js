@@ -1,13 +1,16 @@
 self.addEventListener("install", (event) => {
+  console.log("SW Installed")
   self.skipWaiting()
 })
 
 self.addEventListener("activate", (event) => {
+  console.log("SW Activated")
   event.waitUntil(self.clients.claim())
 })
 
-// 🔔 Receive push
-self.addEventListener("push", function (event) {
+/* 🔔 Receive Push */
+self.addEventListener("push", (event) => {
+  console.log("Push received")
 
   if (!event.data) return
 
@@ -15,12 +18,11 @@ self.addEventListener("push", function (event) {
 
   try {
     data = event.data.json()
-  } catch (err) {
-    // fallback if plain text push
+  } catch {
     data = {
       title: "Metro Cool",
       body: event.data.text(),
-      url: "/"
+      url: "/",
     }
   }
 
@@ -29,7 +31,9 @@ self.addEventListener("push", function (event) {
     icon: "/profile.png",
     badge: "/profile.png",
     vibrate: [200, 100, 200],
-    data: { url: data.url }
+    data: {
+      url: data.url,
+    },
   }
 
   event.waitUntil(
@@ -37,9 +41,10 @@ self.addEventListener("push", function (event) {
   )
 })
 
-// 🔁 Click notification
-self.addEventListener("notificationclick", function (event) {
+/* 🔁 Click Notification */
+self.addEventListener("notificationclick", (event) => {
   event.notification.close()
+
   event.waitUntil(
     clients.openWindow(event.notification.data.url)
   )
