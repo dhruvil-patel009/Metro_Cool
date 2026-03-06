@@ -1,10 +1,19 @@
+# *
 User-agent: *
 Allow: /
 
-# Block private dashboards
-Disallow: /admin/
-Disallow: /technician/
-Disallow: /auth/
+# *
+User-agent: *
+Disallow: /admin
+Disallow: /auth
+Disallow: /technician
+Disallow: /profile
+Disallow: /checkout
+Disallow: /bookings
+Disallow: /addresses
 
-# Sitemap
+# Host
+Host: https://www.metro-cool.com
+
+# Sitemaps
 Sitemap: https://www.metro-cool.com/sitemap.xml
