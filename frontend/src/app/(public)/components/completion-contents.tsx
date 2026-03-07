@@ -39,6 +39,13 @@ export default function CompletionContent() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
   const razorpayOpened = useRef(false)
 
+
+  /* ---------------- PRICE BREAKDOWN ---------------- */
+
+const servicePrice = Number(booking?.service_price || 0)
+const taxAmount = Number(booking?.tax || 0)
+const totalAmount = servicePrice + taxAmount
+
   /* ---------------- LOAD RAZORPAY SCRIPT ---------------- */
   // useEffect(() => {
   //   if (document.getElementById("razorpay-script")) return
@@ -200,8 +207,7 @@ const handleRazorpay = async () => {
     return
   }
 
-  const parsedAmount = parseFloat(booking.total_amount)
-
+const parsedAmount = Number(booking?.total_amount || 0)
   if (!parsedAmount || isNaN(parsedAmount)) {
     toast.error("Invalid payment amount")
     razorpayOpened.current = false
@@ -238,22 +244,22 @@ const handleRazorpay = async () => {
     name: "Metro Cool",
     description: booking.service?.title || "Service Payment",
 
-    handler: async function (response: any) {
+handler: async function (response: any) {
 
-      await fetch(`${API_URL}/payments/verify`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          booking_id: bookingId,
-          ...response,
-        }),
-      })
-
-      waitForPaymentConfirmation()
+  await fetch(`${API_URL}/payments/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({
+      booking_id: bookingId,   // IMPORTANT
+      ...response,
+    }),
+  })
+
+  waitForPaymentConfirmation()
+},
 
     modal: {
       ondismiss: function () {
@@ -498,25 +504,28 @@ const handleRazorpay = async () => {
                 <div className="space-y-4">
                   <div className="pb-4 border-b border-gray-100">
                     <div className="text-sm text-gray-500 uppercase tracking-wide mb-3">Description</div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-start">
-                        <span className="text-gray-900">Standard AC Service (x1)</span>
-                        <span className="font-semibold text-gray-900">₹499.00</span>
-                      </div>
-                      <div className="flex justify-between items-start">
-                        <span className="text-gray-900">Gas Refill (R32) - 1.5kg</span>
-                        <span className="font-semibold text-gray-900">₹800.00</span>
-                      </div>
-                      <div className="flex justify-between items-start">
-                        <span className="text-gray-600 text-sm">Taxes & Service Fee</span>
-                        <span className="font-medium text-gray-900">₹0.00</span>
-                      </div>
-                    </div>
+                   <div className="space-y-3">
+
+  <div className="flex justify-between items-start">
+    <span className="text-gray-900">{serviceName}</span>
+    <span className="font-semibold text-gray-900">
+      {formatINR(servicePrice)}
+    </span>
+  </div>
+
+  <div className="flex justify-between items-start">
+    <span className="text-gray-600 text-sm">Taxes</span>
+    <span className="font-medium text-gray-900">
+      {formatINR(taxAmount)}
+    </span>
+  </div>
+
+</div>
                   </div>
 
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-lg font-bold text-gray-900">Total Payable</span>
-                    <span className="text-2xl font-bold text-blue-600">{formatINR(serviceAmount)}</span>
+                    <span className="text-2xl font-bold text-blue-600">{formatINR(totalAmount)}</span>
                   </div>
                 </div>
               </div>
@@ -539,7 +548,7 @@ const handleRazorpay = async () => {
 
                   <div className="mb-6">
                     <div className="text-sm text-gray-500 mb-2">Total Amount</div>
-                    <div className="text-4xl font-bold text-gray-900">{formatINR(serviceAmount)}</div>
+                    <div className="text-4xl font-bold text-gray-900">{formatINR(totalAmount)}</div>
                   </div>
 
                   <div className="mb-6">
@@ -611,7 +620,7 @@ const handleRazorpay = async () => {
                       ? "bg-gray-300 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700"}`}
                   >
-                    Pay {formatINR(serviceAmount)}
+                    Pay {formatINR(totalAmount)}
                   </button>
 
                   <div className="flex items-center justify-center gap-2 mt-4">

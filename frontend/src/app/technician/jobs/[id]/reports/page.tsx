@@ -146,7 +146,7 @@ export default function ServiceCompletionReportPage({
       photoFiles.forEach((file) => formData.append("photos", file));
 
       const res = await fetch(
-        "http://localhost:5000/api/service-report/create",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/service-report/create`,
         {
           method: "POST",
           body: formData,

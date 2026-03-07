@@ -30,7 +30,14 @@ const app = express();
 // app.use("/api/payments/webhook", express.raw({ type: "*/*" }))
 app.use(cookieParser())
 
+/* ---------------------------------------------
+RAZORPAY WEBHOOK ROUTE (RAW BODY REQUIRED)
+--------------------------------------------- */
 
+app.use(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" })
+)
 /* =========================
    🔥 CORS (FINAL FIX)
 ========================= */

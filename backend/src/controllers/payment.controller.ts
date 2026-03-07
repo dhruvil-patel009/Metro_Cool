@@ -73,13 +73,18 @@ VERIFY PAYMENT (ONLY SIGNATURE VALIDATION)
 ========================================================= */
 export const verifyRazorpayPayment = async (req: Request, res: Response) => {
   console.log("🔥 VERIFY HIT")
+
   try {
     const {
+      booking_id,
       razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
     } = req.body
 
+    if (!booking_id) {
+      return res.status(400).json({ error: "booking_id missing" })
+    }
 
     const generatedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
@@ -93,11 +98,75 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       })
     }
 
-    return res.json({
-      success: true,
-      message: "Payment verified. Waiting for webhook confirmation...",
+    console.log("✅ Signature verified")
+
+    /* ---------------- GET BOOKING ---------------- */
+
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("id", booking_id)
+      .single()
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" })
+    }
+
+    /* ---------------- GENERATE OTP ---------------- */
+
+    const closureOTP = Math.floor(1000 + Math.random() * 9000).toString()
+
+    /* ---------------- INSERT PAYMENT ---------------- */
+
+    const { data: payment, error } = await supabase
+      .from("payments")
+      .insert({
+        booking_id,
+        amount: booking.total_amount,
+        currency: "INR",
+        payment_method: "razorpay",
+        razorpay_payment_id,
+        razorpay_order_id,
+        status: "captured",
+        closure_otp: closureOTP,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    /* ---------------- UPDATE BOOKING ---------------- */
+
+    await supabase
+      .from("bookings")
+      .update({
+        payment_status: "completed",
+        closure_otp: closureOTP,
+      })
+      .eq("id", booking_id)
+
+    /* ---------------- GENERATE INVOICE ---------------- */
+
+    const invoicePath = await generateInvoice({
+      booking_id,
+      payment_id: payment.id,
+      amount: booking.total_amount,
+      customer_name: booking.customer_name,
+      service_name: booking.service_name,
+      otp: closureOTP,
     })
 
+    const invoiceUrl = await uploadInvoice(invoicePath, booking_id)
+
+    await supabase
+      .from("payments")
+      .update({ invoice_url: invoiceUrl })
+      .eq("id", payment.id)
+
+    return res.json({
+      success: true,
+      message: "Payment stored successfully",
+    })
 
   } catch (err) {
     console.log("VERIFY ERROR:", err)
@@ -144,7 +213,7 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
         payment_status: "completed",
         closure_otp: Math.floor(1000 + Math.random() * 9000).toString()
       })
-      .eq("booking_id", booking_Id)
+      .eq("id", booking_Id)
       // 🔥 ALSO INSERT INTO PAYMENTS TABLE
       const bookingId = payment.notes.booking_id
       await supabase
@@ -191,7 +260,7 @@ const user_id = req.user.id
     const { data: booking } = await supabase
       .from("bookings")
       .select("*")
-      .eq("booking_id", booking_id)
+      .eq("id", booking_id)
       .single()
 
     if (!booking) {
@@ -225,7 +294,7 @@ const user_id = req.user.id
         payment_status: "completed",
         closure_otp: closureOTP,
       })
-      .eq("booking_id", booking_id)
+      .eq("id", booking_id)
 
     /* ---------- INVOICE ---------- */
     const invoicePath = await generateInvoice({
