@@ -275,7 +275,7 @@ handler: async function (response: any) {
   }
 
   console.log("Opening Razorpay with:", options)
-  
+
 const rzp = new window.Razorpay(options)
 
 rzp.on("payment.failed", function (response:any) {
@@ -669,14 +669,7 @@ rzp.open()
                     <div className="text-center">
                       <div className="text-sm text-gray-600 mb-2">Share this code</div>
                       <div className="flex justify-center gap-2 mb-3">
-                        {serviceOTP?.split("").map((digit, idx) => (
-                          <div
-                            key={idx}
-                            className="w-14 h-14 bg-white rounded-lg border-2 border-gray-200 flex items-center justify-center text-2xl font-bold text-gray-900"
-                          >
-                            {digit}
-                          </div>
-                        ))}
+                        {serviceOTP && serviceOTP.split("").map((digit, i) => ( <div key={i} className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-xl font-bold" > {digit} </div> ))}
                       </div>
                     </div>
                   </div>
