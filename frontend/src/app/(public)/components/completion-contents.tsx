@@ -389,17 +389,41 @@ rzp.open()
   }
 
   /* ---------------- INVOICE ---------------- */
-  const downloadInvoice = async () => {
-    if (!bookingId) return
+const downloadInvoice = async () => {
+
+  if (!bookingId) return
+
+  try {
 
     const token = localStorage.getItem("accessToken")
+
     const res = await fetch(`${API_URL}/payments/invoice/${bookingId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
 
+    if (!res.ok) {
+      toast.error("Invoice not found")
+      return
+    }
+
     const data = await res.json()
+
+    if (!data?.invoice_url) {
+      toast.error("Invoice not generated yet")
+      return
+    }
+
     window.open(data.invoice_url, "_blank")
+
+  } catch (err) {
+
+    console.error(err)
+    toast.error("Failed to download invoice")
+
   }
+}
 
   /* ---------------- LOADING SCREEN ---------------- */
   if (!booking) {

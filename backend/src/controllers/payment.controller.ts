@@ -295,7 +295,7 @@ export const getInvoice = async (req: Request, res: Response) => {
 
   const { bookingId } = req.params
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("payments")
     .select("invoice_url")
     .eq("booking_id", bookingId)
@@ -303,10 +303,13 @@ export const getInvoice = async (req: Request, res: Response) => {
     .limit(1)
     .single()
 
-  if (!data) {
-    return res.status(404).json({ error: "Invoice not found" })
+  if (error || !data?.invoice_url) {
+    return res.status(404).json({
+      error: "Invoice not found"
+    })
   }
 
-  res.json({ invoice_url: data.invoice_url })
-
+  res.json({
+    invoice_url: data.invoice_url
+  })
 }

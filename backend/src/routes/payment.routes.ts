@@ -26,6 +26,8 @@ router.post("/webhook", razorpayWebhook)
 
 
 router.post("/cash", protect, markCashPayment)
-router.get("/invoice/:bookingId", protect, getInvoice)
+// router.get("/invoice/:bookingId", protect, getInvoice)
+router.get("/invoice/:bookingId", getInvoice)
+
 
 export default router
