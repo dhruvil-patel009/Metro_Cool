@@ -2,30 +2,35 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Calendar, ChevronRight, ChevronLeft, Info, MessageCircle, Check } from "lucide-react"
 import { formatINR } from "@/app/lib/currency"
 import { getServiceById } from "@/app/(public)/lib/services.api"
 import AuthGuard from "@/app/components/AuthGuard"
 
-// Generate calendar days for the current month
+/* ---------------- CALENDAR GENERATOR ---------------- */
+
 function generateCalendarDays(year: number, month: number) {
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = firstDay.getDay()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
 
-    const days = []
+  const daysInMonth = lastDay.getDate()
+  const startingDayOfWeek = firstDay.getDay()
 
-    for (let i = 0; i < startingDayOfWeek; i++) days.push(null)
-    for (let i = 1; i <= daysInMonth; i++) days.push(i)
+  const days = []
 
-    return days
+  for (let i = 0; i < startingDayOfWeek; i++) days.push(null)
+
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i)
+  }
+
+  return days
 }
 
 const MONTH_NAMES = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December",
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
 ]
 
 const DAY_NAMES = ["Su","Mo","Tu","We","Th","Fr","Sa"]
@@ -36,37 +41,50 @@ export default function BookingPage() {
   const params = useParams<{ id: string }>()
   const id = params?.id as string
 
-  /* ---------------- SERVICE STATE ---------------- */
+  const searchParams = useSearchParams()
+
+const selectedAddons = JSON.parse(searchParams.get("addons") || "[]")
+const selectedTotal = Number(searchParams.get("total") || 0)
+
+  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+
+  /* ---------------- SERVICE ---------------- */
+
   const [service, setService] = useState<any>(null)
   const [serviceLoading, setServiceLoading] = useState(true)
 
-  /* ---------------- CALENDAR STATE ---------------- */
-  const [currentDate] = useState(new Date())
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth())
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
-  const [selectedDay, setSelectedDay] = useState<number>(5)
-  const [selectedTime, setSelectedTime] = useState("10:00 AM")
+  /* ---------------- DATE STATE ---------------- */
+
+  const today = new Date()
+
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth())
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear())
+
+  /* ✅ FIXED */
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+
+  const [selectedTime] = useState("10:00 AM")
 
   const [blockedDates, setBlockedDates] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+  /* ---------------- FETCH SERVICE ---------------- */
 
-  /* ---------------- FETCH SERVICE (MAIN FIX) ---------------- */
   useEffect(() => {
     if (!id) return
 
     async function loadService() {
       try {
+
         const data = await getServiceById(id)
 
         setService({
           ...data,
-          // handle snake_case from backend
           price: data.price,
-          originalPrice: data.original_price ?? data.originalPrice ?? data.price + 20,
+          originalPrice: data.original_price ?? data.originalPrice ?? data.price + 20
         })
-      } catch (err) {
+
+      } catch {
         setService(null)
       } finally {
         setServiceLoading(false)
@@ -74,64 +92,68 @@ export default function BookingPage() {
     }
 
     loadService()
+
   }, [id])
 
-  /* ---------------- BLOCKED DATES ---------------- */
+  /* ---------------- FETCH BLOCKED DATES ---------------- */
+
   useEffect(() => {
+
     if (!id) return
 
-    const month = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
+    const month =
+      `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
 
     fetch(`${API_URL}/bookings/dates?serviceId=${id}&month=${month}`)
       .then(res => res.json())
       .then(data => setBlockedDates(data.dates || []))
       .catch(() => setBlockedDates([]))
+
   }, [selectedMonth, selectedYear, id])
 
-  /* ---------------- LOADING ---------------- */
-  if (serviceLoading) {
-    return (
-      <div className="loader-wrapper">
-  <div className="loader"></div>
-</div>
-    )
-  }
+  /* ---------------- AUTO SELECT FIRST AVAILABLE DAY ---------------- */
 
-  if (!service) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        Service Not Found
-      </div>
-    )
-  }
+  useEffect(() => {
 
-  const calendarDays = generateCalendarDays(selectedYear, selectedMonth)
+    const days = generateCalendarDays(selectedYear, selectedMonth)
 
-  const handlePreviousMonth = () => {
-      if (selectedMonth === 0) {
-          setSelectedMonth(11)
-          setSelectedYear(selectedYear - 1)
-      } else setSelectedMonth(selectedMonth - 1)
-  }
+    for (const day of days) {
 
-  const handleNextMonth = () => {
-      if (selectedMonth === 11) {
-          setSelectedMonth(0)
-          setSelectedYear(selectedYear + 1)
-      } else setSelectedMonth(selectedMonth + 1)
-  }
+      if (!day) continue
 
-  const subtotal = Number(service?.price || 0)
-  const taxAndFees = 2.5
-  const total = subtotal + taxAndFees
+      const formattedDate =
+        `${selectedYear}-${String(selectedMonth+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`
+
+      const isBooked = blockedDates.includes(formattedDate)
+
+      const isPast =
+        day < today.getDate() &&
+        selectedMonth === today.getMonth() &&
+        selectedYear === today.getFullYear()
+
+      if (!isBooked && !isPast) {
+        setSelectedDay(day)
+        break
+      }
+
+    }
+
+  }, [blockedDates, selectedMonth, selectedYear])
 
   /* ---------------- BOOKING ---------------- */
+
   const handleContinueBooking = async () => {
+
+    if (!selectedDay) {
+      alert("Please select a date")
+      return
+    }
 
     const bookingDate =
       `${selectedYear}-${String(selectedMonth+1).padStart(2,"0")}-${String(selectedDay).padStart(2,"0")}`
 
     const token = localStorage.getItem("accessToken")
+
     if (!token) {
       router.push("/login")
       return
@@ -140,38 +162,108 @@ export default function BookingPage() {
     setLoading(true)
 
     try {
+
       const res = await fetch(`${API_URL}/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           serviceId: id,
           bookingDate,
-          timeSlot: selectedTime,
-        }),
+          timeSlot: selectedTime
+        })
       })
 
       const data = await res.json()
+
       if (!res.ok) throw new Error(data.message)
+
+      /* ✅ instantly block selected date */
+      setBlockedDates(prev => [...prev, bookingDate])
 
       localStorage.setItem("bookingId", data.booking.id)
       localStorage.setItem("bookingDate", bookingDate)
       localStorage.setItem("bookingTime", selectedTime)
-      localStorage.setItem("bookingService", JSON.stringify(service))
-
-      // ✅ FIXED REDIRECT
+localStorage.setItem(
+  "bookingService",
+  JSON.stringify({
+    ...service,
+    totalPrice: total,
+    selectedAddons
+  })
+)
       router.push(`/services/${data.booking.id}/booking/confirm`)
 
     } catch (err:any) {
+
       alert(err.message || "Booking failed")
+
     } finally {
+
       setLoading(false)
+
     }
   }
+
+  /* ---------------- CALENDAR ---------------- */
+
+  const calendarDays = generateCalendarDays(selectedYear, selectedMonth)
+
+const handlePreviousMonth = () => {
+  const today = new Date()
+
+  const isCurrentMonth =
+    selectedMonth === today.getMonth() &&
+    selectedYear === today.getFullYear()
+
+  if (isCurrentMonth) return // ❌ prevent going back
+
+  if (selectedMonth === 0) {
+    setSelectedMonth(11)
+    setSelectedYear(selectedYear - 1)
+  } else {
+    setSelectedMonth(selectedMonth - 1)
+  }
+}
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0)
+      setSelectedYear(selectedYear + 1)
+    } else {
+      setSelectedMonth(selectedMonth + 1)
+    }
+  }
+
+/* 🔵 UPDATED : use price with addons */
+const subtotal = selectedTotal || Number(service?.price || 0)
+
+const taxAndFees = 2.5
+
+const total = subtotal + taxAndFees
+
+  /* ---------------- LOADING ---------------- */
+
+  if (serviceLoading) {
     return (
-        <AuthGuard>
+      <div className="loader-wrapper">
+        <div className="loader"></div>
+      </div>
+    )
+  }
+
+  if (!service) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Service Not Found
+      </div>
+    )
+  }
+
+  return (
+<AuthGuard>
         <div className="min-h-screen bg-gray-50 font-sans animate-fade-in">
 
             <main className="max-w-fit mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -251,7 +343,14 @@ export default function BookingPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={handlePreviousMonth} className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors">
+                                    <button
+onClick={handlePreviousMonth}
+disabled={
+  selectedMonth === new Date().getMonth() &&
+  selectedYear === new Date().getFullYear()
+}
+className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+>
                                         <ChevronLeft className="w-5 h-5" />
                                     </button>
                                     <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors">
@@ -268,32 +367,47 @@ export default function BookingPage() {
                                     </div>
                                 ))}
 {calendarDays.map((day, index) => {
-  if (!day) {
-    return <div key={index} />
-  }
 
-  const formattedDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+  if (!day) return <div key={index} />
+
+  const formattedDate =
+    `${selectedYear}-${String(selectedMonth+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`
+
   const isBooked = blockedDates.includes(formattedDate)
+
   const isPast =
-    day < currentDate.getDate() &&
-    selectedMonth === currentDate.getMonth() &&
-    selectedYear === currentDate.getFullYear()
+    day < today.getDate() &&
+    selectedMonth === today.getMonth() &&
+    selectedYear === today.getFullYear()
 
   return (
-    <button
-      key={index}
-      onClick={() => !isBooked && !isPast && setSelectedDay(day)}
-      disabled={isBooked || isPast}
-      className={`
-        aspect-square p-2 cursor-pointer rounded-lg text-sm font-medium transition-all
-        ${day === selectedDay ? "bg-blue-600 text-white shadow-lg scale-105" : "hover:bg-gray-100 text-gray-700"}
-        ${isBooked || isPast ? "bg-gray-200 text-gray-400 cursor-not-allowed hover:bg-gray-200" : ""}
-      `}
-    >
-      {day}
-    </button>
-  )
+
+<button
+key={index}
+onClick={() => !isBooked && !isPast && setSelectedDay(day)}
+disabled={isBooked || isPast}
+
+className={`
+
+aspect-square p-2 rounded-lg text-sm font-medium transition-all
+
+${day === selectedDay
+? "bg-blue-600 text-white shadow-lg scale-105"
+: "hover:bg-gray-100 text-gray-700"}
+
+${isBooked || isPast
+? "bg-gray-200 text-gray-400 cursor-not-allowed"
+: ""}
+
+`}
+>
+{day}
+</button>
+
+)
+
 })}
+
 
                             </div>
                         </div>

@@ -141,10 +141,15 @@ export default function BookingConfirmPage() {
     setSelectedIssues((prev) => (prev.includes(issueId) ? prev.filter((id) => id !== issueId) : [...prev, issueId]))
   }
 
-  const serviceFee = service.price
-  const estimatedParts = 10.0
-  const taxes = (serviceFee + estimatedParts) * 0.08
-  const total = serviceFee + estimatedParts + taxes
+/* 🔵 UPDATED : dynamic price from booking page */
+
+const serviceFee = service?.totalPrice || service?.price || 0
+
+const estimatedParts = 10.0
+
+const taxes = (serviceFee + estimatedParts) * 0.08
+
+const total = serviceFee + estimatedParts + taxes
 
   const handleCompleteBooking = async () => {
     try {
@@ -425,10 +430,10 @@ export default function BookingConfirmPage() {
                     <span className="text-gray-600">Service Fee</span>
                     <span className="font-semibold">{formatINR(serviceFee.toFixed(2))}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
+                  {/* <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Est. Parts</span>
                     <span className="font-semibold">{formatINR(estimatedParts.toFixed(2))}</span>
-                  </div>
+                  </div> */}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Taxes (8%)</span>
                     <span className="font-semibold">{formatINR(taxes.toFixed(2))}</span>

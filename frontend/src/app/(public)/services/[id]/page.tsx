@@ -42,6 +42,13 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [selectedAddons, setSelectedAddons] = useState<string[]>([])
 
+  const totalPrice =
+  service?.price +
+  service?.addons
+    ?.filter((addon: any) => selectedAddons.includes(addon.id))
+    .reduce((sum: number, addon: any) => sum + addon.price, 0) || 0
+/* 🔵 ADDED : Dynamic total price with selected addons */
+
 
   const toggleAddon = (id: string) => {
     setSelectedAddons(prev =>
@@ -465,7 +472,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Total Estimate</p>
                     <div className="flex items-baseline gap-2">
                       <span className="text-5xl font-black font-semibold tracking-tighter">
-                        {formatINR(service.price)}
+                        {formatINR(totalPrice)}
 
                         <span className="text-2xl">.00</span>
                       </span>
@@ -490,13 +497,13 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                       </div>
                       <span className="text-sm font-bold">Tomorrow, 10:00 AM</span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    {/* <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 text-gray-500">
                         <Users className="w-5 h-5" />
                         <span className="text-sm font-medium">Team Size</span>
                       </div>
                       <span className="text-sm font-bold">1 Technician</span>
-                    </div>
+                    </div> */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 text-gray-500">
                         <Truck className="w-5 h-5" />
@@ -509,7 +516,13 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   </div>
 
                   <Link
-                    href={`/services/${service.id}/booking`}
+                    href={{
+    pathname: `/services/${service.id}/booking`,
+    query: {
+      addons: JSON.stringify(selectedAddons),
+      total: totalPrice
+    }
+  }}
                     className="w-full bg-[#0060ff] text-white py-5 rounded-md font-bold text-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200"
                   >
                     Book Appointment <ChevronRight className="w-5 h-5" />

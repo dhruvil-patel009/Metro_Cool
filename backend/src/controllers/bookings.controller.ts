@@ -20,6 +20,7 @@ export const getBookedDates = async (req: Request, res: Response) => {
     .from("bookings")
     .select("booking_date")
     .eq("service_id", serviceId)
+    .eq("status", "confirmed") // ✅ only confirmed bookings block date
     .gte("booking_date", startDate)
     .lt("booking_date", endDateStr)
 
@@ -27,7 +28,9 @@ export const getBookedDates = async (req: Request, res: Response) => {
     return res.status(500).json({ message: error.message })
   }
 
-  const dates = data.map(d => d.booking_date)
+  const dates = data.map(d =>
+  new Date(d.booking_date).toISOString().split("T")[0]
+) 
 
   res.setHeader("Cache-Control", "no-store")
   return res.json({

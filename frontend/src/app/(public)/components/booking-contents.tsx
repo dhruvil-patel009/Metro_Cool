@@ -528,7 +528,7 @@ const showLocalNotification = async (status: string) => {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-sm mb-1">{service.title}</h4>
-                  <p className="text-xs text-gray-600 mb-2">Quantity: {service.quantity}</p>
+                  {/* <p className="text-xs text-gray-600 mb-2">Quantity: {service.quantity}</p> */}
                   {service.includesCheck && (
                     <span className="inline-block bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded">
                       Includes Gas Check
@@ -536,7 +536,7 @@ const showLocalNotification = async (status: string) => {
                   )}
                 </div>
                 <div>
-                  <p className="font-bold text-lg">{formatINR(service.price.toFixed(2))}</p> 
+                  <p className="font-bold text-lg">{formatINR(subtotal.toFixed(2))}</p> 
                 </div>
               </div>
 
