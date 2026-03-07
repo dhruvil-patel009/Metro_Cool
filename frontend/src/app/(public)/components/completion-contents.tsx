@@ -246,17 +246,23 @@ const parsedAmount = Number(booking?.total_amount || 0)
 
 handler: async function (response: any) {
 
-  await fetch(`${API_URL}/payments/verify`, {
+  const verifyRes = await fetch(`${API_URL}/payments/verify`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      booking_id: bookingId,   // IMPORTANT
+      booking_id: bookingId,
       ...response,
     }),
   })
+
+  if (!verifyRes.ok) {
+    toast.error("Payment verification failed")
+    razorpayOpened.current = false
+    return
+  }
 
   waitForPaymentConfirmation()
 },
@@ -269,9 +275,15 @@ handler: async function (response: any) {
   }
 
   console.log("Opening Razorpay with:", options)
+  
+const rzp = new window.Razorpay(options)
 
-  const rzp = new window.Razorpay(options)
-  rzp.open()
+rzp.on("payment.failed", function (response:any) {
+  toast.error("Payment failed. Please try again.")
+  razorpayOpened.current = false
+})
+
+rzp.open()
 }
 
 // const handleRazorpay = async () => {

@@ -34,10 +34,16 @@ app.use(cookieParser())
 RAZORPAY WEBHOOK ROUTE (RAW BODY REQUIRED)
 --------------------------------------------- */
 
+// Razorpay webhook MUST come first
 app.use(
   "/api/payments/webhook",
-  express.raw({ type: "application/json" })
+  express.raw({ type: "application/json" }),
+  webhookHandlerRoutes
 )
+
+// THEN parse json
+app.use(express.json({ limit: "10mb" }))
+app.use(express.urlencoded({ extended: true, limit: "10mb" }))
 /* =========================
    🔥 CORS (FINAL FIX)
 ========================= */
@@ -63,7 +69,8 @@ const corsOptions: cors.CorsOptions = {
     "X-Requested-With",
     "Content-Type",
     "Accept",
-    "Authorization"
+    "Authorization",
+    "ngrok-skip-browser-warning"
   ],
   optionsSuccessStatus: 204
 };
@@ -103,10 +110,10 @@ app.get("/", (_req, res) => {
 //   express.json({ limit: "10mb" })(req, res, next);
 // });
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// app.use(express.json({ limit: "10mb" }));
+// app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
