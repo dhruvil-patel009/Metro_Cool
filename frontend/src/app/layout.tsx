@@ -56,6 +56,13 @@ export const metadata: Metadata = {
     siteName: "Metro Cool",
     locale: "en_IN",
     type: "website",
+    images: [
+    {
+      url: "https://www.metro-cool.com/og.jpg",
+      width: 1200,
+      height: 630,
+    },
+  ],
   },
 
   robots: {
