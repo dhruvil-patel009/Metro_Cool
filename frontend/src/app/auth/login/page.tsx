@@ -192,7 +192,7 @@ export default function Page() {
             </button>
 
             {/* Register options */}
-            <div>
+            {/* <div>
               <p className="text-center text-sm text-gray-600">
                 New to AC Marketplace?
               </p>
@@ -224,7 +224,7 @@ export default function Page() {
                 </h3>
                 <p className="text-sm text-gray-600">Offer services</p>
               </button>
-            </div>
+            </div> */}
 
             <p className="text-center text-xs text-gray-500">
               Secure MPIN authentication protects your account 🔐

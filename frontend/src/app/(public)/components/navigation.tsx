@@ -203,9 +203,9 @@ export function Navigation() {
                 </div></>
             ) : (
               /* LOGIN BUTTON (GUEST) */
-              <Link href="/auth/login">
+              <Link href="/auth/">
                 <button className="bg-blue-600 cursor-pointer text-white sm:px-6 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue:900 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200">
-                  Login
+                  Register
                 </button>
               </Link>
             )}

@@ -42,9 +42,9 @@ export default function CompletionContent() {
 
   /* ---------------- PRICE BREAKDOWN ---------------- */
 
-const servicePrice = Number(booking?.service_price || 0)
-const taxAmount = Number(booking?.tax || 0)
-const totalAmount = servicePrice + taxAmount
+  const servicePrice = Number(booking?.service_price || 0)
+  const taxAmount = Number(booking?.tax || 0)
+  const totalAmount = servicePrice + taxAmount
 
   /* ---------------- LOAD RAZORPAY SCRIPT ---------------- */
   // useEffect(() => {
@@ -138,222 +138,222 @@ const totalAmount = servicePrice + taxAmount
 
 
   /* ---------------- RAZORPAY ---------------- */
-/* ---------------- RAZORPAY ---------------- */
+  /* ---------------- RAZORPAY ---------------- */
 
-const loadRazorpay = () => {
-  return new Promise<void>((resolve, reject) => {
+  const loadRazorpay = () => {
+    return new Promise<void>((resolve, reject) => {
 
-    if (typeof window === "undefined") {
-      reject("Window not available")
-      return
-    }
+      if (typeof window === "undefined") {
+        reject("Window not available")
+        return
+      }
 
-    if (window.Razorpay && typeof window.Razorpay === "function") {
-      resolve()
-      return
-    }
-
-    const existingScript = document.querySelector(
-      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
-    )
-
-    if (existingScript) {
-      existingScript.addEventListener("load", () => resolve())
-      existingScript.addEventListener("error", () => reject())
-      return
-    }
-
-    const script = document.createElement("script")
-    script.src = "https://checkout.razorpay.com/v1/checkout.js"
-    script.async = true
-
-    script.onload = () => {
       if (window.Razorpay && typeof window.Razorpay === "function") {
         resolve()
-      } else {
-        reject("Razorpay failed to initialize")
+        return
+      }
+
+      const existingScript = document.querySelector(
+        'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+      )
+
+      if (existingScript) {
+        existingScript.addEventListener("load", () => resolve())
+        existingScript.addEventListener("error", () => reject())
+        return
+      }
+
+      const script = document.createElement("script")
+      script.src = "https://checkout.razorpay.com/v1/checkout.js"
+      script.async = true
+
+      script.onload = () => {
+        if (window.Razorpay && typeof window.Razorpay === "function") {
+          resolve()
+        } else {
+          reject("Razorpay failed to initialize")
+        }
+      }
+
+      script.onerror = () => reject("Script load failed")
+
+      document.body.appendChild(script)
+    })
+  }
+
+  const handleRazorpay = async () => {
+
+    if (razorpayOpened.current) return
+    razorpayOpened.current = true
+
+    try {
+      await loadRazorpay()
+    } catch (err) {
+      console.error(err)
+      toast.error("Payment gateway failed to load")
+      razorpayOpened.current = false
+      return
+    }
+
+    if (!window.Razorpay || typeof window.Razorpay !== "function") {
+      toast.error("Razorpay not available")
+      razorpayOpened.current = false
+      return
+    }
+
+    if (!bookingId || !booking?.total_amount) {
+      toast.error("Invalid booking details")
+      razorpayOpened.current = false
+      return
+    }
+
+    const parsedAmount = Number(booking?.total_amount || 0)
+    if (!parsedAmount || isNaN(parsedAmount)) {
+      toast.error("Invalid payment amount")
+      razorpayOpened.current = false
+      return
+    }
+
+    const token = localStorage.getItem("accessToken")
+
+    const orderRes = await fetch(`${API_URL}/payments/razorpay-order`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        booking_id: bookingId,
+        amount: parsedAmount,
+      }),
+    })
+
+    const orderData = await orderRes.json()
+
+    if (!orderRes.ok || !orderData.orderId || !orderData.key) {
+      toast.error("Order creation failed")
+      razorpayOpened.current = false
+      return
+    }
+
+    const options = {
+      key: orderData.key,
+      order_id: orderData.orderId,
+      amount: Math.round(parsedAmount * 100),
+      currency: "INR",
+      name: "Metro Cool",
+      description: booking.service?.title || "Service Payment",
+
+      handler: async function (response: any) {
+
+        const verifyRes = await fetch(`${API_URL}/payments/verify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            booking_id: bookingId,
+            ...response,
+          }),
+        })
+
+        if (!verifyRes.ok) {
+          toast.error("Payment verification failed")
+          razorpayOpened.current = false
+          return
+        }
+
+        waitForPaymentConfirmation()
+      },
+
+      modal: {
+        ondismiss: function () {
+          razorpayOpened.current = false
+        }
       }
     }
 
-    script.onerror = () => reject("Script load failed")
+    console.log("Opening Razorpay with:", options)
 
-    document.body.appendChild(script)
-  })
-}
+    const rzp = new window.Razorpay(options)
 
-const handleRazorpay = async () => {
+    rzp.on("payment.failed", function (response: any) {
+      toast.error("Payment failed. Please try again.")
+      razorpayOpened.current = false
+    })
 
-  if (razorpayOpened.current) return
-  razorpayOpened.current = true
-
-  try {
-    await loadRazorpay()
-  } catch (err) {
-    console.error(err)
-    toast.error("Payment gateway failed to load")
-    razorpayOpened.current = false
-    return
+    rzp.open()
   }
 
-  if (!window.Razorpay || typeof window.Razorpay !== "function") {
-    toast.error("Razorpay not available")
-    razorpayOpened.current = false
-    return
-  }
+  // const handleRazorpay = async () => {
 
-  if (!bookingId || !booking?.total_amount) {
-    toast.error("Invalid booking details")
-    razorpayOpened.current = false
-    return
-  }
+  //   const isLoaded = await loadRazorpay()
 
-const parsedAmount = Number(booking?.total_amount || 0)
-  if (!parsedAmount || isNaN(parsedAmount)) {
-    toast.error("Invalid payment amount")
-    razorpayOpened.current = false
-    return
-  }
+  //   if (!isLoaded) {
+  //     toast.error("Failed to load payment gateway")
+  //     return
+  //   }
 
-  const token = localStorage.getItem("accessToken")
+  //   if (!bookingId || serviceAmount <= 0) {
+  //     toast.error("Invalid payment details")
+  //     return
+  //   }
 
-  const orderRes = await fetch(`${API_URL}/payments/razorpay-order`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      booking_id: bookingId,
-      amount: parsedAmount,
-    }),
-  })
+  //   const token = localStorage.getItem("accessToken")
+  //   if (!token) {
+  //     toast.error("Login expired")
+  //     return
+  //   }
 
-  const orderData = await orderRes.json()
+  //   const res = await fetch(`${API_URL}/payments/razorpay-order`, {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //     body: JSON.stringify({
+  //       booking_id: bookingId,
+  //       amount: serviceAmount,
+  //     }),
+  //   })
 
-  if (!orderRes.ok || !orderData.orderId || !orderData.key) {
-    toast.error("Order creation failed")
-    razorpayOpened.current = false
-    return
-  }
+  //   const data = await res.json()
 
-  const options = {
-    key: orderData.key,
-    order_id: orderData.orderId,
-    amount: Math.round(parsedAmount * 100),
-    currency: "INR",
-    name: "Metro Cool",
-    description: booking.service?.title || "Service Payment",
+  //   console.log("Razorpay Data:", data)
 
-handler: async function (response: any) {
+  //   if (!res.ok || !data.orderId || !data.key) {
+  //     toast.error("Order creation failed")
+  //     return
+  //   }
 
-  const verifyRes = await fetch(`${API_URL}/payments/verify`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      booking_id: bookingId,
-      ...response,
-    }),
-  })
+  //   const options = {
+  //     key: data.key,
+  //     order_id: data.orderId,
+  //     amount: serviceAmount * 100,
+  //     currency: "INR",
+  //     name: "Metro Cool",
+  //     description: serviceName,
+  //     handler: async function (response: any) {
+  //       await fetch(`${API_URL}/payments/verify`, {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({
+  //           booking_id: bookingId,
+  //           ...response,
+  //         }),
+  //       })
+  //     },
+  //   }
 
-  if (!verifyRes.ok) {
-    toast.error("Payment verification failed")
-    razorpayOpened.current = false
-    return
-  }
+  //   console.log("FINAL OPTIONS:", options)
 
-  waitForPaymentConfirmation()
-},
-
-    modal: {
-      ondismiss: function () {
-        razorpayOpened.current = false
-      }
-    }
-  }
-
-  console.log("Opening Razorpay with:", options)
-
-const rzp = new window.Razorpay(options)
-
-rzp.on("payment.failed", function (response:any) {
-  toast.error("Payment failed. Please try again.")
-  razorpayOpened.current = false
-})
-
-rzp.open()
-}
-
-// const handleRazorpay = async () => {
-
-//   const isLoaded = await loadRazorpay()
-
-//   if (!isLoaded) {
-//     toast.error("Failed to load payment gateway")
-//     return
-//   }
-
-//   if (!bookingId || serviceAmount <= 0) {
-//     toast.error("Invalid payment details")
-//     return
-//   }
-
-//   const token = localStorage.getItem("accessToken")
-//   if (!token) {
-//     toast.error("Login expired")
-//     return
-//   }
-
-//   const res = await fetch(`${API_URL}/payments/razorpay-order`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${token}`,
-//     },
-//     body: JSON.stringify({
-//       booking_id: bookingId,
-//       amount: serviceAmount,
-//     }),
-//   })
-
-//   const data = await res.json()
-
-//   console.log("Razorpay Data:", data)
-
-//   if (!res.ok || !data.orderId || !data.key) {
-//     toast.error("Order creation failed")
-//     return
-//   }
-
-//   const options = {
-//     key: data.key,
-//     order_id: data.orderId,
-//     amount: serviceAmount * 100,
-//     currency: "INR",
-//     name: "Metro Cool",
-//     description: serviceName,
-//     handler: async function (response: any) {
-//       await fetch(`${API_URL}/payments/verify`, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${token}`,
-//         },
-//         body: JSON.stringify({
-//           booking_id: bookingId,
-//           ...response,
-//         }),
-//       })
-//     },
-//   }
-
-//   console.log("FINAL OPTIONS:", options)
-
-//   const rzp = new window.Razorpay(options)
-//   rzp.open()
-// }
+  //   const rzp = new window.Razorpay(options)
+  //   rzp.open()
+  // }
 
   /* ---------------- CASH ---------------- */
   const handleCashPayment = async () => {
@@ -389,41 +389,41 @@ rzp.open()
   }
 
   /* ---------------- INVOICE ---------------- */
-const downloadInvoice = async () => {
+  const downloadInvoice = async () => {
 
-  if (!bookingId) return
+    if (!bookingId) return
 
-  try {
+    try {
 
-    const token = localStorage.getItem("accessToken")
+      const token = localStorage.getItem("accessToken")
 
-    const res = await fetch(`${API_URL}/payments/invoice/${bookingId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
+      const res = await fetch(`${API_URL}/payments/invoice/${bookingId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      if (!res.ok) {
+        toast.error("Invoice not found")
+        return
       }
-    })
 
-    if (!res.ok) {
-      toast.error("Invoice not found")
-      return
+      const data = await res.json()
+
+      if (!data?.invoice_url) {
+        toast.error("Invoice not generated yet")
+        return
+      }
+
+      window.open(data.invoice_url, "_blank")
+
+    } catch (err) {
+
+      console.error(err)
+      toast.error("Failed to download invoice")
+
     }
-
-    const data = await res.json()
-
-    if (!data?.invoice_url) {
-      toast.error("Invoice not generated yet")
-      return
-    }
-
-    window.open(data.invoice_url, "_blank")
-
-  } catch (err) {
-
-    console.error(err)
-    toast.error("Failed to download invoice")
-
   }
-}
 
   /* ---------------- LOADING SCREEN ---------------- */
   if (!booking) {
@@ -437,7 +437,7 @@ const downloadInvoice = async () => {
   return (
 
     <>
-    <main className="min-h-screen bg-gray-50 py-8 px-4">
+      <main className="min-h-screen bg-gray-50 py-8 px-4">
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           {/* <Link
@@ -540,23 +540,23 @@ const downloadInvoice = async () => {
                 <div className="space-y-4">
                   <div className="pb-4 border-b border-gray-100">
                     <div className="text-sm text-gray-500 uppercase tracking-wide mb-3">Description</div>
-                   <div className="space-y-3">
+                    <div className="space-y-3">
 
-  <div className="flex justify-between items-start">
-    <span className="text-gray-900">{serviceName}</span>
-    <span className="font-semibold text-gray-900">
-      {formatINR(servicePrice)}
-    </span>
-  </div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-gray-900">{serviceName}</span>
+                        <span className="font-semibold text-gray-900">
+                          {formatINR(servicePrice)}
+                        </span>
+                      </div>
 
-  <div className="flex justify-between items-start">
-    <span className="text-gray-600 text-sm">Taxes</span>
-    <span className="font-medium text-gray-900">
-      {formatINR(taxAmount)}
-    </span>
-  </div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-gray-600 text-sm">Taxes</span>
+                        <span className="font-medium text-gray-900">
+                          {formatINR(taxAmount)}
+                        </span>
+                      </div>
 
-</div>
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-center pt-2">
@@ -590,7 +590,7 @@ const downloadInvoice = async () => {
                   <div className="mb-6">
                     <div className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Choose Method</div>
                     <div className="space-y-3">
-                      <button
+                      {/* <button
                         onClick={() => setPaymentMethod("upi")}
                         className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${paymentMethod === "upi" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
                       >
@@ -614,7 +614,7 @@ const downloadInvoice = async () => {
                         >
                           {paymentMethod === "upi" && <div className="w-2 h-2 bg-white rounded-full"></div>}
                         </div>
-                      </button>
+                      </button> */}
 
                       <button
                         onClick={() => setPaymentMethod("cash")}
@@ -693,7 +693,7 @@ const downloadInvoice = async () => {
                     <div className="text-center">
                       <div className="text-sm text-gray-600 mb-2">Share this code</div>
                       <div className="flex justify-center gap-2 mb-3">
-                        {serviceOTP && serviceOTP.split("").map((digit, i) => ( <div key={i} className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-xl font-bold" > {digit} </div> ))}
+                        {serviceOTP && serviceOTP.split("").map((digit, i) => (<div key={i} className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-xl font-bold" > {digit} </div>))}
                       </div>
                     </div>
                   </div>
