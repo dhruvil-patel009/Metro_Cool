@@ -197,13 +197,13 @@ export default function ProductsPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3">
                 <span className="text-sm text-slate-400">Sort by:</span>
                 <button className="flex items-center gap-4 bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium">
                   Recommended
                   <ChevronDown className="w-4 h-4" />
                 </button>
-              </div>
+              </div> */}
             </div>
 
             {/* PRODUCT GRID */}

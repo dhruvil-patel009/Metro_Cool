@@ -141,15 +141,18 @@ export default function BookingConfirmPage() {
     setSelectedIssues((prev) => (prev.includes(issueId) ? prev.filter((id) => id !== issueId) : [...prev, issueId]))
   }
 
-/* 🔵 UPDATED : dynamic price from booking page */
+
+/* 🔵 PRICE CALCULATION WITH 18% GST */
 
 const serviceFee = service?.totalPrice || service?.price || 0
 
-const estimatedParts = 10.0
+/* GST 18% */
+const gstRate = 0.18
 
-const taxes = (serviceFee + estimatedParts) * 0.08
+const gstAmount = serviceFee * gstRate
 
-const total = serviceFee + estimatedParts + taxes
+const total = serviceFee + gstAmount
+
 
   const handleCompleteBooking = async () => {
     try {
@@ -179,8 +182,8 @@ const total = serviceFee + estimatedParts + taxes
           },
           pricing: {
             serviceFee,
-            parts: estimatedParts,
-            tax: taxes,
+             gst: gstAmount,
+            // tax: taxes,
             total,
           },
         }),
@@ -435,8 +438,9 @@ const total = serviceFee + estimatedParts + taxes
                     <span className="font-semibold">{formatINR(estimatedParts.toFixed(2))}</span>
                   </div> */}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Taxes (8%)</span>
-                    <span className="font-semibold">{formatINR(taxes.toFixed(2))}</span>
+<span className="text-gray-600">GST (18%)</span>
+<span className="font-semibold">{formatINR(gstAmount.toFixed(2))}</span>
+
                   </div>
                   <div className="flex items-center justify-between text-lg font-bold pt-3 border-t border-gray-200">
                     <span>Total</span>
