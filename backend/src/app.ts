@@ -23,6 +23,7 @@ import addressRoutes from "./routes/address.routes.js";
 import serviceContentRoutes from "./routes/serviceContent.routes.js";
 import serviceDetailsRoutes from "./routes/serviceDetails.routes.js";
 import webhookHandlerRoutes from "./routes/webhookHandler.routes.js";
+import { razorpayWebhook } from "./controllers/payment.controller.js";
 import pushRoutes from "./routes/push.routes.js";
 import ordersRoutes from "./routes/orders.routes.js";
 
@@ -33,16 +34,17 @@ app.use(cookieParser())
 
 /* ---------------------------------------------
 RAZORPAY WEBHOOK ROUTE (RAW BODY REQUIRED)
+Must be registered BEFORE express.json() so req.body
+is a raw Buffer — required for HMAC signature verification.
 --------------------------------------------- */
 
-// Razorpay webhook MUST come first
-app.use(
+app.post(
   "/api/payments/webhook",
   express.raw({ type: "application/json" }),
-  webhookHandlerRoutes
+  razorpayWebhook
 )
 
-// THEN parse json
+// THEN parse json for all other routes
 app.use(express.json({ limit: "10mb" }))
 app.use(express.urlencoded({ extended: true, limit: "10mb" }))
 /* =========================

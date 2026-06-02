@@ -1,6 +1,7 @@
 import Razorpay from "razorpay"
 import { Request, Response } from "express"
 import crypto from "crypto"
+import fs from "fs"
 import { supabase } from "../utils/supabase.js"
 import { uploadInvoice } from "../utils/uploadInvoice.js"
 import { generateInvoice } from "../utils/generateInvoice.js"
@@ -69,19 +70,24 @@ const order = await razorpay.orders.create({
 }
 
 /* =========================================================
-VERIFY PAYMENT (ONLY SIGNATURE VALIDATION)
-❌ DOES NOT INSERT DB
+VERIFY PAYMENT — SIGNATURE CHECK + DB UPDATE
+Handles the full post-payment flow when webhook is not
+reachable (local dev). In production the webhook does this,
+but verify acts as a reliable fallback so the user is never
+left waiting.
 ========================================================= */
 export const verifyRazorpayPayment = async (req: Request, res: Response) => {
 
   try {
 
     const {
+      booking_id,
       razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
     } = req.body
 
+    // ── 1. Verify signature ──────────────────────────────
     const generatedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -94,12 +100,109 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       })
     }
 
-    console.log("✅ Signature verified")
+    console.log("✅ Signature verified for booking:", booking_id)
 
-    return res.json({
-      success: true,
-      message: "Signature verified successfully"
-    })
+    if (!booking_id) {
+      return res.status(400).json({ error: "booking_id is required" })
+    }
+
+    // ── 2. Idempotency — skip if already processed ───────
+    const { data: existingPayment } = await supabase
+      .from("payments")
+      .select("id, invoice_url")
+      .eq("razorpay_payment_id", razorpay_payment_id)
+      .maybeSingle()
+
+    if (existingPayment) {
+      console.log("⚠️ Payment already processed, skipping duplicate")
+      return res.json({ success: true, message: "Already processed" })
+    }
+
+    // ── 3. Fetch booking + service ───────────────────────
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
+      .select("*, services(title)")
+      .eq("id", booking_id)
+      .single()
+
+    if (bookingError || !booking) {
+      return res.status(404).json({ error: "Booking not found" })
+    }
+
+    // ── 4. Fetch user profile ────────────────────────────
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", booking.user_id)
+      .single()
+
+    // ── 5. Generate OTP ──────────────────────────────────
+    const closureOTP = Math.floor(1000 + Math.random() * 9000).toString()
+
+    // ── 6. Update booking ────────────────────────────────
+    await supabase
+      .from("bookings")
+      .update({
+        payment_status: "completed",
+        closure_otp: closureOTP,
+      })
+      .eq("id", booking_id)
+
+    // ── 7. Insert payment row ────────────────────────────
+    const { data: paymentRow, error: paymentInsertError } = await supabase
+      .from("payments")
+      .insert({
+        booking_id,
+        user_id: booking.user_id,
+        amount: booking.total_amount,
+        currency: "INR",
+        payment_method: "card",
+        razorpay_payment_id,
+        razorpay_order_id,
+        status: "captured",
+        closure_otp: closureOTP,
+      })
+      .select()
+      .single()
+
+    if (paymentInsertError || !paymentRow) {
+      console.error("Payment insert error:", paymentInsertError)
+      // Booking is already updated — still return success so user isn't blocked
+      return res.json({ success: true, message: "Payment recorded (invoice pending)" })
+    }
+
+    // ── 8. Generate & upload invoice ─────────────────────
+    try {
+      const customerName = profile
+        ? `${profile.first_name} ${profile.last_name}`
+        : (booking.full_name || "Customer")
+      const serviceName = booking.services?.title || "AC Service"
+
+      const invoicePath = await generateInvoice({
+        booking_id,
+        payment_id: razorpay_payment_id,
+        amount: booking.total_amount,
+        customer_name: customerName,
+        service_name: serviceName,
+        otp: closureOTP,
+      })
+
+      const invoiceUrl = await uploadInvoice(invoicePath, booking_id)
+
+      try { fs.unlinkSync(invoicePath) } catch (_) { /* ignore */ }
+
+      await supabase
+        .from("payments")
+        .update({ invoice_url: invoiceUrl })
+        .eq("id", paymentRow.id)
+
+      console.log("✅ Invoice generated:", invoiceUrl)
+    } catch (invoiceErr) {
+      // Invoice failure must NOT block the payment success response
+      console.error("⚠️ Invoice generation failed (non-fatal):", invoiceErr)
+    }
+
+    return res.json({ success: true, message: "Payment verified and recorded" })
 
   } catch (err) {
     console.log("VERIFY ERROR:", err)
@@ -158,13 +261,20 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
 
       const { data: booking } = await supabase
         .from("bookings")
-        .select("*")
+        .select("*, services(title)")
         .eq("id", bookingId)
         .single()
 
       if (!booking) {
         return res.status(404).send("Booking not found")
       }
+
+      /* GET USER PROFILE */
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", booking.user_id)
+        .single()
 
       /* 🔥 GENERATE OTP */
 
@@ -200,16 +310,24 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
 
       /* GENERATE INVOICE */
 
+      const customerName = profile
+        ? `${profile.first_name} ${profile.last_name}`
+        : (booking.full_name || "Customer")
+      const serviceName = booking.services?.title || "AC Service"
+
       const invoicePath = await generateInvoice({
         booking_id: bookingId,
         payment_id: paymentRow.id,
         amount: booking.total_amount,
-        customer_name: booking.customer_name,
-        service_name: booking.service_name,
+        customer_name: customerName,
+        service_name: serviceName,
         otp: closureOTP,
       })
 
       const invoiceUrl = await uploadInvoice(invoicePath, bookingId)
+
+      // Clean up local file after upload
+      try { fs.unlinkSync(invoicePath) } catch (_) { /* ignore */ }
 
       await supabase
         .from("payments")
@@ -289,27 +407,77 @@ export const markCashPayment = async (req: Request, res: Response) => {
 
 /* =========================================================
 GET INVOICE
+Generates invoice on-demand if it wasn't created yet
 ========================================================= */
 
 export const getInvoice = async (req: Request, res: Response) => {
 
   const { bookingId } = req.params
 
-  const { data, error } = await supabase
+  // ── 1. Check if invoice already exists ──────────────
+  const { data: paymentRow } = await supabase
     .from("payments")
-    .select("invoice_url")
+    .select("id, invoice_url, amount, closure_otp, booking_id, user_id, razorpay_payment_id")
     .eq("booking_id", bookingId)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
-  if (error || !data?.invoice_url) {
-    return res.status(404).json({
-      error: "Invoice not found"
-    })
+  if (!paymentRow) {
+    return res.status(404).json({ error: "Payment not found for this booking" })
   }
 
-  res.json({
-    invoice_url: data.invoice_url
-  })
+  // ── 2. Return existing invoice URL ───────────────────
+  if (paymentRow.invoice_url) {
+    return res.json({ invoice_url: paymentRow.invoice_url })
+  }
+
+  // ── 3. Invoice missing — generate it now ─────────────
+  console.log("⚠️ Invoice missing, generating on-demand for booking:", bookingId)
+
+  try {
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("*, services(title)")
+      .eq("id", bookingId)
+      .single()
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", paymentRow.user_id)
+      .single()
+
+    const customerName = profile
+      ? `${profile.first_name} ${profile.last_name}`
+      : (booking?.full_name || "Customer")
+    const serviceName = booking?.services?.title || "AC Service"
+    const otp = paymentRow.closure_otp || booking?.closure_otp || "----"
+
+    const invoicePath = await generateInvoice({
+      booking_id: bookingId,
+      payment_id: paymentRow.razorpay_payment_id || paymentRow.id,
+      amount: paymentRow.amount,
+      customer_name: customerName,
+      service_name: serviceName,
+      otp,
+    })
+
+    const invoiceUrl = await uploadInvoice(invoicePath, bookingId)
+
+    try { fs.unlinkSync(invoicePath) } catch (_) { /* ignore */ }
+
+    await supabase
+      .from("payments")
+      .update({ invoice_url: invoiceUrl })
+      .eq("id", paymentRow.id)
+
+    console.log("✅ On-demand invoice generated:", invoiceUrl)
+
+    return res.json({ invoice_url: invoiceUrl })
+
+  } catch (err) {
+    console.error("Invoice generation error:", err)
+    return res.status(500).json({ error: "Failed to generate invoice" })
+  }
 }

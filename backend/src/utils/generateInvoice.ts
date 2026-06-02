@@ -12,8 +12,15 @@ export const generateInvoice = async ({
 }: any) => {
   return new Promise<string>((resolve, reject) => {
     try {
+      const invoicesDir = path.join(process.cwd(), "invoices")
+
+      // Ensure the invoices directory exists
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true })
+      }
+
       const fileName = `invoice_${booking_id}.pdf`
-      const filePath = path.join(process.cwd(), "invoices", fileName)
+      const filePath = path.join(invoicesDir, fileName)
 
       const doc = new PDFDocument({ margin: 50 })
       const stream = fs.createWriteStream(filePath)
@@ -33,9 +40,9 @@ export const generateInvoice = async ({
 
       // Invoice Info
       doc.fontSize(12)
-      doc.text(`Invoice ID: ${booking_id}`)
+      doc.text(`Invoice ID: INV-${booking_id.slice(0, 8).toUpperCase()}`)
       doc.text(`Payment ID: ${payment_id}`)
-      doc.text(`Date: ${new Date().toLocaleDateString()}`)
+      doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`)
       doc.moveDown()
 
       // Customer
@@ -67,6 +74,7 @@ export const generateInvoice = async ({
       doc.end()
 
       stream.on("finish", () => resolve(filePath))
+      stream.on("error", (err) => reject(err))
     } catch (err) {
       reject(err)
     }

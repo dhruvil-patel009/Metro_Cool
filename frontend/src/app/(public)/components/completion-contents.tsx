@@ -33,6 +33,7 @@ export default function CompletionContent() {
   const [booking, setBooking] = useState<any>(null)
   const [serviceOTP, setServiceOTP] = useState<string | null>(null)
   const [checkingPayment, setCheckingPayment] = useState(false)
+  const [razorpayPaymentId, setRazorpayPaymentId] = useState<string | null>(null)
 
   /* ---------------- REFS ---------------- */
   const fetchedRef = useRef(false)
@@ -264,6 +265,8 @@ export default function CompletionContent() {
           return
         }
 
+        // Store the real Razorpay payment ID for display
+        setRazorpayPaymentId(response.razorpay_payment_id)
         waitForPaymentConfirmation()
       },
 
@@ -590,7 +593,7 @@ export default function CompletionContent() {
                   <div className="mb-6">
                     <div className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Choose Method</div>
                     <div className="space-y-3">
-                      {/* <button
+                      <button
                         onClick={() => setPaymentMethod("upi")}
                         className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${paymentMethod === "upi" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
                       >
@@ -606,7 +609,7 @@ export default function CompletionContent() {
                           </div>
                           <div className="text-left">
                             <div className="font-semibold text-gray-900">UPI / Online</div>
-                            <div className="text-xs text-gray-500">GPay, PhonePe, Paytm</div>
+                            <div className="text-xs text-gray-500">GPay, PhonePe, Paytm, Card</div>
                           </div>
                         </div>
                         <div
@@ -614,7 +617,7 @@ export default function CompletionContent() {
                         >
                           {paymentMethod === "upi" && <div className="w-2 h-2 bg-white rounded-full"></div>}
                         </div>
-                      </button> */}
+                      </button>
 
                       <button
                         onClick={() => setPaymentMethod("cash")}
@@ -707,7 +710,11 @@ export default function CompletionContent() {
                           </div>
                           <span className="font-bold text-green-900">Payment Successful!</span>
                         </div>
-                        <p className="text-sm text-green-700">Transaction ID: #TXN-882920</p>
+                        <p className="text-sm text-green-700">
+                          {razorpayPaymentId
+                            ? `Payment ID: ${razorpayPaymentId}`
+                            : `Booking Ref: #${serviceRef.slice(0, 8).toUpperCase()}`}
+                        </p>
                       </div>
 
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">

@@ -125,7 +125,7 @@ export const getSettlements = async (req: Request, res: Response) => {
         commission,
         payable,
 
-        status: payment.payout_status === "pending" ? "Paid" : "Pending",
+        status: payment.payout_status === "paid" ? "Paid" : "Pending",
       })
     }
 

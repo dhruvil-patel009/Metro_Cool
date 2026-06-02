@@ -16,17 +16,10 @@ router.post("/razorpay-order", protect, createRazorpayOrder)
 // only signature verify
 router.post("/verify", protect, verifyRazorpayPayment)
 
-// 🚨 CRITICAL — RAW BODY REQUIRED FOR RAZORPAY
-// router.post(
-//   "/webhook",
-//   express.raw({ type: "application/json" }), // IMPORTANT
-//   razorpayWebhook
-// )
-router.post("/webhook", razorpayWebhook)
-
+// NOTE: /webhook is registered directly in app.ts with raw body parsing
+// Do NOT add it here — it must receive a raw Buffer for HMAC verification
 
 router.post("/cash", protect, markCashPayment)
-// router.get("/invoice/:bookingId", protect, getInvoice)
 router.get("/invoice/:bookingId", getInvoice)
 
 
