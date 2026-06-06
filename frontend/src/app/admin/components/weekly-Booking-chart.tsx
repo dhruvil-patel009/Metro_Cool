@@ -116,7 +116,7 @@ export function WeeklyBookingsChart() {
                   fontSize: 13,
                   padding: "8px 14px",
                 }}
-                formatter={(v: number) => [v, "Bookings"]}
+                formatter={(v: number | undefined) => [v ?? 0, "Bookings"] as [number, string]}
                 labelFormatter={(_, payload) => {
                   if (payload?.[0]?.payload?.date) {
                     return new Date(payload[0].payload.date + "T00:00:00").toLocaleDateString("en-IN", {
