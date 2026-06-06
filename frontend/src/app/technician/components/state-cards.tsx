@@ -6,10 +6,10 @@ import dayjs from "dayjs";
 const stats = [
   {
     title: "Total Earnings",
-    value: "$1,240",
+    value: "₹1,240",
     trend: "+12%",
     trendLabel: "vs last week",
-    icon: DollarSign,
+    icon: IndianRupee,
     iconBg: "bg-cyan-50",
     iconColor: "text-cyan-600",
     progress: 65,

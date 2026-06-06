@@ -105,7 +105,7 @@ export function WeeklyEarningsChart() {
               <YAxis hide />
               <Tooltip
                 contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", fontSize: 13 }}
-                formatter={(v: number) => [formatINR(v), "Revenue"]}
+                formatter={(v: number | undefined) => [formatINR(v ?? 0), "Revenue"] as [string, string]}
               />
               <Area
                 type="monotone"
