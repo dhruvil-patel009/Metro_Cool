@@ -1,4 +1,4 @@
-import { DollarSign, CheckCircle2, Clock, Calendar } from "lucide-react"
+import { IndianRupee, CheckCircle2, Clock, Calendar } from "lucide-react"
 import { Card, CardContent } from "@/app/components/ui/card"
 import { cn } from "@/app/lib/utils"
 import dayjs from "dayjs";

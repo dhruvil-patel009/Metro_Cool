@@ -1,158 +1,175 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 import {
-  LayoutDashboard,
-  Briefcase,
-  Users,
-  UserCircle,
-  Calendar,
-  CreditCard,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  PackageSearch,
-} from "lucide-react";
-import { cn } from "@/app/lib/utils";
-import { toast } from "react-toastify";
-import { useAuthStore } from "@/store/auth.store";
+  LayoutDashboard, Briefcase, Users, UserCircle,
+  Calendar, CreditCard, Settings, LogOut, Menu, X,
+  PackageSearch, ChevronRight,
+} from "lucide-react"
+import { cn } from "@/app/lib/utils"
+import { toast } from "react-toastify"
+import { useAuthStore } from "@/store/auth.store"
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
-  { icon: Briefcase, label: "Services", href: "/admin/Services" },
-  // { icon: FolderTree, label: "Categories", href: "/admin/Categories" },
-  { icon: PackageSearch, label: "Products", href: "/admin/products" },
-  { icon: Users, label: "Technicians", href: "/admin/Technician" },
-  { icon: UserCircle, label: "Users", href: "/admin/users" },
-  { icon: Calendar, label: "Bookings", href: "/admin/Bookings" },
-  { icon: CreditCard, label: "Settlements", href: "/admin/Settlements" },
-  { icon: Settings, label: "Settings", href: "/admin/Settings" },
-];
+  { icon: LayoutDashboard, label: "Dashboard",   href: "/admin",              color: "text-blue-500" },
+  { icon: Briefcase,       label: "Services",     href: "/admin/Services",     color: "text-violet-500" },
+  { icon: PackageSearch,   label: "Products",     href: "/admin/products",     color: "text-cyan-500" },
+  { icon: Users,           label: "Technicians",  href: "/admin/Technician",   color: "text-emerald-500" },
+  { icon: UserCircle,      label: "Users",        href: "/admin/users",        color: "text-orange-500" },
+  { icon: Calendar,        label: "Bookings",     href: "/admin/Bookings",     color: "text-rose-500" },
+  { icon: CreditCard,      label: "Settlements",  href: "/admin/Settlements",  color: "text-amber-500" },
+  { icon: Settings,        label: "Settings",     href: "/admin/Settings",     color: "text-slate-500" },
+]
 
 export function Sidebar() {
-  const [isOpen, setIsOpen] = useState(true);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const pathname = usePathname();
-    const router = useRouter()
-  const logout = useAuthStore((s) => s.logout);
-  
-
-
-    /* ---------- LOGOUT HANDLER ---------- */
-  // const handleLogout = async () => {
-  //   try {
-  //     await fetch("http://localhost:5000/api/auth/logout", {
-  //       method: "POST",
-  //       credentials: "include", // 🔑 important
-  //     })
-
-  //     router.push("/")
-  //   } catch (error) {
-  //     console.error("Logout failed", error)
-  //   }
-  // }
+  const [isOpen, setIsOpen] = useState(true)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const pathname = usePathname()
+  const router = useRouter()
+  const logout = useAuthStore((s) => s.logout)
 
   const handleLogout = () => {
-    logout(); // ✅ clears token, role, refreshToken, Zustand state
+    logout()
+    toast.success("Logged out successfully")
+    router.replace("/")
+  }
 
-    toast.success("Logged out successfully");
+  const SidebarContent = () => (
+    <aside className={cn(
+      "fixed lg:static inset-y-0 left-0 z-40 flex h-screen flex-col",
+      "bg-white border-r border-gray-100 shadow-sm",
+      "transition-all duration-300 ease-in-out",
+      isOpen ? "w-64" : "w-[72px]",
+      isMobileOpen ? "translate-x-0" : "-translate-x-full",
+      "lg:translate-x-0"
+    )}>
 
-    
-    router.replace("/"); // ✅ correct redirect
-  };
+      {/* Logo */}
+      <div className={cn(
+        "flex h-16 items-center border-b border-gray-100 flex-shrink-0",
+        isOpen ? "px-5 justify-between" : "px-0 justify-center"
+      )}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm">
+            <span className="text-white font-bold text-sm">MC</span>
+          </div>
+          {isOpen && (
+            <div className="min-w-0">
+              <p className="font-bold text-gray-900 text-sm leading-none truncate">Metro Cool</p>
+              <p className="text-[11px] text-gray-400 mt-0.5 truncate">Admin Panel</p>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+        >
+          <ChevronRight className={cn("h-4 w-4 text-gray-400 transition-transform duration-300", isOpen ? "rotate-180" : "")} />
+        </button>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 space-y-0.5">
+        {isOpen && (
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 pb-2 pt-1">
+            Main Menu
+          </p>
+        )}
+        {menuItems.map((item) => {
+          const isActive = item.href === "/admin"
+            ? pathname === "/admin"
+            : pathname === item.href || pathname.startsWith(item.href + "/")
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={() => setIsMobileOpen(false)}
+              title={!isOpen ? item.label : undefined}
+              className={cn(
+                "group flex items-center rounded-xl transition-all duration-150",
+                isOpen ? "gap-3 px-3 py-2.5" : "justify-center px-0 py-2.5 mx-auto w-11 h-11",
+                isActive
+                  ? "bg-blue-50 shadow-sm"
+                  : "hover:bg-gray-50"
+              )}
+            >
+              <div className={cn(
+                "flex items-center justify-center rounded-lg flex-shrink-0 transition-all",
+                isOpen ? "w-8 h-8" : "w-9 h-9",
+                isActive ? "bg-white shadow-sm" : "group-hover:bg-white group-hover:shadow-sm"
+              )}>
+                <item.icon className={cn(
+                  "h-[18px] w-[18px] transition-colors",
+                  isActive ? item.color : "text-gray-400 group-hover:" + item.color.replace("text-", "text-")
+                )} />
+              </div>
+              {isOpen && (
+                <span className={cn(
+                  "text-sm font-medium truncate transition-colors",
+                  isActive ? "text-gray-900" : "text-gray-600 group-hover:text-gray-900"
+                )}>
+                  {item.label}
+                </span>
+              )}
+              {isOpen && isActive && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Logout */}
+      <div className="border-t border-gray-100 p-3 flex-shrink-0">
+        <button
+          onClick={handleLogout}
+          title={!isOpen ? "Logout" : undefined}
+          className={cn(
+            "group flex items-center w-full rounded-xl transition-all duration-150 hover:bg-red-50",
+            isOpen ? "gap-3 px-3 py-2.5" : "justify-center px-0 py-2.5 mx-auto w-11 h-11"
+          )}
+        >
+          <div className={cn(
+            "flex items-center justify-center rounded-lg transition-all flex-shrink-0",
+            isOpen ? "w-8 h-8" : "w-9 h-9",
+            "group-hover:bg-white group-hover:shadow-sm"
+          )}>
+            <LogOut className="h-[18px] w-[18px] text-gray-400 group-hover:text-red-500 transition-colors" />
+          </div>
+          {isOpen && (
+            <span className="text-sm font-medium text-gray-600 group-hover:text-red-600 transition-colors">
+              Logout
+            </span>
+          )}
+        </button>
+      </div>
+    </aside>
+  )
 
   return (
     <>
-      {/* MOBILE TOGGLE */}
+      {/* Mobile toggle */}
       {!isMobileOpen && (
-  <button
-    onClick={() => setIsMobileOpen(true)}
-    className="fixed sm:left-4 sm:top-4 left-0 top-2 z-50 rounded-lg bg-white p-2 shadow lg:hidden"
-  >
-    <Menu className="h-6 w-6" />
-  </button>
-)}
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="fixed left-3 top-3 z-50 flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow-md border border-gray-100 lg:hidden"
+        >
+          <Menu className="h-5 w-5 text-gray-600" />
+        </button>
+      )}
 
-      {/* MOBILE OVERLAY */}
+      {/* Mobile overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* SIDEBAR */}
-<aside
-  className={cn(
-    "fixed lg:static inset-y-0 left-0 z-40 flex h-screen flex-col bg-white shadow-sm transition-all duration-300",
-    isOpen ? "w-64" : "w-20",
-    isMobileOpen ? "translate-x-0" : "-translate-x-full",
-    "lg:translate-x-0"
-  )}
->
-
-        {/* HEADER */}
-        <div className="flex h-16 items-center justify-between border-b px-4 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-blue-500">
-              <div className="h-5 w-5 rounded border-2 border-white" />
-            </div>
-            {isOpen && (
-              <div>
-                <h1 className="text-sm font-bold">Comfort AC</h1>
-                <p className="text-xs text-gray-500">admin Panel</p>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="hidden lg:block rounded p-1 hover:bg-gray-100"
-          >
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-
-        {/* MENU (SCROLLABLE) */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {menuItems.map((item) => {
-            const isActive =
-  item.href === "/admin"
-    ? pathname === "/admin"
-    : pathname === item.href || pathname.startsWith(item.href + "/");
-
-
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-700 hover:bg-gray-100"
-                )}
-              >
-                <item.icon className="h-5 w-5 shrink-0" />
-                {isOpen && <span>{item.label}</span>}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* LOGOUT (ALWAYS AT BOTTOM) */}
-        <div className="border-t p-3 shrink-0">
-          <button className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"           onClick={handleLogout}
->
-            <LogOut className="h-5 w-5" />
-            {isOpen && <span>Logout</span>}
-          </button>
-        </div>
-      </aside>
+      <SidebarContent />
     </>
-  );
+  )
 }

@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express"
+import jwt from "jsonwebtoken"
+import { env } from "../config/env.js"
 
 export const protect = (
   req: Request,
@@ -7,23 +8,30 @@ export const protect = (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers.authorization
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "No token provided" });
+      return res.status(401).json({ error: "No token provided" })
     }
 
-    const token = authHeader.split(" ")[1];
+    const token = authHeader.split(" ")[1]
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      id: string;
-      role: string;
-    };
+    if (!token || token === "null" || token === "undefined") {
+      return res.status(401).json({ error: "Invalid token" })
+    }
 
-    req.user = decoded; // ✅ now TypeScript accepts this
+    // Use env.JWT_SECRET — single source of truth for the secret
+    const decoded = jwt.verify(token, env.JWT_SECRET) as {
+      id: string
+      role: string
+    }
 
-    next();
-  } catch {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    req.user = decoded
+    next()
+  } catch (err: any) {
+    if (err?.name === "TokenExpiredError") {
+      return res.status(401).json({ error: "Token expired — please log in again" })
+    }
+    return res.status(401).json({ error: "Invalid or expired token" })
   }
-};
+}

@@ -2,651 +2,567 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Star, Download, Lock, Copy, Check } from "lucide-react"
+import {
+  Download, Lock, Copy, Check, CreditCard, Banknote,
+  ShieldCheck, Wrench, CalendarDays, Clock, User, Receipt,
+  Loader2, AlertCircle, RefreshCw,
+} from "lucide-react"
 import { toast } from "react-toastify"
 import { formatINR } from "@/app/lib/currency"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
+// Max time to poll before showing a "taking longer" warning (ms)
+const POLL_TIMEOUT_MS = 3 * 60 * 1000 // 3 minutes
+const POLL_INTERVAL_MS = 3000
+
+// Safe token getter — reads from both possible keys
+const getToken = (): string | null => {
+  if (typeof window === "undefined") return null
+  return (
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token") ||
+    null
+  )
+}
+
 declare global {
-  interface Window {
-    Razorpay: any
-  }
+  interface Window { Razorpay: any }
 }
 
 export default function CompletionContent() {
-
   const searchParams = useSearchParams()
 
-  /* ---------------- STABLE BOOKING ID ---------------- */
   const [bookingId, setBookingId] = useState<string | null>(null)
-
-  useEffect(() => {
-    const id = searchParams.get("id")
-    if (id) setBookingId(id)
-  }, [])
-
-  /* ---------------- STATES ---------------- */
+  const [bookingError, setBookingError] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "cash" | null>(null)
   const [paymentConfirmed, setPaymentConfirmed] = useState(false)
   const [copied, setCopied] = useState(false)
   const [booking, setBooking] = useState<any>(null)
   const [serviceOTP, setServiceOTP] = useState<string | null>(null)
   const [checkingPayment, setCheckingPayment] = useState(false)
+  const [pollTimedOut, setPollTimedOut] = useState(false)
   const [razorpayPaymentId, setRazorpayPaymentId] = useState<string | null>(null)
+  const [paying, setPaying] = useState(false)
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false)
 
-  /* ---------------- REFS ---------------- */
   const fetchedRef = useRef(false)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const razorpayOpened = useRef(false)
 
-
-  /* ---------------- PRICE BREAKDOWN ---------------- */
-
+  // ── Amount: always use booking.total_amount as single source of truth ──
+  const totalAmount = Number(booking?.total_amount || 0)
   const servicePrice = Number(booking?.service_price || 0)
   const taxAmount = Number(booking?.tax || 0)
-  const totalAmount = servicePrice + taxAmount
 
-  /* ---------------- LOAD RAZORPAY SCRIPT ---------------- */
-  // useEffect(() => {
-  //   if (document.getElementById("razorpay-script")) return
-  //   const script = document.createElement("script")
-  //   script.id = "razorpay-script"
-  //   script.src = "https://checkout.razorpay.com/v1/checkout.js"
-  //   script.async = true
-  //   document.body.appendChild(script)
-  // }, [])
+  // ── Read bookingId from URL ──
+  useEffect(() => {
+    const id = searchParams.get("id")
+    if (id && id.length > 10) {
+      setBookingId(id)
+    } else {
+      setBookingError(true)
+    }
+  }, [])
 
-  /* ---------------- FETCH BOOKING ---------------- */
+  // ── Fetch booking ──
   useEffect(() => {
     if (!bookingId || fetchedRef.current) return
     fetchedRef.current = true
 
-    const token = localStorage.getItem("accessToken")
-
+    const token = getToken()
     fetch(`${API_URL}/bookings/${bookingId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         setBooking(data.booking)
-
         if (data.booking?.payment_status === "completed") {
           setServiceOTP(data.booking.closure_otp)
           setPaymentConfirmed(true)
         }
       })
-      .catch(() => toast.error("Failed to load booking"))
+      .catch(() => {
+        setBookingError(true)
+        toast.error("Failed to load booking details")
+      })
   }, [bookingId])
 
-  /* ---------------- POLLING ---------------- */
-  const waitForPaymentConfirmation = async () => {
-    if (!bookingId) return
-    if (pollingRef.current) return
-
-    const token = localStorage.getItem("accessToken")
-    setCheckingPayment(true)
-
-    pollingRef.current = setInterval(async () => {
-      const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      const data = await res.json()
-
-      if (data?.booking?.payment_status === "completed") {
-        setServiceOTP(data.booking.closure_otp)
-        setPaymentConfirmed(true)
-        setBooking(data.booking)
-
-        clearInterval(pollingRef.current!)
-        pollingRef.current = null
-        setCheckingPayment(false)
-
-        toast.success("Payment Confirmed 🎉")
-      }
-    }, 3000)
-  }
-
-  /* ---------------- CLEANUP ---------------- */
+  // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)
+      if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current)
     }
   }, [])
 
-  /* ---------------- DYNAMIC DATA (FIXED FOR YOUR API RESPONSE) ---------------- */
-
-  const serviceName = booking?.service?.title || "-"
-  const serviceAmount = Number(booking?.total_amount || 0)
-  const serviceRef = booking?.id || "-"
-  const technicianId = booking?.technician_id || "-"
-  const technicianName = booking?.technician?.full_name || "Assigned Technician"
-
-  const serviceDate = booking?.booking_date
-    ? new Date(booking.booking_date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    })
-    : "-"
-
-  const serviceTime = booking?.time_slot || ""
-
-  const fullDateTime = serviceDate + (serviceTime ? ` at ${serviceTime}` : "")
-
-  const serviceImage = booking?.service?.image_url || "/assets/technician-working-on-ac-unit.jpg"
-
-
-  /* ---------------- RAZORPAY ---------------- */
-  /* ---------------- RAZORPAY ---------------- */
-
-  const loadRazorpay = () => {
-    return new Promise<void>((resolve, reject) => {
-
-      if (typeof window === "undefined") {
-        reject("Window not available")
-        return
-      }
-
-      if (window.Razorpay && typeof window.Razorpay === "function") {
-        resolve()
-        return
-      }
-
-      const existingScript = document.querySelector(
-        'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
-      )
-
-      if (existingScript) {
-        existingScript.addEventListener("load", () => resolve())
-        existingScript.addEventListener("error", () => reject())
-        return
-      }
-
-      const script = document.createElement("script")
-      script.src = "https://checkout.razorpay.com/v1/checkout.js"
-      script.async = true
-
-      script.onload = () => {
-        if (window.Razorpay && typeof window.Razorpay === "function") {
-          resolve()
-        } else {
-          reject("Razorpay failed to initialize")
-        }
-      }
-
-      script.onerror = () => reject("Script load failed")
-
-      document.body.appendChild(script)
-    })
+  // ── Stop polling ──
+  const stopPolling = () => {
+    if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null }
+    if (pollTimeoutRef.current) { clearTimeout(pollTimeoutRef.current); pollTimeoutRef.current = null }
+    setCheckingPayment(false)
   }
 
-  const handleRazorpay = async () => {
+  // ── Start polling for payment confirmation ──
+  const waitForPaymentConfirmation = () => {
+    if (!bookingId || pollingRef.current) return
 
+    const token = getToken()
+    setCheckingPayment(true)
+    setPollTimedOut(false)
+
+    // Safety timeout — stop polling after 3 minutes
+    pollTimeoutRef.current = setTimeout(() => {
+      stopPolling()
+      setPollTimedOut(true)
+    }, POLL_TIMEOUT_MS)
+
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_URL}/bookings/${bookingId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const data = await res.json()
+        if (data?.booking?.payment_status === "completed") {
+          setServiceOTP(data.booking.closure_otp)
+          setPaymentConfirmed(true)
+          setBooking(data.booking)
+          stopPolling()
+          toast.success("Payment Confirmed! 🎉")
+        }
+      } catch (_) { /* silently retry */ }
+    }, POLL_INTERVAL_MS)
+  }
+
+  // ── Load Razorpay SDK ──
+  const loadRazorpay = () => new Promise<void>((resolve, reject) => {
+    if (typeof window === "undefined") return reject(new Error("SSR"))
+    if (window.Razorpay) return resolve()
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+    )
+    if (existing) {
+      existing.addEventListener("load", () => resolve())
+      existing.addEventListener("error", () => reject(new Error("Script load failed")))
+      return
+    }
+    const s = document.createElement("script")
+    s.src = "https://checkout.razorpay.com/v1/checkout.js"
+    s.async = true
+    s.onload = () => (window.Razorpay ? resolve() : reject(new Error("Razorpay not available")))
+    s.onerror = () => reject(new Error("Script load failed"))
+    document.body.appendChild(s)
+  })
+
+  // ── Handle Razorpay payment ──
+  const handleRazorpay = async () => {
     if (razorpayOpened.current) return
     razorpayOpened.current = true
+    setPaying(true)
 
     try {
       await loadRazorpay()
-    } catch (err) {
-      console.error(err)
-      toast.error("Payment gateway failed to load")
+    } catch {
+      toast.error("Payment gateway failed to load. Please try again.")
       razorpayOpened.current = false
+      setPaying(false)
       return
     }
 
-    if (!window.Razorpay || typeof window.Razorpay !== "function") {
-      toast.error("Razorpay not available")
-      razorpayOpened.current = false
-      return
-    }
-
-    if (!bookingId || !booking?.total_amount) {
-      toast.error("Invalid booking details")
-      razorpayOpened.current = false
-      return
-    }
-
-    const parsedAmount = Number(booking?.total_amount || 0)
-    if (!parsedAmount || isNaN(parsedAmount)) {
+    if (!totalAmount || totalAmount <= 0) {
       toast.error("Invalid payment amount")
       razorpayOpened.current = false
+      setPaying(false)
       return
     }
 
-    const token = localStorage.getItem("accessToken")
+    const token = getToken()
 
-    const orderRes = await fetch(`${API_URL}/payments/razorpay-order`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        booking_id: bookingId,
-        amount: parsedAmount,
-      }),
-    })
-
-    const orderData = await orderRes.json()
-
-    if (!orderRes.ok || !orderData.orderId || !orderData.key) {
-      toast.error("Order creation failed")
+    let orderData: any
+    try {
+      const orderRes = await fetch(`${API_URL}/payments/razorpay-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ booking_id: bookingId, amount: totalAmount }),
+      })
+      orderData = await orderRes.json()
+      if (!orderRes.ok || !orderData.orderId) {
+        throw new Error(orderData.error || orderData.message || "Order creation failed")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Could not create payment order")
       razorpayOpened.current = false
+      setPaying(false)
       return
     }
 
     const options = {
       key: orderData.key,
       order_id: orderData.orderId,
-      amount: Math.round(parsedAmount * 100),
+      amount: Math.round(totalAmount * 100),
       currency: "INR",
       name: "Metro Cool",
-      description: booking.service?.title || "Service Payment",
-
-      handler: async function (response: any) {
-
-        const verifyRes = await fetch(`${API_URL}/payments/verify`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            booking_id: bookingId,
-            ...response,
-          }),
-        })
-
-        if (!verifyRes.ok) {
-          toast.error("Payment verification failed")
-          razorpayOpened.current = false
-          return
-        }
-
-        // Store the real Razorpay payment ID for display
-        setRazorpayPaymentId(response.razorpay_payment_id)
-        waitForPaymentConfirmation()
+      description: booking?.service?.title || "Service Payment",
+      image: "/logo.png",
+      prefill: {
+        name: booking?.user?.full_name || "",
+        contact: booking?.user?.phone || "",
       },
+      theme: { color: "#2563eb" },
+      handler: async (response: any) => {
+        try {
+          setRazorpayPaymentId(response.razorpay_payment_id)
 
-      modal: {
-        ondismiss: function () {
-          razorpayOpened.current = false
+          const verifyRes = await fetch(`${API_URL}/payments/verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              booking_id: bookingId,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          })
+
+          if (!verifyRes.ok) {
+            const errData = await verifyRes.json().catch(() => ({}))
+            toast.error(errData.error || "Payment verification failed. Contact support.")
+            razorpayOpened.current = false
+            return
+          }
+
+          // Verify returned success — start polling for booking update
+          waitForPaymentConfirmation()
+        } catch {
+          toast.error("Network error during verification. Your payment may have succeeded — please check your bookings.")
+          // Still start polling — the payment may have gone through
+          waitForPaymentConfirmation()
         }
-      }
+      },
+      modal: {
+        ondismiss: () => {
+          razorpayOpened.current = false
+          setPaying(false)
+        },
+      },
     }
-
-    console.log("Opening Razorpay with:", options)
 
     const rzp = new window.Razorpay(options)
-
-    rzp.on("payment.failed", function (response: any) {
-      toast.error("Payment failed. Please try again.")
+    rzp.on("payment.failed", (response: any) => {
+      const reason = response?.error?.description || "Payment failed. Please try again."
+      toast.error(reason)
       razorpayOpened.current = false
+      setPaying(false)
     })
-
     rzp.open()
+    // setPaying(false) here would prematurely clear — it clears in ondismiss/success
   }
 
-  // const handleRazorpay = async () => {
-
-  //   const isLoaded = await loadRazorpay()
-
-  //   if (!isLoaded) {
-  //     toast.error("Failed to load payment gateway")
-  //     return
-  //   }
-
-  //   if (!bookingId || serviceAmount <= 0) {
-  //     toast.error("Invalid payment details")
-  //     return
-  //   }
-
-  //   const token = localStorage.getItem("accessToken")
-  //   if (!token) {
-  //     toast.error("Login expired")
-  //     return
-  //   }
-
-  //   const res = await fetch(`${API_URL}/payments/razorpay-order`, {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //     body: JSON.stringify({
-  //       booking_id: bookingId,
-  //       amount: serviceAmount,
-  //     }),
-  //   })
-
-  //   const data = await res.json()
-
-  //   console.log("Razorpay Data:", data)
-
-  //   if (!res.ok || !data.orderId || !data.key) {
-  //     toast.error("Order creation failed")
-  //     return
-  //   }
-
-  //   const options = {
-  //     key: data.key,
-  //     order_id: data.orderId,
-  //     amount: serviceAmount * 100,
-  //     currency: "INR",
-  //     name: "Metro Cool",
-  //     description: serviceName,
-  //     handler: async function (response: any) {
-  //       await fetch(`${API_URL}/payments/verify`, {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //         body: JSON.stringify({
-  //           booking_id: bookingId,
-  //           ...response,
-  //         }),
-  //       })
-  //     },
-  //   }
-
-  //   console.log("FINAL OPTIONS:", options)
-
-  //   const rzp = new window.Razorpay(options)
-  //   rzp.open()
-  // }
-
-  /* ---------------- CASH ---------------- */
+  // ── Handle cash payment ──
   const handleCashPayment = async () => {
     if (!bookingId) return
-
-    const token = localStorage.getItem("accessToken")
-
-    const res = await fetch(`${API_URL}/payments/cash`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ booking_id: bookingId }),
-    })
-
-    if (!res.ok) {
-      toast.error("Cash payment failed")
-      return
+    setPaying(true)
+    try {
+      const token = getToken()
+      const res = await fetch(`${API_URL}/payments/cash`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ booking_id: bookingId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || "Cash payment failed")
+        return
+      }
+      toast.success("Cash payment recorded")
+      waitForPaymentConfirmation()
+    } catch {
+      toast.error("Network error. Please try again.")
+    } finally {
+      setPaying(false)
     }
-
-    toast.success("Cash payment recorded")
-    waitForPaymentConfirmation()
   }
 
-  /* ---------------- OTP COPY ---------------- */
+  // ── Copy OTP ──
   const copyOTP = () => {
     if (!serviceOTP) return
     navigator.clipboard.writeText(serviceOTP)
     setCopied(true)
-    toast.success("OTP copied to clipboard!")
+    toast.success("OTP copied!")
     setTimeout(() => setCopied(false), 2000)
   }
 
-  /* ---------------- INVOICE ---------------- */
+  // ── Download invoice ──
   const downloadInvoice = async () => {
-
     if (!bookingId) return
-
+    setDownloadingInvoice(true)
     try {
-
-      const token = localStorage.getItem("accessToken")
-
+      const token = getToken()
       const res = await fetch(`${API_URL}/payments/invoice/${bookingId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       })
-
-      if (!res.ok) {
-        toast.error("Invoice not found")
-        return
-      }
-
       const data = await res.json()
-
-      if (!data?.invoice_url) {
-        toast.error("Invoice not generated yet")
+      if (!res.ok || !data?.invoice_url) {
+        toast.error(data?.error || "Invoice not ready yet. Please try again in a moment.")
         return
       }
-
       window.open(data.invoice_url, "_blank")
-
-    } catch (err) {
-
-      console.error(err)
+    } catch {
       toast.error("Failed to download invoice")
-
+    } finally {
+      setDownloadingInvoice(false)
     }
   }
 
-  /* ---------------- LOADING SCREEN ---------------- */
+  // ── Derived values ──
+  const serviceName = booking?.service?.title || "AC Service"
+  const serviceRef = booking?.id || ""
+  const technicianName = booking?.technician?.full_name || "Assigned Technician"
+  const serviceDate = booking?.booking_date
+    ? new Date(booking.booking_date).toLocaleDateString("en-IN", {
+        day: "2-digit", month: "short", year: "numeric",
+      })
+    : "—"
+  const serviceTime = booking?.time_slot || ""
+
+  // ── Error state ──
+  if (bookingError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <AlertCircle className="w-7 h-7 text-red-500" />
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">Booking not found</h2>
+          <p className="text-sm text-gray-500">
+            We couldn't load your booking. Please go back and try again, or contact support.
+          </p>
+          <button
+            onClick={() => window.history.back()}
+            className="text-blue-600 text-sm font-medium hover:underline"
+          >
+            ← Go back
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Loading state ──
   if (!booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-gray-600">
-        Loading service details...
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-10 h-10 text-blue-600 animate-spin mx-auto" />
+          <p className="text-gray-500 font-medium">Loading booking details…</p>
+        </div>
       </div>
     )
   }
 
   return (
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
 
-    <>
-      <main className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Back Button */}
-          {/* <Link
-      href={`/bookings?id=${bookingId}`}
-      className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-    >
-      <ArrowLeft className="w-5 h-5" />
-      <span className="font-medium">Back to Bookings</span>
-    </Link> */}
+        {/* ── Header ── */}
+        <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Service Completion</h1>
+            <p className="text-gray-500 mt-1 text-sm">Complete payment to receive your closure OTP</p>
+          </div>
+          <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border ${
+            paymentConfirmed
+              ? "bg-green-50 text-green-700 border-green-200"
+              : "bg-amber-50 text-amber-700 border-amber-200"
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${
+              paymentConfirmed ? "bg-green-500" : "bg-amber-500 animate-pulse"
+            }`} />
+            {paymentConfirmed ? "Payment Completed" : "Payment Pending"}
+          </span>
+        </div>
 
-          <div className="grid lg:grid-cols-[1fr_400px] gap-6">
-            {/* Left Column */}
-            <div className="space-y-6">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Service Completions</h1>
-                  <p className="text-gray-600">Review invoice and complete payment to close the service request.</p>
-                </div>
-                <div className="flex items-center gap-2 bg-yellow-50 text-yellow-700 px-4 py-2 rounded-lg border border-yellow-200">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="font-semibold text-sm">{paymentConfirmed ? "Payment Completed" : "Payment Pending"}</span>
-                </div>
-              </div>
+        <div className="grid lg:grid-cols-[1fr_380px] gap-6">
 
-              {/* Technician Card */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-yellow-400">
-                      <img
-                        src={serviceImage}
-                        alt={technicianName}
-                        className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900">{technicianName}</h3>
-                    <p className="text-sm text-gray-600">Senior AC Technician • Metro Cool Pro</p>
-                    <div className="flex items-center gap-4 mt-2">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold text-sm">4.8</span>
-                      </div>
-                      <span className="text-sm text-gray-500">500+ Jobs Completed</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500 mb-1">ID: {technicianId}</div>
-                    <button className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+          {/* ═══ LEFT ═══ */}
+          <div className="space-y-5">
 
-                {/* Service Details */}
-                <div className="grid md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
-                  <div>
-                    <div className="text-sm text-gray-500 uppercase tracking-wide mb-1">Service Reference</div>
-                    <div className="font-bold text-gray-900">#{serviceRef}</div>
+            {/* Booking info */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400" />
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <Wrench className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 uppercase tracking-wide mb-1">Completion Time</div>
-                    <div className="font-bold text-gray-900">{fullDateTime}</div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <div className="text-sm text-gray-500 uppercase tracking-wide mb-1">Service Type</div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <span className="font-semibold text-gray-900">{serviceName}</span>
-                    </div>
+                    <p className="font-bold text-gray-900">{serviceName}</p>
+                    <p className="text-xs text-gray-400">Ref #{serviceRef.slice(0, 8).toUpperCase()}</p>
                   </div>
                 </div>
-              </div>
-
-              {/* Bill Summary */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">Bill Summary</h3>
-                  <button className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm">
-                    <Download className="w-4 h-4" />
-                    Invoice
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="pb-4 border-b border-gray-100">
-                    <div className="text-sm text-gray-500 uppercase tracking-wide mb-3">Description</div>
-                    <div className="space-y-3">
-
-                      <div className="flex justify-between items-start">
-                        <span className="text-gray-900">{serviceName}</span>
-                        <span className="font-semibold text-gray-900">
-                          {formatINR(servicePrice)}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-start">
-                        <span className="text-gray-600 text-sm">Taxes</span>
-                        <span className="font-medium text-gray-900">
-                          {formatINR(taxAmount)}
-                        </span>
-                      </div>
-
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
+                      <User className="w-3.5 h-3.5" /> Technician
                     </div>
+                    <p className="font-semibold text-gray-900 text-sm truncate">{technicianName}</p>
                   </div>
-
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-lg font-bold text-gray-900">Total Payable</span>
-                    <span className="text-2xl font-bold text-blue-600">{formatINR(totalAmount)}</span>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
+                      <CalendarDays className="w-3.5 h-3.5" /> Date
+                    </div>
+                    <p className="font-semibold text-gray-900 text-sm">{serviceDate}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
+                      <Clock className="w-3.5 h-3.5" /> Time
+                    </div>
+                    <p className="font-semibold text-gray-900 text-sm">{serviceTime || "—"}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right Column */}
-            <div className="space-y-6">
-              {/* Payment Card */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+            {/* Bill summary */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Receipt className="w-5 h-5 text-gray-400" />
+                  <h3 className="font-bold text-gray-900">Bill Summary</h3>
+                </div>
+                {paymentConfirmed && (
+                  <button
+                    onClick={downloadInvoice}
+                    disabled={downloadingInvoice}
+                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors disabled:opacity-60"
+                  >
+                    {downloadingInvoice
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Download className="w-4 h-4" />}
+                    Download Receipt
+                  </button>
+                )}
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-3 border-b border-gray-50">
+                  <span className="text-gray-600">{serviceName}</span>
+                  <span className="font-semibold text-gray-900">{formatINR(servicePrice)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-gray-50">
+                  <span className="text-gray-500 text-sm">GST / Taxes</span>
+                  <span className="font-medium text-gray-700">{formatINR(taxAmount)}</span>
+                </div>
+                <div className="flex justify-between items-center pt-3">
+                  <span className="font-bold text-gray-900 text-lg">Total Payable</span>
+                  <span className="font-bold text-blue-600 text-2xl">{formatINR(totalAmount)}</span>
+                </div>
+              </div>
+            </div>
 
+            {/* Payment success banner */}
+            {paymentConfirmed && (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Check className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-green-900">Payment Successful</p>
+                    <p className="text-sm text-green-700">
+                      {razorpayPaymentId
+                        ? `Payment ID: ${razorpayPaymentId}`
+                        : `Ref: #${serviceRef.slice(0, 8).toUpperCase()}`}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={downloadInvoice}
+                  disabled={downloadingInvoice}
+                  className="w-full flex items-center justify-center gap-2 bg-white border border-green-300 text-green-700 hover:bg-green-100 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60"
+                >
+                  {downloadingInvoice
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
+                    : <><Download className="w-4 h-4" /> Download Invoice</>}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ═══ RIGHT ═══ */}
+          <div className="space-y-5">
+
+            {/* Payment card */}
+            {!paymentConfirmed ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">Make Payment</h3>
-                    <div className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1 rounded-lg">
-                      <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                      <span className="font-semibold text-xs uppercase">Due Now</span>
-                    </div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-bold text-gray-900 text-lg">Make Payment</h3>
+                    <span className="bg-red-50 text-red-600 text-xs font-bold px-3 py-1 rounded-full border border-red-100">
+                      DUE NOW
+                    </span>
                   </div>
+                  <p className="text-3xl font-bold text-gray-900 mt-4 mb-6">{formatINR(totalAmount)}</p>
 
-                  <div className="mb-6">
-                    <div className="text-sm text-gray-500 mb-2">Total Amount</div>
-                    <div className="text-4xl font-bold text-gray-900">{formatINR(totalAmount)}</div>
-                  </div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Choose Method</p>
+                  <div className="space-y-3 mb-6">
+                    {/* UPI */}
+                    <button
+                      onClick={() => setPaymentMethod("upi")}
+                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 ${
+                        paymentMethod === "upi"
+                          ? "border-blue-600 bg-blue-50 shadow-sm"
+                          : "border-gray-100 hover:border-gray-200 bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          paymentMethod === "upi" ? "bg-blue-100" : "bg-white border border-gray-200"
+                        }`}>
+                          <CreditCard className={`w-5 h-5 ${paymentMethod === "upi" ? "text-blue-600" : "text-gray-500"}`} />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold text-gray-900 text-sm">UPI / Online</p>
+                          <p className="text-xs text-gray-400">GPay, PhonePe, Card, NetBanking</p>
+                        </div>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        paymentMethod === "upi" ? "border-blue-600 bg-blue-600" : "border-gray-300"
+                      }`}>
+                        {paymentMethod === "upi" && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                    </button>
 
-                  <div className="mb-6">
-                    <div className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Choose Method</div>
-                    <div className="space-y-3">
-                      <button
-                        onClick={() => setPaymentMethod("upi")}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${paymentMethod === "upi" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <div className="text-left">
-                            <div className="font-semibold text-gray-900">UPI / Online</div>
-                            <div className="text-xs text-gray-500">GPay, PhonePe, Paytm, Card</div>
-                          </div>
+                    {/* Cash */}
+                    <button
+                      onClick={() => setPaymentMethod("cash")}
+                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 ${
+                        paymentMethod === "cash"
+                          ? "border-blue-600 bg-blue-50 shadow-sm"
+                          : "border-gray-100 hover:border-gray-200 bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          paymentMethod === "cash" ? "bg-blue-100" : "bg-white border border-gray-200"
+                        }`}>
+                          <Banknote className={`w-5 h-5 ${paymentMethod === "cash" ? "text-blue-600" : "text-gray-500"}`} />
                         </div>
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "upi" ? "border-blue-600 bg-blue-600" : "border-gray-300"}`}
-                        >
-                          {paymentMethod === "upi" && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                        <div className="text-left">
+                          <p className="font-semibold text-gray-900 text-sm">Cash</p>
+                          <p className="text-xs text-gray-400">Pay directly to technician</p>
                         </div>
-                      </button>
-
-                      <button
-                        onClick={() => setPaymentMethod("cash")}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${paymentMethod === "cash"
-                          ? "border-blue-600 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                          </div>
-                          <div className="text-left">
-                            <div className="font-semibold text-gray-900">Cash</div>
-                            <div className="text-xs text-gray-500">Pay directly to technician</div>
-                          </div>
-                        </div>
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "cash" ? "border-blue-600 bg-blue-600" : "border-gray-300"}`}
-                        >
-                          {paymentMethod === "cash" && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                        </div>
-                      </button>
-                    </div>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        paymentMethod === "cash" ? "border-blue-600 bg-blue-600" : "border-gray-300"
+                      }`}>
+                        {paymentMethod === "cash" && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                    </button>
                   </div>
 
                   <button
@@ -654,105 +570,148 @@ export default function CompletionContent() {
                       if (paymentMethod === "upi") handleRazorpay()
                       if (paymentMethod === "cash") handleCashPayment()
                     }}
-                    disabled={!paymentMethod}
-                    className={`w-full py-4 rounded-xl font-bold text-white transition-all ${!paymentMethod
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"}`}
+                    disabled={!paymentMethod || paying}
+                    className={`w-full py-4 rounded-xl font-bold text-white text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                      !paymentMethod || paying
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg active:scale-[0.98]"
+                    }`}
                   >
-                    Pay {formatINR(totalAmount)}
+                    {paying
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing…</>
+                      : <>Pay {formatINR(totalAmount)}</>}
                   </button>
 
                   <div className="flex items-center justify-center gap-2 mt-4">
-                    <Lock className="w-3 h-3 text-gray-400" />
-                    <span className="text-xs text-gray-500">Secured by Razorpay</span>
+                    <ShieldCheck className="w-3.5 h-3.5 text-gray-300" />
+                    <span className="text-xs text-gray-400">Secured by Razorpay · 256-bit SSL</span>
                   </div>
                 </div>
               </div>
-
-              {/* Service Closure Code */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-6">
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg font-bold text-gray-600">2</span>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 mb-1">Service Closure Code</h3>
-                      <p className="text-sm text-gray-500">Unlocks after payment confirmation</p>
-                    </div>
-                    <Lock className="w-5 h-5 text-gray-400 ml-auto" />
+            ) : (
+              <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-lg">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-white" />
                   </div>
-
-                  <div
-                    className={`relative rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-6 transition-all ${!paymentConfirmed ? "blur-sm" : ""}`}
-                  >
-                    {!paymentConfirmed && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center">
-                          <Lock className="w-6 h-6 text-gray-400" />
-                        </div>
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <div className="text-sm text-gray-600 mb-2">Share this code</div>
-                      <div className="flex justify-center gap-2 mb-3">
-                        {serviceOTP && serviceOTP.split("").map((digit, i) => (<div key={i} className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-xl font-bold" > {digit} </div>))}
-                      </div>
-                    </div>
+                  <div>
+                    <p className="font-bold">Payment Complete</p>
+                    <p className="text-blue-200 text-xs">{formatINR(totalAmount)} paid</p>
                   </div>
-
-                  {paymentConfirmed && (
-                    <div className="mt-6 space-y-4 animate-fade-in">
-                      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                            <Check className="w-4 h-4 text-white" />
-                          </div>
-                          <span className="font-bold text-green-900">Payment Successful!</span>
-                        </div>
-                        <p className="text-sm text-green-700">
-                          {razorpayPaymentId
-                            ? `Payment ID: ${razorpayPaymentId}`
-                            : `Booking Ref: #${serviceRef.slice(0, 8).toUpperCase()}`}
-                        </p>
-                      </div>
-
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <div className="text-sm font-semibold text-blue-900 mb-2 uppercase tracking-wide">
-                          Share OTP with Technician
-                        </div>
-                        <p className="text-sm text-blue-700 mb-3">
-                          This code closes the service request <span className="font-semibold">#{serviceRef.slice(0, 8)}</span>
-                        </p>
-                        <button
-                          onClick={copyOTP}
-                          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
-                        >
-                          {copied ? (
-                            <>
-                              <Check className="w-4 h-4" />
-                              Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-4 h-4" />
-                              Copy OTP
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <button onClick={downloadInvoice} className="w-full py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
-                        <Download className="w-4 h-4" />
-                        Download Receipt
-                      </button>
-                    </div>
-                  )}
                 </div>
+                <p className="text-blue-100 text-sm">
+                  Share the OTP below with your technician to close the service.
+                </p>
+              </div>
+            )}
+
+            {/* OTP card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Lock className={`w-5 h-5 ${paymentConfirmed ? "text-green-500" : "text-gray-300"}`} />
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">Service Closure OTP</p>
+                    <p className="text-xs text-gray-400">
+                      {paymentConfirmed
+                        ? "Share this with your technician to close the job"
+                        : "Unlocks after payment is confirmed"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* OTP digits */}
+                <div className={`flex justify-center gap-3 my-5 transition-all ${
+                  !paymentConfirmed ? "opacity-20 pointer-events-none select-none" : ""
+                }`}>
+                  {(serviceOTP || "----").split("").map((digit, i) => (
+                    <div
+                      key={i}
+                      className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-bold border-2 ${
+                        paymentConfirmed
+                          ? "bg-blue-50 border-blue-200 text-blue-700"
+                          : "bg-gray-50 border-gray-200 text-gray-300"
+                      }`}
+                    >
+                      {digit}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Polling indicator */}
+                {checkingPayment && !paymentConfirmed && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-xl p-3 mb-4">
+                    <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                    <span>Confirming your payment…</span>
+                  </div>
+                )}
+
+                {/* Poll timed out */}
+                {pollTimedOut && !paymentConfirmed && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-orange-700">
+                        Payment is taking longer than expected. If you were charged, it will appear in your bookings shortly.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setPollTimedOut(false)
+                        fetchedRef.current = false
+                        // Re-check booking status manually
+                        const token = getToken()
+                        fetch(`${API_URL}/bookings/${bookingId}`, {
+                          headers: { Authorization: `Bearer ${token}` },
+                        })
+                          .then(r => r.json())
+                          .then(data => {
+                            if (data?.booking?.payment_status === "completed") {
+                              setServiceOTP(data.booking.closure_otp)
+                              setPaymentConfirmed(true)
+                              setBooking(data.booking)
+                              toast.success("Payment Confirmed!")
+                            } else {
+                              waitForPaymentConfirmation()
+                            }
+                          })
+                          .catch(() => toast.error("Could not check status"))
+                      }}
+                      className="flex items-center gap-2 text-sm text-orange-700 font-semibold hover:text-orange-800 transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Check again
+                    </button>
+                  </div>
+                )}
+
+                {paymentConfirmed && (
+                  <div className="space-y-3">
+                    <button
+                      onClick={copyOTP}
+                      className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                    >
+                      {copied
+                        ? <><Check className="w-4 h-4" /> Copied!</>
+                        : <><Copy className="w-4 h-4" /> Copy OTP</>}
+                    </button>
+                    <button
+                      onClick={downloadInvoice}
+                      disabled={downloadingInvoice}
+                      className="w-full py-3 rounded-xl border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-gray-700 font-semibold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {downloadingInvoice
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
+                        : <><Download className="w-4 h-4" /> Download Receipt</>}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
+
           </div>
         </div>
-      </main></>
+      </div>
+    </main>
   )
 }

@@ -93,7 +93,7 @@ export default function EarningsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-4xl font-bold text-slate-900">${currentData.total.toFixed(2)}</p>
+                <p className="text-4xl font-bold text-slate-900">₹{currentData.total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 <Badge variant="secondary" className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   {currentData.growth}% vs last {period}
@@ -124,7 +124,7 @@ export default function EarningsPage() {
                   <span className="text-sm font-medium text-slate-600 uppercase tracking-wide">Avg. Per Job</span>
                 </div>
               </div>
-              <p className="text-4xl font-bold text-slate-900">${currentData.avgPerJob.toFixed(2)}</p>
+              <p className="text-4xl font-bold text-slate-900">₹{currentData.avgPerJob.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </Card>
           </div>
 
@@ -180,7 +180,7 @@ export default function EarningsPage() {
           Amount
         </span>
         <span className="font-semibold text-cyan-600">
-          ${item.amount.toFixed(2)}
+          ₹{item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
       </div>
     </div>
@@ -230,7 +230,7 @@ export default function EarningsPage() {
                       </td>
                       <td className="py-4 px-4 text-right">
                         <span className="font-semibold text-cyan-600 group-hover:text-cyan-700 transition-colors duration-200">
-                          ${item.amount.toFixed(2)}
+                          ₹{item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </td>
                     </tr>

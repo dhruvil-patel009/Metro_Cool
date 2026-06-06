@@ -1,25 +1,22 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { Users, UserCheck, Clock, Filter, Eye, MoreVertical, UserX  } from "lucide-react"
+import { useEffect, useMemo, useState, useCallback } from "react"
+import {
+  Users, UserCheck, UserX, Clock, Eye, MoreVertical,
+  ChevronLeft, ChevronRight, Search, CheckCircle2,
+  XCircle, Loader2, AlertCircle, RefreshCw, Phone,
+} from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu"
-import Image from "next/image"
 import { authHeaders } from "../../lib/authHeader"
 import { toast } from "react-toastify"
-import { Skeleton } from "@/app/components/ui/skeleton"
 import { useRouter } from "next/navigation"
+import { cn } from "@/app/lib/utils"
 
-
-
-
-/* ================= TYPES ================= */
-
+/* ─── Types ─── */
 type ApiTechnician = {
   id: string
   services: string[]
@@ -29,7 +26,7 @@ type ApiTechnician = {
     first_name: string
     last_name: string
     phone: string
-    profile_photo: string
+    profile_photo: string | null
   }
 }
 
@@ -40,540 +37,443 @@ type TechnicianUI = {
   phone: string
   services: string[]
   status: "Active" | "Inactive"
-  approval: "Approved" | "Review" | "Pending"
-  avatar: string
+  approval: "Approved" | "Review" | "Rejected"
+  avatar: string | null
 }
 
-/* ================= COMPONENT ================= */
+const LIMIT = 8
 
+const APPROVAL_STYLE: Record<string, string> = {
+  Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  Review: "bg-amber-50 text-amber-700 border-amber-200",
+  Rejected: "bg-red-50 text-red-700 border-red-200",
+}
+
+/* ─── Avatar helper ─── */
+function Avatar({ src, name, size = 10 }: { src?: string | null; name: string; size?: number }) {
+  const initials = name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()
+  if (src && !src.includes("placeholder")) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className={`w-${size} h-${size} rounded-full object-cover flex-shrink-0`}
+      />
+    )
+  }
+  return (
+    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm`}>
+      {initials}
+    </div>
+  )
+}
+
+/* ─── Stat Card ─── */
+function StatCard({
+  icon: Icon, label, value, iconBg, iconColor, badge,
+}: {
+  icon: React.ElementType; label: string; value: number | string
+  iconBg: string; iconColor: string; badge?: { text: string; color: string }
+}) {
+  return (
+    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group">
+      <div className="flex items-start justify-between mb-4">
+        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+          <Icon className={`w-5 h-5 ${iconColor}`} />
+        </div>
+      </div>
+      <p className="text-3xl font-bold text-gray-900">{value}</p>
+      {badge && (
+        <p className={`text-xs font-semibold mt-2 ${badge.color}`}>{badge.text}</p>
+      )}
+    </div>
+  )
+}
+
+/* ─── Main Component ─── */
 export default function TechniciansContent() {
-  const [activeTab, setActiveTab] =
-    useState<"all" | "active" | "inactive">("all");
-  const [currentPage, setCurrentPage] = useState(1)
-  const [allTechnicians, setAllTechnicians] = useState<TechnicianUI[]>([])
+  const router = useRouter()
+  const BASE = process.env.NEXT_PUBLIC_API_BASE_URL!
 
-  const limit = 3
-
-  const [requests, setRequests] = useState<ApiTechnician[]>([])
+  // List state
+  const [technicians, setTechnicians] = useState<TechnicianUI[]>([])
   const [total, setTotal] = useState(0)
-  const [viewTech, setViewTech] = useState<any>(null);
-  const [editTech, setEditTech] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "inactive">("all")
+  const [actionId, setActionId] = useState<string | null>(null)
 
-  const [totalTechnicians, setTotalTechnicians] = useState(0)
-  const [activeTechnicians, setActiveTechnicians] = useState(0)
-  const [inactiveTechnicians, setInActiveTechnicians] = useState(0)
-  const [pendingRequests, setPendingRequests] = useState(0)
-  const router = useRouter();
+  // Requests state
+  const [requests, setRequests] = useState<ApiTechnician[]>([])
+  const [requestActionId, setRequestActionId] = useState<string | null>(null)
 
+  // Stats state
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, pending: 0 })
 
-
-  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
-
-  /* ================= API CALLS ================= */
-
-const fetchTechnicians = async () => {
-  try {
+  /* ─── Fetch ─── */
+  const fetchTechnicians = useCallback(async () => {
     setLoading(true)
-
-    const res = await fetch(
-      `${BASE_URL}/admin/technicians?page=${currentPage}&limit=${limit}`,
-      { headers: authHeaders() }
-    )
-
-    if (!res.ok) {
-      console.error("Fetch technicians failed:", res.status)
-      setAllTechnicians([])
-      setTotal(0)
-      return
-    }
-
-    const json = await res.json()
-
-    const raw: ApiTechnician[] = Array.isArray(json.data) ? json.data : []
-
-    const mappedData: TechnicianUI[] = raw.map((t) => ({
-      id: t.id,
-      techId: t.id.slice(0, 8).toUpperCase(),
-      name: `${t.profiles.first_name} ${t.profiles.last_name}`,
-      phone: t.profiles.phone,
-      services: t.services ?? [],
-      status: t.status === "active" ? "Active" : "Inactive",
-      approval:
-        t.approval_status === "approved"
-          ? "Approved"
-          : t.approval_status === "pending"
-          ? "Review"
-          : "Pending",
-      avatar: t.profiles.profile_photo || "/placeholder.svg",
-    }))
-
-    setAllTechnicians(mappedData)
-    setTotal(Number(json.total ?? 0))
-  } catch (err) {
-    console.error(err)
-  } finally {
-    setLoading(false)
-  }
-}
-
-
-const fetchStats = async () => {
-  try {
-    const res = await fetch(
-      `${BASE_URL}/admin/technicians/stats`,
-      { headers: authHeaders() }
-    )
-
-    if (!res.ok) {
-      console.error("Stats fetch failed:", res.status)
-      return
-    }
-
-    const data = await res.json()
-
-    setTotalTechnicians(Number(data.total ?? 0))
-    setActiveTechnicians(Number(data.active ?? 0))
-    setInActiveTechnicians(Number(data.inactive ?? 0))
-    setPendingRequests(Number(data.pending ?? 0))
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-
-
-  // useEffect(() => {
-  //   const token = localStorage.getItem("accessToken")
-  //   if (token) {
-  //     fetchStats()
-  //   }
-  // }, [])
-
-  useEffect(() => {
-      fetchStats()
-      fetchRequests()
-  }, [])
-
-  /* ================= FILTER LOGIC (🔥 MAIN FIX) ================= */
-
-  const filteredTechnicians = useMemo(() => {
-    if (activeTab === "active") {
-      return allTechnicians.filter(t => t.status === "Active")
-    }
-
-    if (activeTab === "inactive") {
-      return allTechnicians.filter(t => t.status === "Inactive")
-    }
-
-    return allTechnicians
-  }, [activeTab, allTechnicians])
-
-  const toggleStatus = async (id: string, makeActive: boolean) => {
     try {
-      await fetch(`${BASE_URL}/admin/technicians/${id}`, {
-        method: "PATCH",
-        headers: authHeaders(),
-           cache: "no-store",
-        body: JSON.stringify({
-          status: makeActive ? "active" : "inactive",
-        }),
-      });
-
-      // 🔥 OPTIMISTIC UPDATE (FAST)
-      setAllTechnicians((prev) =>
-        prev.map((t) =>
-          t.id === id
-            ? { ...t, status: makeActive ? "Active" : "Inactive" }
-            : t
-        )
-      );
-
-      fetchStats()
-      toast.success(
-        makeActive ? "Technician activated" : "Technician deactivated"
-      );
+      const res = await fetch(
+        `${BASE}/admin/technicians?page=${page}&limit=${LIMIT}`,
+        { headers: authHeaders() }
+      )
+      if (!res.ok) throw new Error()
+      const json = await res.json()
+      const raw: ApiTechnician[] = Array.isArray(json.data) ? json.data : []
+      setTechnicians(raw.map(t => ({
+        id: t.id,
+        techId: t.id.slice(0, 8).toUpperCase(),
+        name: `${t.profiles?.first_name ?? ""} ${t.profiles?.last_name ?? ""}`.trim(),
+        phone: t.profiles?.phone ?? "",
+        services: t.services ?? [],
+        status: t.status === "active" ? "Active" : "Inactive",
+        approval: t.approval_status === "approved" ? "Approved"
+          : t.approval_status === "pending" ? "Review" : "Rejected",
+        avatar: t.profiles?.profile_photo ?? null,
+      })))
+      setTotal(Number(json.total ?? 0))
     } catch {
-      toast.error("Status update failed");
+      toast.error("Failed to load technicians")
+    } finally {
+      setLoading(false)
     }
-  };
+  }, [page, BASE])
 
-
-const fetchRequests = async () => {
-  try {
-    const res = await fetch(
-      `${BASE_URL}/admin/technicians/requests`,
-      { headers: authHeaders() }
-    )
-
-    if (!res.ok) {
-      setRequests([])
-      return
-    }
-
-    const json = await res.json()
-
-    // ✅ ALWAYS FORCE ARRAY
-    if (Array.isArray(json)) {
-      setRequests(json)
-    } else if (Array.isArray(json.data)) {
-      setRequests(json.data)
-    } else {
-      setRequests([])
-    }
-  } catch (err) {
-    console.error(err)
-    setRequests([])
-  }
-}
-
-
-  const handleApprove = async (id: string) => {
-    await fetch(`${BASE_URL}/admin/technicians/${id}/approve`, {
-      method: "PATCH",
-      headers: authHeaders(),
-      cache: "no-store"
-    });
-    fetchTechnicians();
-    fetchRequests();
-    fetchStats()
-  };
-
-  const handleReject = async (id: string) => {
-    await fetch(`${BASE_URL}/admin/technicians/${id}/reject`, {
-      method: "PATCH",
-      headers: authHeaders(),
-    });
-    fetchRequests();
-  };
-
-  const handleDeactivate = async (id: string) => {
+  const fetchStats = useCallback(async () => {
     try {
-      await fetch(`${BASE_URL}/admin/technicians/${id}/deactivate`, {
-        method: "PATCH",
-        headers: authHeaders(),
-      });
+      const res = await fetch(`${BASE}/admin/technicians/stats`, { headers: authHeaders() })
+      if (!res.ok) return
+      const d = await res.json()
+      setStats({
+        total: Number(d.total ?? 0),
+        active: Number(d.active ?? 0),
+        inactive: Number(d.inactive ?? 0),
+        pending: Number(d.pending ?? 0),
+      })
+    } catch {}
+  }, [BASE])
 
-      toast.success("Technician deactivated");
-      fetchTechnicians();
-    } catch {
-      toast.error("Failed to deactivate");
-    }
-  };
-
-
-
-  const handleView = async (id: string) => {
+  const fetchRequests = useCallback(async () => {
     try {
-      const res = await fetch(`${BASE_URL}/admin/technicians/${id}`, {
-        headers: authHeaders(),
-      });
-
-      if (!res.ok) throw new Error();
-
-      setViewTech(await res.json());
-    } catch {
-      toast.error("Failed to load technician");
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this technician?")) {
-      toast.warning("Deletion cancelled");
-      return;
-    }
-
-    try {
-      await fetch(`${BASE_URL}/admin/technicians/${id}`, {
-        method: "DELETE",
-        headers: authHeaders(),
-        cache: "no-store",
-      });
-
-      toast.success("Technician deleted");
-      fetchTechnicians();
-      fetchStats()
-    } catch {
-      toast.error("Delete failed");
-    }
-  };
-
+      const res = await fetch(`${BASE}/admin/technicians/requests`, { headers: authHeaders() })
+      if (!res.ok) { setRequests([]); return }
+      const json = await res.json()
+      setRequests(Array.isArray(json) ? json : Array.isArray(json.data) ? json.data : [])
+    } catch { setRequests([]) }
+  }, [BASE])
 
   useEffect(() => {
     fetchTechnicians()
-  }, [currentPage])
+  }, [fetchTechnicians])
 
   useEffect(() => {
+    fetchStats()
     fetchRequests()
-  }, [])
+  }, [fetchStats, fetchRequests])
 
-  const formatPhone = (phone: string) => {
-    if (!phone) return "";
+  /* ─── Actions ─── */
+  const toggleStatus = async (id: string, makeActive: boolean) => {
+    setActionId(id)
+    try {
+      const res = await fetch(`${BASE}/admin/technicians/${id}`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ status: makeActive ? "active" : "inactive" }),
+      })
+      if (!res.ok) throw new Error()
+      setTechnicians(prev => prev.map(t =>
+        t.id === id ? { ...t, status: makeActive ? "Active" : "Inactive" } : t
+      ))
+      fetchStats()
+      toast.success(makeActive ? "Technician activated" : "Technician deactivated")
+    } catch {
+      toast.error("Status update failed")
+    } finally {
+      setActionId(null)
+    }
+  }
 
-    const digits = phone.replace(/\D/g, "");
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Delete ${name}? This cannot be undone.`)) return
+    setActionId(id)
+    try {
+      const res = await fetch(`${BASE}/admin/technicians/${id}`, {
+        method: "DELETE", headers: authHeaders(),
+      })
+      if (!res.ok) throw new Error()
+      toast.success("Technician deleted")
+      fetchTechnicians()
+      fetchStats()
+    } catch {
+      toast.error("Delete failed")
+    } finally {
+      setActionId(null)
+    }
+  }
 
-    if (digits.length !== 10) return phone;
+  const handleApprove = async (id: string) => {
+    setRequestActionId(id)
+    try {
+      await fetch(`${BASE}/admin/technicians/${id}/approve`, {
+        method: "PATCH", headers: authHeaders(),
+      })
+      toast.success("Technician approved")
+      fetchTechnicians()
+      fetchRequests()
+      fetchStats()
+    } catch {
+      toast.error("Approval failed")
+    } finally {
+      setRequestActionId(null)
+    }
+  }
 
-    return `(${digits.slice(0, 3)}) - ${digits.slice(3, 6)} - ${digits.slice(6)}`;
-  };
+  const handleReject = async (id: string) => {
+    setRequestActionId(id)
+    try {
+      await fetch(`${BASE}/admin/technicians/${id}/reject`, {
+        method: "PATCH", headers: authHeaders(),
+      })
+      toast.success("Technician rejected")
+      fetchRequests()
+      fetchStats()
+    } catch {
+      toast.error("Rejection failed")
+    } finally {
+      setRequestActionId(null)
+    }
+  }
 
-  /* ================= UI (UNCHANGED) ================= */
+  /* ─── Derived ─── */
+  const filtered = useMemo(() => {
+    let list = technicians
+    if (activeTab === "active") list = list.filter(t => t.status === "Active")
+    if (activeTab === "inactive") list = list.filter(t => t.status === "Inactive")
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(t =>
+        t.name.toLowerCase().includes(q) ||
+        t.techId.toLowerCase().includes(q) ||
+        t.phone.includes(q)
+      )
+    }
+    return list
+  }, [technicians, activeTab, search])
 
+  const totalPages = Math.max(1, Math.ceil(total / LIMIT))
+
+  const formatPhone = (p: string) => {
+    const d = p?.replace(/\D/g, "") ?? ""
+    if (d.length !== 10) return p || "—"
+    return `${d.slice(0, 5)} ${d.slice(5)}`
+  }
+
+  /* ─── UI ─── */
   return (
-    <div className="flex-1 overflow-auto bg-gray-50">
-      <main className="lg:py-6 lg:px-6 py-6 px-2 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="flex items-start justify-between mb-4">
-              <span className="text-sm text-gray-600 font-medium">Total Technicians</span>
-              <div className="p-2.5 bg-cyan-50 rounded-lg">
-                <Users className="w-5 h-5 text-cyan-500" />
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold text-gray-900">{totalTechnicians}</h3>
-              {/* <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
-                <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-                +12%
-              </span> */}
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50/40">
+      <div className="max-w-[1400px] mx-auto p-4 lg:p-6 space-y-6">
 
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="flex items-start justify-between mb-4">
-              <span className="text-sm text-gray-600 font-medium">Active Now</span>
-              <div className="p-2.5 bg-green-50 rounded-lg">
-                <UserCheck className="w-5 h-5 text-green-500" />
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold text-gray-900">{activeTechnicians}</h3>
-              {/* <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
-                <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-                +5%
-              </span> */}
-            </div>
+        {/* ── Page Title ── */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Technicians</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Manage field technicians and approval requests</p>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="flex items-start justify-between mb-4 ">
-              <span className="text-sm text-gray-600 font-medium">InActive Now</span>
-              <div className="p-2.5 bg-red-100 rounded-lg">
-                <UserX  className="w-5 h-5 text-red-500" />
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold text-gray-900">{inactiveTechnicians}</h3>
-              {/* <span className="text-sm text-green-600 flex items-center mb-1 font-medium">
-                <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-                +5%
-              </span> */}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="flex items-start justify-between mb-4">
-              <span className="text-sm text-gray-600 font-medium">Pending Requests</span>
-              <div className="p-2.5 bg-orange-50 rounded-lg">
-                <Clock className="w-5 h-5 text-orange-500" />
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold text-gray-900">{pendingRequests}</h3>
-              <span className="text-sm text-orange-600 font-semibold mb-1">! Action Needed</span>
-            </div>
-          </div>
+          <button
+            onClick={() => { fetchTechnicians(); fetchStats(); fetchRequests() }}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-xl hover:bg-white border border-transparent hover:border-gray-200 transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
         </div>
-        {/* ===== TABLE ===== */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex gap-4 bg-gray-200 p-1 border rounded-3xl w-fit">
-                {["all", "active", "inactive"].map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      setActiveTab(tab as any)
-                      setCurrentPage(1)
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === tab
-                        ? "bg-white text-gray-900"
-                        : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                  >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  </button>
-                ))}
-              </div>
 
-              <div className="flex gap-2">
-                {/* <Button variant="outline" className="gap-2 border-gray-200 hover:bg-gray-50 bg-transparent text-black">
-                  <Filter className="w-4 h-4" />
-                  Filter
-                </Button> */}
-                {/* <Button className="gap-2 bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm">
-                  <Plus className="w-4 h-4" />
-                  Add Technician
-                </Button> */}
-              </div>
+        {/* ── Stat Cards ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard icon={Users}     label="Total"    value={stats.total}    iconBg="bg-blue-50"   iconColor="text-blue-600" />
+          <StatCard icon={UserCheck} label="Active"   value={stats.active}   iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+          <StatCard icon={UserX}     label="Inactive" value={stats.inactive}  iconBg="bg-red-50"    iconColor="text-red-500" />
+          <StatCard
+            icon={Clock} label="Pending Approval" value={stats.pending}
+            iconBg="bg-amber-50" iconColor="text-amber-600"
+            badge={stats.pending > 0 ? { text: "⚠ Action required", color: "text-amber-600" } : undefined}
+          />
+        </div>
+
+        {/* ── Technicians Table ── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+          {/* Toolbar */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 border-b border-gray-100">
+            {/* Tabs */}
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+              {(["all", "active", "inactive"] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => { setActiveTab(tab); setPage(1) }}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
+                    activeTab === tab
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  )}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  <span className={cn(
+                    "ml-1.5 text-xs px-1.5 py-0.5 rounded-full",
+                    activeTab === tab ? "bg-blue-100 text-blue-700" : "bg-gray-200 text-gray-500"
+                  )}>
+                    {tab === "all" ? stats.total
+                      : tab === "active" ? stats.active
+                      : stats.inactive}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Search */}
+            <div className="relative sm:ml-auto sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search name, ID, phone…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full h-9 pl-9 pr-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+              />
             </div>
           </div>
+
+          {/* Desktop Table */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
-                    Technician
-                  </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
-                    Phone Number
-                  </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
-                    Services Assigned
-                  </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
-                    Status
-                  </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
-                    Approval
-                  </th>
-                  <th className="text-left py-3.5 px-6 text-xs font-semibold text-gray-600 uppercase">
-                    Actions
-                  </th>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {["Technician", "Phone", "Services", "Status", "Approval", "Actions"].map(h => (
+                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  [...Array(limit)].map((_, i) => (
+                  [...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      <td colSpan={6} className="px-6 py-4">
-                        <Skeleton className="h-10 w-full" />
-                      </td>
+                      {[...Array(6)].map((_, j) => (
+                        <td key={j} className="px-5 py-4">
+                          <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                        </td>
+                      ))}
                     </tr>
                   ))
-                ) : filteredTechnicians.length === 0 ? (
+                ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-500">
-                      No technicians found
+                    <td colSpan={6} className="py-16 text-center">
+                      <div className="flex flex-col items-center gap-2 text-gray-400">
+                        <AlertCircle className="w-8 h-8" />
+                        <p className="font-medium">No technicians found</p>
+                        {search && <p className="text-xs">Try a different search term</p>}
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredTechnicians.map((tech) => (
-                    <tr key={tech.id} className="hover:bg-gray-50">
-                      <td className="py-4 px-6 flex items-center gap-3">
-                        <Image
-                          src={tech.avatar}
-                          alt={tech.name}
-                          width={40}
-                          height={40}
-                          className="rounded-full w-16 h-16"
-                        />
-                        <div>
-                          <div className="font-semibold">{tech.name}</div>
-                          <div className="text-sm text-gray-500">
-                            ID: {tech.techId}
+                  filtered.map(tech => (
+                    <tr key={tech.id} className="hover:bg-gray-50/70 transition-colors group">
+                      {/* Name */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar src={tech.avatar} name={tech.name} size={10} />
+                          <div>
+                            <p className="font-semibold text-gray-900">{tech.name}</p>
+                            <p className="text-xs text-gray-400 font-mono">#{tech.techId}</p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-6">{formatPhone(tech.phone)}</td>
+                      {/* Phone */}
+                      <td className="px-5 py-4 text-gray-600 text-sm whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-gray-400" />
+                          {formatPhone(tech.phone)}
+                        </div>
+                      </td>
 
-                      <td className="px-6">
-                        <div className="flex gap-2 flex-wrap">
-                          {tech.services.map((s, i) => (
-                            <span
-                              key={i}
-                              className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
-                            >
+                      {/* Services */}
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap gap-1.5 max-w-[220px]">
+                          {tech.services.length > 0 ? tech.services.slice(0, 3).map((s, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-medium border border-blue-100">
                               {s}
                             </span>
-                          ))}
+                          )) : <span className="text-gray-400 text-xs">No services</span>}
+                          {tech.services.length > 3 && (
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-md text-xs">
+                              +{tech.services.length - 3}
+                            </span>
+                          )}
                         </div>
                       </td>
 
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-2 h-2 rounded-full ${tech.status === "Active"
-                              ? "bg-green-500"
-                              : "bg-gray-400"
-                              }`}
-                          />
-                          <span className="text-sm font-medium text-gray-700">
-                            {tech.status}
-                          </span>
-                        </div>
+                      {/* Status */}
+                      <td className="px-5 py-4">
+                        <span className={cn(
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border",
+                          tech.status === "Active"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-gray-100 text-gray-500 border-gray-200"
+                        )}>
+                          <span className={cn(
+                            "w-1.5 h-1.5 rounded-full",
+                            tech.status === "Active" ? "bg-emerald-500" : "bg-gray-400"
+                          )} />
+                          {tech.status}
+                        </span>
                       </td>
 
-                      <td className="py-4 px-6">
-                        <div
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${tech.approval === "Approved"
-                            ? "bg-blue-50 text-blue-600"
-                            : "bg-orange-50 text-orange-600"
-                            }`}
-                        >
+                      {/* Approval */}
+                      <td className="px-5 py-4">
+                        <span className={cn(
+                          "inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border",
+                          APPROVAL_STYLE[tech.approval]
+                        )}>
                           {tech.approval}
-                        </div>
+                        </span>
                       </td>
-                      <td className="px-6">
+
+                      {/* Actions */}
+                      <td className="px-5 py-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="w-4 h-4" />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              disabled={actionId === tech.id}
+                            >
+                              {actionId === tech.id
+                                ? <Loader2 className="w-4 h-4 animate-spin" />
+                                : <MoreVertical className="w-4 h-4" />}
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-44">
                             <DropdownMenuItem onClick={() => router.push(`/admin/Technician/${tech.id}`)}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Profile
+                              <Eye className="w-4 h-4 mr-2" /> View Profile
                             </DropdownMenuItem>
-
                             {tech.status === "Active" ? (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  toggleStatus(tech.id, false)
-                                }
-                                className="text-orange-600"
-                              >
-                                Deactivate
+                              <DropdownMenuItem onClick={() => toggleStatus(tech.id, false)} className="text-amber-600">
+                                <UserX className="w-4 h-4 mr-2" /> Deactivate
                               </DropdownMenuItem>
                             ) : (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  toggleStatus(tech.id, true)
-                                }
-                                className="text-green-600"
-                              >
-                                Activate
+                              <DropdownMenuItem onClick={() => toggleStatus(tech.id, true)} className="text-emerald-600">
+                                <UserCheck className="w-4 h-4 mr-2" /> Activate
                               </DropdownMenuItem>
                             )}
-
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => handleDelete(tech.id)}
-                            >
-                              Delete
+                            <DropdownMenuItem onClick={() => handleDelete(tech.id, tech.name)} className="text-red-600">
+                              <XCircle className="w-4 h-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -585,198 +485,201 @@ const fetchRequests = async () => {
             </table>
           </div>
 
-          {/* MOBILE & TABLET CARDS */}
-<div className="lg:hidden lg:p-4 p-2 space-y-4">
-  {loading ? (
-    [...Array(limit)].map((_, i) => (
-      <Skeleton key={i} className="h-36 w-full rounded-xl" />
-    ))
-  ) : filteredTechnicians.length === 0 ? (
-    <div className="text-center py-8 text-gray-500">
-      No technicians found
-    </div>
-  ) : (
-    filteredTechnicians.map((tech) => (
-      <div
-        key={tech.id}
-        className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Image
-              src={tech.avatar}
-              alt={tech.name}
-              width={48}
-              height={48}
-              className="rounded-full w-12 h-12"
-            />
-            <div>
-              <p className="font-semibold">{tech.name}</p>
-              <p className="text-xs text-gray-500">
-                ID: {tech.techId}
-              </p>
-            </div>
-          </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() =>
-                  router.push(`/admin/Technician/${tech.id}`)
-                }
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                View Profile
-              </DropdownMenuItem>
-
-              {tech.status === "Active" ? (
-                <DropdownMenuItem
-                  onClick={() => toggleStatus(tech.id, false)}
-                  className="text-orange-600"
-                >
-                  Deactivate
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onClick={() => toggleStatus(tech.id, true)}
-                  className="text-green-600"
-                >
-                  Activate
-                </DropdownMenuItem>
-              )}
-
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => handleDelete(tech.id)}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Details */}
-        <div className="mt-3 space-y-3 text-sm">
-          <div>
-            <p className="text-gray-500">Phone</p>
-            <p>{formatPhone(tech.phone)}</p>
-          </div>
-
-          <div>
-            <p className="text-gray-500">Services</p>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {tech.services.map((s, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  tech.status === "Active"
-                    ? "bg-green-500"
-                    : "bg-gray-400"
-                }`}
-              />
-              <span className="font-medium">{tech.status}</span>
-            </div>
-
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                tech.approval === "Approved"
-                  ? "bg-blue-50 text-blue-600"
-                  : "bg-orange-50 text-orange-600"
-              }`}
-            >
-              {tech.approval}
-            </span>
-          </div>
-        </div>
-      </div>
-    ))
-  )}
-</div>
-
-
-          {/* ===== PAGINATION ===== */}
-          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Showing {(currentPage - 1) * limit + 1}–
-              {Math.min(currentPage * limit, total)} of {total}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage * limit >= total}
-                onClick={() => setCurrentPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* ===== REQUESTS ===== */}
-        <h2 className="text-xl font-bold text-gray-900">
-          Technician Requests
-        </h2>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {Array.isArray(requests) && requests.map((r) => (
-            <div key={r.id} className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="flex gap-4 mb-4">
-                <Image
-                  src={r.profiles.profile_photo || "/placeholder.svg"}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="rounded-full w-16 h-16"
-                />
-                <div>
-                  <h3 className="font-bold">
-                    {r.profiles.first_name} {r.profiles.last_name}
-                  </h3>
-                  <p className="text-sm text-gray-500">Pending Approval</p>
+          {/* Mobile Cards */}
+          <div className="lg:hidden divide-y divide-gray-50">
+            {loading ? (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="p-4 space-y-3 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-200" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-36" />
+                      <div className="h-3 bg-gray-200 rounded w-20" />
+                    </div>
+                  </div>
                 </div>
+              ))
+            ) : filtered.length === 0 ? (
+              <div className="py-16 text-center text-gray-400">
+                <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+                <p className="font-medium text-sm">No technicians found</p>
               </div>
+            ) : (
+              filtered.map(tech => (
+                <div key={tech.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar src={tech.avatar} name={tech.name} size={10} />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">{tech.name}</p>
+                        <p className="text-xs text-gray-400 font-mono">#{tech.techId}</p>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled={actionId === tech.id}>
+                          {actionId === tech.id
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <MoreVertical className="w-4 h-4" />}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={() => router.push(`/admin/Technician/${tech.id}`)}>
+                          <Eye className="w-4 h-4 mr-2" /> View Profile
+                        </DropdownMenuItem>
+                        {tech.status === "Active" ? (
+                          <DropdownMenuItem onClick={() => toggleStatus(tech.id, false)} className="text-amber-600">
+                            <UserX className="w-4 h-4 mr-2" /> Deactivate
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => toggleStatus(tech.id, true)} className="text-emerald-600">
+                            <UserCheck className="w-4 h-4 mr-2" /> Activate
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => handleDelete(tech.id, tech.name)} className="text-red-600">
+                          <XCircle className="w-4 h-4 mr-2" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => handleReject(r.id)}>
-                  Reject
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <Phone className="w-3.5 h-3.5" />
+                    {formatPhone(tech.phone)}
+                  </div>
+
+                  {tech.services.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {tech.services.slice(0, 3).map((s, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-medium border border-blue-100">
+                          {s}
+                        </span>
+                      ))}
+                      {tech.services.length > 3 && (
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-md text-xs">+{tech.services.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border",
+                      tech.status === "Active"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-gray-100 text-gray-500 border-gray-200"
+                    )}>
+                      <span className={cn("w-1.5 h-1.5 rounded-full", tech.status === "Active" ? "bg-emerald-500" : "bg-gray-400")} />
+                      {tech.status}
+                    </span>
+                    <span className={cn("inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border", APPROVAL_STYLE[tech.approval])}>
+                      {tech.approval}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Pagination */}
+          {!loading && total > 0 && (
+            <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-gray-50/40">
+              <p className="text-sm text-gray-500">
+                {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)} of {total} technicians
+              </p>
+              <div className="flex items-center gap-1.5">
+                <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <Button onClick={() => handleApprove(r.id)}>
-                  Approve
-                </Button>
-                <Button className="cursor-pointer" variant="outline" size="icon" onClick={() => router.push(`/admin/Technician/${r.id}`)} >
-                  <Eye className="w-4 h-4" />
+                <span className="text-sm font-medium text-gray-700 px-2">{page} / {totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>
-          ))}
+          )}
         </div>
-      </main>
+
+        {/* ── Pending Requests ── */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-lg font-bold text-gray-900">Approval Requests</h2>
+            {requests.length > 0 && (
+              <span className="px-2.5 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">
+                {requests.length}
+              </span>
+            )}
+          </div>
+
+          {requests.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mb-3">
+                <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+              </div>
+              <p className="font-semibold text-gray-700">All caught up!</p>
+              <p className="text-sm text-gray-400 mt-1">No pending technician requests</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {requests.map(r => {
+                const name = `${r.profiles?.first_name ?? ""} ${r.profiles?.last_name ?? ""}`.trim()
+                const isLoading = requestActionId === r.id
+                return (
+                  <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar src={r.profiles?.profile_photo} name={name} size={12} />
+                      <div className="min-w-0">
+                        <p className="font-bold text-gray-900 truncate">{name}</p>
+                        <p className="text-xs text-gray-400 font-mono">#{r.id.slice(0, 8).toUpperCase()}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span className="text-xs text-amber-600 font-medium">Pending Approval</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {r.profiles?.phone && (
+                      <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                        <Phone className="w-3.5 h-3.5" />
+                        {r.profiles.phone}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => handleReject(r.id)}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Reject"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleApprove(r.id)}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Approve"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="flex-shrink-0"
+                        onClick={() => router.push(`/admin/Technician/${r.id}`)}
+                        title="View profile"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   )
 }

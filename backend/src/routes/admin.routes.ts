@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.middleware.js";
+import { getAdminNotifications } from "../controllers/notifications.controller.js";
 import {
   approveTechnician,
   rejectTechnician,
@@ -36,6 +37,9 @@ router.get(
     res.json({ message: "Admin dashboard access granted" });
   }
 );
+
+/* ================= NOTIFICATIONS ================= */
+router.get("/notifications", protect, authorize("admin"), getAdminNotifications);
 
 /* ================= TECHNICIANS ================= */
 

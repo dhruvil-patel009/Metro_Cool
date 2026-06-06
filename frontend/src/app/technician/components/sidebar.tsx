@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Settings,
   LifeBuoy,
   CheckCircle2,
@@ -27,7 +27,7 @@ const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/technician" },
   { label: "Schedule", icon: Calendar, href: "/technician/schedule" },
   { label: "Jobs", icon: Briefcase, href: "/technician/jobs" },
-  { label: "Earnings", icon: DollarSign, href: "/technician/earnings" },
+  { label: "Earnings", icon: IndianRupee, href: "/technician/earnings" },
 ];
 
 const systemItems = [

@@ -78,24 +78,20 @@ export const useAuthStore = create<AuthState>()(
       hydrate: () => {
         if (typeof window !== "undefined") {
           try {
-            // read zustand persisted storage
-            const raw = localStorage.getItem("auth-storage");
-
+            const raw = localStorage.getItem("auth-storage")
             if (raw) {
-              const parsed = JSON.parse(raw);
-              const token = parsed?.state?.token;
-
-              // ⭐ restore accessToken after refresh
+              const parsed = JSON.parse(raw)
+              const token = parsed?.state?.token
+              // Restore accessToken so API calls before Zustand loads work
               if (token) {
-                localStorage.setItem("accessToken", token);
+                localStorage.setItem("accessToken", token)
               }
             }
           } catch (err) {
-            console.error("Auth hydration failed", err);
+            console.error("Auth hydration failed", err)
           }
         }
-
-        set({ hydrated: true });
+        set({ hydrated: true })
       },
     }),
     {

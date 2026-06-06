@@ -2,8 +2,57 @@ import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
 
 /* ======================================================
-   📊 GET BOOKING STATS (Cards)
+   📊 GET WEEKLY BOOKING STATS (Chart data)
+   Returns per-day booking counts for the last 7 days
    ====================================================== */
+
+export const getWeeklyBookingStats = async (req: Request, res: Response) => {
+  try {
+    res.setHeader("Cache-Control", "no-store")
+
+    // Build date range: today (IST) back 6 days
+    const days: string[] = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      days.push(d.toLocaleDateString("en-CA")) // "YYYY-MM-DD" in local time
+    }
+
+    const from = days[0]
+    const to = days[days.length - 1]
+
+    // Single query — fetch all bookings in date range
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("booking_date")
+      .gte("booking_date", from)
+      .lte("booking_date", to)
+
+    if (error) throw error
+
+    // Count per day
+    const counts: Record<string, number> = {}
+    days.forEach(d => { counts[d] = 0 })
+    ;(data || []).forEach(b => {
+      const key = String(b.booking_date).slice(0, 10)
+      if (counts[key] !== undefined) counts[key]++
+    })
+
+    const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    const chartData = days.map(dateStr => ({
+      date: dateStr,
+      day: DAY_NAMES[new Date(dateStr + "T00:00:00").getDay()],
+      count: counts[dateStr],
+    }))
+
+    const total = chartData.reduce((s, d) => s + d.count, 0)
+
+    res.json({ chartData, total })
+  } catch (err) {
+    console.error("Weekly stats error:", err)
+    res.status(500).json({ error: "Failed to fetch weekly stats" })
+  }
+}
 
 export const getBookingStats = async (req: Request, res: Response) => {
   try {

@@ -1,80 +1,88 @@
-"use client";
+"use client"
 
-import { Search, Bell } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
-import { NotificationsDropdown } from "../components/notification-dropdown";
-import { useAuthStore } from "@/store/auth.store";
+import { Search, Bell } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
+import { NotificationsDropdown } from "../components/notification-dropdown"
+import { useAuthStore } from "@/store/auth.store"
 
-const pageTitles: Record<string, string> = {
-  "/admin": "Dashboard",
-  "/admin/Services": "Services",
-  "/admin/Categories": "Categories",
-  "/admin/Technician": "Technicians",
-  "/admin/users": "Users",
-  "/admin/Bookings": "Bookings",
-  "/admin/Settlements": "Settlements",
-  "/admin/Settings": "Settings",
-};
+const pageTitles: Record<string, { title: string; sub: string }> = {
+  "/admin":             { title: "Dashboard",    sub: "Overview of your operations" },
+  "/admin/Services":    { title: "Services",     sub: "Manage your service offerings" },
+  "/admin/products":    { title: "Products",     sub: "Manage products and inventory" },
+  "/admin/Technician":  { title: "Technicians",  sub: "Manage your field technicians" },
+  "/admin/users":       { title: "Users",        sub: "Registered customer accounts" },
+  "/admin/Bookings":    { title: "Bookings",     sub: "Track and manage appointments" },
+  "/admin/Settlements": { title: "Settlements",  sub: "Payouts and commission reports" },
+  "/admin/Settings":    { title: "Settings",     sub: "Account and system preferences" },
+}
 
 export function Header() {
-  const pathname = usePathname();
-  const user = useAuthStore((s) => s.user);
+  const pathname = usePathname()
+  const user = useAuthStore((s) => s.user)
 
-
-  const title =
+  const pageInfo =
     pageTitles[pathname] ||
-    pageTitles["/" + pathname.split("/")[1]] ||
-    "admin";
+    pageTitles["/" + pathname.split("/").slice(1, 3).join("/")] ||
+    { title: "Admin", sub: "" }
 
-  const fullName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim();
-  const initials =
-    `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
+  const fullName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim()
+  const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase()
+  const profileImage = user?.profile_photo || ""
 
-  const profileImage = user?.profile_photo || "";
+  // Today's greeting
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
 
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
-      <div className="grid h-16 grid-cols-3 items-center pl-11 pr-2 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 bg-white border-b border-gray-100">
+      <div className="flex h-16 items-center gap-4 pl-14 pr-4 sm:pl-6 lg:pl-6 lg:pr-6">
 
-        {/* LEFT: PAGE TITLE */}
-        <h1 className="ml-0 pl-0 sm:ml-0 sm:pl-0 md:ml-4 md:pl-10 lg:ml-0 lg:pl-0 sm:text-3xl text-md font-semibold text-gray-900">
-          {title}
-        </h1>
+        {/* Page title — hidden on small screens, visible md+ */}
+        <div className="hidden md:block flex-shrink-0">
+          <h1 className="text-lg font-bold text-gray-900 leading-none">{pageInfo.title}</h1>
+          <p className="text-xs text-gray-400 mt-0.5">{pageInfo.sub}</p>
+        </div>
 
-        {/* CENTER: SEARCH BAR */}
-        <div className="flex justify-center">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+        {/* Search */}
+        <div className="flex-1 max-w-md mx-auto md:mx-0 md:ml-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search bookings, technicians, services..."
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-10 pr-4 text-sm placeholder:text-gray-500 focus:border-cyan-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+              placeholder="Search anything…"
+              className="w-full h-9 rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
             />
           </div>
         </div>
 
-        {/* Right Side - Notifications & Profile */}
-        <div className="ml-auto flex items-center gap-4">
-          {/* Notification Bell */}
-          <NotificationsDropdown />
+        {/* Right */}
+        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
 
-          {/* User Profile */}
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-gray-900">{fullName || "Admin User"}</p>
-              <p className="text-xs text-gray-500">{user?.role}</p>
+          {/* Notifications */}
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 transition-colors">
+            <NotificationsDropdown />
+          </div>
+
+          {/* Divider */}
+          <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
+
+          {/* Profile */}
+          <div className="flex items-center gap-2.5 cursor-pointer group">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-semibold text-gray-900 leading-none">
+                {fullName || "Admin"}
+              </p>
+              <p className="text-[11px] text-gray-400 mt-0.5 capitalize">
+                {greeting}
+              </p>
             </div>
-            <Avatar className="h-9 w-9 border-2 border-slate-100">
+            <Avatar className="h-9 w-9 ring-2 ring-gray-100 group-hover:ring-blue-200 transition-all">
               {profileImage ? (
-                <AvatarImage
-                  src={profileImage}
-                  alt={fullName}
-                  referrerPolicy="no-referrer"
-                />
+                <AvatarImage src={profileImage} alt={fullName} referrerPolicy="no-referrer" />
               ) : (
-                <AvatarFallback className="bg-blue-600 text-white font-semibold">
-                  {initials}
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-700 text-white text-xs font-bold">
+                  {initials || "A"}
                 </AvatarFallback>
               )}
             </Avatar>
@@ -82,5 +90,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  );
+  )
 }

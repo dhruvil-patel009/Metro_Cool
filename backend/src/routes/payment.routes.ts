@@ -20,7 +20,7 @@ router.post("/verify", protect, verifyRazorpayPayment)
 // Do NOT add it here — it must receive a raw Buffer for HMAC verification
 
 router.post("/cash", protect, markCashPayment)
-router.get("/invoice/:bookingId", getInvoice)
+router.get("/invoice/:bookingId", protect, getInvoice)
 
 
 export default router

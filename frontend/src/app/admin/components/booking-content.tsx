@@ -205,7 +205,7 @@ const filteredBookings = bookings.filter((b) => {
               <Calendar className="w-5 h-5 text-blue-600" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">24</div>
+          <div className="text-3xl font-bold text-gray-900">{stats.today}</div>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -215,7 +215,7 @@ const filteredBookings = bookings.filter((b) => {
               <ClipboardList className="w-5 h-5 text-orange-600" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">7</div>
+          <div className="text-3xl font-bold text-gray-900">{stats.pending}</div>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -225,7 +225,7 @@ const filteredBookings = bookings.filter((b) => {
               <CheckCircle2 className="w-5 h-5 text-green-600" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">128</div>
+          <div className="text-3xl font-bold text-gray-900">{stats.completed}</div>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -235,7 +235,9 @@ const filteredBookings = bookings.filter((b) => {
               <Wallet className="w-5 h-5 text-purple-600" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900">$12,450</div>
+          <div className="text-3xl font-bold text-gray-900">
+            ₹{Number(stats.revenue).toLocaleString("en-IN")}
+          </div>
         </div>
       </div>
 
