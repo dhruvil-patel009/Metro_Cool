@@ -110,7 +110,7 @@ export function ProfileSidebar() {
           </div>
           <div>
             <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Saved</div>
-            <div className="text-2xl font-bold text-gray-900">$1.2k</div>
+            <div className="text-2xl font-bold text-gray-900">₹1.2k</div>
           </div>
         </div>
       </div>

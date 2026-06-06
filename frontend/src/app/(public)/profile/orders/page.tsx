@@ -2,127 +2,91 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
-  ChevronRight,
-  Clock,
-  CheckCircle,
-  Package,
-  Wrench,
-  ShoppingBag,
-  XCircle,
-  ChevronLeft,
+  ChevronRight, ChevronLeft, Clock, CheckCircle,
+  ShoppingBag, Wrench, CalendarDays, Download,
+  Star, Navigation, Loader2, AlertCircle, FileText,
+  IndianRupee,
 } from "lucide-react"
 import { ProfileSidebar } from "../../components/profile-sidebar"
+import { toast } from "react-toastify"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+
+const formatINR = (v: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(v)
+
+/* ─── Status config ─── */
+const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
+  open:           { label: "Pending",     color: "bg-amber-50 text-amber-700 border-amber-200",   dot: "bg-amber-500" },
+  assigned:       { label: "Assigned",    color: "bg-blue-50 text-blue-700 border-blue-200",       dot: "bg-blue-500 animate-pulse" },
+  on_the_way:     { label: "On the Way",  color: "bg-indigo-50 text-indigo-700 border-indigo-200", dot: "bg-indigo-500 animate-pulse" },
+  working:        { label: "In Progress", color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500 animate-pulse" },
+  report_submitted: { label: "Completed", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  completed:      { label: "Completed",   color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  cancelled:      { label: "Cancelled",   color: "bg-red-50 text-red-700 border-red-200",           dot: "bg-red-500" },
+}
+
+const ITEMS_PER_PAGE = 6
 
 export default function OrdersPage() {
   const [activeFilter, setActiveFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [orders, setOrders] = useState<any[]>([])
-  const [stats, setStats] = useState({
-    total: 0,
-    completed: 0,
-    upcoming: 0,
-  })
+  const [stats, setStats] = useState({ total: 0, completed: 0, upcoming: 0 })
   const [loading, setLoading] = useState(true)
-  const ITEMS_PER_PAGE = 5
 
   const filters = [
-    { id: "all", label: "All" },
-    { id: "services", label: "Services" },
-    { id: "products", label: "Products" },
+    { id: "all",       label: "All" },
+    { id: "services",  label: "Services" },
+    { id: "products",  label: "Products" },
     { id: "cancelled", label: "Cancelled" },
   ]
 
-  /* ================= FETCH ORDER HISTORY ================= */
+  /* ── Fetch ── */
   useEffect(() => {
     const fetchOrders = async () => {
-      const token = localStorage.getItem("accessToken")
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("token")
       if (!token) return
 
       try {
         const res = await fetch(`${API_URL}/users/me/orders`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         })
-
         const data = await res.json()
         if (!res.ok) throw new Error(data.message)
 
         setStats(data.summary)
 
-        /* 🔥 MAP API → UI SHAPE (NO UI CHANGE) */
-const mappedOrders = data.orders.map((o: any) => {
+        const mapped = data.orders.map((o: any) => {
+          const d = new Date(o.date)
+          const month = d.toLocaleString("en-IN", { month: "short" }).toUpperCase()
+          const day   = String(d.getDate()).padStart(2, "0")
+          const year  = String(d.getFullYear())
 
-  /* ---------- STATUS NORMALIZATION ---------- */
-  let uiStatus = "upcoming"
-  let statusLabel = "Technician Assigned"
+          return {
+            id:           o.id,
+            type:         "service",
+            title:        o.service_title || "AC Service",
+            description:  o.technician_name ? `${o.time} · Tech: ${o.technician_name}` : o.time,
+            day, month, year,
+            price:        Number(o.price || 0),
+            status:       o.status,
+            canTrack:     o.can_track,
+            canReview:    o.can_review,
+            hasInvoice:   o.invoice_available,
+          }
+        })
 
-  if (o.status === "completed") {
-    uiStatus = "completed"
-    statusLabel = "Service Completed"
-  }
-  else if (o.status === "cancelled") {
-    uiStatus = "cancelled"
-    statusLabel = "Cancelled"
-  }
-  else if (["assigned", "on_the_way", "working", "open"].includes(o.status)) {
-    uiStatus = "upcoming"
-    statusLabel = "Technician Assigned"
-  }
-
-  /* ---------- DATE FORMAT (FOR BLUE CALENDAR BADGE) ---------- */
-/* ---------- DATE FORMAT ---------- */
-const d = new Date(o.date)
-
-const month = d.toLocaleString("en-US", { month: "short" }).toUpperCase()
-const day = String(d.getDate()).padStart(2, "0")
-const year = d.getFullYear()
-
-const fullDateText = d.toLocaleDateString("en-US", {
-  month: "short",
-  day: "2-digit",
-  year: "numeric",
-})
-
-  return {
-    id: o.id,
-    type: "service",
-    title: o.service_title,
-
-    description: o.technician_name
-      ? `${o.time} • Technician: ${o.technician_name}`
-      : o.time,
-
-     /* 👇 IMPORTANT FIELDS FOR UI */
-  date: `${month} ${day}`,
-  day,
-  month,
-  year: String(year),
-  fullDate: fullDateText,
-
-    price: `$${Number(o.price).toFixed(2)}`,
-
-    status: uiStatus,
-    statusLabel,
-
-    icon: "snowflake",
-
-    tag: uiStatus === "upcoming" ? "UPCOMING SERVICE" : null,
-
-    actions: [
-      ...(o.can_track ? ["track", "reschedule"] : []),
-      ...(o.invoice_available ? ["invoice"] : []),
-      ...(o.can_review ? ["review"] : []),
-    ],
-  }
-})
-
-        setOrders(mappedOrders)
+        setOrders(mapped)
       } catch (err) {
         console.error(err)
+        toast.error("Failed to load orders")
       } finally {
         setLoading(false)
       }
@@ -131,138 +95,146 @@ const fullDateText = d.toLocaleDateString("en-US", {
     fetchOrders()
   }, [])
 
-  useEffect(() => {
-  setCurrentPage(1)
-}, [activeFilter])
+  useEffect(() => { setCurrentPage(1) }, [activeFilter])
 
-/* ================= FILTER ================= */
-const filteredOrders = orders.filter((order) => {
-  if (activeFilter === "all") return true
-  if (activeFilter === "services") return order.type === "service"
-  if (activeFilter === "products") return order.type === "product"
-  if (activeFilter === "cancelled") return order.status === "cancelled"
-  return true
-})
+  /* ── Filter ── */
+  const filtered = orders.filter(o => {
+    if (activeFilter === "all")       return true
+    if (activeFilter === "services")  return o.type === "service"
+    if (activeFilter === "products")  return o.type === "product"
+    if (activeFilter === "cancelled") return o.status === "cancelled"
+    return true
+  })
 
-/* ================= PAGINATION ================= */
-const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE)
-
-const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-const paginatedOrders = filteredOrders.slice(
-  startIndex,
-  startIndex + ITEMS_PER_PAGE
-)
-
-  if (loading) {
-    return <div className="p-10 text-center">Loading orders...</div>
-  }
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+  const paginated  = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   return (
-    <div className="min-h-screen animate-fade-in">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50/40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-          <Link href="/" className="hover:text-blue-600  transition-colors">
-            Home
-          </Link>
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+          <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
           <ChevronRight className="w-4 h-4" />
-          <Link href="/profile" className="hover:text-blue-600  transition-colors">
-            My Account
-          </Link>
+          <Link href="/profile" className="hover:text-blue-600 transition-colors">My Account</Link>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium">Order History</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
           {/* Sidebar */}
           <div className="lg:col-span-3">
             <ProfileSidebar />
           </div>
 
           {/* Main */}
-          <div className="lg:col-span-9">
-            <div className="mb-8">
-              {/* Header */}
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">Order History</h1>
-                  <p className="text-gray-600">
-                    Manage your bookings, track status and download invoices.
-                  </p>
-                </div>
+          <div className="lg:col-span-9 space-y-6">
 
-                {/* Filters */}
-                <div className="flex gap-2 mt-4 md:mt-0">
-                  {filters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      onClick={() => setActiveFilter(filter.id)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        activeFilter === filter.id
-                          ? "bg-gray-900 text-white"
-                          : "bg-white border text-gray-700 hover:bg-gray-100 border-gray-200"
-                      }`}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
+            {/* Header + Filters */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Order History</h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Manage your bookings, track status and download invoices.
+                </p>
               </div>
-
-              {/* Stats */}
-<div className="grid grid-cols-3 gap-4 mb-8">
-  <StatCard variant="total" label="TOTAL ORDERS" value={stats.total} icon={ShoppingBag} />
-  <StatCard variant="completed" label="COMPLETED" value={stats.completed} icon={CheckCircle} />
-  <StatCard variant="upcoming" label="UPCOMING" value={stats.upcoming} icon={Clock} />
-</div>
-
-              {/* Orders */}
-              <div className="space-y-4">
-{paginatedOrders.map((order) => (
-  <OrderCard key={order.id} order={order} />
-))}
+              <div className="flex flex-wrap gap-2">
+                {filters.map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setActiveFilter(f.id)}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
+                      activeFilter === f.id
+                        ? "bg-gray-900 text-white border-gray-900"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
-              {/* ================= PAGINATION ================= */}
-{totalPages > 1 && (
-  <div className="flex items-center justify-center gap-2 mt-8">
-
-    {/* Prev */}
-    <button
-      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-      disabled={currentPage === 1}
-      className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-    >
-      <ChevronLeft className="w-5 h-5" />
-    </button>
-
-    {/* Page Numbers */}
-    {Array.from({ length: totalPages }).map((_, i) => {
-      const page = i + 1
-      return (
-        <button
-          key={page}
-          onClick={() => setCurrentPage(page)}
-          className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-            currentPage === page
-              ? "bg-blue-600 text-white"
-              : "text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          {page}
-        </button>
-      )
-    })}
-
-    {/* Next */}
-    <button
-      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-      disabled={currentPage === totalPages}
-      className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-    >
-      <ChevronRight className="w-5 h-5" />
-    </button>
-
-  </div>
-)}
             </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: "Total Orders",  value: stats.total,     icon: ShoppingBag,  color: "text-blue-600",   bg: "bg-blue-50" },
+                { label: "Completed",     value: stats.completed,  icon: CheckCircle,  color: "text-emerald-600", bg: "bg-emerald-50" },
+                { label: "Upcoming",      value: stats.upcoming,   icon: Clock,        color: "text-purple-600",  bg: "bg-purple-50" },
+              ].map(({ label, value, icon: Icon, color, bg }) => (
+                <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`w-5 h-5 ${color}`} />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-gray-900">{String(value).padStart(2, "0")}</p>
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Orders list */}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+              </div>
+            ) : paginated.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 flex flex-col items-center text-center">
+                <AlertCircle className="w-10 h-10 text-gray-300 mb-3" />
+                <p className="font-semibold text-gray-600">No orders found</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  {activeFilter === "all"
+                    ? "You haven't placed any bookings yet."
+                    : "No orders match this filter."}
+                </p>
+                <Link href="/services" className="mt-4 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+                  Book a Service
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {paginated.map(order => (
+                  <OrderCard key={order.id} order={order} />
+                ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-9 h-9 rounded-xl text-sm font-semibold transition-all ${
+                      currentPage === i + 1
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
       </div>
@@ -270,124 +242,143 @@ const paginatedOrders = filteredOrders.slice(
   )
 }
 
-/* ================= SMALL UI HELPERS (NO STYLE CHANGE) ================= */
+/* ─── Order Card ─── */
+function OrderCard({ order }: { order: any }) {
+  const router = useRouter()
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false)
 
-function StatCard({ label, value, icon: Icon, variant }: any) {
+  const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.open
+  const isActive = ["assigned", "on_the_way", "working"].includes(order.status)
+  const isCompleted = order.status === "completed" || order.status === "report_submitted"
 
-  /* ---------- COLOR MAP ---------- */
-  const styles: Record<string, any> = {
-    total: {
-      wrapper: "bg-white border border-gray-100",
-      iconBox: "bg-blue-50",
-      iconColor: "text-blue-600",
-      number: "text-gray-900",
-    },
-    completed: {
-      wrapper: "bg-white border border-gray-100",
-      iconBox: "bg-green-50",
-      iconColor: "text-green-600",
-      number: "text-gray-900",
-    },
-    upcoming: {
-      wrapper: "bg-white border border-gray-100",
-      iconBox: "bg-purple-50",
-      iconColor: "text-purple-600",
-      number: "text-gray-900",
-    },
+  const handleInvoice = async () => {
+    setDownloadingInvoice(true)
+    try {
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("token")
+      const res = await fetch(`${API_URL}/payments/invoice/${order.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.invoice_url) {
+        toast.error(data?.error || "Invoice not ready yet. Please try again.")
+        return
+      }
+      window.open(data.invoice_url, "_blank")
+    } catch {
+      toast.error("Failed to download invoice")
+    } finally {
+      setDownloadingInvoice(false)
+    }
   }
 
-  const s = styles[variant] || styles.total
+  const handleReview = () => {
+    router.push(`/bookings/feedback?id=${order.id}`)
+  }
 
   return (
-    <div className={`rounded-xl p-4 ${s.wrapper}`}>
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${s.iconBox}`}>
-          <Icon className={`w-5 h-5 ${s.iconColor}`} />
-        </div>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+      {/* Top accent for active jobs */}
+      {isActive && <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-400" />}
+      {isCompleted && <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />}
 
-        <div>
-          <div className={`text-2xl font-bold ${s.number}`}>
-            {String(value).padStart(2, "0")}
-          </div>
-          <div className="text-sm text-gray-600">{label}</div>
-        </div>
-      </div>
-    </div>
-  )
-}
+      <div className="p-5">
+        <div className="flex items-start gap-4">
 
-function OrderCard({ order }: any) {
-  return (
-    <div className="bg-white rounded-xl border p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-start gap-4">
-
-        {/* 🔥 DATE BADGE (calendar style) */}
-        {order.year && (
-          <div className="flex-shrink-0 text-center">
-            <div className="text-xs font-medium text-blue-600 mb-1">
-              {order.month}
-            </div>
-            <div className="text-2xl font-bold text-gray-900">
-              {order.day}
-            </div>
-            <div className="text-xs text-gray-500">
-              {order.year}
-            </div>
-          </div>
-        )}
-
-        {/* Icon */}
-        <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-          <Wrench className="w-6 h-6 text-blue-600" />
-        </div>
-
-        {/* Content */}
-        <div className="flex-1">
-          {order.tag && (
-            <span className="inline-block px-2 py-1 bg-blue-600 text-white text-xs rounded mb-2">
-              {order.tag}
-            </span>
-          )}
-
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-semibold">{order.title}</h3>
-            <span className="text-xs text-gray-500">Order #{order.id.slice(0,8)}</span>
+          {/* Date badge */}
+          <div className="flex-shrink-0 w-14 text-center">
+            <div className="text-xs font-bold text-blue-600 uppercase">{order.month}</div>
+            <div className="text-2xl font-bold text-gray-900 leading-none mt-0.5">{order.day}</div>
+            <div className="text-xs text-gray-400 mt-0.5">{order.year}</div>
           </div>
 
-          <p className="text-sm text-gray-600 flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            {order.description}
-          </p>
+          {/* Service icon */}
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+            isCompleted ? "bg-emerald-50" : isActive ? "bg-blue-50" : "bg-gray-50"
+          }`}>
+            <Wrench className={`w-5 h-5 ${
+              isCompleted ? "text-emerald-600" : isActive ? "text-blue-600" : "text-gray-400"
+            }`} />
+          </div>
 
-          {/* Footer */}
-          <div className="flex justify-between items-center mt-4 pt-4 border-t">
-            <span className="font-bold text-xl">{order.price}</span>
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h3 className="font-bold text-gray-900 text-base">{order.title}</h3>
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  <span>{order.description || "—"}</span>
+                </div>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">
+                  Order #{order.id.slice(0, 8).toUpperCase()}
+                </p>
+              </div>
 
-            <div className="flex gap-2">
-              {/* {order.actions.includes("reschedule") && (
-                <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
-                  Reschedule
-                </button>
-              )} */}
+              {/* Status badge */}
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border flex-shrink-0 ${statusCfg.color}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                {statusCfg.label}
+              </span>
+            </div>
 
-              {/* {order.actions.includes("track") && ( */}
-                <Link
-               href={`/bookings?id=${order.id}`}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-200 cursor-pointer"
-              >
-                <button>
-                  Track Arrival
-                </button>
-                </Link>
-               {/* )} */}
+            {/* Price + Actions */}
+            <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-50 flex-wrap">
+              <div className="flex items-center gap-1">
+                <IndianRupee className="w-4 h-4 text-gray-700" />
+                <span className="text-xl font-bold text-gray-900">
+                  {Number(order.price).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
 
-              {order.actions.includes("invoice") && (
-                <button className="px-4 py-2 text-sm">Invoice</button>
-              )}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Track Arrival — for active jobs */}
+                {order.canTrack && (
+                  <Link href={`/bookings?id=${order.id}`}>
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-blue-200 active:scale-[0.97]">
+                      <Navigation className="w-4 h-4" />
+                      Track Arrival
+                    </button>
+                  </Link>
+                )}
 
-              {order.actions.includes("review") && (
-                <button className="px-4 py-2 text-sm">Write Review</button>
-              )}
+                {/* Go to Completion — for completed, unpaid */}
+                {!order.canTrack && !isCompleted && order.status !== "cancelled" && (
+                  <Link href={`/bookings/completion?id=${order.id}`}>
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-blue-200 active:scale-[0.97]">
+                      <Navigation className="w-4 h-4" />
+                      View Booking
+                    </button>
+                  </Link>
+                )}
+
+                {/* Invoice — only when completed */}
+                {order.hasInvoice && (
+                  <button
+                    onClick={handleInvoice}
+                    disabled={downloadingInvoice}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-gray-700 hover:text-blue-700 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+                  >
+                    {downloadingInvoice
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Download className="w-4 h-4" />}
+                    Invoice
+                  </button>
+                )}
+
+                {/* Write Review — only when completed */}
+                {order.canReview && (
+                  <button
+                    onClick={handleReview}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 hover:border-amber-300 hover:bg-amber-50 text-gray-700 hover:text-amber-700 rounded-xl text-sm font-semibold transition-all"
+                  >
+                    <Star className="w-4 h-4" />
+                    Write Review
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
