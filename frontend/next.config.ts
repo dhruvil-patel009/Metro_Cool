@@ -1,20 +1,9 @@
-// import type { NextConfig } from "next";
+import { NextConfig } from "next/dist/server/config-shared"
 
-import { NextConfig } from "next/dist/server/config-shared";
-import { hostname } from "os";
-
-// const nextConfig: NextConfig = {
-//   /* config options here */
-// };
-
-// export default nextConfig;
-
-
-/** @type {import('next').NextConfig} */
-const nextConfig: NextConfig  = {
-  reactStrictMode: false,   // ✅ MUST be inside object
+const nextConfig: NextConfig = {
+  reactStrictMode: false,
   images: {
-    domains: ["nlimsceezdxwkykpzlbv.supabase.co"],
+    // `domains` removed — use remotePatterns only (no deprecation warning)
     remotePatterns: [
       {
         protocol: "https",
@@ -29,9 +18,10 @@ const nextConfig: NextConfig  = {
       {
         protocol: "https",
         hostname: "maps.googleapis.com",
-      }
+        pathname: "/**",
+      },
     ],
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

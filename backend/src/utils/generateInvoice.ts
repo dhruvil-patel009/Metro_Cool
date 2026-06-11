@@ -2,333 +2,452 @@ import PDFDocument from "pdfkit"
 import fs from "fs"
 import path from "path"
 
-/* ── Brand colors ── */
-const BLUE       = "#1D4ED8"
-const BLUE_DARK  = "#1E3A8A"
-const BLUE_LIGHT = "#EFF6FF"
-const GRAY_TEXT  = "#374151"
-const GRAY_LIGHT = "#F9FAFB"
-const GRAY_MID   = "#E5E7EB"
-const GREEN      = "#16A34A"
-const WHITE      = "#FFFFFF"
+/* ─────────────────────────────────────────
+   PALETTE
+───────────────────────────────────────── */
+const P = {
+  navy:      "#0F172A",
+  blue:      "#2563EB",
+  blueDark:  "#1D4ED8",
+  blueDeep:  "#1E3A8A",
+  blueLight: "#EFF6FF",
+  blueMid:   "#BFDBFE",
+  blueHint:  "#93C5FD",
+  teal:      "#0891B2",
+  green:     "#16A34A",
+  greenBg:   "#F0FDF4",
+  greenBdr:  "#BBF7D0",
+  amber:     "#D97706",
+  gray50:    "#F8FAFC",
+  gray100:   "#F1F5F9",
+  gray200:   "#E2E8F0",
+  text:      "#1E293B",
+  muted:     "#64748B",
+  white:     "#FFFFFF",
+}
 
-const formatINR = (v: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+/* ─────────────────────────────────────────
+   HELPERS — no emojis, no special Unicode
+   PDFKit Helvetica only supports Latin-1
+───────────────────────────────────────── */
+const INR = (v: number) => {
+  // Format number in Indian style, prefix with "Rs." since
+  // Helvetica cannot render the rupee sign (U+20B9)
+  const formatted = new Intl.NumberFormat("en-IN", {
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(v)
+  return `Rs. ${formatted}`
+}
 
-const formatDate = (d: Date) =>
+const fDate = (d: Date) =>
   d.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
+    day: "2-digit", month: "long", year: "numeric",
   })
 
-export const generateInvoice = async ({
-  booking_id,
-  payment_id,
-  amount,
-  customer_name,
-  service_name,
-  otp,
-}: {
-  booking_id: string
-  payment_id: string
-  amount: number | string
-  customer_name: string
-  service_name: string
-  otp: string
-}) => {
+const methodLabel = (m: string) => {
+  const s = (m || "").toLowerCase()
+  if (s === "upi")        return "UPI Payment"
+  if (s === "card")       return "Card Payment"
+  if (s === "netbanking") return "Net Banking"
+  if (s === "wallet")     return "Wallet"
+  if (s === "cash")       return "Cash"
+  if (s === "emi")        return "EMI"
+  return "Online Payment"
+}
+
+const methodTag = (m: string) => {
+  const s = (m || "").toLowerCase()
+  if (s === "upi")        return "UPI"
+  if (s === "card")       return "CARD"
+  if (s === "netbanking") return "NB"
+  if (s === "wallet")     return "WLT"
+  if (s === "cash")       return "CASH"
+  if (s === "emi")        return "EMI"
+  return "PAY"
+}
+
+/* ─────────────────────────────────────────
+   INTERFACE
+───────────────────────────────────────── */
+export interface InvoiceData {
+  booking_id:      string
+  payment_id:      string
+  amount:          number | string
+  customer_name:   string
+  customer_phone?: string
+  service_name:    string
+  service_type?:   "service" | "product"
+  booking_date?:   string
+  time_slot?:      string
+  payment_method?: string
+  payment_last4?:  string
+  payment_bank?:   string
+  payment_vpa?:    string
+  payment_date?:   string
+  otp?:            string
+}
+
+/* ─────────────────────────────────────────
+   DRAW HELPERS
+───────────────────────────────────────── */
+function hline(doc: PDFKit.PDFDocument, x: number, y: number, w: number, color = P.gray200) {
+  doc.save()
+    .moveTo(x, y).lineTo(x + w, y)
+    .strokeColor(color).lineWidth(0.6).stroke()
+    .restore()
+}
+
+function pill(doc: PDFKit.PDFDocument, x: number, y: number, w: number, h: number, r: number, color: string) {
+  doc.roundedRect(x, y, w, h, r).fill(color)
+}
+
+function sectionLabel(doc: PDFKit.PDFDocument, text: string, x: number, y: number, color = P.blue) {
+  doc.fillColor(color).fontSize(7).font("Helvetica-Bold")
+    .text(text.toUpperCase(), x, y, { characterSpacing: 0.5 })
+}
+
+/* ─────────────────────────────────────────
+   MAIN
+───────────────────────────────────────── */
+export const generateInvoice = async (data: InvoiceData): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     try {
-      const invoicesDir = path.join(process.cwd(), "invoices")
-      if (!fs.existsSync(invoicesDir)) {
-        fs.mkdirSync(invoicesDir, { recursive: true })
-      }
+      const dir = path.join(process.cwd(), "invoices")
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 
-      const fileName = `invoice_${booking_id}.pdf`
-      const filePath = path.join(invoicesDir, fileName)
+      const filePath = path.join(dir, `invoice_${data.booking_id}.pdf`)
 
-      const doc = new PDFDocument({
-        size: "A4",
-        margin: 0,
+      const doc = new PDFDocument({ size: "A4", margin: 0,
         info: {
-          Title: `Invoice INV-${booking_id.slice(0, 8).toUpperCase()}`,
-          Author: "Metro Cool Services",
-          Subject: "Service Invoice",
+          Title:   `Invoice INV-${data.booking_id.slice(0, 8).toUpperCase()}`,
+          Author:  "Metro Cool",
+          Subject: "Payment Invoice",
         },
       })
-
       const stream = fs.createWriteStream(filePath)
       doc.pipe(stream)
 
-      const W = doc.page.width   // 595
-      const H = doc.page.height  // 842
-      const MARGIN = 48
+      const W = 595
+      const H = 842
+      const M = 44       // side margin
+      const IW = W - M * 2  // inner width
 
-      const totalAmount = Number(amount)
-      // Reverse-calculate: total = base + 18% GST
-      // So base = total / 1.18
-      const baseAmount  = +(totalAmount / 1.18).toFixed(2)
-      const gstAmount   = +(totalAmount - baseAmount).toFixed(2)
+      const total = Number(data.amount)
+      const base  = +(total / 1.18).toFixed(2)
+      const gst   = +(total - base).toFixed(2)
+      const meth  = (data.payment_method || "card").toLowerCase()
+      const invNo = `INV-${data.booking_id.slice(0, 8).toUpperCase()}`
+      const isProd = data.service_type === "product"
+      const invDate = data.payment_date
+        ? fDate(new Date(data.payment_date)) : fDate(new Date())
 
-      /* ════════════════════════════════════════
-         1. DARK HEADER BAND
-      ════════════════════════════════════════ */
-      doc.rect(0, 0, W, 140).fill(BLUE_DARK)
+      /* ══════════════════════════
+         1. HEADER — navy bg
+      ══════════════════════════ */
+      doc.rect(0, 0, W, 144).fill(P.navy)
 
-      // Company name
-      doc
-        .fillColor(WHITE)
-        .fontSize(26)
-        .font("Helvetica-Bold")
-        .text("METRO COOL", MARGIN, 32, { lineBreak: false })
+      // Left teal accent bar
+      doc.rect(0, 0, 5, 144).fill(P.teal)
 
-      // Tagline
-      doc
-        .fillColor("#93C5FD")
-        .fontSize(10)
-        .font("Helvetica")
-        .text("AC Repair & Maintenance Services", MARGIN, 64)
-
-      // INVOICE label on the right
-      doc
-        .fillColor(WHITE)
-        .fontSize(36)
-        .font("Helvetica-Bold")
-        .text("INVOICE", W - MARGIN - 160, 28, { width: 160, align: "right" })
-
-      // Invoice number under INVOICE
-      doc
-        .fillColor("#93C5FD")
-        .fontSize(11)
-        .font("Helvetica")
-        .text(
-          `#INV-${booking_id.slice(0, 8).toUpperCase()}`,
-          W - MARGIN - 160,
-          72,
-          { width: 160, align: "right" }
-        )
-
-      /* ════════════════════════════════════════
-         2. BLUE ACCENT STRIPE
-      ════════════════════════════════════════ */
-      doc.rect(0, 140, W, 6).fill(BLUE)
-
-      /* ════════════════════════════════════════
-         3. META ROW  (Date | Status | Payment ID)
-      ════════════════════════════════════════ */
-      const metaY = 164
-      doc.rect(0, 155, W, 55).fill(BLUE_LIGHT)
-
-      // Date
-      doc.fillColor(BLUE).fontSize(8).font("Helvetica-Bold")
-        .text("DATE ISSUED", MARGIN, metaY)
-      doc.fillColor(GRAY_TEXT).fontSize(11).font("Helvetica")
-        .text(formatDate(new Date()), MARGIN, metaY + 13)
-
-      // Status
-      const statusX = W / 2 - 60
-      doc.fillColor(BLUE).fontSize(8).font("Helvetica-Bold")
-        .text("STATUS", statusX, metaY)
-      // Green pill
-      doc.roundedRect(statusX, metaY + 10, 64, 20, 10).fill(GREEN)
-      doc.fillColor(WHITE).fontSize(9).font("Helvetica-Bold")
-        .text("PAID", statusX + 18, metaY + 14)
-
-      // Payment ID
-      const pidX = W - MARGIN - 180
-      doc.fillColor(BLUE).fontSize(8).font("Helvetica-Bold")
-        .text("PAYMENT ID", pidX, metaY)
-      doc.fillColor(GRAY_TEXT).fontSize(9).font("Helvetica")
-        .text(
-          String(payment_id).length > 22
-            ? String(payment_id).slice(0, 22) + "…"
-            : String(payment_id),
-          pidX,
-          metaY + 13,
-          { width: 180 }
-        )
-
-      /* ════════════════════════════════════════
-         4. BILL TO + SERVICE INFO (two columns)
-      ════════════════════════════════════════ */
-      const sectionY = 232
-      const colW = (W - MARGIN * 2 - 24) / 2
-
-      // ── Bill To ──
-      doc.rect(MARGIN, sectionY, colW, 88).fill(GRAY_LIGHT)
-        .rect(MARGIN, sectionY, 4, 88).fill(BLUE)
-
-      doc.fillColor(BLUE).fontSize(8).font("Helvetica-Bold")
-        .text("BILLED TO", MARGIN + 12, sectionY + 12)
-      doc.fillColor(GRAY_TEXT).fontSize(13).font("Helvetica-Bold")
-        .text(customer_name || "Customer", MARGIN + 12, sectionY + 26, {
-          width: colW - 20,
-        })
-      doc.fillColor("#6B7280").fontSize(9).font("Helvetica")
-        .text("Valued Customer", MARGIN + 12, sectionY + 48)
-
-      // ── Service Info ──
-      const col2X = MARGIN + colW + 24
-      doc.rect(col2X, sectionY, colW, 88).fill(GRAY_LIGHT)
-        .rect(col2X, sectionY, 4, 88).fill(BLUE)
-
-      doc.fillColor(BLUE).fontSize(8).font("Helvetica-Bold")
-        .text("SERVICE DETAILS", col2X + 12, sectionY + 12)
-      doc.fillColor(GRAY_TEXT).fontSize(13).font("Helvetica-Bold")
-        .text(service_name || "AC Service", col2X + 12, sectionY + 26, {
-          width: colW - 20,
-        })
-      doc.fillColor("#6B7280").fontSize(9).font("Helvetica")
-        .text("Professional AC Service", col2X + 12, sectionY + 48)
-
-      /* ════════════════════════════════════════
-         5. ITEMS TABLE
-      ════════════════════════════════════════ */
-      const tableY = sectionY + 108
-      const tableW = W - MARGIN * 2
-      const COL = {
-        desc:  MARGIN,
-        hsn:   MARGIN + tableW * 0.48,
-        qty:   MARGIN + tableW * 0.62,
-        rate:  MARGIN + tableW * 0.72,
-        amt:   MARGIN + tableW * 0.85,
+      // --- Logo PNG (process.cwd() = backend root) ---
+      const logoPath = path.join(process.cwd(), "logo.png")
+      let logoDrawn = false
+      if (fs.existsSync(logoPath)) {
+        try {
+          doc.image(logoPath, M, 20, { width: 50, height: 50 })
+          logoDrawn = true
+        } catch (_) { /* fall through to text logo */ }
+      }
+      if (!logoDrawn) {
+        // Text-based logo fallback
+        doc.roundedRect(M, 20, 50, 50, 8).fill(P.blue)
+        doc.fillColor(P.white).fontSize(18).font("Helvetica-Bold")
+          .text("MC", M + 9, M - 8)
       }
 
-      // Header row
-      doc.rect(MARGIN, tableY, tableW, 28).fill(BLUE)
-      doc.fillColor(WHITE).fontSize(9).font("Helvetica-Bold")
-      const headY = tableY + 9
-      doc.text("DESCRIPTION",        COL.desc + 8, headY)
-      doc.text("HSN / SAC",          COL.hsn,      headY)
-      doc.text("QTY",                COL.qty,      headY)
-      doc.text("UNIT PRICE",         COL.rate,     headY)
-      doc.text("AMOUNT",             COL.amt,      headY)
+      // Company name
+      doc.fillColor(P.white).fontSize(20).font("Helvetica-Bold")
+        .text("METRO COOL", M + 60, 24)
+      doc.fillColor(P.blueHint).fontSize(9).font("Helvetica")
+        .text("AC Repair & Maintenance Services", M + 60, 49)
+      doc.fillColor(P.blueMid).fontSize(7.5).font("Helvetica")
+        .text("www.metro-cool.com  |  support@metro-cool.com", M + 60, 63)
 
-      // Item row 1 — service
-      const row1Y = tableY + 28
-      doc.rect(MARGIN, row1Y, tableW, 36).fill(WHITE)
-      doc.rect(MARGIN, row1Y, tableW, 36).stroke(GRAY_MID)
+      // INVOICE label (right)
+      doc.fillColor(P.white).fontSize(30).font("Helvetica-Bold")
+        .text("INVOICE", W - M - 160, 18, { width: 160, align: "right" })
+      doc.fillColor(P.blueHint).fontSize(10).font("Helvetica")
+        .text(invNo, W - M - 160, 57, { width: 160, align: "right" })
 
-      doc.fillColor(GRAY_TEXT).fontSize(10).font("Helvetica-Bold")
-        .text(service_name || "AC Service", COL.desc + 8, row1Y + 6, {
-          width: tableW * 0.44,
-        })
-      doc.fillColor("#6B7280").fontSize(8).font("Helvetica")
-        .text("998719", COL.hsn, row1Y + 11)
-      doc.text("1", COL.qty + 8, row1Y + 11)
-      doc.text(formatINR(baseAmount), COL.rate, row1Y + 11)
-      doc.fillColor(GRAY_TEXT).fontSize(10).font("Helvetica-Bold")
-        .text(formatINR(baseAmount), COL.amt, row1Y + 11)
+      // PAID badge
+      pill(doc, W - M - 68, 76, 68, 24, 12, P.green)
+      doc.fillColor(P.white).fontSize(10).font("Helvetica-Bold")
+        .text("[ PAID ]", W - M - 63, 81)
 
-      /* ════════════════════════════════════════
-         6. SUMMARY BOX (right-aligned)
-      ════════════════════════════════════════ */
-      const summaryY = row1Y + 48
-      const summaryX = W - MARGIN - 220
-      const summaryW = 220
+      // Blue accent stripe
+      doc.rect(0, 144, W, 5).fill(P.blue)
 
+      /* ══════════════════════════
+         2. META BAR
+      ══════════════════════════ */
+      doc.rect(0, 149, W, 52).fill(P.blueLight)
+
+      const mY = 162
+      const cW = IW / 3
+
+      // Invoice date
+      sectionLabel(doc, "Invoice Date", M, mY)
+      doc.fillColor(P.text).fontSize(10).font("Helvetica")
+        .text(invDate, M, mY + 12)
+
+      // Service date
+      const sDate = data.booking_date
+        ? fDate(new Date(data.booking_date)) + (data.time_slot ? "  |  " + data.time_slot : "")
+        : "N/A"
+      sectionLabel(doc, "Service Date", M + cW, mY)
+      doc.fillColor(P.text).fontSize(10).font("Helvetica")
+        .text(sDate, M + cW, mY + 12, { width: cW - 4 })
+
+      // Payment ID
+      const pidTxt = String(data.payment_id).length > 22
+        ? String(data.payment_id).slice(0, 22) + "..."
+        : String(data.payment_id)
+      sectionLabel(doc, "Payment Reference", M + cW * 2, mY)
+      doc.fillColor(P.text).fontSize(9).font("Helvetica")
+        .text(pidTxt, M + cW * 2, mY + 12, { width: cW })
+
+      /* ══════════════════════════
+         3. BILL TO  +  SERVICE
+      ══════════════════════════ */
+      const s3Y = 218
+      const hW  = (IW - 14) / 2
+
+      // Billed To card
+      doc.rect(M, s3Y, hW, 82).fill(P.gray50)
+      doc.rect(M, s3Y, 4, 82).fill(P.blue)
+      sectionLabel(doc, "Billed To", M + 12, s3Y + 10)
+      doc.fillColor(P.text).fontSize(12).font("Helvetica-Bold")
+        .text(data.customer_name || "Customer", M + 12, s3Y + 24, { width: hW - 18 })
+      if (data.customer_phone) {
+        doc.fillColor(P.muted).fontSize(9).font("Helvetica")
+          .text("Phone: " + data.customer_phone, M + 12, s3Y + 46)
+      }
+
+      // Service / Product card
+      const s2X = M + hW + 14
+      doc.rect(s2X, s3Y, hW, 82).fill(P.gray50)
+      doc.rect(s2X, s3Y, 4, 82).fill(P.teal)
+      sectionLabel(doc, isProd ? "Product Details" : "Service Details", s2X + 12, s3Y + 10, P.teal)
+      doc.fillColor(P.text).fontSize(12).font("Helvetica-Bold")
+        .text(data.service_name || "AC Service", s2X + 12, s3Y + 24, { width: hW - 18 })
+      doc.fillColor(P.muted).fontSize(9).font("Helvetica")
+        .text(isProd ? "Product Purchase" : "Professional AC Service", s2X + 12, s3Y + 46)
+
+      /* ══════════════════════════
+         4. LINE ITEMS TABLE
+      ══════════════════════════ */
+      const tY = s3Y + 96
+      const cols = {
+        d: M,
+        h: M + IW * 0.46,
+        q: M + IW * 0.60,
+        r: M + IW * 0.72,
+        a: M + IW * 0.85,
+      }
+
+      // Header
+      doc.rect(M, tY, IW, 27).fill(P.blueDeep)
+      doc.fillColor(P.white).fontSize(8.5).font("Helvetica-Bold")
+      const hRow = tY + 9
+      doc.text("DESCRIPTION",  cols.d + 8, hRow)
+        .text("HSN / SAC",     cols.h,     hRow)
+        .text("QTY",           cols.q,     hRow)
+        .text("UNIT PRICE",    cols.r,     hRow)
+        .text("AMOUNT",        cols.a,     hRow)
+
+      // Row
+      const dRow = tY + 27
+      doc.rect(M, dRow, IW, 36).fill(P.white)
+      hline(doc, M, dRow + 36, IW)
+
+      doc.fillColor(P.text).fontSize(10).font("Helvetica-Bold")
+        .text(data.service_name || "AC Service", cols.d + 8, dRow + 8, { width: IW * 0.42 })
+      doc.fillColor(P.muted).fontSize(8).font("Helvetica")
+        .text("998719",    cols.h,      dRow + 12)
+        .text("1",         cols.q + 8,  dRow + 12)
+        .text(INR(base),   cols.r,      dRow + 12)
+      doc.fillColor(P.text).fontSize(10).font("Helvetica-Bold")
+        .text(INR(base),   cols.a,      dRow + 12)
+
+      /* ══════════════════════════
+         5. PAYMENT METHOD  +  TOTALS
+      ══════════════════════════ */
+      const s5Y  = dRow + 50
+      const totX = W - M - 215
+      const totW = 215
+      const pmW  = totX - M - 14
+      const s5H  = 90
+
+      // Payment Method card
+      doc.rect(M, s5Y, pmW, s5H).fill(P.gray50)
+      doc.rect(M, s5Y, 4, s5H).fill(P.teal)
+      sectionLabel(doc, "Payment Method", M + 12, s5Y + 10, P.teal)
+
+      // Badge color by method
+      const badgeCol = meth === "cash" ? P.green : meth === "upi" ? P.teal : P.blueDeep
+      pill(doc, M + 12, s5Y + 24, 48, 30, 6, badgeCol)
+      doc.fillColor(P.white).fontSize(9).font("Helvetica-Bold")
+        .text(methodTag(meth), M + 14, s5Y + 33, { width: 44, align: "center" })
+
+      doc.fillColor(P.text).fontSize(11).font("Helvetica-Bold")
+        .text(methodLabel(meth), M + 68, s5Y + 26)
+
+      // Payment detail line
+      let detail = ""
+      if (meth === "card" && data.payment_last4)
+        detail = "Card ending  ....  " + data.payment_last4
+      else if (meth === "upi" && data.payment_vpa)
+        detail = "UPI ID: " + data.payment_vpa
+      else if (meth === "netbanking" && data.payment_bank)
+        detail = "Bank: " + data.payment_bank
+      else if (meth === "cash")
+        detail = "Paid directly to technician"
+      else if (meth === "wallet")
+        detail = "Paid via digital wallet"
+
+      if (detail) {
+        doc.fillColor(P.muted).fontSize(8.5).font("Helvetica")
+          .text(detail, M + 68, s5Y + 44, { width: pmW - 78 })
+      }
+
+      // Totals
       // Subtotal row
-      doc.rect(summaryX, summaryY, summaryW, 26).fill(GRAY_LIGHT)
-      doc.fillColor("#6B7280").fontSize(9).font("Helvetica")
-        .text("Subtotal", summaryX + 10, summaryY + 7)
-      doc.text(formatINR(baseAmount), summaryX + summaryW - 80, summaryY + 7)
+      doc.rect(totX, s5Y, totW, 27).fill(P.gray100)
+      doc.fillColor(P.muted).fontSize(9).font("Helvetica")
+        .text("Subtotal",  totX + 12, s5Y + 8)
+        .text(INR(base),   totX + totW - 85, s5Y + 8)
 
       // GST row
-      doc.rect(summaryX, summaryY + 26, summaryW, 26).fill(WHITE)
-      doc.rect(summaryX, summaryY + 26, summaryW, 26).stroke(GRAY_MID)
-      doc.fillColor("#6B7280").fontSize(9).font("Helvetica")
-        .text("GST @ 18%", summaryX + 10, summaryY + 33)
-      doc.text(formatINR(gstAmount), summaryX + summaryW - 80, summaryY + 33)
+      doc.rect(totX, s5Y + 27, totW, 27).fill(P.white)
+      hline(doc, totX, s5Y + 27, totW)
+      hline(doc, totX, s5Y + 54, totW)
+      doc.fillColor(P.muted).fontSize(9).font("Helvetica")
+        .text("GST @ 18%", totX + 12, s5Y + 35)
+        .text(INR(gst),    totX + totW - 85, s5Y + 35)
 
       // Total row
-      doc.rect(summaryX, summaryY + 52, summaryW, 34).fill(BLUE)
-      doc.fillColor(WHITE).fontSize(11).font("Helvetica-Bold")
-        .text("TOTAL PAID", summaryX + 10, summaryY + 62)
-      doc.fontSize(13)
-        .text(formatINR(totalAmount), summaryX + summaryW - 95, summaryY + 60)
+      doc.rect(totX, s5Y + 54, totW, 36).fill(P.blue)
+      doc.fillColor(P.white).fontSize(11).font("Helvetica-Bold")
+        .text("TOTAL PAID",  totX + 12,          s5Y + 65)
+        .text(INR(total),    totX + totW - 95,    s5Y + 64)
 
-      /* ════════════════════════════════════════
-         7. NOTES (left side, same level as summary)
-      ════════════════════════════════════════ */
-      doc.fillColor(BLUE).fontSize(8).font("Helvetica-Bold")
-        .text("NOTES", MARGIN, summaryY + 4)
-      doc.fillColor("#6B7280").fontSize(8.5).font("Helvetica")
+      /* ══════════════════════════
+         6. SUCCESS BANNER
+      ══════════════════════════ */
+      const banY = s5Y + s5H + 14
+      const banH = 56
+
+      doc.rect(M, banY, IW, banH).fill(P.greenBg)
+      doc.rect(M, banY, IW, banH).strokeColor(P.greenBdr).lineWidth(0.8).stroke()
+      doc.rect(M, banY, 5, banH).fill(P.green)
+
+      // Circle with checkmark (no emoji — use text "OK")
+      doc.circle(M + 36, banY + banH / 2, 17).fill(P.green)
+      doc.fillColor(P.white).fontSize(11).font("Helvetica-Bold")
+        .text("OK", M + 27, banY + banH / 2 - 7)
+
+      doc.fillColor("#14532D").fontSize(11).font("Helvetica-Bold")
         .text(
-          "Payment received. Thank you for choosing Metro Cool!\n" +
-          "For support, contact us at support@metro-cool.com\n" +
-          "This is a computer-generated invoice.",
-          MARGIN,
-          summaryY + 16,
-          { width: summaryX - MARGIN - 16, lineGap: 4 }
+          isProd ? "Order Placed & Payment Successful!" : "Service Completed & Payment Received!",
+          M + 64, banY + 11
         )
-
-      /* ════════════════════════════════════════
-         8. SERVICE COMPLETED BANNER
-      ════════════════════════════════════════ */
-      const bannerY = summaryY + 112
-
-      // Green success banner
-      doc.rect(MARGIN, bannerY, tableW, 60).fill("#F0FDF4")
-      doc.rect(MARGIN, bannerY, tableW, 60).stroke("#BBF7D0")
-      doc.rect(MARGIN, bannerY, 6, 60).fill(GREEN)
-
-      // Checkmark circle
-      doc.circle(MARGIN + 38, bannerY + 30, 18).fill(GREEN)
-      doc.fillColor(WHITE).fontSize(16).font("Helvetica-Bold")
-        .text("✓", MARGIN + 29, bannerY + 22)
-
-      // Text
-      doc.fillColor("#14532D").fontSize(12).font("Helvetica-Bold")
-        .text("Service Successfully Completed", MARGIN + 68, bannerY + 10)
       doc.fillColor("#166534").fontSize(9).font("Helvetica")
         .text(
-          "Your AC service has been completed and payment has been received. " +
-          "Thank you for choosing Metro Cool!",
-          MARGIN + 68,
-          bannerY + 28,
-          { width: tableW - 90 }
+          isProd
+            ? "Your order is confirmed. Thank you for shopping with Metro Cool!"
+            : "Your AC service is done and payment received. Thank you for choosing Metro Cool!",
+          M + 64, banY + 28, { width: IW - 78 }
         )
 
-      /* ════════════════════════════════════════
-         9. DIVIDER
-      ════════════════════════════════════════ */
-      const divY = bannerY + 80
-      doc.rect(MARGIN, divY, tableW, 1).fill(GRAY_MID)
+      /* ══════════════════════════
+         7. THANK YOU CARD
+      ══════════════════════════ */
+      const tyY = banY + banH + 14
+      const tyH = 68
 
-      /* ════════════════════════════════════════
-         10. FOOTER
-      ════════════════════════════════════════ */
-      const footerY = divY + 12
+      doc.rect(M, tyY, IW, tyH).fill(P.blueDeep)
+      doc.rect(M, tyY, 5, tyH).fill(P.teal)
+      // Right accent panel
+      doc.rect(M + IW - 80, tyY, 80, tyH).fill("#1E40AF")
 
-      doc.fillColor("#9CA3AF").fontSize(8).font("Helvetica")
+      doc.fillColor(P.white).fontSize(14).font("Helvetica-Bold")
+        .text("Thank you for choosing Metro Cool!", M + 16, tyY + 12, { width: IW - 100 })
+      doc.fillColor(P.blueMid).fontSize(9).font("Helvetica")
         .text(
-          "Metro Cool Services  ·  AC Repair & Maintenance  ·  support@metro-cool.com  ·  www.metro-cool.com",
-          MARGIN,
-          footerY,
-          { width: tableW, align: "center" }
+          "We appreciate your trust. For support or future bookings: www.metro-cool.com",
+          M + 16, tyY + 34, { width: IW - 100 }
         )
 
-      // Page number
-      doc.text(
-        `Generated on ${formatDate(new Date())}  ·  Page 1 of 1`,
-        MARGIN,
-        footerY + 14,
-        { width: tableW, align: "center" }
-      )
+      // Star rating — plain text (no Unicode stars which fail)
+      doc.fillColor("#FCD34D").fontSize(16).font("Helvetica-Bold")
+        .text("* * * * *", M + IW - 74, tyY + 24, { width: 72, align: "center" })
 
-      // Bottom blue bar
-      doc.rect(0, H - 8, W, 8).fill(BLUE)
+      /* ══════════════════════════
+         8. TERMS  +  SUMMARY
+      ══════════════════════════ */
+      const noteY = tyY + tyH + 14
+      const hNW   = (IW - 14) / 2
 
-      /* ── Done ── */
+      // Terms box
+      doc.rect(M, noteY, hNW, 62).fill(P.gray50)
+      doc.rect(M, noteY, 4, 62).fill(P.amber)
+      sectionLabel(doc, "Terms & Conditions", M + 12, noteY + 9, P.amber)
+      doc.fillColor(P.muted).fontSize(7.8).font("Helvetica")
+        .text(
+          "- Computer-generated invoice, no signature required.\n" +
+          "- For disputes email support@metro-cool.com within 7 days.\n" +
+          "- Refund policy at metro-cool.com/terms",
+          M + 12, noteY + 22, { width: hNW - 20, lineGap: 3 }
+        )
+
+      // Invoice summary box
+      const refX = M + hNW + 14
+      doc.rect(refX, noteY, hNW, 62).fill(P.blueLight)
+      doc.rect(refX, noteY, 4, 62).fill(P.blue)
+      sectionLabel(doc, "Invoice Summary", refX + 12, noteY + 9, P.blue)
+      doc.fillColor(P.muted).fontSize(8.5).font("Helvetica")
+        .text("Invoice No :  " + invNo,         refX + 12, noteY + 22)
+        .text("Amount Paid:  " + INR(total),     refX + 12, noteY + 35)
+        .text("Date       :  " + invDate,        refX + 12, noteY + 48)
+
+      /* ══════════════════════════
+         9. FOOTER
+      ══════════════════════════ */
+      const fDivY = noteY + 76
+      hline(doc, M, fDivY, IW, P.gray200)
+
+      const fY = fDivY + 10
+      doc.fillColor("#94A3B8").fontSize(7.5).font("Helvetica")
+        .text(
+          "Metro Cool Services  |  AC Repair & Maintenance  |  support@metro-cool.com  |  www.metro-cool.com",
+          M, fY, { width: IW, align: "center" }
+        )
+        .text(
+          "Generated on " + fDate(new Date()) + "  |  Page 1 of 1",
+          M, fY + 13, { width: IW, align: "center" }
+        )
+
+      // Bottom split bar — teal left, blue right
+      doc.rect(0,     H - 7, W / 2, 7).fill(P.teal)
+      doc.rect(W / 2, H - 7, W / 2, 7).fill(P.blue)
+
       doc.end()
       stream.on("finish", () => resolve(filePath))
-      stream.on("error", (err) => reject(err))
+      stream.on("error", reject)
 
-    } catch (err) {
+    } catch (err: any) {
+      console.error("[generateInvoice] crash:", err?.message, err?.stack)
       reject(err)
     }
   })

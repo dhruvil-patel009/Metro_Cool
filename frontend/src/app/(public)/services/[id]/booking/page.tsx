@@ -9,6 +9,16 @@ import { getServiceById } from "@/app/(public)/lib/services.api"
 import AuthGuard from "@/app/components/AuthGuard"
 
 /* ---------------- CALENDAR GENERATOR ---------------- */
+interface Service {
+  id: string
+  title: string
+  category: string
+  price: number
+  original_price?: number
+  originalPrice?: number
+  badge?: string
+}
+
 
 function generateCalendarDays(year: number, month: number) {
   const firstDay = new Date(year, month, 1)
@@ -50,8 +60,8 @@ const selectedTotal = Number(searchParams.get("total") || 0)
 
   /* ---------------- SERVICE ---------------- */
 
-  const [service, setService] = useState<any>(null)
-  const [serviceLoading, setServiceLoading] = useState(true)
+const [service, setService] = useState<Service | null>(null)
+const [serviceLoading, setServiceLoading] = useState(true)
 
   /* ---------------- DATE STATE ---------------- */
 
@@ -73,23 +83,23 @@ const selectedTotal = Number(searchParams.get("total") || 0)
   useEffect(() => {
     if (!id) return
 
-    async function loadService() {
-      try {
+async function loadService() {
+  try {
+const data = (await getServiceById(id)) as Service;
 
-        const data = await getServiceById(id)
-
-        setService({
-          ...data,
-          price: data.price,
-          originalPrice: data.original_price ?? data.originalPrice ?? data.price + 20
-        })
-
-      } catch {
-        setService(null)
-      } finally {
-        setServiceLoading(false)
-      }
-    }
+    setService({
+      ...data,
+      originalPrice:
+        data.original_price ??
+        data.originalPrice ??
+        data.price + 20,
+    });
+  } catch {
+    setService(null);
+  } finally {
+    setServiceLoading(false);
+  }
+}
 
     loadService()
 

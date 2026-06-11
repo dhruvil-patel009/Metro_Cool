@@ -14,7 +14,21 @@ export interface CreateServicePayload {
   imageUrl?: string;
   isActive?: boolean;
 }
+export interface Service {
+  id: string
+  title: string
+  category: string
+  price: number
+  original_price?: number
+  originalPrice?: number
+  badge?: string
+}
 
+export const getServiceById = async (
+  id: string
+): Promise<Service> => {
+  return apiFetch(`/services/${id}`);
+};
 /**
  * ADMIN — Create Service
  */

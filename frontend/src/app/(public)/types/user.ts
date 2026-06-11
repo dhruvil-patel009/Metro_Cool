@@ -4,4 +4,5 @@ export interface UserMeResponse {
   last_name: string;
   email: string;
   profile_photo: string | null;
+  phone: string | null;
 }

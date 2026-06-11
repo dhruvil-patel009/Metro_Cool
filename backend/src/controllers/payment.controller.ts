@@ -12,34 +12,67 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 })
 
-/* ── helper: build + upload invoice (non-fatal) ── */
+/* ── helper: build + upload invoice ── */
 const buildAndUploadInvoice = async ({
   booking_id,
   payment_id,
   amount,
   customer_name,
+  customer_phone,
   service_name,
-  otp,
+  service_type,
+  booking_date,
+  time_slot,
+  payment_method,
+  payment_last4,
+  payment_bank,
+  payment_vpa,
+  payment_date,
   payment_row_id,
 }: {
   booking_id: string
   payment_id: string
   amount: number
   customer_name: string
+  customer_phone?: string
   service_name: string
-  otp: string
+  service_type?: "service" | "product"
+  booking_date?: string
+  time_slot?: string
+  payment_method?: string
+  payment_last4?: string
+  payment_bank?: string
+  payment_vpa?: string
+  payment_date?: string
   payment_row_id: string
-}) => {
+}): Promise<string | null> => {
   try {
+    console.log("[invoice] generating for booking:", booking_id)
+
     const invoicePath = await generateInvoice({
       booking_id,
       payment_id,
       amount,
       customer_name,
+      customer_phone,
       service_name,
-      otp,
+      service_type,
+      booking_date,
+      time_slot,
+      payment_method,
+      payment_last4,
+      payment_bank,
+      payment_vpa,
+      payment_date,
+      otp: "",
     })
+
+    console.log("[invoice] PDF generated at:", invoicePath)
+
     const invoiceUrl = await uploadInvoice(invoicePath, booking_id)
+
+    console.log("[invoice] uploaded to:", invoiceUrl)
+
     try { fs.unlinkSync(invoicePath) } catch (_) { /* ignore */ }
 
     await supabase
@@ -48,8 +81,9 @@ const buildAndUploadInvoice = async ({
       .eq("id", payment_row_id)
 
     return invoiceUrl
-  } catch (err) {
-    console.error("Invoice generation failed (non-fatal):", err)
+  } catch (err: any) {
+    console.error("[invoice] FAILED:", err?.message || err)
+    console.error("[invoice] Stack:", err?.stack)
     return null
   }
 }
@@ -243,13 +277,32 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       : booking.full_name || "Customer"
     const serviceName = (booking.services as any)?.title || "AC Service"
 
+    // Fetch card last4 / UPI VPA from Razorpay if available
+    let paymentLast4: string | undefined
+    let paymentVpa: string | undefined
+    let paymentBank: string | undefined
+    try {
+      const pd = await razorpay.payments.fetch(razorpay_payment_id) as any
+      paymentLast4 = pd?.card?.last4
+      paymentVpa   = pd?.vpa
+      paymentBank  = pd?.bank
+    } catch (_) {}
+
     await buildAndUploadInvoice({
       booking_id,
       payment_id: razorpay_payment_id,
       amount: booking.total_amount,
       customer_name: customerName,
+      customer_phone: (profile as any)?.phone,
       service_name: serviceName,
-      otp: closureOTP,
+      service_type: "service",
+      booking_date: booking.booking_date,
+      time_slot: booking.time_slot,
+      payment_method: paymentMethod,
+      payment_last4: paymentLast4,
+      payment_vpa: paymentVpa,
+      payment_bank: paymentBank,
+      payment_date: new Date().toISOString(),
       payment_row_id: paymentRow.id,
     })
 
@@ -384,8 +437,16 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
       payment_id: payment.id,
       amount: booking.total_amount,
       customer_name: customerName,
+      customer_phone: (profile as any)?.phone,
       service_name: serviceName,
-      otp: closureOTP,
+      service_type: "service",
+      booking_date: booking.booking_date,
+      time_slot: booking.time_slot,
+      payment_method: payment.method || "card",
+      payment_last4: payment.card?.last4,
+      payment_vpa: payment.vpa,
+      payment_bank: payment.bank,
+      payment_date: new Date().toISOString(),
       payment_row_id: paymentRow.id,
     })
 
@@ -487,8 +548,13 @@ export const markCashPayment = async (req: Request, res: Response) => {
       payment_id: paymentRow.id,
       amount: booking.total_amount,
       customer_name: customerName,
+      customer_phone: (profile as any)?.phone,
       service_name: serviceName,
-      otp: closureOTP,
+      service_type: "service",
+      booking_date: booking.booking_date,
+      time_slot: booking.time_slot,
+      payment_method: "cash",
+      payment_date: new Date().toISOString(),
       payment_row_id: paymentRow.id,
     })
 
@@ -507,6 +573,7 @@ export const markCashPayment = async (req: Request, res: Response) => {
 ========================================================= */
 export const getInvoice = async (req: Request, res: Response) => {
   const { bookingId } = req.params
+  const forceRefresh = req.query.refresh === "1"
 
   // ── 1. Get payment row ────────────────────────────────
   const { data: paymentRow } = await supabase
@@ -535,9 +602,17 @@ export const getInvoice = async (req: Request, res: Response) => {
     }
   }
 
-  // ── 2. Return existing URL ────────────────────────────
-  if (paymentRow.invoice_url) {
+  // ── 2. Return existing URL (skip if force refresh) ──
+  if (paymentRow.invoice_url && !forceRefresh) {
     return res.json({ invoice_url: paymentRow.invoice_url })
+  }
+
+  // If forcing refresh, clear old URL so it regenerates
+  if (forceRefresh && paymentRow.invoice_url) {
+    await supabase
+      .from("payments")
+      .update({ invoice_url: null })
+      .eq("id", paymentRow.id)
   }
 
   // ── 3. Generate on-demand ─────────────────────────────
@@ -550,7 +625,7 @@ export const getInvoice = async (req: Request, res: Response) => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name")
+      .select("first_name, last_name, phone")
       .eq("id", paymentRow.user_id)
       .single()
 
@@ -565,8 +640,13 @@ export const getInvoice = async (req: Request, res: Response) => {
       payment_id: paymentRow.razorpay_payment_id || paymentRow.id,
       amount: paymentRow.amount,
       customer_name: customerName,
+      customer_phone: (profile as any)?.phone,
       service_name: serviceName,
-      otp,
+      service_type: "service",
+      booking_date: booking?.booking_date,
+      time_slot: booking?.time_slot,
+      payment_method: (paymentRow as any).payment_method || "card",
+      payment_date: (paymentRow as any).created_at,
       payment_row_id: paymentRow.id,
     })
 

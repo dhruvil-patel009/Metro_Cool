@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-// import { Toaster } from "sonner";
 import AuthProvider from "@/providers/AuthProvider";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import Providers from "./providers"
+import SessionGuard from "./components/SessionGuard"
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 import Script from "next/script";
@@ -119,9 +119,10 @@ export default function RootLayout({
 
         <Providers>
           <AuthProvider>
+            <SessionGuard />
             <main className="flex-1">{children}</main>
           </AuthProvider>
-          <ToastContainer />
+          <ToastContainer position="top-center" />
         </Providers>
       </body>
     </html>

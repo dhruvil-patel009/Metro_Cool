@@ -48,7 +48,7 @@ export function ServicesTable({
   /* ---------------- FETCH SERVICES ---------------- */
   useEffect(() => {
     apiFetch("/services/admin")
-      .then(setServices)
+    .then((data) => setServices(data as Service[]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -419,7 +419,9 @@ export function ServicesTable({
     service={editingService}
     onClose={() => {
       setEditingService(null);
-      getAllServicesAdmin().then(setServices); // refresh
+getAllServicesAdmin().then(
+  (data) => setServices(data as Service[])
+);
     }}
   />
   )}

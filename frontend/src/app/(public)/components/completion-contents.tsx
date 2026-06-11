@@ -50,11 +50,16 @@ export default function CompletionContent() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const razorpayOpened = useRef(false)
+  const confirmedRef = useRef(false) // prevents duplicate "Payment Confirmed" toasts
 
   // ── Amount: always use booking.total_amount as single source of truth ──
   const totalAmount = Number(booking?.total_amount || 0)
   const servicePrice = Number(booking?.service_price || 0)
-  const taxAmount = Number(booking?.tax || 0)
+  // If tax field is missing/zero but total > service_price, derive tax from the difference
+  const storedTax = Number(booking?.tax || 0)
+  const taxAmount = storedTax > 0
+    ? storedTax
+    : Math.max(0, totalAmount - servicePrice)
 
   // ── Read bookingId from URL ──
   useEffect(() => {
@@ -127,12 +132,13 @@ export default function CompletionContent() {
           headers: { Authorization: `Bearer ${token}` },
         })
         const data = await res.json()
-        if (data?.booking?.payment_status === "completed") {
+        if (data?.booking?.payment_status === "completed" && !confirmedRef.current) {
+          confirmedRef.current = true  // set FIRST — blocks any concurrent ticks
           setServiceOTP(data.booking.closure_otp)
           setPaymentConfirmed(true)
           setBooking(data.booking)
           stopPolling()
-          toast.success("Payment Confirmed! 🎉")
+          toast.success("Payment Confirmed!")
         }
       } catch (_) { /* silently retry */ }
     }, POLL_INTERVAL_MS)
@@ -666,7 +672,8 @@ export default function CompletionContent() {
                         })
                           .then(r => r.json())
                           .then(data => {
-                            if (data?.booking?.payment_status === "completed") {
+                            if (data?.booking?.payment_status === "completed" && !confirmedRef.current) {
+                              confirmedRef.current = true
                               setServiceOTP(data.booking.closure_otp)
                               setPaymentConfirmed(true)
                               setBooking(data.booking)
