@@ -12,7 +12,8 @@ import {
 import { ProfileSidebar } from "../../components/profile-sidebar"
 import { toast } from "react-toastify"
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+import { apiFetch } from "@/app/lib/api"
+import { OrdersSkeletonList } from "@/app/components/ui/PageLoader"
 
 const formatINR = (v: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -51,15 +52,9 @@ export default function OrdersPage() {
   /* ── Fetch ── */
   useEffect(() => {
     const fetchOrders = async () => {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token")
-      if (!token) return
-
       try {
-        const res = await fetch(`${API_URL}/users/me/orders`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.message)
+        const data = await apiFetch<any>("/users/me/orders")
+        if (!data) throw new Error("No data")
 
         setStats(data.summary)
 
@@ -178,9 +173,7 @@ export default function OrdersPage() {
 
             {/* Orders list */}
             {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-              </div>
+              <OrdersSkeletonList count={4} />
             ) : paginated.length === 0 ? (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 flex flex-col items-center text-center">
                 <AlertCircle className="w-10 h-10 text-gray-300 mb-3" />
@@ -254,18 +247,16 @@ function OrderCard({ order }: { order: any }) {
   const handleInvoice = async () => {
     setDownloadingInvoice(true)
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/payments/invoice/${order.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      const data = await res.json()
-      if (!res.ok || !data?.invoice_url) {
+      const data = await apiFetch<{ invoice_url?: string; error?: string }>(
+        `/payments/invoice/${order.id}`
+      )
+      if (!data?.invoice_url) {
         toast.error(data?.error || "Invoice not ready yet. Please try again.")
         return
       }
       window.open(data.invoice_url, "_blank")
-    } catch {
-      toast.error("Failed to download invoice")
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download invoice")
     } finally {
       setDownloadingInvoice(false)
     }

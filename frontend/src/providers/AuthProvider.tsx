@@ -16,12 +16,16 @@ export default function AuthProvider({
     hydrate()
   }, [hydrate])
 
-  // Block render until Zustand has restored the token from localStorage
-  // This prevents "Invalid token" flashes on page refresh
+  // Block render until Zustand has restored the token from localStorage.
+  // This prevents "Invalid token" flashes and auth guard flickering on refresh.
   if (!hydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-3">
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 rounded-full border-4 border-blue-100" />
+          <div className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
+        </div>
+        <p className="text-sm text-gray-400 font-medium animate-pulse">Loading…</p>
       </div>
     )
   }

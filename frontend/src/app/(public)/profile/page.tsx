@@ -135,8 +135,36 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   /* ================= LOADING ================= */
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-500">
-        Loading profile...
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-3">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3 animate-pulse">
+                <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto" />
+                <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto" />
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-10 bg-gray-100 rounded-xl" />
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-9">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6 animate-pulse">
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 bg-gray-200 rounded-2xl" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-5 bg-gray-200 rounded w-1/3" />
+                    <div className="h-4 bg-gray-200 rounded w-1/4" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="h-12 bg-gray-100 rounded-lg" />
+                  <div className="h-12 bg-gray-100 rounded-lg" />
+                  <div className="col-span-2 h-12 bg-gray-100 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

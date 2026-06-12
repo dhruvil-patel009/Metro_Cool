@@ -1,8 +1,6 @@
-"use client";
+"use client"
 
 import {
-  Bell,
-  Hammer,
   ClipboardList,
   PenTool,
   StickyNote,
@@ -12,165 +10,177 @@ import {
   LayoutDashboard,
   ChevronRight,
   Save,
-  Lock,
+  ShieldCheck,
   Check,
   AlertCircle,
-  LayoutGrid,
   RotateCcw,
   Briefcase,
   User,
-  DollarSign,
-} from "lucide-react";
-import { Button } from "@/app/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+  IndianRupee,
+  Smartphone,
+  Loader2,
+} from "lucide-react"
+import { Button } from "@/app/components/ui/button"
+import { motion, AnimatePresence } from "framer-motion"
+import { useEffect, useRef, useState } from "react"
+import { useParams } from "next/navigation"
+import Link from "next/link"
 
+const API = process.env.NEXT_PUBLIC_API_BASE_URL!
+const getToken = () => localStorage.getItem("accessToken") || localStorage.getItem("token") || ""
 
+/* ─── OTP length is 4 digits — matches what payment controller generates ─── */
+const OTP_LEN = 4
 
-export default function ServiceCompletionReportPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const routeParams = useParams();
-  const jobId = routeParams?.id as string;
-  // -------- FORM DATA ----------
-  const [issueDescription, setIssueDescription] = useState("");
-  const [fixApplied, setFixApplied] = useState("");
-  const [additionalNotes, setAdditionalNotes] = useState("");
+export default function ServiceCompletionReportPage() {
+  const routeParams = useParams()
+  const jobId = routeParams?.id as string
 
-  // -------- PHOTO DATA ----------
-  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
-  const [photos, setPhotos] = useState<string[]>([]);
+  /* ── Booking data (fetched for success screen) ── */
+  const [booking, setBooking] = useState<any>(null)
 
-  // -------- LOADING ----------
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  /* ── Report fields ── */
+  const [issueDescription, setIssueDescription] = useState("")
+  const [fixApplied, setFixApplied] = useState("")
+  const [additionalNotes, setAdditionalNotes] = useState("")
+  const [photoFiles, setPhotoFiles] = useState<File[]>([])
+  const [photos, setPhotos] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [currentStep, setCurrentStep] = useState<
-    "report" | "otp" | "completed"
-  >("report");
-  const [otpValues, setOtpValues] = useState<string[]>([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isResending, setIsResending] = useState(false);
+  /* ── OTP ── */
+  const [currentStep, setCurrentStep] = useState<"report" | "otp" | "completed">("report")
+  const [otpValues, setOtpValues] = useState<string[]>(Array(OTP_LEN).fill(""))
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [otpError, setOtpError] = useState("")
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
+  /* ── Fetch booking for success screen ── */
+  useEffect(() => {
+    if (!jobId) return
+    fetch(`${API}/bookings/techjobs/${jobId}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then(r => r.json())
+      .then(d => { if (d.success) setBooking(d.booking) })
+      .catch(console.error)
+  }, [jobId])
+
+  /* ── OTP input handlers ── */
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtpValues = [...otpValues];
-    newOtpValues[index] = value;
-    setOtpValues(newOtpValues);
-
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-${index + 1}`);
-      nextInput?.focus();
+    if (!/^\d*$/.test(value) || value.length > 1) return
+    const next = [...otpValues]
+    next[index] = value
+    setOtpValues(next)
+    setOtpError("")
+    if (value && index < OTP_LEN - 1) {
+      inputRefs.current[index + 1]?.focus()
     }
-  };
+  }
 
+  const handleOtpKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LEN)
+    if (!text) return
+    const next = Array(OTP_LEN).fill("")
+    text.split("").forEach((ch, i) => { next[i] = ch })
+    setOtpValues(next)
+    setOtpError("")
+    // Focus last filled or next empty
+    const lastIdx = Math.min(text.length, OTP_LEN - 1)
+    inputRefs.current[lastIdx]?.focus()
+  }
+
+  const clearOtp = () => {
+    setOtpValues(Array(OTP_LEN).fill(""))
+    setOtpError("")
+    inputRefs.current[0]?.focus()
+  }
+
+  /* ── Verify OTP ── */
   const handleVerifyOtp = async () => {
-    const otpCode = otpValues.join("");
-    if (otpCode.length !== 6) return;
+    const otp = otpValues.join("")
+    if (otp.length !== OTP_LEN) return
+
+    setIsVerifying(true)
+    setOtpError("")
 
     try {
-      setIsVerifying(true);
+      const res = await fetch(`${API}/tech-jobs/${jobId}/verify-otp`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ otp }),
+      })
+      const data = await res.json()
 
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/tech-jobs/${jobId}/verify-otp`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            otp: otpCode, // later real SMS validation
-          }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!data.success) {
-        alert("OTP verification failed");
-        setIsVerifying(false);
-        return;
+      if (!res.ok || !data.success) {
+        setOtpError(data.message || "Incorrect OTP. Please try again.")
+        // Shake + clear
+        clearOtp()
+        return
       }
 
-      // SUCCESS → close job
-      setCurrentStep("completed");
-
-    } catch (err) {
-      console.error(err);
-      alert("Server error");
+      setCurrentStep("completed")
+    } catch {
+      setOtpError("Network error. Please try again.")
     } finally {
-      setIsVerifying(false);
+      setIsVerifying(false)
     }
-  };
+  }
 
-
-  const handleResendCode = async () => {
-    setIsResending(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsResending(false);
-    setOtpValues(["", "", "", "", "", ""]);
-    const firstInput = document.getElementById("otp-0");
-    firstInput?.focus();
-  };
-
+  /* ── Submit service report ── */
   const submitServiceReport = async () => {
-    if (!issueDescription || !fixApplied) {
-      alert("Please fill Issue & Fix fields");
-      return;
+    if (!issueDescription.trim() || !fixApplied.trim()) {
+      alert("Please fill in the Issue Description and Fix Applied fields.")
+      return
     }
 
     try {
-      setIsSubmitting(true);
+      setIsSubmitting(true)
 
-      const formData = new FormData();
-      formData.append("job_id", jobId);
-      formData.append("issue_description", issueDescription);
-      formData.append("fix_applied", fixApplied);
-      formData.append("additional_notes", additionalNotes);
+      const formData = new FormData()
+      formData.append("job_id", jobId)
+      formData.append("issue_description", issueDescription)
+      formData.append("fix_applied", fixApplied)
+      formData.append("additional_notes", additionalNotes)
+      photoFiles.forEach(f => formData.append("photos", f))
 
-      photoFiles.forEach((file) => formData.append("photos", file));
+      const res = await fetch(`${API}/service-report/create`, {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error()
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/service-report/create`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await res.json();
-
-      if (!data.success) throw new Error();
-
-      // ONLY NOW OPEN OTP SCREEN
-      setCurrentStep("otp");
-    } catch (err) {
-      alert("Report submission failed");
+      setCurrentStep("otp")
+      // Auto-focus first OTP box
+      setTimeout(() => inputRefs.current[0]?.focus(), 400)
+    } catch {
+      alert("Report submission failed. Please try again.")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
+  const otpFilled = otpValues.join("").length === OTP_LEN
 
+  /* ════════════════════════════════════════════════════════
+     RENDER
+  ════════════════════════════════════════════════════════ */
   return (
-    <div className=" bg-slate-50/50 ">
-      <main className="max-w-4xl mx-auto p-8 space-y-8">
+    <div className="bg-slate-50/50 min-h-screen">
+      <main className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">
         <AnimatePresence mode="wait">
+
+          {/* ─────────────── STEP 1 — REPORT ─────────────── */}
           {currentStep === "report" && (
             <motion.div
               key="report"
@@ -179,151 +189,124 @@ export default function ServiceCompletionReportPage({
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="space-y-6">
-                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <span>Dashboard</span>
-                  <ChevronRight className="w-3 h-3 opacity-30" />
-                  <span>Active Jobs</span>
-                  <ChevronRight className="w-3 h-3 opacity-30" />
-                  <span className="text-slate-900">Job #{params.id}-AC</span>
-                </div>
+              {/* Breadcrumb */}
+              <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">
+                <span>Dashboard</span>
+                <ChevronRight className="w-3 h-3 opacity-30" />
+                <span>Active Jobs</span>
+                <ChevronRight className="w-3 h-3 opacity-30" />
+                <span className="text-slate-900">Job #{jobId?.slice(0, 6)?.toUpperCase()} · Report</span>
+              </div>
 
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                  <div className="space-y-2">
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-                      Service Completion Report
-                    </h1>
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-cyan-50 rounded flex items-center justify-center">
-                        <div className="w-2.5 h-2.5 rounded-full border-2 border-[#0891b2]" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-500 tracking-wide">
-                        Job #{params.id}-AC - AC Repair
-                      </span>
-                    </div>
-                  </div>
-                  <div className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full border border-orange-100 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">
-                      In Progress
-                    </span>
-                  </div>
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                    Service Completion Report
+                  </h1>
+                  <p className="text-slate-400 font-medium mt-1">
+                    Fill in the details, then proceed to OTP verification.
+                  </p>
+                </div>
+                <div className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full border border-orange-100 flex items-center gap-2 self-start">
+                  <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">In Progress</span>
                 </div>
               </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden mt-8"
-              >
-                <div className="px-10 py-6 border-b border-slate-50 bg-slate-50/30">
-                  <div className="flex items-center justify-between mb-3 text-[10px] font-black uppercase tracking-widest">
-                    <span className="text-blue-500">
-                      Step 3 of 4: Report Details
-                    </span>
-                    <span className="text-slate-400">Next: Verification</span>
+              <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                {/* Progress bar */}
+                <div className="px-8 py-5 border-b border-slate-50 bg-slate-50/40">
+                  <div className="flex items-center justify-between mb-2 text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-blue-500">Step 3 of 4: Report Details</span>
+                    <span className="text-slate-400">Next: OTP Verification</span>
                   </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: "0%" }}
                       animate={{ width: "75%" }}
                       transition={{ duration: 1, ease: "easeOut" }}
-                      className="h-full bg-cyan-400 rounded-full"
+                      className="h-full bg-blue-500 rounded-full"
                     />
                   </div>
                 </div>
 
-                <div className="p-10 space-y-10">
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3 text-slate-900 font-bold tracking-tight">
+                <div className="p-6 sm:p-10 space-y-8">
+                  {/* Issue */}
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-2 text-slate-900 font-bold">
                       <ClipboardList className="w-5 h-5 text-blue-500" />
-                      Issue Description
+                      Issue Description <span className="text-red-500 text-sm">*</span>
                     </label>
                     <textarea
                       value={issueDescription}
-                      onChange={(e) => setIssueDescription(e.target.value)}
+                      onChange={e => setIssueDescription(e.target.value)}
                       placeholder="Describe the diagnosed problem in detail..."
-                      className="w-full h-32 p-6 rounded-2xl bg-white border border-slate-200 focus:border-[#0891b2] focus:ring-4 focus:ring-cyan-50 transition-all outline-none text-slate-600 font-medium leading-relaxed resize-none"
+                      rows={4}
+                      className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-medium leading-relaxed resize-none transition-all"
                     />
                   </div>
 
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3 text-slate-900 font-bold tracking-tight">
+                  {/* Fix */}
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-2 text-slate-900 font-bold">
                       <PenTool className="w-5 h-5 text-blue-500" />
-                      Fix Applied
+                      Fix Applied <span className="text-red-500 text-sm">*</span>
                     </label>
                     <textarea
                       value={fixApplied}
-                      onChange={(e) => setFixApplied(e.target.value)}
+                      onChange={e => setFixApplied(e.target.value)}
                       placeholder="List parts replaced and repairs performed..."
-                      className="w-full h-32 p-6 rounded-2xl bg-white border border-slate-200 focus:border-[#0891b2] focus:ring-4 focus:ring-cyan-50 transition-all outline-none text-slate-600 font-medium leading-relaxed resize-none"
+                      rows={4}
+                      className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-medium leading-relaxed resize-none transition-all"
                     />
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-3 text-slate-900 font-bold tracking-tight">
+                  {/* Notes */}
+                  <div className="space-y-3">
+                    <label className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 text-slate-900 font-bold">
                         <StickyNote className="w-5 h-5 text-blue-500" />
                         Additional Notes
-                      </label>
-                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                        (Optional)
                       </span>
-                    </div>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Optional</span>
+                    </label>
                     <textarea
                       value={additionalNotes}
-                      onChange={(e) => setAdditionalNotes(e.target.value)}
-                      placeholder="Any warnings, follow-up recommendations, or customer comments..."
-                      className="w-full h-24 p-6 rounded-2xl bg-white border border-slate-200 focus:border-[#0891b2] focus:ring-4 focus:ring-cyan-50 transition-all outline-none text-slate-600 font-medium leading-relaxed resize-none"
+                      onChange={e => setAdditionalNotes(e.target.value)}
+                      placeholder="Warnings, follow-up recommendations, or customer comments..."
+                      rows={3}
+                      className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-medium leading-relaxed resize-none transition-all"
                     />
                   </div>
 
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3 text-slate-900 font-bold tracking-tight">
+                  {/* Photos */}
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-2 text-slate-900 font-bold">
                       <Camera className="w-5 h-5 text-blue-500" />
                       Proof of Work
                     </label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <label className="aspect-[4/3] rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center gap-2 text-slate-300 hover:border-[#0891b2] hover:text-blue-500 transition-all bg-slate-50/50 group cursor-pointer">
-                        <Plus className="w-6 h-6 transition-transform group-hover:scale-110" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">
-                          Add Photo
-                        </span>
-
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <label className="aspect-[4/3] rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-300 hover:border-blue-400 hover:text-blue-400 transition-all cursor-pointer group">
+                        <Plus className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Add Photo</span>
                         <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => {
-                            const files = e.target.files;
-                            if (!files) return;
-
-                            const arr = Array.from(files);
-                            setPhotoFiles((prev) => [...prev, ...arr]);
-
-                            const previews = arr.map((file) => URL.createObjectURL(file));
-                            setPhotos((prev) => [...prev, ...previews]);
+                          type="file" accept="image/*" multiple className="hidden"
+                          onChange={e => {
+                            const files = Array.from(e.target.files || [])
+                            setPhotoFiles(p => [...p, ...files])
+                            setPhotos(p => [...p, ...files.map(f => URL.createObjectURL(f))])
                           }}
                         />
                       </label>
-
                       {photos.map((src, i) => (
-                        <div
-                          key={i}
-                          className="aspect-[4/3] rounded-2xl overflow-hidden relative group border border-slate-100 shadow-sm"
-                        >
-                          <img
-                            src={src || "/placeholder.svg"}
-                            alt="Proof"
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                          />
+                        <div key={i} className="aspect-[4/3] rounded-2xl overflow-hidden relative group border border-slate-100 shadow-sm">
+                          <img src={src} alt="Proof" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           <button
                             onClick={() => {
-                              setPhotos((prev) => prev.filter((_, index) => index !== i));
-                              setPhotoFiles((prev) => prev.filter((_, index) => index !== i));
+                              setPhotos(p => p.filter((_, j) => j !== i))
+                              setPhotoFiles(p => p.filter((_, j) => j !== i))
                             }}
-                            className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                            className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full shadow flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -333,34 +316,27 @@ export default function ServiceCompletionReportPage({
                   </div>
                 </div>
 
-                <div className="px-10 py-8 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between gap-4">
-                  <Button
-                    variant="outline"
-                    className="px-8 h-14 rounded-xl border-slate-200 font-bold text-slate-600 bg-white gap-2 hover:bg-slate-50 transition-all"
-                  >
-                    <Save className="w-5 h-5" />
-                    Save Draft
+                {/* Footer */}
+                <div className="px-6 sm:px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between gap-4">
+                  <Button variant="outline" className="px-6 h-12 rounded-xl border-slate-200 font-bold text-slate-600 bg-white gap-2">
+                    <Save className="w-4 h-4" /> Save Draft
                   </Button>
                   <Button
-                    // onClick={() => setCurrentStep("otp")}
                     onClick={submitServiceReport}
                     disabled={isSubmitting}
-                    className="flex-1 bg-cyan-400 hover:bg-cyan-500 text-white h-14 rounded-xl font-black text-lg gap-2 shadow-lg shadow-cyan-100 transition-all active:scale-[0.98] hover:shadow-xl hover:shadow-cyan-200"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-xl font-bold text-base gap-2 shadow-lg transition-all active:scale-[0.98]"
                   >
-                    {isSubmitting ? "Submitting..." : "Proceed to OTP Verification"}
-                    <ChevronRight className="w-5 h-5" />
+                    {isSubmitting
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
+                      : <>Proceed to OTP Verification <ChevronRight className="w-4 h-4" /></>
+                    }
                   </Button>
                 </div>
-              </motion.div>
-
-              <footer className="text-center py-4 mt-8">
-                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">
-                  © 2026 Metro Cool Services. Job ID: {params.id}-AC
-                </p>
-              </footer>
+              </div>
             </motion.div>
           )}
 
+          {/* ─────────────── STEP 2 — OTP ─────────────── */}
           {currentStep === "otp" && (
             <motion.div
               key="otp"
@@ -368,181 +344,134 @@ export default function ServiceCompletionReportPage({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3 }}
-              className="min-h-[80vh] flex items-center justify-center p-4"
+              className="min-h-[80vh] flex items-center justify-center py-8"
             >
-              <div className="w-full max-w-lg">
+              <div className="w-full max-w-md">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+                  className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
                 >
-                  {/* Header section with gradient background */}
-                  <div className="pt-12 pb-8 px-8 bg-gradient-to-br from-cyan-50 via-white to-cyan-50/30 relative overflow-hidden">
-                    {/* Decorative circles */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-100/30 rounded-full blur-3xl" />
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-cyan-100/20 rounded-full blur-2xl" />
+                  {/* Header */}
+                  <div className="pt-10 pb-8 px-8 bg-gradient-to-br from-blue-50 via-white to-blue-50/20 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/30 rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-100/20 rounded-full blur-2xl" />
 
-                    <div className="flex justify-center mb-6 relative">
-                      <motion.div
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{
-                          delay: 0.2,
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 15,
-                        }}
-                        className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-50 flex items-center justify-center shadow-lg shadow-cyan-100/50"
-                      >
-                        <Lock className="w-9 h-9 text-cyan-500" />
-                      </motion.div>
-                    </div>
+                    <motion.div
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                      className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 relative"
+                    >
+                      <ShieldCheck className="w-8 h-8 text-white" />
+                    </motion.div>
 
-                    <motion.h2
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="text-3xl font-black text-slate-900 text-center mb-3 text-balance"
-                    >
-                      Verify Customer OTP
-                    </motion.h2>
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                      className="text-slate-500 text-center leading-relaxed px-4 text-balance"
-                    >
-                      Ask the customer for the 6-digit verification code sent to
-                      their mobile ending in{" "}
-                      <span className="font-bold text-slate-900">**89</span>.
-                    </motion.p>
+                    <h2 className="text-2xl font-black text-slate-900 text-center mb-2">
+                      Enter Customer OTP
+                    </h2>
+                    <p className="text-slate-500 text-center text-sm leading-relaxed">
+                      Ask the customer for the <span className="font-bold text-slate-700">4-digit code</span> shown
+                      on their payment completion screen.
+                    </p>
                   </div>
 
-                  {/* OTP Input Section */}
-                  <div className="px-8 py-10">
-                    <div className="flex justify-center gap-3 mb-8">
+                  {/* How it works pill */}
+                  <div className="mx-8 mt-6 flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3">
+                    <Smartphone className="w-5 h-5 text-blue-500 shrink-0" />
+                    <p className="text-xs text-blue-700 font-medium">
+                      The customer sees this code on their screen after payment — just ask them to read it out to you.
+                    </p>
+                  </div>
+
+                  {/* OTP input */}
+                  <div className="px-8 pt-6 pb-4">
+                    <div className="flex justify-center gap-3 mb-2">
                       {otpValues.map((value, index) => (
                         <motion.input
                           key={index}
-                          initial={{ opacity: 0, y: 20 }}
+                          ref={el => { inputRefs.current[index] = el }}
+                          initial={{ opacity: 0, y: 16 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.5 + index * 0.05 }}
+                          transition={{ delay: 0.15 + index * 0.06 }}
                           id={`otp-${index}`}
                           type="text"
                           inputMode="numeric"
                           maxLength={1}
                           value={value}
-                          onChange={(e) =>
-                            handleOtpChange(index, e.target.value)
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Backspace" && !value && index > 0) {
-                              const prevInput = document.getElementById(
-                                `otp-${index - 1}`,
-                              );
-                              prevInput?.focus();
+                          onChange={e => handleOtpChange(index, e.target.value)}
+                          onKeyDown={e => handleOtpKeyDown(e, index)}
+                          onPaste={handleOtpPaste}
+                          className={`w-16 h-16 text-center text-3xl font-black rounded-2xl border-2 outline-none transition-all
+                            ${otpError
+                              ? "border-red-400 bg-red-50 text-red-600 shake"
+                              : value
+                              ? "border-blue-500 bg-blue-50 text-blue-700 shadow-md shadow-blue-100"
+                              : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
                             }
-                          }}
-                          className="w-12 h-14 text-center text-2xl font-bold text-slate-900 border-2 border-slate-200 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none transition-all hover:border-cyan-300 bg-white shadow-sm"
+                            focus:border-blue-500 focus:ring-4 focus:ring-blue-50
+                          `}
                         />
                       ))}
                     </div>
 
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.8 }}
-                    >
-                      <Button
-                        onClick={handleVerifyOtp}
-                        disabled={
-                          otpValues.join("").length !== 6 || isVerifying
-                        }
-                        className="w-full h-14 bg-cyan-400 hover:bg-cyan-500 text-white rounded-xl font-black text-base gap-2 shadow-lg shadow-cyan-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:shadow-cyan-200 active:scale-[0.98]"
-                      >
-                        {isVerifying ? (
-                          <>
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1,
-                                repeat: Number.POSITIVE_INFINITY,
-                                ease: "linear",
-                              }}
-                            >
-                              <RotateCcw className="w-5 h-5" />
-                            </motion.div>
-                            Verifying...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="w-5 h-5" />
-                            Verify & Close Job
-                          </>
-                        )}
-                      </Button>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.9 }}
-                      className="flex items-center justify-center gap-2 mt-6 text-sm"
-                    >
-                      <span className="text-slate-500">
-                        Didn't receive code?
-                      </span>
-                      <button
-                        onClick={handleResendCode}
-                        disabled={isResending}
-                        className="text-cyan-500 font-bold hover:text-cyan-600 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed hover:underline"
-                      >
-                        {isResending ? (
-                          <>
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1,
-                                repeat: Number.POSITIVE_INFINITY,
-                                ease: "linear",
-                              }}
-                            >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                            </motion.div>
-                            Sending...
-                          </>
-                        ) : (
-                          <>
-                            Resend Code
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          </>
-                        )}
-                      </button>
-                    </motion.div>
+                    {/* Error message */}
+                    <AnimatePresence>
+                      {otpError && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="flex items-center gap-2 text-red-600 text-sm font-medium mt-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3"
+                        >
+                          <AlertCircle className="w-4 h-4 shrink-0" />
+                          {otpError}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
-                  {/* Info section */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1 }}
-                    className="px-8 pb-8"
-                  >
+                  {/* Verify button */}
+                  <div className="px-8 pb-4">
+                    <Button
+                      onClick={handleVerifyOtp}
+                      disabled={!otpFilled || isVerifying}
+                      className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-base gap-2 shadow-lg shadow-blue-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                    >
+                      {isVerifying
+                        ? <><Loader2 className="w-5 h-5 animate-spin" /> Verifying…</>
+                        : <><Check className="w-5 h-5" /> Verify & Close Job</>
+                      }
+                    </Button>
+                  </div>
+
+                  {/* Clear link */}
+                  {otpValues.some(v => v !== "") && !isVerifying && (
+                    <div className="pb-4 text-center">
+                      <button
+                        onClick={clearOtp}
+                        className="text-slate-400 text-sm hover:text-slate-600 font-medium flex items-center gap-1.5 mx-auto transition-colors"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" /> Clear
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Info note */}
+                  <div className="px-8 pb-8">
                     <div className="bg-slate-50 rounded-2xl p-4 flex gap-3 border border-slate-100">
-                      <AlertCircle className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-slate-500 leading-relaxed text-balance">
-                        By verifying this OTP, you confirm that the job has been
-                        completed to the customer's satisfaction and all safety
-                        protocols were followed. This action cannot be undone.
+                      <AlertCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        By verifying this OTP, you confirm the job is done to the customer's satisfaction.
+                        This action cannot be undone.
                       </p>
                     </div>
-                  </motion.div>
+                  </div>
                 </motion.div>
               </div>
             </motion.div>
           )}
 
+          {/* ─────────────── STEP 3 — SUCCESS ─────────────── */}
           {currentStep === "completed" && (
             <motion.div
               key="completed"
@@ -550,55 +479,41 @@ export default function ServiceCompletionReportPage({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3 }}
-              className="min-h-[80vh] flex items-center justify-center p-4"
+              className="min-h-[80vh] flex items-center justify-center py-8"
             >
-              <div className="w-full max-w-lg">
+              <div className="w-full max-w-md">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+                  className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
                 >
                   {/* Success header */}
-                  <div className="pt-12 pb-8 px-8 bg-gradient-to-br from-cyan-50 via-white to-cyan-50/30 relative overflow-hidden">
-                    {/* Decorative circles */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-100/30 rounded-full blur-3xl" />
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-cyan-100/20 rounded-full blur-2xl" />
+                  <div className="pt-10 pb-8 px-8 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/20 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/30 rounded-full blur-3xl" />
 
-                    <div className="flex justify-center mb-6 relative">
+                    <div className="flex justify-center mb-5 relative">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        transition={{
-                          delay: 0.2,
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 12,
-                        }}
-                        className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-50 flex items-center justify-center shadow-lg shadow-cyan-100/50 relative"
+                        transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 }}
+                        className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-200 relative"
                       >
-                        {/* Success ripple effect */}
-                        <motion.div
-                          initial={{ scale: 1, opacity: 0.5 }}
-                          animate={{ scale: 1.5, opacity: 0 }}
-                          transition={{
-                            duration: 1.5,
-                            repeat: Number.POSITIVE_INFINITY,
-                            ease: "easeOut",
-                          }}
-                          className="absolute inset-0 rounded-full bg-cyan-400"
-                        />
+                        {/* Ripple */}
+                        {[1, 1.4, 1.8].map((scale, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ scale: 1, opacity: 0.4 }}
+                            animate={{ scale, opacity: 0 }}
+                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut", delay: i * 0.4 }}
+                            className="absolute inset-0 rounded-full bg-emerald-400"
+                          />
+                        ))}
                         <motion.div
                           initial={{ scale: 0, rotate: -90 }}
                           animate={{ scale: 1, rotate: 0 }}
-                          transition={{
-                            delay: 0.4,
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 15,
-                          }}
+                          transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.3 }}
                         >
-                          <Check className="w-10 h-10 text-cyan-500 stroke-[3]" />
+                          <Check className="w-10 h-10 text-white stroke-[3]" />
                         </motion.div>
                       </motion.div>
                     </div>
@@ -606,130 +521,92 @@ export default function ServiceCompletionReportPage({
                     <motion.h2
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="text-3xl font-black text-slate-900 text-center mb-3 text-balance"
+                      transition={{ delay: 0.4 }}
+                      className="text-2xl font-black text-slate-900 text-center mb-2"
                     >
-                      Job Completed Successfully
+                      Job Closed Successfully!
                     </motion.h2>
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: 0.6 }}
-                      className="text-slate-500 text-center text-balance"
+                      transition={{ delay: 0.5 }}
+                      className="text-slate-500 text-center text-sm"
                     >
-                      Job ID{" "}
-                      <span className="font-bold text-slate-900">
-                        #{params.id}829
-                      </span>{" "}
-                      has been closed and synced.
+                      Job <span className="font-bold text-slate-800">#{jobId?.slice(0, 8).toUpperCase()}</span> has been
+                      verified and closed.
                     </motion.p>
                   </div>
 
-                  {/* Job details */}
-                  <div className="px-8 py-8 space-y-0">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.7 }}
-                      className="flex items-center justify-between py-5 border-b border-slate-100 hover:bg-slate-50/50 transition-colors rounded-lg px-3 -mx-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                          <Briefcase className="w-5 h-5 text-slate-400" />
+                  {/* Job summary — real data */}
+                  <div className="px-8 py-6 space-y-0 divide-y divide-slate-50">
+                    {[
+                      {
+                        icon: Briefcase,
+                        label: "Service",
+                        value: (booking?.services as any)?.title || booking?.service?.title || "AC Service",
+                        delay: 0.6,
+                      },
+                      {
+                        icon: User,
+                        label: "Customer",
+                        value: booking?.user?.full_name || "—",
+                        delay: 0.7,
+                      },
+                      {
+                        icon: IndianRupee,
+                        label: "Job Amount",
+                        value: booking?.total_amount
+                          ? `Rs. ${Number(booking.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                          : "—",
+                        delay: 0.8,
+                        highlight: true,
+                      },
+                    ].map(({ icon: Icon, label, value, delay, highlight }) => (
+                      <motion.div
+                        key={label}
+                        initial={{ opacity: 0, x: -16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay }}
+                        className="flex items-center justify-between py-4 hover:bg-slate-50/60 rounded-xl px-2 -mx-2 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center">
+                            <Icon className="w-4 h-4 text-slate-400" />
+                          </div>
+                          <span className="text-slate-600 font-medium text-sm">{label}</span>
                         </div>
-                        <span className="text-slate-600 font-medium">
-                          Service Type
+                        <span className={`font-bold text-sm ${highlight ? "text-emerald-600 text-base" : "text-slate-900"}`}>
+                          {value}
                         </span>
-                      </div>
-                      <span className="font-bold text-slate-900">
-                        Emergency Plumbing
-                      </span>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.8 }}
-                      className="flex items-center justify-between py-5 border-b border-slate-100 hover:bg-slate-50/50 transition-colors rounded-lg px-3 -mx-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                          <User className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <span className="text-slate-600 font-medium">
-                          Customer
-                        </span>
-                      </div>
-                      <span className="font-bold text-slate-900">
-                        Westside Apartments
-                      </span>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.9 }}
-                      className="flex items-center justify-between py-5 hover:bg-slate-50/50 transition-colors rounded-lg px-3 -mx-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                          <DollarSign className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <span className="text-slate-600 font-medium">
-                          Total Earnings
-                        </span>
-                      </div>
-                      <span className="font-bold text-cyan-500 text-xl">
-                        $245.00
-                      </span>
-                    </motion.div>
+                      </motion.div>
+                    ))}
                   </div>
 
-                  {/* Action buttons */}
+                  {/* Actions */}
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1 }}
+                    transition={{ delay: 0.9 }}
                     className="px-8 pb-8 space-y-3"
                   >
                     <Link href="/technician/jobs">
-                      <Button
-                        variant="outline"
-                        className="w-full h-14 cursor-pointer border-slate-200 rounded-xl font-bold text-slate-600 bg-white gap-2 hover:bg-slate-50 transition-all"
-                      >
-                        <LayoutDashboard className="w-5 h-5" />
-                        Go to Dashboard
+                      <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold gap-2 transition-all">
+                        <LayoutDashboard className="w-4 h-4" /> Back to Jobs
                       </Button>
                     </Link>
                     <Link href="/technician/jobs?tab=completed">
-                      <Button
-                        variant="outline"
-                        className="w-full h-14 cursor-pointer border-slate-200 rounded-xl font-bold text-slate-600 bg-white gap-2 hover:bg-slate-50 transition-all"
-                      >
-                        <RotateCcw className="w-5 h-5" />
-                        View Completed Jobs
+                      <Button variant="outline" className="w-full h-12 rounded-2xl font-bold text-slate-600 border-slate-200 gap-2 hover:bg-slate-50 transition-all">
+                        <RotateCcw className="w-4 h-4" /> View Completed Jobs
                       </Button>
                     </Link>
-                  </motion.div>
-
-                  {/* Report issue link */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.1 }}
-                    className="pb-8 text-center"
-                  >
-                    <button className="text-slate-400 text-sm hover:text-slate-600 transition-colors flex items-center gap-2 mx-auto group">
-                      <AlertCircle className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                      Report an issue with this job
-                    </button>
                   </motion.div>
                 </motion.div>
               </div>
             </motion.div>
           )}
+
         </AnimatePresence>
       </main>
     </div>
-  );
+  )
 }

@@ -2,6 +2,7 @@
 
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import authRoutes from "./routes/auth.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import swaggerUi from "swagger-ui-express";
@@ -29,7 +30,10 @@ import ordersRoutes from "./routes/orders.routes.js";
 
 
 const app = express();
-// app.use("/api/payments/webhook", express.raw({ type: "*/*" }))
+
+/* ── Gzip compression — reduces response sizes by ~70% ── */
+app.use(compression())
+
 app.use(cookieParser())
 
 /* ---------------------------------------------

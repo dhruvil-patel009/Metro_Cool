@@ -1,5 +1,5 @@
-import express from "express";
-import { protect } from "../middlewares/auth.middleware.js";
+import express from "express"
+import { protect } from "../middlewares/auth.middleware.js"
 import {
   acceptJob,
   onTheWay,
@@ -7,20 +7,19 @@ import {
   submitReport,
   completeJob,
   verifyOtpAndCloseJob,
-} from "../controllers/technicianjob.controller.js";
-import { getMyJobs, getOpenJobs } from "../controllers/technicianJobsList.controller.js";
+} from "../controllers/technicianjob.controller.js"
+import { getMyJobs, getOpenJobs } from "../controllers/technicianJobsList.controller.js"
 
-const router = express.Router();
+const router = express.Router()
 
-/* JOB FLOW */
-router.patch("/:id/accept", protect, acceptJob);
-router.patch("/:id/on-the-way", protect, onTheWay);
-router.patch("/:id/start-work", protect, startWork);
-router.patch("/:id/report", protect, submitReport);
-router.patch("/:id/complete", protect, completeJob);
+router.patch("/:id/accept",     protect, acceptJob)
+router.patch("/:id/on-the-way", protect, onTheWay)
+router.patch("/:id/start-work", protect, startWork)
+router.patch("/:id/report",     protect, submitReport)
+router.patch("/:id/complete",   protect, completeJob)
+router.patch("/:id/verify-otp", protect, verifyOtpAndCloseJob)
 
-router.get("/open", protect, getOpenJobs);
-router.get("/my", protect, getMyJobs);
-router.patch("/:id/verify-otp", protect, verifyOtpAndCloseJob);
+router.get("/open", protect, getOpenJobs)
+router.get("/my",   protect, getMyJobs)
 
-export default router;
+export default router

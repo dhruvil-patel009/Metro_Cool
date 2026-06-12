@@ -122,7 +122,7 @@ export default function RootLayout({
             <SessionGuard />
             <main className="flex-1">{children}</main>
           </AuthProvider>
-          <ToastContainer position="top-center" />
+          <ToastContainer position="top-right" />
         </Providers>
       </body>
     </html>

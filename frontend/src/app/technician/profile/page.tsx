@@ -1,422 +1,322 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card } from "@/app/components/ui/card"
 import { Button } from "@/app/components/ui/button"
 import { Badge } from "@/app/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
-import { Switch } from "@/app/components/ui/switch"
 import { Input } from "@/app/components/ui/input"
-import { Textarea } from "@/app/components/ui/textarea"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/app/components/ui/dialog"
 import { Label } from "@/app/components/ui/label"
-import { MapPin, Calendar, CheckCircle2, Star, Wifi, Plus, X, Truck, BadgeCheck } from "lucide-react"
+import {
+  Dialog, DialogContent, DialogHeader,
+  DialogTitle, DialogDescription, DialogFooter,
+} from "@/app/components/ui/dialog"
+import {
+  MapPin, Calendar, CheckCircle2, BadgeCheck,
+  Phone, Mail, Loader2, AlertCircle, Edit2,
+} from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "react-toastify"
+import dayjs from "dayjs"
+
+const API      = process.env.NEXT_PUBLIC_API_BASE_URL!
+const getToken = () =>
+  typeof window === "undefined" ? "" :
+  localStorage.getItem("accessToken") || localStorage.getItem("token") || ""
+
+/* ── Fetch profile ── */
+const fetchProfile = async () => {
+  const res = await fetch(`${API}/user/me`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  })
+  if (!res.ok) throw new Error("Failed to load profile")
+  return res.json()
+}
+
+/* ── Fetch bookings for stats ── */
+const fetchBookings = async (): Promise<any[]> => {
+  const res = await fetch(`${API}/bookings`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+    cache: "no-store",
+  })
+  if (!res.ok) return []
+  const json = await res.json()
+  return Array.isArray(json.bookings) ? json.bookings : []
+}
 
 export default function ProfilePage() {
-  const [isOnline, setIsOnline] = useState(true)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isAddSkillDialogOpen, setIsAddSkillDialogOpen] = useState(false)
-  const [newSkill, setNewSkill] = useState("")
+  const qc = useQueryClient()
 
-  const [profileData, setProfileData] = useState({
-    fullName: "Alex Technician",
-    email: "alex.tech@example.com",
-    phone: "+1 (555) 123-4567",
-    zipCode: "98101",
-    address: "1234 Technology Blvd, Suite 100, Seattle, WA",
-    bio: "Specializing in commercial AC systems with over 10 years of experience. Certified for all major brands and emergency repair protocols.",
+  const { data: profile, isLoading, isError } = useQuery({
+    queryKey: ["tech-profile"],
+    queryFn:  fetchProfile,
+    staleTime: 5 * 60_000,
   })
 
-  const [skills, setSkills] = useState([
-    "AC Repair",
-    "Electrical Wiring",
-    "Preventative Maintenance",
-    "OSHA Certified",
-    "Customer Service",
-  ])
+  const { data: bookings = [] } = useQuery({
+    queryKey: ["technician-earnings"],   // shared with earnings page
+    queryFn:  fetchBookings,
+    staleTime: 60_000,
+  })
 
-  const handleSaveProfile = () => {
-    setIsEditDialogOpen(false)
-  }
+  /* ── Edit dialog ── */
+  const [editOpen,    setEditOpen]    = useState(false)
+  const [firstName,   setFirstName]   = useState("")
+  const [lastName,    setLastName]    = useState("")
+  const [phone,       setPhone]       = useState("")
 
-  const handleAddSkill = () => {
-    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      setSkills([...skills, newSkill.trim()])
-      setNewSkill("")
-      setIsAddSkillDialogOpen(false)
+  // Pre-fill when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFirstName(profile.first_name || "")
+      setLastName(profile.last_name  || "")
+      setPhone(profile.phone         || "")
     }
+  }, [profile])
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API}/me`, {
+        method: "PUT",
+        headers: {
+          Authorization:  `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ first_name: firstName, last_name: lastName, phone }),
+      })
+      if (!res.ok) throw new Error("Update failed")
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tech-profile"] })
+      setEditOpen(false)
+      toast.success("Profile updated!")
+    },
+    onError: () => toast.error("Failed to update profile"),
+  })
+
+  /* ── Stats ── */
+  const completed   = bookings.filter((b) => b.job_status === "completed").length
+  const totalEarned = bookings
+    .filter((b) => b.job_status === "completed" && b.total_amount)
+    .reduce((s, b) => s + Number(b.total_amount || 0), 0)
+  const memberSince = profile?.created_at
+    ? dayjs(profile.created_at).format("MMM YYYY")
+    : "—"
+
+  /* ── Initials ── */
+  const initials = [profile?.first_name?.[0], profile?.last_name?.[0]]
+    .filter(Boolean).join("").toUpperCase() || "T"
+
+  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Technician"
+
+  /* ── Loading / Error ── */
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-slate-400">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <p className="font-medium">Loading profile…</p>
+      </div>
+    )
   }
 
-  const handleRemoveSkill = (skillToRemove: string) => {
-    setSkills(skills.filter((skill) => skill !== skillToRemove))
+  if (isError) {
+    return (
+      <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3">
+        <AlertCircle className="w-8 h-8 text-red-400" />
+        <p className="font-semibold text-red-500">Failed to load profile</p>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl">
-        {/* Header */}
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
-          <p className="text-slate-600 mt-1">Manage your personal information, skills, and availability status.</p>
+    <div className="max-w-7xl space-y-6">
+
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
+        <p className="text-slate-500 mt-1">Manage your personal information and view your stats.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* ── Left: main info ── */}
+        <div className="lg:col-span-2 space-y-6">
+
+          {/* Profile header card */}
+          <Card className="p-6 border border-slate-200 shadow-sm">
+            <div className="flex items-start gap-5">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                <Avatar className="w-20 h-20 border-4 border-white shadow-lg ring-2 ring-slate-100">
+                  <AvatarImage
+                    src={profile?.profile_photo || ""}
+                    alt={fullName}
+                  />
+                  <AvatarFallback className="text-xl font-black bg-gradient-to-br from-blue-500 to-blue-700 text-white">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Online dot */}
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <h2 className="text-2xl font-bold text-slate-900 truncate">{fullName}</h2>
+                  <BadgeCheck className="w-5 h-5 text-blue-500 shrink-0" />
+                </div>
+                <p className="text-slate-500 font-medium text-sm mb-3">AC Service Technician</p>
+                <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                  {profile?.phone && (
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="w-4 h-4" />
+                      <span>{profile.phone}</span>
+                    </div>
+                  )}
+                  {profile?.email && (
+                    <div className="flex items-center gap-1.5">
+                      <Mail className="w-4 h-4" />
+                      <span className="truncate max-w-[200px]">{profile.email}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
+                    <span>Since {memberSince}</span>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => setEditOpen(true)}
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50 bg-transparent"
+              >
+                <Edit2 className="w-3.5 h-3.5" /> Edit
+              </Button>
+            </div>
+          </Card>
+
+          {/* Personal info card */}
+          <Card className="p-6 border border-slate-200 shadow-sm">
+            <h3 className="font-bold text-slate-900 mb-5">Personal Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {[
+                { label: "First Name",  value: profile?.first_name },
+                { label: "Last Name",   value: profile?.last_name },
+                { label: "Phone",       value: profile?.phone },
+                { label: "Email",       value: profile?.email },
+                { label: "Role",        value: profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : "—" },
+                { label: "Member Since",value: memberSince },
+              ].map(({ label, value }) => (
+                <div key={label} className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-wide">{label}</Label>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-800 font-medium text-sm min-h-[40px]">
+                    {value || <span className="text-slate-300">—</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Profile Info */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Profile Header Card */}
-            <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 animate-slide-up">
-              <div className="flex items-start gap-6">
-                <div className="relative group">
-                  <Avatar className="w-24 h-24 border-4 border-white shadow-lg ring-2 ring-slate-100 transition-transform duration-300 group-hover:scale-105">
-                    <AvatarImage src="https://github.com/shadcn.png" alt="Alex Technician" />
-                    <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
-                      AT
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-500 rounded-full border-4 border-white shadow-md animate-pulse" />
-                </div>
+        {/* ── Right: stats ── */}
+        <div className="space-y-5">
 
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h2 className="text-2xl font-bold text-slate-900">Alex Technician</h2>
-                    <BadgeCheck className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <p className="text-slate-600 font-medium mb-3">Senior AC Specialist</p>
-                  <div className="flex items-center gap-4 text-sm text-slate-500">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4" />
-                      <span>Seattle, WA</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4" />
-                      <span>Member since 2021</span>
-                    </div>
-                  </div>
-                </div>
+          {/* Jobs completed */}
+          <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 bg-emerald-50 rounded-xl">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               </div>
-            </Card>
+              <span className="text-sm font-medium text-slate-500">Jobs Completed</span>
+            </div>
+            <p className="text-3xl font-black text-slate-900">{completed}</p>
+            <p className="text-xs text-slate-400 mt-1">all time</p>
+          </Card>
 
-            {/* Personal Information */}
-            <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 animate-slide-up delay-100">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-slate-900">Personal Information</h3>
-                <Button
-                  onClick={() => setIsEditDialogOpen(true)}
-                  variant="ghost"
-                  size="sm"
-                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200"
-                >
-                  Edit Details
-                </Button>
+          {/* Total earned */}
+          <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 bg-blue-50 rounded-xl">
+                <span className="text-lg font-black text-blue-600">₹</span>
               </div>
+              <span className="text-sm font-medium text-slate-500">Total Earned</span>
+            </div>
+            <p className="text-3xl font-black text-slate-900">
+              ₹{totalEarned.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">from {completed} completed jobs</p>
+          </Card>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700">Full Name</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-900">
-                    {profileData.fullName}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700">Email Address</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-900">
-                    {profileData.email}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700">Phone Number</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-900">
-                    {profileData.phone}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700">Zip Code</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-900">
-                    {profileData.zipCode}
-                  </div>
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="text-sm font-medium text-slate-700">Address</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-900">
-                    {profileData.address}
-                  </div>
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="text-sm font-medium text-slate-700">Bio</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-900 min-h-[80px]">
-                    {profileData.bio}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Right Column - Stats & Settings */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Jobs Completed */}
-            <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-slide-up delay-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2.5 bg-blue-50 rounded-lg">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                </div>
-                <span className="text-sm font-medium text-slate-600">Jobs Completed</span>
-              </div>
-              <div className="text-3xl font-bold text-slate-900">1,248</div>
-            </Card>
-
-            {/* Rating */}
-            <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-slide-up delay-250">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2.5 bg-amber-50 rounded-lg">
-                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-                </div>
-                <span className="text-sm font-medium text-slate-600">Rating</span>
-              </div>
-              <div className="text-3xl font-bold text-slate-900">4.9/5.0</div>
-            </Card>
-
-            {/* Availability Status */}
-            <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 animate-slide-up delay-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-slate-900">Availability Status</h3>
-                <Switch checked={isOnline} onCheckedChange={setIsOnline} className="data-[state=checked]:bg-blue-600" />
-              </div>
-              <p className="text-sm text-slate-600 mb-4">Go online to receive jobs.</p>
-
-              {isOnline && (
-                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg animate-fade-in">
-                  <Wifi className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-700">You are currently Online</span>
-                </div>
-              )}
-            </Card>
-
-            {/* Skills & Certs */}
-            <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 animate-slide-up delay-350">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-slate-900">Skills & Certs</h3>
-                <Button
-                  onClick={() => setIsAddSkillDialogOpen(true)}
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-200"
-                >
-                  <Plus className="w-5 h-5" />
-                </Button>
-              </div>
+          {/* Services badge */}
+          {profile?.services && Array.isArray(profile.services) && profile.services.length > 0 && (
+            <Card className="p-6 border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-900 mb-4">Service Categories</h3>
               <div className="flex flex-wrap gap-2">
-                {skills.map((skill, index) => (
-                  <Badge
-                    key={skill}
-                    variant="secondary"
-                    className="px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-all duration-200 group animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    {skill}
-                    <button
-                      onClick={() => handleRemoveSkill(skill)}
-                      className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                {profile.services.map((s: string, i: number) => (
+                  <Badge key={i} className="bg-blue-50 text-blue-700 border-blue-200 font-semibold px-3 py-1.5">
+                    {s}
                   </Badge>
                 ))}
               </div>
             </Card>
+          )}
 
-            {/* Vehicle Information */}
-            <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 animate-slide-up delay-400">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Vehicle Information</h3>
-              <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
-                <div className="p-3 bg-white rounded-lg shadow-sm">
-                  <Truck className="w-6 h-6 text-slate-600" />
+          {/* Experience */}
+          {profile?.experience_years && (
+            <Card className="p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-amber-50 rounded-xl">
+                  <MapPin className="w-5 h-5 text-amber-600" />
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-slate-900 mb-1">Ford Transit Connect</h4>
-                  <p className="text-sm text-slate-600 mb-2">White • 2022 Model</p>
-                  <div className="inline-flex items-center px-3 py-1 bg-slate-200 rounded-md">
-                    <span className="text-xs font-mono font-semibold text-slate-700">WA-882-KL</span>
-                  </div>
-                </div>
+                <span className="text-sm font-medium text-slate-500">Experience</span>
               </div>
+              <p className="text-3xl font-black text-slate-900">{profile.experience_years}+</p>
+              <p className="text-xs text-slate-400 mt-1">years of experience</p>
             </Card>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Edit Profile Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+      {/* ── Edit dialog ── */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Profile Details</DialogTitle>
+            <DialogTitle>Edit Profile</DialogTitle>
             <DialogDescription>Update your personal information below.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  value={profileData.fullName}
-                  onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
-                />
+                <Label>First Name</Label>
+                <Input value={firstName} onChange={e => setFirstName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profileData.email}
-                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={profileData.phone}
-                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">Zip Code</Label>
-                <Input
-                  id="zipCode"
-                  value={profileData.zipCode}
-                  onChange={(e) => setProfileData({ ...profileData, zipCode: e.target.value })}
-                />
+                <Label>Last Name</Label>
+                <Input value={lastName} onChange={e => setLastName(e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                value={profileData.address}
-                onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                rows={4}
-                value={profileData.bio}
-                onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-              />
+              <Label>Phone</Label>
+              <Input value={phone} onChange={e => setPhone(e.target.value)} inputMode="numeric" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveProfile} className="bg-blue-600 hover:bg-blue-700">
-              Save Changes
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => updateMutation.mutate()}
+              disabled={updateMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {updateMutation.isPending
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving…</>
+                : "Save Changes"
+              }
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Add Skill Dialog */}
-      <Dialog open={isAddSkillDialogOpen} onOpenChange={setIsAddSkillDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add New Skill</DialogTitle>
-            <DialogDescription>Enter a new skill or certification to add to your profile.</DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="space-y-2">
-              <Label htmlFor="newSkill">Skill Name</Label>
-              <Input
-                id="newSkill"
-                placeholder="e.g., Fire Safety Training"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddSkillDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddSkill} className="bg-blue-600 hover:bg-blue-700">
-              Add Skill
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.4s ease-out forwards;
-          opacity: 0;
-        }
-
-        .animate-slide-up {
-          animation: slide-up 0.5s ease-out forwards;
-          opacity: 0;
-        }
-
-        .delay-100 {
-          animation-delay: 100ms;
-        }
-
-        .delay-200 {
-          animation-delay: 200ms;
-        }
-
-        .delay-250 {
-          animation-delay: 250ms;
-        }
-
-        .delay-300 {
-          animation-delay: 300ms;
-        }
-
-        .delay-350 {
-          animation-delay: 350ms;
-        }
-
-        .delay-400 {
-          animation-delay: 400ms;
-        }
-      `}</style>
     </div>
   )
 }

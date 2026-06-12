@@ -30,6 +30,8 @@ export interface Job {
 /* ----------- COMPONENT ----------- */
 
 export function JobCard({ job }: { job: Job }) {
+  // API returns job_status; normalise to status for display
+  const status = (job as any).job_status || job.status || "open"
 
   // 🧠 Convert address safely (handles object OR string OR null)
   let addressObj: Address | null = null;
@@ -51,11 +53,22 @@ export function JobCard({ job }: { job: Job }) {
 
   /* status color */
   const statusStyles: Record<string, string> = {
-    assigned: "bg-amber-50 text-amber-700 border-amber-100",
-    on_the_way: "bg-blue-50 text-blue-700 border-blue-100",
-    working: "bg-cyan-50 text-cyan-700 border-cyan-100",
-    completed: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  };
+    open:             "bg-amber-50 text-amber-700 border-amber-100",
+    assigned:         "bg-blue-50 text-blue-700 border-blue-100",
+    on_the_way:       "bg-indigo-50 text-indigo-700 border-indigo-100",
+    working:          "bg-cyan-50 text-cyan-700 border-cyan-100",
+    report_submitted: "bg-purple-50 text-purple-700 border-purple-100",
+    completed:        "bg-emerald-50 text-emerald-700 border-emerald-100",
+  }
+
+  const statusLabel: Record<string, string> = {
+    open:             "Pending",
+    assigned:         "Assigned",
+    on_the_way:       "On the Way",
+    working:          "In Progress",
+    report_submitted: "Reported",
+    completed:        "Completed",
+  }
 
   const serviceImage =
     Array.isArray(job.services)
@@ -93,16 +106,16 @@ export function JobCard({ job }: { job: Job }) {
                 variant="outline"
                 className={cn(
                   "uppercase text-[10px] font-bold px-2 py-0.5 tracking-wider",
-                  statusStyles[job.status] || "bg-slate-100 text-slate-600"
+                  statusStyles[status] || "bg-slate-100 text-slate-600"
                 )}
               >
-                {job.status.replaceAll("_", " ")}
+                {statusLabel[status] || status.replaceAll("_", " ")}
               </Badge>
 
               <div className="flex items-center gap-1.5 text-slate-500">
                 <Clock className="w-4 h-4" />
                 <span className="text-xs font-semibold">
-                  {job.booking_date}
+                  {job.booking_date} {job.time_slot ? `• ${job.time_slot}` : ""}
                 </span>
               </div>
             </div>
