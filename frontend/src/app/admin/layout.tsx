@@ -11,7 +11,7 @@ export default function adminLayout({
 }) {
   return (
 <ProtectedRoute>
-    <div className="h-screen bg-gray-100 overflow-visible">
+    <div className="h-screen bg-gray-50/40 overflow-visible">
       <div className="flex h-full">
         {/* SIDEBAR */}
         <Sidebar />

@@ -459,7 +459,7 @@ export default function CompletionContent() {
                   <span className="font-semibold text-gray-900">{formatINR(servicePrice)}</span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-gray-50">
-                  <span className="text-gray-500 text-sm">GST / Taxes</span>
+                  <span className="text-gray-500 text-sm">GST / Taxes (18%)</span>
                   <span className="font-medium text-gray-700">{formatINR(taxAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3">

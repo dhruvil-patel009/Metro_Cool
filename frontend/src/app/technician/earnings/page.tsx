@@ -17,9 +17,9 @@ const getToken = () =>
   typeof window === "undefined" ? "" :
   localStorage.getItem("accessToken") || localStorage.getItem("token") || ""
 
-/* ── Fetch all bookings for this technician ── */
+/* ── Fetch completed jobs for this technician ── */
 const fetchBookings = async (): Promise<any[]> => {
-  const res = await fetch(`${API}/bookings`, {
+  const res = await fetch(`${API}/technician/earnings`, {
     headers: { Authorization: `Bearer ${getToken()}` },
     cache: "no-store",
   })

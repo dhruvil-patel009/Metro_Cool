@@ -337,11 +337,6 @@ export default function CheckoutPage() {
               <span>₹{total}</span>
             </div>
 
-            <div className="flex justify-between">
-              <span>GST 18%</span>
-              <span>₹{tax.toFixed(2)}</span>
-            </div>
-
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total</span>
               <span>₹{finalAmount.toFixed(2)}</span>

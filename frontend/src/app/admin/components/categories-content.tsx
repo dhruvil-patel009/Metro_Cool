@@ -1,158 +1,193 @@
-"use client";
+"use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import { Search, Plus, MoreVertical, Filter, Snowflake, Flame, Wind, Zap, Settings, ClipboardList } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import {
+  Search, Plus, MoreVertical, Filter, Loader2,
+  Briefcase, Snowflake, Flame, Wind, Zap, Settings, ClipboardList,
+} from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
 import { Switch } from "@/app/components/ui/switch"
-import Image from "next/image"
-import { AddCategoryModal } from "../components/add-categories-model"
+import { apiFetch } from "@/app/lib/api"
+import { toast } from "react-toastify"
+import { AdminPageShell, AdminLoadingState, AdminStatCard } from "./admin-page-shell"
+import { cn } from "@/app/lib/utils"
 
-
-interface Category {
+interface Service {
   id: string
-  name: string
-  description: string
-  image: string
-  icon: React.ReactNode
-  iconColor: string
-  isActive: boolean
+  title: string
+  category: string
+  image_url?: string
+  is_active: boolean
 }
 
-const categories: Category[] = [
-  {
-    id: "cat-001",
-    name: "AC Installation",
-    description:
-      "Complete installation services for residential split and central air units.",
-    image: "/ac-unit.jpg",
-    icon: <Snowflake className="w-5 h-5 text-white" />,
-    iconColor: "bg-cyan-500",
-    isActive: true,
-  },
-  {
-    id: "cat-002",
-    name: "Heating Repair",
-    description:
-      "Diagnostics and repair for furnaces, heat pumps, and boilers.",
-    image: "/old-fashioned-furnace.png",
-    icon: <Flame className="w-5 h-5 text-white" />,
-    iconColor: "bg-orange-500",
-    isActive: true,
-  },
-  {
-    id: "cat-003",
-    name: "Duct Cleaning",
-    description:
-      "Professional cleaning of air ducts to improve indoor air quality.",
-    image: "/duct.jpg",
-    icon: <Wind className="w-5 h-5 text-white" />,
-    iconColor: "bg-gray-500",
-    isActive: false,
-  },
-  {
-    id: "cat-004",
-    name: "Emergency Services",
-    description: "24/7 Rapid response for critical AC failures.",
-    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
-    icon: <Zap className="w-5 h-5 text-white" />,
-    iconColor: "bg-red-500",
-    isActive: true,
-  },
-  {
-    id: "cat-005",
-    name: "Smart Thermostats",
-    description:
-      "Installation and configuration of smart home climate control systems.",
-    image: "/smart-thermostat.png",
-    icon: <Settings className="w-5 h-5 text-white" />,
-    iconColor: "bg-purple-500",
-    isActive: true,
-  },
-  {
-    id: "cat-006",
-    name: "Maintenance Plans",
-    description: "Annual and bi-annual system checkups and filter replacements.",
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80",
-    icon: <ClipboardList className="w-5 h-5 text-white" />,
-    iconColor: "bg-blue-600",
-    isActive: true,
-  },
-];
+interface CategoryGroup {
+  name: string
+  slug: string
+  serviceCount: number
+  activeCount: number
+  isActive: boolean
+  image: string
+  services: Service[]
+}
+
+const ICON_MAP: Record<string, { icon: React.ReactNode; color: string }> = {
+  installation: { icon: <Snowflake className="w-5 h-5 text-white" />, color: "bg-cyan-500" },
+  repair: { icon: <Flame className="w-5 h-5 text-white" />, color: "bg-orange-500" },
+  cleaning: { icon: <Wind className="w-5 h-5 text-white" />, color: "bg-gray-500" },
+  emergency: { icon: <Zap className="w-5 h-5 text-white" />, color: "bg-red-500" },
+  maintenance: { icon: <ClipboardList className="w-5 h-5 text-white" />, color: "bg-blue-600" },
+  default: { icon: <Settings className="w-5 h-5 text-white" />, color: "bg-violet-500" },
+}
+
+function getCategoryStyle(name: string) {
+  const key = name.toLowerCase()
+  for (const [k, v] of Object.entries(ICON_MAP)) {
+    if (key.includes(k)) return v
+  }
+  return ICON_MAP.default
+}
+
+function slugify(name: string) {
+  return name.toLowerCase().replace(/\s+/g, "-")
+}
 
 export function CategoriesContent() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [categoryStates, setCategoryStates] = useState<Record<string, boolean>>(
-    categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.isActive }), {})
-  );
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [toggling, setToggling] = useState<string | null>(null)
 
-    const [isModalOpen, setIsModalOpen] = useState(false)
+  const fetchServices = async () => {
+    setLoading(true)
+    try {
+      const data = await apiFetch("/services/admin")
+      setServices(Array.isArray(data) ? data : [])
+    } catch {
+      toast.error("Failed to load categories")
+      setServices([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const filteredCategories = categories.filter((category) => {
-    const matchesSearch = category.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+  useEffect(() => { fetchServices() }, [])
+
+  const categories = useMemo<CategoryGroup[]>(() => {
+    const map = new Map<string, Service[]>()
+    services.forEach(s => {
+      const key = s.category?.trim() || "Uncategorized"
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(s)
+    })
+
+    return Array.from(map.entries()).map(([name, svcs]) => ({
+      name,
+      slug: slugify(name),
+      serviceCount: svcs.length,
+      activeCount: svcs.filter(s => s.is_active).length,
+      isActive: svcs.some(s => s.is_active),
+      image: svcs.find(s => s.image_url)?.image_url || "/placeholder.svg",
+      services: svcs,
+    })).sort((a, b) => a.name.localeCompare(b.name))
+  }, [services])
+
+  const filteredCategories = categories.filter(cat => {
+    const matchesSearch = cat.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "active" && categoryStates[category.id]) ||
-      (statusFilter === "inactive" && !categoryStates[category.id]);
-    return matchesSearch && matchesStatus;
-  });
+      (statusFilter === "active" && cat.isActive) ||
+      (statusFilter === "inactive" && !cat.isActive)
+    return matchesSearch && matchesStatus
+  })
 
-  const toggleCategory = (categoryId: string) => {
-    setCategoryStates((prev) => ({
-      ...prev,
-      [categoryId]: !prev[categoryId],
-    }));
-  };
+  const totalServices = services.length
+  const activeCategories = categories.filter(c => c.isActive).length
 
-  function handleAddCategory(category: { name: string; image: string; isActive: boolean }): void {
-    throw new Error("Function not implemented.")
+  const toggleCategory = async (cat: CategoryGroup, enable: boolean) => {
+    setToggling(cat.slug)
+    try {
+      await Promise.all(
+        cat.services.map(s =>
+          apiFetch(`/services/${s.id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isActive: enable }),
+          })
+        )
+      )
+      setServices(prev =>
+        prev.map(s =>
+          cat.services.some(cs => cs.id === s.id)
+            ? { ...s, is_active: enable }
+            : s
+        )
+      )
+      toast.success(`${cat.name} ${enable ? "activated" : "deactivated"}`)
+    } catch {
+      toast.error("Failed to update category")
+    } finally {
+      setToggling(null)
+    }
   }
 
   return (
-    <div className="p-6 sm:p-8 max-w-[1400px] mx-auto">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <span className="hover:text-gray-900 cursor-pointer transition-colors">Dashboard</span>
-        <span>›</span>
-        <span className="text-gray-900 font-medium">Categories</span>
-      </div>
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Categories Management</h1>
-          <p className="text-gray-500">Manage service categories for the AC platform.</p>
-        </div>
-        <Button           onClick={() => setIsModalOpen(true)}
- className="bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm transition-all hover:shadow-md shrink-0">
+    <AdminPageShell
+      title="Categories"
+      description="Service categories derived from your live service catalog."
+      action={
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => toast.info("Add a new service with a category name to create a category.")}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Category
         </Button>
+      }
+    >
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <AdminStatCard
+          label="Total Categories"
+          value={categories.length}
+          icon={<Briefcase className="w-5 h-5 text-blue-600" />}
+          iconBg="bg-blue-50"
+          loading={loading}
+        />
+        <AdminStatCard
+          label="Active Categories"
+          value={activeCategories}
+          icon={<Snowflake className="w-5 h-5 text-emerald-600" />}
+          iconBg="bg-emerald-50"
+          loading={loading}
+        />
+        <AdminStatCard
+          label="Total Services"
+          value={totalServices}
+          icon={<ClipboardList className="w-5 h-5 text-violet-600" />}
+          iconBg="bg-violet-50"
+          loading={loading}
+        />
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-8">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             placeholder="Search categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-white border-gray-200 focus:border-cyan-500 focus:ring-cyan-500 h-10 text-black"
+            className="pl-9 bg-white border-gray-200 h-10 text-gray-900"
           />
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           <Filter className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-600">Filter by:</span>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] bg-white border-gray-200 h-10 text-black">
+            <SelectTrigger className="w-[140px] bg-white border-gray-200 h-10 text-gray-900">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -164,121 +199,88 @@ export function CategoriesContent() {
         </div>
       </div>
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCategories.map((category, index) => (
-          <div
-            key={category.id}
-            className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group"
-            style={{
-              animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
-            }}
-          >
-            {/* Image */}
-            <div className="relative h-48 bg-gray-100 overflow-hidden">
-              <Image
-                src={category.image || "/placeholder.svg"}
-                alt={category.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              {/* Icon Badge */}
-              <div
-                className={`absolute bottom-3 left-3 ${category.iconColor} w-11 h-11 rounded-lg flex items-center justify-center shadow-lg`}
-              >
-                {category.icon}
-              </div>
-              {/* Menu Button */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-3 right-3 bg-white/90 hover:bg-white rounded-full w-8 h-8 shadow-sm"
-                  >
-                    <MoreVertical className="w-4 h-4 text-gray-700" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem>Edit Category</DropdownMenuItem>
-                  <DropdownMenuItem>View Services</DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-600">
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Content */}
-            <div className="p-5">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.name}</h3>
-              <p className="text-sm text-gray-500 mb-4 line-clamp-2 leading-relaxed">{category.description}</p>
-
-              {/* Status and Toggle */}
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2 h-2 rounded-md ${
-                      categoryStates[category.id]
-                        ? "bg-green-500"
-                        : "bg-gray-400"
-                    }`}
-                  />
-                  <span
-                    className={`text-sm font-medium ${
-                      categoryStates[category.id]
-                        ? "text-green-700"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {categoryStates[category.id] ? "Active" : "Inactive"}
-                  </span>
-                </div>
-                <Switch
-                  checked={categoryStates[category.id]}
-                  onCheckedChange={() => toggleCategory(category.id)}
-                    className="data-[state=checked]:bg-cyan-500     data-[state=unchecked]:bg-gray-200"
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {/* Create Category Card */}
-        <div
-                  onClick={() => setIsModalOpen(true)}
-
-          className="bg-white rounded-xl border-2 border-dashed border-gray-300 hover:border-cyan-400 hover:bg-gray-50 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center p-8 min-h-[360px]"
-          style={{
-            animation: `fadeInUp 0.5s ease-out ${filteredCategories.length * 0.1}s both`,
-          }}
-        >
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 group-hover:bg-cyan-50 transition-colors">
-            <Plus className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Create Category
-          </h3>
-          <p className="text-sm text-gray-500 text-center">
-            Add a new service category to the platform
-          </p>
+      {loading ? (
+        <AdminLoadingState label="Loading categories…" />
+      ) : filteredCategories.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
+          <p className="text-gray-600 font-medium">No categories found</p>
+          <p className="text-sm text-gray-400 mt-1">Categories appear when you add services.</p>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredCategories.map((category, index) => {
+            const style = getCategoryStyle(category.name)
+            const isToggling = toggling === category.slug
 
-      <AddCategoryModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleAddCategory} />
+            return (
+              <div
+                key={category.slug}
+                className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group"
+                style={{ animation: `fadeInUp 0.4s ease-out ${index * 0.06}s both` }}
+              >
+                <div className="relative h-44 bg-gray-100 overflow-hidden">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className={cn("absolute bottom-3 left-3 w-11 h-11 rounded-xl flex items-center justify-center shadow-lg", style.color)}>
+                    {style.icon}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-3 right-3 bg-white/90 hover:bg-white rounded-full w-8 h-8 shadow-sm"
+                      >
+                        <MoreVertical className="w-4 h-4 text-gray-700" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => toast.info(`${category.serviceCount} services in this category`)}>
+                        View Services ({category.serviceCount})
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
-      <style jsx>{`
+                <div className="p-5">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{category.name}</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    {category.activeCount} of {category.serviceCount} services active
+                  </p>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-2 h-2 rounded-full", category.isActive ? "bg-green-500" : "bg-gray-400")} />
+                      <span className={cn("text-sm font-medium", category.isActive ? "text-green-700" : "text-gray-500")}>
+                        {category.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    {isToggling ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                    ) : (
+                      <Switch
+                        checked={category.isActive}
+                        onCheckedChange={(checked) => toggleCategory(category, checked)}
+                        className="data-[state=checked]:bg-blue-600"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <style jsx global>{`
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-    </div>
-  );
+    </AdminPageShell>
+  )
 }

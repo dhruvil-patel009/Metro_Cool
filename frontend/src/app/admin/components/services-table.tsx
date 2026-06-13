@@ -186,7 +186,7 @@ export function ServicesTable({
         <div className="flex items-center justify-between pt-2">
           <div>
             <p className="font-semibold">
-              ${service.price.toFixed(2)}
+              ₹{service.price.toFixed(2)}
             </p>
             <p className="text-xs text-gray-500">
               {service.pricing_type === "fixed"
@@ -287,7 +287,7 @@ export function ServicesTable({
 
                 <td className="px-6 py-4">
                   <div className="font-semibold">
-                    ${service.price.toFixed(2)}
+                    ₹{service.price.toFixed(2)}
                   </div>
                   <div className="text-xs text-gray-500">
                     {service.pricing_type === "fixed"

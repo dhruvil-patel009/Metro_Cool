@@ -54,6 +54,59 @@ export const getWeeklyBookingStats = async (req: Request, res: Response) => {
   }
 }
 
+/* ======================================================
+   💰 GET WEEKLY REVENUE STATS (Chart data)
+   Returns per-day revenue from completed bookings
+   ====================================================== */
+
+export const getWeeklyRevenueStats = async (_req: Request, res: Response) => {
+  try {
+    res.setHeader("Cache-Control", "no-store")
+
+    const days: string[] = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      days.push(d.toLocaleDateString("en-CA"))
+    }
+
+    const from = days[0]
+    const to = days[days.length - 1]
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("booking_date, total_amount")
+      .eq("job_status", "completed")
+      .gte("booking_date", from)
+      .lte("booking_date", to)
+
+    if (error) throw error
+
+    const revenue: Record<string, number> = {}
+    days.forEach(d => { revenue[d] = 0 })
+    ;(data || []).forEach(b => {
+      const key = String(b.booking_date).slice(0, 10)
+      if (revenue[key] !== undefined) {
+        revenue[key] += Number(b.total_amount || 0)
+      }
+    })
+
+    const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    const chartData = days.map(dateStr => ({
+      date: dateStr,
+      day: DAY_NAMES[new Date(dateStr + "T00:00:00").getDay()],
+      value: revenue[dateStr],
+    }))
+
+    const total = chartData.reduce((s, d) => s + d.value, 0)
+
+    res.json({ chartData, total })
+  } catch (err) {
+    console.error("Weekly revenue stats error:", err)
+    res.status(500).json({ error: "Failed to fetch weekly revenue stats" })
+  }
+}
+
 export const getBookingStats = async (req: Request, res: Response) => {
   try {
     // 🔥 Disable caching
@@ -257,8 +310,15 @@ export const getAdminBookings = async (req: Request, res: Response) => {
       service: serviceMap.get(b.service_id) || "Service",
       date: b.booking_date,
       time: b.time_slot,
-      status: normalizeStatus(b.status),
-      payment: b.total_amount ? "Paid" : "Unpaid",
+      status:
+        b.job_status === "open" ? "Open"
+        : b.job_status === "assigned" ? "Assigned"
+        : b.job_status === "on_the_way" ? "On the Way"
+        : b.job_status === "working" ? "Working"
+        : b.job_status === "completed" ? "Completed"
+        : b.job_status === "cancelled" ? "Cancelled"
+        : "Confirmed",
+      payment: b.job_status === "completed" ? "Paid" : "Unpaid",
 
       user: {
         name:

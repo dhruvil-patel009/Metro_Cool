@@ -200,7 +200,9 @@ localStorage.setItem(
   "bookingService",
   JSON.stringify({
     ...service,
-    totalPrice: total,
+    totalPrice: total,       // GST-inclusive total
+    basePrice: subtotal,     // pre-GST base price
+    taxAmount: taxAndFees,   // GST amount (18%)
     selectedAddons
   })
 )
@@ -250,7 +252,7 @@ const handlePreviousMonth = () => {
 /* 🔵 UPDATED : use price with addons */
 const subtotal = selectedTotal || Number(service?.price || 0)
 
-const taxAndFees = 2.5
+const taxAndFees = +(subtotal * 0.18).toFixed(2)   // 18% GST
 
 const total = subtotal + taxAndFees
 
@@ -514,7 +516,7 @@ ${isBooked || isPast
                                     <span className="font-semibold">{formatINR(subtotal.toFixed(2))}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600">Tax & Fees</span>
+                                    <span className="text-gray-600">GST (18%)</span>
                                     <span className="font-semibold">{formatINR(taxAndFees.toFixed(2))}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-lg font-bold pt-3 border-t border-gray-100">

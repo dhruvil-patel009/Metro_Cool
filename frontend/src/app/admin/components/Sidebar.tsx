@@ -5,8 +5,8 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboard, Briefcase, Users, UserCircle,
-  Calendar, CreditCard, Settings, LogOut, Menu, X,
-  PackageSearch, ChevronRight,
+  Calendar, CreditCard, Settings, LogOut, Menu,
+  PackageSearch, ChevronRight, Layers,
 } from "lucide-react"
 import { cn } from "@/app/lib/utils"
 import { toast } from "react-toastify"
@@ -15,6 +15,7 @@ import { useAuthStore } from "@/store/auth.store"
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard",   href: "/admin",              color: "text-blue-500" },
   { icon: Briefcase,       label: "Services",     href: "/admin/Services",     color: "text-violet-500" },
+  { icon: Layers,          label: "Categories",   href: "/admin/Categories",   color: "text-indigo-500" },
   { icon: PackageSearch,   label: "Products",     href: "/admin/products",     color: "text-cyan-500" },
   { icon: Users,           label: "Technicians",  href: "/admin/Technician",   color: "text-emerald-500" },
   { icon: UserCircle,      label: "Users",        href: "/admin/users",        color: "text-orange-500" },

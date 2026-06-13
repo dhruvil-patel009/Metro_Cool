@@ -2,34 +2,17 @@
 
 import { useEffect, useState } from "react"
 import {
-  Search,
-  Filter,
-  MoreVertical,
-  Phone,
-  Users,
-  ShieldCheck,
-  UserPlus,
+  Search, MoreVertical, Phone, Users, ShieldCheck, UserPlus, Loader2,
 } from "lucide-react"
-
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu"
+import { AdminPageShell, AdminStatCard, AdminEmptyState } from "./admin-page-shell"
+import { toast } from "react-toastify"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL
-
-/* ================= TYPES ================= */
 
 type User = {
   id: string
@@ -39,38 +22,49 @@ type User = {
   profile_photo: string | null
 }
 
-/* ================= COMPONENT ================= */
+type UserStats = {
+  total: number
+  active: number
+  inactive: number
+  newThisMonth: number
+}
 
 export default function UsersContent() {
   const [users, setUsers] = useState<User[]>([])
+  const [stats, setStats] = useState<UserStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [statsLoading, setStatsLoading] = useState(true)
 
   const [page, setPage] = useState(1)
   const limit = 10
   const [total, setTotal] = useState(0)
-
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [search, setSearch] = useState("")
 
-  // 🔐 ADMIN TOKEN
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("accessToken")
       : null
 
-  /* ================= FETCH USERS ================= */
+  const fetchStats = async () => {
+    setStatsLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/admin/users/stats`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      })
+      if (res.ok) setStats(await res.json())
+    } catch {
+      // stats are non-critical
+    } finally {
+      setStatsLoading(false)
+    }
+  }
 
   const fetchUsers = async () => {
     setLoading(true)
-
     try {
       const res = await fetch(
         `${API_URL}/admin/users?page=${page}&limit=${limit}`,
-        {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
+        { headers: { Authorization: token ? `Bearer ${token}` : "" } }
       )
 
       if (!res.ok) {
@@ -82,8 +76,7 @@ export default function UsersContent() {
       const json = await res.json()
       setUsers(Array.isArray(json.data) ? json.data : [])
       setTotal(json.total ?? 0)
-    } catch (error) {
-      console.error("Fetch users error:", error)
+    } catch {
       setUsers([])
       setTotal(0)
     } finally {
@@ -91,265 +84,204 @@ export default function UsersContent() {
     }
   }
 
-  useEffect(() => {
-    fetchUsers()
-  }, [page])
-
-  /* ================= DELETE USER ================= */
+  useEffect(() => { fetchStats() }, [])
+  useEffect(() => { fetchUsers() }, [page])
 
   const deleteUser = async (userId: string) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this user?"
-    )
-
-    if (!confirmed) return
+    if (!window.confirm("Are you sure you want to delete this user?")) return
 
     try {
-      const res = await fetch(
-        `${API_URL}/admin/users/${userId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      )
+      const res = await fetch(`${API_URL}/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      })
 
       if (!res.ok) {
-        alert("Failed to delete user")
+        toast.error("Failed to delete user")
         return
       }
 
-      // ✅ Update UI instantly
-      setUsers((prev) => prev.filter((u) => u.id !== userId))
-      setSelectedUsers((prev) => prev.filter((id) => id !== userId))
-      setTotal((prev) => Math.max(0, prev - 1))
-    } catch (error) {
-      console.error("Delete user error:", error)
-      alert("Something went wrong")
+      setUsers(prev => prev.filter(u => u.id !== userId))
+      setTotal(prev => Math.max(0, prev - 1))
+      fetchStats()
+      toast.success("User deleted")
+    } catch {
+      toast.error("Something went wrong")
     }
   }
 
-  /* ================= SELECTION ================= */
-
-  const toggleAllUsers = () => {
-    setSelectedUsers(
-      selectedUsers.length === users.length
-        ? []
-        : users.map((u) => u.id)
-    )
-  }
-
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUsers((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    )
-  }
-
-  /* ================= FILTER ================= */
-
-  const filteredUsers = users.filter((u) =>
-    `${u.first_name} ${u.last_name}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
+  const filteredUsers = users.filter(u =>
+    `${u.first_name} ${u.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
+    u.phone.includes(search)
   )
 
   const totalPages = Math.max(1, Math.ceil(total / limit))
-  
-
-  /* ================= UI ================= */
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
-
-      {/* STATS (STATIC UI FOR NOW) */}
+    <AdminPageShell
+      title="Users"
+      description="Manage registered customer accounts."
+    >
+      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Users" value={total} icon={<Users />} />
-        <StatCard title="Active Users" value="—" icon={<ShieldCheck />} />
-        <StatCard title="New This Month" value="—" icon={<UserPlus />} />
-      </div>
-
-      {/* SEARCH */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          placeholder="Search users by name"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
+        <AdminStatCard
+          label="Total Users"
+          value={stats?.total ?? total}
+          icon={<Users className="w-5 h-5 text-blue-600" />}
+          iconBg="bg-blue-50"
+          loading={statsLoading}
+        />
+        <AdminStatCard
+          label="Active Users"
+          value={stats?.active ?? "—"}
+          icon={<ShieldCheck className="w-5 h-5 text-emerald-600" />}
+          iconBg="bg-emerald-50"
+          loading={statsLoading}
+        />
+        <AdminStatCard
+          label="New This Month"
+          value={stats?.newThisMonth ?? "—"}
+          icon={<UserPlus className="w-5 h-5 text-violet-600" />}
+          iconBg="bg-violet-50"
+          loading={statsLoading}
         />
       </div>
 
-      {/* TABLE */}
-      <div className="hidden lg:block rounded-lg border bg-white shadow-sm overflow-x-auto">
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Search by name or phone…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10 bg-white border-gray-200 text-gray-900"
+        />
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden lg:block rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
         <table className="w-full min-w-[700px]">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+          <thead className="bg-gray-50/80 text-xs uppercase text-gray-500 tracking-wider">
             <tr>
-              <th className="px-6 py-3 text-left">
-               sr no
-              </th>
-              <th className="px-6 py-3 text-left">Profile img</th>
-              <th className="px-6 py-3 text-left">Name</th>
-              <th className="px-6 py-3 text-left">Phone</th>
-              <th className="px-6 py-3 text-center">Actions</th>
+              <th className="px-6 py-3.5 text-left">#</th>
+              <th className="px-6 py-3.5 text-left">User</th>
+              <th className="px-6 py-3.5 text-left">Phone</th>
+              <th className="px-6 py-3.5 text-center">Actions</th>
             </tr>
           </thead>
-
-<tbody className="divide-y">
-  {filteredUsers.map((user, index) => (
-    <tr key={user.id} className="hover:bg-gray-50">
-      {/* SR NO */}
-      <td className="px-6 py-4 font-medium text-gray-700">
-        {(page - 1) * limit + index + 1}
-      </td>
-
-      {/* USER */}
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          <img
-            src={user.profile_photo || "/placeholder.svg"}
-            className="h-10 w-10 rounded-full object-cover"
-            alt=""
-          />
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          <p className="font-semibold">
-            {user.first_name} {user.last_name}
-          </p>
-        </div>
-      </td>
-
-      {/* PHONE */}
-      <td className="px-6 py-4 text-sm text-gray-600">
-        <Phone className="inline mr-2 h-4 w-4" />
-        {user.phone}
-      </td>
-
-      {/* ACTIONS */}
-      <td className="px-6 py-4 text-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600"
-              onClick={() => deleteUser(user.id)}
-            >
-              Delete User
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </td>
-    </tr>
-  ))}
-</tbody>
-
+          <tbody className="divide-y divide-gray-100">
+            {loading ? (
+              <tr>
+                <td colSpan={4} className="py-16 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto" />
+                </td>
+              </tr>
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={4}>
+                  <AdminEmptyState title="No users found" description="Try adjusting your search." />
+                </td>
+              </tr>
+            ) : (
+              filteredUsers.map((user, index) => (
+                <tr key={user.id} className="hover:bg-gray-50/60 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-500">
+                    {(page - 1) * limit + index + 1}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={user.profile_photo || "/placeholder.svg"}
+                        className="h-10 w-10 rounded-full object-cover ring-2 ring-gray-100"
+                        alt=""
+                      />
+                      <p className="font-semibold text-gray-900">
+                        {user.first_name} {user.last_name}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    <Phone className="inline mr-2 h-4 w-4 text-gray-400" />
+                    {user.phone}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => deleteUser(user.id)}
+                        >
+                          Delete User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
         </table>
 
-        {/* PAGINATION */}
-        <div className="flex items-center justify-between p-4 border-t">
+        <div className="flex items-center justify-between p-4 border-t border-gray-100">
           <p className="text-sm text-gray-500">
-            Page {page} of {totalPages}
+            Page {page} of {totalPages} · {total} users
           </p>
-
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
               Previous
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
               Next
             </Button>
           </div>
         </div>
       </div>
-      {/* MOBILE & TABLET CARDS */}
-<div className="lg:hidden rounded-lg border bg-white shadow-sm p-4 space-y-4">
-  {filteredUsers.map((user, index) => (
-    <div
-      key={user.id}
-      className="rounded-xl border border-gray-200 p-4 shadow-sm"
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <img
-            src={user.profile_photo || "/placeholder.svg"}
-            className="h-12 w-12 rounded-full object-cover"
-            alt=""
-          />
-          <div>
-            <p className="font-semibold text-gray-900">
-              {user.first_name} {user.last_name}
-            </p>
-            <p className="text-xs text-gray-500">
-              #{(page - 1) * limit + index + 1}
+
+      {/* Mobile cards */}
+      <div className="lg:hidden space-y-3">
+        {loading ? (
+          <div className="py-12 flex justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+          </div>
+        ) : filteredUsers.map((user, index) => (
+          <div key={user.id} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <img
+                  src={user.profile_photo || "/placeholder.svg"}
+                  className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-100"
+                  alt=""
+                />
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {user.first_name} {user.last_name}
+                  </p>
+                  <p className="text-xs text-gray-400">#{(page - 1) * limit + index + 1}</p>
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon"><MoreVertical /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="text-red-600" onClick={() => deleteUser(user.id)}>
+                    Delete User
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <p className="mt-3 text-sm text-gray-600">
+              <Phone className="inline mr-2 h-4 w-4 text-gray-400" />
+              {user.phone}
             </p>
           </div>
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600"
-              onClick={() => deleteUser(user.id)}
-            >
-              Delete User
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        ))}
       </div>
-
-      {/* Details */}
-      <div className="mt-3 text-sm text-gray-600">
-        <p>
-          <Phone className="inline mr-2 h-4 w-4" />
-          {user.phone}
-        </p>
-      </div>
-    </div>
-  ))}
-</div>
-
-    </div>
-  )
-}
-
-/* ================= SMALL COMPONENT ================= */
-
-function StatCard({ title, value, icon }: any) {
-  return (
-    <div className="rounded-lg border bg-white p-5 flex justify-between items-center">
-      <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-3xl font-bold">{value}</p>
-      </div>
-      <div className="p-3 bg-gray-100 rounded-lg">{icon}</div>
-    </div>
+    </AdminPageShell>
   )
 }

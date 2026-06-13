@@ -116,73 +116,21 @@ router.delete(
   deleteTechnician
 );
 
-export default router;
-
-
-
 /* ================= USERS ================= */
 
-// GET ALL USERS (PAGINATED)
-router.get(
-  "/users",
-  protect,
-  authorize("admin"),
-  getUsers
-)
+router.get("/users", protect, authorize("admin"), getUsers)
+router.get("/users/stats", protect, authorize("admin"), getUserStats)
+router.get("/users/:id", protect, authorize("admin"), getUserById)
+router.patch("/users/:id", protect, authorize("admin"), updateUser)
+router.patch("/users/:id/status", protect, authorize("admin"), toggleUserStatus)
+router.delete("/users/:id", protect, authorize("admin"), deleteUser)
 
-// GET USER STATS
-router.get(
-  "/users/stats",
-  protect,
-  authorize("admin"),
-  getUserStats
-)
+/* ================= ADMIN PROFILE ================= */
 
-// GET SINGLE USER
-router.get(
-  "/users/:id",
-  protect,
-  authorize("admin"),
-  getUserById
-)
+router.get("/profile", protect, authorize("admin"), getAdminProfile)
+router.put("/profile", protect, authorize("admin"), updateAdminProfile)
+router.get("/admins", protect, authorize("admin"), getAdmins)
+router.post("/create", protect, authorize("admin"), createAdmin)
+router.delete("/admins/:adminId", protect, deleteAdmin)
 
-// UPDATE USER (name, phone, status)
-router.patch(
-  "/users/:id",
-  protect,
-  authorize("admin"),
-  updateUser
-)
-
-// TOGGLE USER STATUS (active | inactive | blocked)
-router.patch(
-  "/users/:id/status",
-  protect,
-  authorize("admin"),
-  toggleUserStatus
-)
-
-// DELETE USER
-router.delete(
-  "/users/:id",
-  protect,
-  authorize("admin"),
-  deleteUser
-)
-
-
-
-
-////////////////////////////////////// Admin /////////////////////////////////
-
-router.get("/profile",protect,
-  authorize("admin"), getAdminProfile)
-router.put("/profile", protect,
-  authorize("admin"),updateAdminProfile)
-
-router.get("/admins",protect,
-  authorize("admin"), getAdmins)
-router.post("/create",protect,
-  authorize("admin"), createAdmin)
-
-router.delete("/admins/:adminId", protect, deleteAdmin);  
+export default router;

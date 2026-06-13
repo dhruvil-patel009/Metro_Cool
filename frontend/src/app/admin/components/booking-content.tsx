@@ -12,12 +12,13 @@ import {
   Wallet,
   Search,
   Filter,
-  DollarSign,
+  IndianRupee,
   Download,
   MoreVertical,
   CalendarDays,
-  Plus,
+  Loader2,
 } from "lucide-react"
+import { AdminEmptyState } from "./admin-page-shell"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -51,11 +52,15 @@ interface Stats {
 /* ================= COLORS ================= */
 
 const statusColors: Record<string, string> = {
-  Confirmed: "bg-green-100 text-green-700",
-  Pending: "bg-yellow-100 text-yellow-700",
-  Completed: "bg-gray-100 text-gray-700",
-  "In Progress": "bg-blue-100 text-blue-700",
-  Cancelled: "bg-red-100 text-red-700",
+  Open: "bg-blue-50 text-blue-700",
+  Assigned: "bg-indigo-50 text-indigo-700",
+  "On the Way": "bg-cyan-50 text-cyan-700",
+  Working: "bg-purple-50 text-purple-700",
+  Completed: "bg-green-50 text-green-700",
+  Cancelled: "bg-red-50 text-red-700",
+  Confirmed: "bg-emerald-50 text-emerald-700",
+  Pending: "bg-amber-50 text-amber-700",
+  "In Progress": "bg-blue-50 text-blue-700",
 }
 
 const paymentColors: Record<string, string> = {
@@ -65,7 +70,7 @@ const paymentColors: Record<string, string> = {
 }
 
 export default function BookingsContent() {
-const [bookings, setBookings] = useState<Booking[]>([])
+  const [bookings, setBookings] = useState<Booking[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFilter, setDateFilter] = useState("all")
 
@@ -78,10 +83,9 @@ const [bookings, setBookings] = useState<Booking[]>([])
 
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
-  const limit = 4
+  const limit = 8
   const [total, setTotal] = useState(0)
 
-  const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("any")
   const [paymentFilter, setPaymentFilter] = useState("all")
 
@@ -141,23 +145,42 @@ const fetchBookings = async () => {
 
   /* ================= FILTER ================= */
 
-const filteredBookings = bookings.filter((b) => {
-  const q = searchQuery.toLowerCase()
+  const todayStr = new Date().toLocaleDateString("en-CA")
 
-  const matchesSearch =
-    b.id.toLowerCase().includes(q) ||
-    b.user.name.toLowerCase().includes(q)
+  const filteredBookings = bookings.filter((b) => {
+    const q = searchQuery.toLowerCase()
 
-  const matchesStatus =
-    statusFilter === "any" ||
-    b.status.toLowerCase() === statusFilter
+    const matchesSearch =
+      b.id.toLowerCase().includes(q) ||
+      b.user.name.toLowerCase().includes(q) ||
+      b.service.toLowerCase().includes(q)
 
-  const matchesPayment =
-    paymentFilter === "all" ||
-    b.payment.toLowerCase() === paymentFilter
+    const matchesStatus =
+      statusFilter === "any" ||
+      b.status.toLowerCase().replace(/[\s_-]/g, "") === statusFilter.toLowerCase().replace(/[\s_-]/g, "")
 
-  return matchesSearch && matchesStatus && matchesPayment
-})
+    const matchesPayment =
+      paymentFilter === "all" ||
+      b.payment.toLowerCase() === paymentFilter
+
+    const bookingDate = String(b.date).slice(0, 10)
+    const matchesDate =
+      dateFilter === "all" ||
+      (dateFilter === "today" && bookingDate === todayStr) ||
+      (dateFilter === "week" && (() => {
+        const d = new Date(bookingDate + "T00:00:00")
+        const weekAgo = new Date()
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        return d >= weekAgo
+      })()) ||
+      (dateFilter === "month" && (() => {
+        const d = new Date(bookingDate + "T00:00:00")
+        const now = new Date()
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      })())
+
+    return matchesSearch && matchesStatus && matchesPayment && matchesDate
+  })
 
 
   // const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -290,16 +313,17 @@ const filteredBookings = bookings.filter((b) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Status: Any</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="assigned">Assigned</SelectItem>
+                  <SelectItem value="ontheway">On the Way</SelectItem>
+                  <SelectItem value="working">Working</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex items-center gap-2 min-w-[160px]">
-              <DollarSign className="w-4 h-4 text-gray-500" />
+              <IndianRupee className="w-4 h-4 text-gray-500" />
               <Select value={paymentFilter} onValueChange={setPaymentFilter}>
                 <SelectTrigger className="bg-white text-black
   border border-gray-200
@@ -342,7 +366,20 @@ const filteredBookings = bookings.filter((b) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredBookings.map((booking) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="py-16 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto" />
+                  </td>
+                </tr>
+              ) : filteredBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={8}>
+                    <AdminEmptyState title="No bookings found" description="Try adjusting your filters." />
+                  </td>
+                </tr>
+              ) : (
+              filteredBookings.map((booking) => (
                 <tr key={booking.id} className="hover:bg-gray-50">
                   <td className="p-4 text-sm text-gray-600">{booking.id}</td>
                   <td className="p-4">
@@ -375,7 +412,7 @@ const filteredBookings = bookings.filter((b) => {
                   <td className="p-4">
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${
-                        statusColors[booking.status]
+                        statusColors[booking.status] || "bg-gray-100 text-gray-700"
                       }`}
                     >
                       {booking.status}
@@ -411,7 +448,8 @@ const filteredBookings = bookings.filter((b) => {
                     </DropdownMenu>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>

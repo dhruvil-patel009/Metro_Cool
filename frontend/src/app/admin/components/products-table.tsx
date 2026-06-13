@@ -8,6 +8,7 @@ import {
   Eye,
   Pencil,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { getProducts, deleteProduct } from "@/app/lib/products.api";
 import { Button } from "@/app/components/ui/button";
@@ -23,9 +24,13 @@ import { ProductViewModal } from "./product-view-modal";
 export function ProductsTable() {
   const [products, setProducts] = useState<any[]>([]);
   const [viewProduct, setViewProduct] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProducts().then(setProducts);
+    setLoading(true);
+    getProducts()
+      .then(setProducts)
+      .finally(() => setLoading(false));
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -36,11 +41,18 @@ export function ProductsTable() {
 
   return (
     <>
-      <div className="hidden lg:block bg-white rounded-xl shadow-sm overflow-x-auto">
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 flex flex-col items-center gap-3 text-gray-400">
+          <Loader2 className="h-7 w-7 animate-spin text-blue-500" />
+          <p className="text-sm">Loading products…</p>
+        </div>
+      ) : (
+      <>
+      <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
         <table className="w-full min-w-[1100px]">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50/80">
             <tr>
-              <th className="p-4 text-left">Product</th>
+              <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
               <th className="p-4 text-left">Price</th>
               <th className="p-4 text-left">Discount</th>
               <th className="p-4 text-left">Rating</th>
@@ -309,6 +321,8 @@ export function ProductsTable() {
           product={viewProduct}
           onClose={() => setViewProduct(null)}
         />
+      )}
+      </>
       )}
     </>
   );

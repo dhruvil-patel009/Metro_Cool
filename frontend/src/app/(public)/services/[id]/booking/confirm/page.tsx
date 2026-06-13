@@ -142,16 +142,26 @@ export default function BookingConfirmPage() {
   }
 
 
-/* 🔵 PRICE CALCULATION WITH 18% GST */
+/* 🔵 PRICE CALCULATION — single source of truth, no double GST
+   Priority order:
+   1. service.basePrice + service.taxAmount  (new format, written by booking page)
+   2. Reverse-calculate from service.totalPrice  (old format: totalPrice already includes GST)
+   3. Fallback: use service.price as base and calculate 18%
+*/
+const _rawTotal   = service?.totalPrice || service?.price || 0
+const _hasNewFmt  = service?.basePrice != null && service?.taxAmount != null
 
-const serviceFee = service?.totalPrice || service?.price || 0
+// If new format — use directly
+// If old format — totalPrice already has GST baked in, so reverse-calculate
+const serviceFee  = _hasNewFmt
+  ? Number(service.basePrice)
+  : +(_rawTotal / 1.18).toFixed(2)
 
-/* GST 18% */
-const gstRate = 0.18
+const gstAmount   = _hasNewFmt
+  ? Number(service.taxAmount)
+  : +(_rawTotal - serviceFee).toFixed(2)
 
-const gstAmount = serviceFee * gstRate
-
-const total = serviceFee + gstAmount
+const total       = +(serviceFee + gstAmount).toFixed(2)
 
 
   const handleCompleteBooking = async () => {
@@ -182,8 +192,7 @@ const total = serviceFee + gstAmount
           },
           pricing: {
             serviceFee,
-             gst: gstAmount,
-            // tax: taxes,
+            tax: gstAmount,
             total,
           },
         }),

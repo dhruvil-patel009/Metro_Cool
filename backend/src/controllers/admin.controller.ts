@@ -253,7 +253,7 @@ export const getUserStats = async (_req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from("profiles")
-      .select("status")
+      .select("status, created_at")
       .eq("role", "user")
 
     if (error) {
@@ -261,11 +261,17 @@ export const getUserStats = async (_req: Request, res: Response) => {
     }
 
     const users = data ?? []
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
     res.json({
       total: users.length,
       active: users.filter(u => u.status === "active").length,
       inactive: users.filter(u => u.status === "inactive").length,
+      newThisMonth: users.filter(u => {
+        if (!u.created_at) return false
+        return new Date(u.created_at) >= startOfMonth
+      }).length,
     })
   } catch {
     res.status(500).json({ error: "Server error" })

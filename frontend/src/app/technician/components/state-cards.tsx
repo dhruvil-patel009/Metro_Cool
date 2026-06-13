@@ -3,22 +3,37 @@ import { Card, CardContent } from "@/app/components/ui/card"
 import { cn } from "@/app/lib/utils"
 import dayjs from "dayjs"
 
-export function StatCards({ bookings }: { bookings: any[] }) {
+interface StatsFromAPI {
+  completed:    number
+  pending:      number
+  today:        number
+  totalEarned:  number
+}
+
+export function StatCards({
+  bookings,
+  stats,
+}: {
+  bookings: any[]
+  stats?: StatsFromAPI
+}) {
   const today = dayjs().format("YYYY-MM-DD")
 
-  const completed  = bookings.filter((j) => j.job_status === "completed").length
-  const pending    = bookings.filter((j) => j.job_status === "open").length
-  const todayJobs  = bookings.filter((j) => j.booking_date?.slice(0, 10) === today).length
-  const inProgress = bookings.filter((j) =>
+  // Use real stats from API if available, fall back to local calculation
+  const completed    = stats?.completed    ?? bookings.filter(j => j.job_status === "completed").length
+  const pending      = stats?.pending      ?? bookings.filter(j => j.job_status === "open").length
+  const todayJobs    = stats?.today        ?? bookings.filter(j => j.booking_date?.slice(0, 10) === today).length
+  const totalEarnings = stats?.totalEarned ?? bookings
+    .filter(j => j.job_status === "completed" && j.total_amount)
+    .reduce((sum, j) => sum + Number(j.total_amount || 0), 0)
+
+  const inProgress = bookings.filter(j =>
     ["assigned", "on_the_way", "working"].includes(j.job_status)
   ).length
 
-  // Total earnings: sum of total_amount for completed bookings
-  const totalEarnings = bookings
-    .filter((j) => j.job_status === "completed" && j.total_amount)
-    .reduce((sum, j) => sum + Number(j.total_amount || 0), 0)
+  const totalJobs = Math.max(completed + pending + inProgress, 1)
 
-  const stats = [
+  const statItems = [
     {
       title: "Total Earnings",
       value: `₹${totalEarnings.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
@@ -67,7 +82,7 @@ export function StatCards({ bookings }: { bookings: any[] }) {
 
   return (
     <div className="grid grid-cols-1 py-6 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat) => (
+      {statItems.map((stat) => (
         <Card key={stat.title} className="border-none shadow-sm overflow-hidden group">
           <CardContent className="p-6 relative">
             <div className="flex justify-between items-start mb-4">

@@ -26,16 +26,16 @@ const getToken = () =>
 
 /* ── Fetch profile ── */
 const fetchProfile = async () => {
-  const res = await fetch(`${API}/user/me`, {
+  const res = await fetch(`${API}/technician/profile`, {
     headers: { Authorization: `Bearer ${getToken()}` },
   })
   if (!res.ok) throw new Error("Failed to load profile")
   return res.json()
 }
 
-/* ── Fetch bookings for stats ── */
+/* ── Fetch completed jobs (earnings) ── */
 const fetchBookings = async (): Promise<any[]> => {
-  const res = await fetch(`${API}/bookings`, {
+  const res = await fetch(`${API}/technician/earnings`, {
     headers: { Authorization: `Bearer ${getToken()}` },
     cache: "no-store",
   })
@@ -76,7 +76,7 @@ export default function ProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API}/me`, {
+      const res = await fetch(`${API}/technician/profile`, {
         method: "PUT",
         headers: {
           Authorization:  `Bearer ${getToken()}`,

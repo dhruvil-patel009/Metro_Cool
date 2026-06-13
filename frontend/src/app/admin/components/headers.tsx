@@ -15,6 +15,8 @@ const pageTitles: Record<string, { title: string; sub: string }> = {
   "/admin/Bookings":    { title: "Bookings",     sub: "Track and manage appointments" },
   "/admin/Settlements": { title: "Settlements",  sub: "Payouts and commission reports" },
   "/admin/Settings":    { title: "Settings",     sub: "Account and system preferences" },
+  "/admin/Categories":  { title: "Categories",   sub: "Service category management" },
+  "/admin/Services/content": { title: "Service Content", sub: "Includes, add-ons & FAQs" },
 }
 
 export function Header() {
