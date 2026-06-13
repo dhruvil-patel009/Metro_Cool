@@ -32,62 +32,60 @@ export function Header() {
   const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase()
   const profileImage = user?.profile_photo || ""
 
-  // Today's greeting
   const hour = new Date().getHours()
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
 
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-gray-100">
-      <div className="flex h-16 items-center gap-4 pl-14 pr-4 sm:pl-6 lg:pl-6 lg:pr-6">
+    <header className="sticky top-0 z-30 h-16 flex items-center bg-white/90 backdrop-blur-md border-b border-gray-100/80 px-4 lg:px-6 gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
 
-        {/* Page title — hidden on small screens, visible md+ */}
-        <div className="hidden md:block flex-shrink-0">
-          <h1 className="text-lg font-bold text-gray-900 leading-none">{pageInfo.title}</h1>
-          <p className="text-xs text-gray-400 mt-0.5">{pageInfo.sub}</p>
+      {/* Page title */}
+      <div className="hidden md:flex flex-col flex-shrink-0 min-w-0">
+        <h1 className="text-[15px] font-bold text-gray-900 leading-none truncate">{pageInfo.title}</h1>
+        <p className="text-[11px] text-gray-400 mt-0.5 truncate">{pageInfo.sub}</p>
+      </div>
+
+      {/* Divider */}
+      <div className="hidden md:block w-px h-7 bg-gray-200 mx-1" />
+
+      {/* Search */}
+      <div className="flex-1 max-w-sm">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search anything…"
+            className="w-full h-9 rounded-xl border border-gray-200 bg-gray-50/80 pl-8.5 pr-4 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Right */}
+      <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+
+        {/* Notifications */}
+        <div className="relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+          <NotificationsDropdown />
         </div>
 
-        {/* Search */}
-        <div className="flex-1 max-w-md mx-auto md:mx-0 md:ml-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search anything…"
-              className="w-full h-9 rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
-            />
-          </div>
-        </div>
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
 
-        {/* Right */}
-        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-
-          {/* Notifications */}
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 transition-colors">
-            <NotificationsDropdown />
-          </div>
-
-          {/* Divider */}
-          <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
-
-          {/* Profile */}
-          <div className="flex items-center gap-2.5 cursor-pointer group">
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-semibold text-gray-900 leading-none">
-                {fullName || "Admin"}
-              </p>
-              <p className="text-[11px] text-gray-400 mt-0.5 capitalize">
-                {greeting}
-              </p>
-            </div>
-            <Avatar className="h-9 w-9 ring-2 ring-gray-100 group-hover:ring-blue-200 transition-all">
-              {profileImage ? (
-                <AvatarImage src={profileImage} alt={fullName} referrerPolicy="no-referrer" />
-              ) : (
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-700 text-white text-xs font-bold">
-                  {initials || "A"}
-                </AvatarFallback>
-              )}
-            </Avatar>
+        {/* Profile chip */}
+        <div className="flex items-center gap-2.5 pl-1 pr-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group">
+          <Avatar className="h-8 w-8 ring-2 ring-offset-1 ring-gray-200 group-hover:ring-blue-300 transition-all">
+            {profileImage ? (
+              <AvatarImage src={profileImage} alt={fullName} referrerPolicy="no-referrer" />
+            ) : (
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs font-bold">
+                {initials || "A"}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div className="hidden sm:block text-left">
+            <p className="text-[13px] font-semibold text-gray-800 leading-none">
+              {fullName || "Admin"}
+            </p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{greeting}</p>
           </div>
         </div>
       </div>

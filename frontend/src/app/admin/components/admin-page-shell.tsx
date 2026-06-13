@@ -19,15 +19,15 @@ export function AdminPageShell({
   className,
 }: AdminPageShellProps) {
   return (
-    <div className={cn("min-h-full bg-gray-50/40", className)}>
-      <div className="p-5 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    <div className={cn("min-h-full", className)}>
+      <div className="p-5 lg:p-7 max-w-[1600px] mx-auto space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
               {title}
             </h1>
             {description && (
-              <p className="text-sm text-gray-500 mt-1.5">{description}</p>
+              <p className="text-sm text-gray-400 mt-1">{description}</p>
             )}
           </div>
           {action && <div className="flex-shrink-0">{action}</div>}
@@ -82,20 +82,20 @@ export function AdminStatCard({
   loading,
 }: AdminStatCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl p-5 border border-gray-100/80 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
-        <p className="text-sm font-medium text-gray-500">{label}</p>
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", iconBg)}>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+        <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", iconBg)}>
           {icon}
         </div>
       </div>
       {loading ? (
-        <div className="h-9 w-20 bg-gray-100 animate-pulse rounded-lg" />
+        <div className="h-8 w-20 bg-gray-100 animate-pulse rounded-lg" />
       ) : (
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
+        <p className="text-2xl font-extrabold text-gray-900">{value}</p>
       )}
       {sub && !loading && (
-        <p className="text-xs text-gray-400 mt-1.5">{sub}</p>
+        <p className="text-xs text-gray-400 mt-1.5 font-medium">{sub}</p>
       )}
     </div>
   )

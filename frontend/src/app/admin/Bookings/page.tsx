@@ -1,12 +1,11 @@
 import { Suspense } from "react"
-import BookingsContent  from "../components/booking-content"
+import BookingsContent from "../components/booking-content"
+import { AdminLoadingState } from "../components/admin-page-shell"
 
 export default function BookingsPage() {
   return (
-    <div className="flex-1 overflow-auto bg-gray-50">
-      <Suspense fallback={null}>
-        <BookingsContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<AdminLoadingState />}>
+      <BookingsContent />
+    </Suspense>
   )
 }

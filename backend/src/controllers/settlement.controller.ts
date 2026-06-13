@@ -3,12 +3,13 @@ import { supabase } from "../utils/supabase.js"
 import { transporter } from "../utils/mailer.js"
 import ExcelJS from "exceljs"
 
-const formatINR = (v: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+const formatINR = (v: number) => {
+  const formatted = new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(v)
+  return `\u20B9${formatted}`
+}
 
 /* =========================================================
    Build settlement rows — optionally filter to today only
@@ -29,8 +30,16 @@ const buildSettlements = async (todayOnly = false) => {
     .order("created_at", { ascending: false })
 
   if (todayOnly) {
-    const today = new Date().toLocaleDateString("en-CA") // YYYY-MM-DD
-    query = query.gte("created_at", `${today}T00:00:00`).lte("created_at", `${today}T23:59:59`)
+    // Use UTC+5:30 (IST) aware range to avoid missing records stored in UTC
+    const now = new Date()
+    // Start of today in IST → subtract IST offset to get UTC equivalent
+    const istOffsetMs = 5.5 * 60 * 60 * 1000 // 5h 30m in ms
+    const istNow = new Date(now.getTime() + istOffsetMs)
+    const todayIST = istNow.toISOString().slice(0, 10) // YYYY-MM-DD in IST
+    // Convert IST midnight/end-of-day back to UTC ISO strings
+    const startUTC = new Date(`${todayIST}T00:00:00+05:30`).toISOString()
+    const endUTC = new Date(`${todayIST}T23:59:59+05:30`).toISOString()
+    query = query.gte("created_at", startUTC).lte("created_at", endUTC)
   }
 
   const { data: payments, error } = await query
@@ -302,17 +311,32 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
 
     // Build HTML table rows
     const tableRows = settlements.map((s, i) => `
-      <tr style="background:${i % 2 === 0 ? "#f8faff" : "#ffffff"}">
-        <td style="padding:10px 14px;font-family:monospace;color:#2563eb;font-size:12px">#${String(s.bookingId).slice(0, 8).toUpperCase()}</td>
-        <td style="padding:10px 14px;font-size:13px">${s.technician.name}</td>
-        <td style="padding:10px 14px;font-size:13px">${s.service.name}</td>
-        <td style="padding:10px 14px;font-size:13px">${s.dateTime.date}</td>
-        <td style="padding:10px 14px;font-size:13px;text-align:right">${formatINR(s.price)}</td>
-        <td style="padding:10px 14px;font-size:13px;text-align:right;color:#dc2626">-${formatINR(s.commission)}</td>
-        <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:700">${formatINR(s.payable)}</td>
-        <td style="padding:10px 14px;font-size:12px;text-align:center">
-          <span style="background:${s.status === "Paid" ? "#dcfce7" : "#fef9c3"};color:${s.status === "Paid" ? "#16a34a" : "#d97706"};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600">
-            ${s.status}
+      <tr style="background:${i % 2 === 0 ? "#f8faff" : "#ffffff"};border-bottom:1px solid #f1f5f9;">
+        <td style="padding:11px 14px;">
+          <span style="font-family:monospace;color:#2563eb;font-size:11px;
+                       background:#eff6ff;padding:3px 8px;border-radius:6px;
+                       font-weight:700;white-space:nowrap;">
+            #${String(s.bookingId).slice(0, 8).toUpperCase()}
+          </span>
+        </td>
+        <td style="padding:11px 14px;font-size:13px;font-weight:600;color:#111827;
+                   white-space:nowrap;">${s.technician.name}</td>
+        <td style="padding:11px 14px;font-size:12px;color:#374151;">${s.service.name}</td>
+        <td style="padding:11px 14px;font-size:12px;color:#6b7280;
+                   white-space:nowrap;">${s.dateTime.date}</td>
+        <td style="padding:11px 14px;font-size:13px;text-align:right;
+                   font-weight:600;color:#111827;">${formatINR(s.price)}</td>
+        <td style="padding:11px 14px;font-size:13px;text-align:right;
+                   color:#dc2626;font-weight:600;">&#8722;${formatINR(s.commission)}</td>
+        <td style="padding:11px 14px;font-size:13px;text-align:right;
+                   font-weight:700;color:#15803d;">${formatINR(s.payable)}</td>
+        <td style="padding:11px 14px;text-align:center;">
+          <span style="background:${s.status === "Paid" ? "#dcfce7" : "#fef9c3"};
+                       color:${s.status === "Paid" ? "#15803d" : "#b45309"};
+                       border:1px solid ${s.status === "Paid" ? "#86efac" : "#fde68a"};
+                       padding:3px 10px;border-radius:999px;font-size:10px;
+                       font-weight:700;white-space:nowrap;">
+            ${s.status === "Paid" ? "✓ Paid" : "⏳ Pending"}
           </span>
         </td>
       </tr>
@@ -320,57 +344,40 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
 
     const html = `
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif">
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Settlement Report — Metro Cool</title>
+</head>
+<body style="margin:0;padding:0;background:#eef2f7;font-family:'Segoe UI',Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
 
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 0">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;padding:40px 16px;">
     <tr><td align="center">
-      <table width="680" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
 
-        <!-- Header -->
-        <tr>
-          <td style="background:linear-gradient(135deg,#1e40af,#2563eb);padding:28px 32px">
-            <table width="100%"><tr>
-              <td>
-                <p style="color:#bfdbfe;font-size:12px;margin:0 0 4px">Daily Settlement Report</p>
-                <h1 style="color:#ffffff;font-size:22px;margin:0;font-weight:700">Metro Cool</h1>
-              </td>
-              <td align="right">
-                <p style="color:#bfdbfe;font-size:12px;margin:0">${reportDate}</p>
-                <p style="color:#ffffff;font-size:13px;font-weight:600;margin:4px 0 0">Auto-generated at 8:00 PM</p>
-              </td>
-            </tr></table>
-          </td>
-        </tr>
+      <table width="640" cellpadding="0" cellspacing="0"
+        style="background:#ffffff;border-radius:20px;overflow:hidden;
+               box-shadow:0 8px 40px rgba(15,23,42,0.12);max-width:640px;">
 
-        <!-- Summary Cards -->
+        <!-- ═══ HEADER BANNER ═══ -->
         <tr>
-          <td style="padding:24px 32px 0">
+          <td style="background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%);
+                     padding:32px 36px 28px;">
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td width="25%" style="padding-right:10px">
-                  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px;text-align:center">
-                    <p style="font-size:11px;color:#6b7280;margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total Jobs</p>
-                    <p style="font-size:28px;font-weight:800;color:#1e40af;margin:0">${settlements.length}</p>
-                  </div>
+                <td style="vertical-align:middle;">
+                  <p style="color:#93c5fd;font-size:11px;font-weight:600;
+                             text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Daily Settlement Report</p>
+                  <h1 style="color:#ffffff;font-size:26px;font-weight:800;
+                             margin:0;letter-spacing:-0.3px;line-height:1.2;">Metro Cool</h1>
+                  <p style="color:#bfdbfe;font-size:12px;margin:6px 0 0;">Automated payout summary</p>
                 </td>
-                <td width="25%" style="padding-right:10px">
-                  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;text-align:center">
-                    <p style="font-size:11px;color:#6b7280;margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Revenue</p>
-                    <p style="font-size:20px;font-weight:800;color:#16a34a;margin:0">${formatINR(totalRevenue)}</p>
-                  </div>
-                </td>
-                <td width="25%" style="padding-right:10px">
-                  <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:16px;text-align:center">
-                    <p style="font-size:11px;color:#6b7280;margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Commission</p>
-                    <p style="font-size:20px;font-weight:800;color:#7c3aed;margin:0">${formatINR(totalCommission)}</p>
-                  </div>
-                </td>
-                <td width="25%">
-                  <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;text-align:center">
-                    <p style="font-size:11px;color:#6b7280;margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Payable</p>
-                    <p style="font-size:20px;font-weight:800;color:#ea580c;margin:0">${formatINR(totalPayable)}</p>
+                <td align="right" style="vertical-align:middle;">
+                  <div style="background:rgba(255,255,255,0.12);border-radius:12px;
+                               padding:12px 16px;display:inline-block;text-align:right;">
+                    <p style="color:#bfdbfe;font-size:11px;margin:0 0 4px;
+                               font-weight:500;">${reportDate}</p>
+                    <p style="color:#ffffff;font-size:13px;font-weight:700;margin:0;">Auto-generated · 8:00 PM</p>
                   </div>
                 </td>
               </tr>
@@ -378,74 +385,258 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
           </td>
         </tr>
 
-        ${pendingCount > 0 ? `
-        <!-- Alert -->
+        <!-- ═══ DIVIDER ACCENT ═══ -->
         <tr>
-          <td style="padding:16px 32px 0">
-            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;display:flex;align-items:center">
-              <span style="font-size:18px;margin-right:10px">⚠️</span>
-              <p style="margin:0;font-size:13px;color:#92400e"><strong>${pendingCount} payout${pendingCount > 1 ? "s" : ""} pending</strong> — please review and mark as paid in the admin panel.</p>
-            </div>
-          </td>
-        </tr>` : `
-        <tr>
-          <td style="padding:16px 32px 0">
-            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px">
-              <p style="margin:0;font-size:13px;color:#166534">✅ All ${settlements.length} payouts are settled for today.</p>
-            </div>
-          </td>
-        </tr>`}
+          <td style="height:4px;background:linear-gradient(90deg,#3b82f6,#8b5cf6,#ec4899);"></td>
+        </tr>
 
-        <!-- Table -->
+        <!-- ═══ BODY ═══ -->
         <tr>
-          <td style="padding:24px 32px">
-            ${settlements.length === 0 ? `
-              <div style="text-align:center;padding:40px 0;color:#9ca3af">
-                <p style="font-size:32px;margin:0">📋</p>
-                <p style="margin:8px 0 0;font-size:14px">No settlements recorded for today.</p>
-              </div>
-            ` : `
-            <p style="font-size:13px;font-weight:600;color:#374151;margin:0 0 12px">Settlement Breakdown</p>
-            <div style="overflow-x:auto;border-radius:10px;border:1px solid #e5e7eb">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
-                <thead>
-                  <tr style="background:#1e40af">
-                    <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#bfdbfe;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Booking</th>
-                    <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#bfdbfe;text-transform:uppercase;letter-spacing:.5px">Technician</th>
-                    <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#bfdbfe;text-transform:uppercase;letter-spacing:.5px">Service</th>
-                    <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#bfdbfe;text-transform:uppercase;letter-spacing:.5px">Date</th>
-                    <th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:600;color:#bfdbfe;text-transform:uppercase;letter-spacing:.5px">Price</th>
-                    <th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:600;color:#bfdbfe;text-transform:uppercase;letter-spacing:.5px">Comm.</th>
-                    <th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:600;color:#bfdbfe;text-transform:uppercase;letter-spacing:.5px">Payable</th>
-                    <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:600;color:#bfdbfe;text-transform:uppercase;letter-spacing:.5px">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${tableRows}
-                  <!-- Total row -->
-                  <tr style="background:#dbeafe">
-                    <td colspan="4" style="padding:12px 14px;font-weight:700;font-size:13px;color:#1e40af">TOTAL</td>
-                    <td style="padding:12px 14px;text-align:right;font-weight:700;font-size:13px;color:#1e40af">${formatINR(totalRevenue)}</td>
-                    <td style="padding:12px 14px;text-align:right;font-weight:700;font-size:13px;color:#7c3aed">-${formatINR(totalCommission)}</td>
-                    <td style="padding:12px 14px;text-align:right;font-weight:700;font-size:13px;color:#16a34a">${formatINR(totalPayable)}</td>
-                    <td></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            `}
+          <td style="padding:32px 36px 0;">
+
+            <!-- Greeting -->
+            <p style="font-size:15px;color:#374151;margin:0 0 4px;">Hello 👋,</p>
+            <p style="font-size:14px;color:#6b7280;margin:0 0 28px;line-height:1.6;">
+              Here is your <strong style="color:#111827;">daily settlement summary</strong> for today.
+              The detailed Excel file is attached below.
+            </p>
+
+            <!-- ─── Summary KPI Cards ─── -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+              <tr>
+                <!-- Total Jobs -->
+                <td width="24%" style="padding-right:8px;vertical-align:top;">
+                  <table width="100%" cellpadding="0" cellspacing="0"
+                    style="background:#eff6ff;border:1.5px solid #bfdbfe;
+                           border-radius:14px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:6px 12px 0;">
+                        <p style="font-size:9px;color:#93c5fd;font-weight:700;
+                                   text-transform:uppercase;letter-spacing:.8px;margin:0;">Total Jobs</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:4px 12px 14px;">
+                        <p style="font-size:32px;font-weight:900;color:#1d4ed8;
+                                   margin:0;line-height:1;">${settlements.length}</p>
+                        <p style="font-size:10px;color:#93c5fd;margin:4px 0 0;">bookings today</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <!-- Revenue -->
+                <td width="25%" style="padding-right:8px;vertical-align:top;">
+                  <table width="100%" cellpadding="0" cellspacing="0"
+                    style="background:#f0fdf4;border:1.5px solid #86efac;
+                           border-radius:14px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:6px 12px 0;">
+                        <p style="font-size:9px;color:#4ade80;font-weight:700;
+                                   text-transform:uppercase;letter-spacing:.8px;margin:0;">Revenue</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:4px 12px 14px;">
+                        <p style="font-size:18px;font-weight:800;color:#15803d;
+                                   margin:0;line-height:1.2;">${formatINR(totalRevenue)}</p>
+                        <p style="font-size:10px;color:#86efac;margin:4px 0 0;">gross service value</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <!-- Commission -->
+                <td width="25%" style="padding-right:8px;vertical-align:top;">
+                  <table width="100%" cellpadding="0" cellspacing="0"
+                    style="background:#faf5ff;border:1.5px solid #d8b4fe;
+                           border-radius:14px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:6px 12px 0;">
+                        <p style="font-size:9px;color:#c084fc;font-weight:700;
+                                   text-transform:uppercase;letter-spacing:.8px;margin:0;">Commission 20%</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:4px 12px 14px;">
+                        <p style="font-size:18px;font-weight:800;color:#7e22ce;
+                                   margin:0;line-height:1.2;">${formatINR(totalCommission)}</p>
+                        <p style="font-size:10px;color:#d8b4fe;margin:4px 0 0;">platform earnings</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <!-- Payable -->
+                <td width="26%" style="vertical-align:top;">
+                  <table width="100%" cellpadding="0" cellspacing="0"
+                    style="background:#fff7ed;border:1.5px solid #fdba74;
+                           border-radius:14px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:6px 12px 0;">
+                        <p style="font-size:9px;color:#fb923c;font-weight:700;
+                                   text-transform:uppercase;letter-spacing:.8px;margin:0;">Net Payable</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:4px 12px 14px;">
+                        <p style="font-size:18px;font-weight:800;color:#c2410c;
+                                   margin:0;line-height:1.2;">${formatINR(totalPayable)}</p>
+                        <p style="font-size:10px;color:#fdba74;margin:4px 0 0;">technician payout</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- ─── Status Alert Banner ─── -->
+            ${pendingCount > 0 ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;
+                           padding:14px 18px;">
+                  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+                    <td width="30" style="vertical-align:middle;font-size:20px;">⚠️</td>
+                    <td style="vertical-align:middle;padding-left:10px;">
+                      <p style="margin:0;font-size:13px;font-weight:700;color:#92400e;">
+                        ${pendingCount} payout${pendingCount > 1 ? "s" : ""} still pending
+                      </p>
+                      <p style="margin:4px 0 0;font-size:12px;color:#b45309;">
+                        Please review and mark as paid in the admin panel.
+                      </p>
+                    </td>
+                  </tr></table>
+                </td>
+              </tr>
+            </table>` : `
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;
+                           padding:14px 18px;">
+                  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+                    <td width="30" style="vertical-align:middle;font-size:20px;">✅</td>
+                    <td style="vertical-align:middle;padding-left:10px;">
+                      <p style="margin:0;font-size:13px;font-weight:700;color:#166534;">
+                        All ${settlements.length} payout${settlements.length !== 1 ? "s" : ""} settled for today
+                      </p>
+                      <p style="margin:4px 0 0;font-size:12px;color:#15803d;">
+                        No pending disbursements — great job!
+                      </p>
+                    </td>
+                  </tr></table>
+                </td>
+              </tr>
+            </table>`}
+
           </td>
         </tr>
 
-        <!-- Footer -->
+        <!-- ═══ SETTLEMENT TABLE ═══ -->
         <tr>
-          <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:20px 32px;text-align:center">
-            <p style="font-size:12px;color:#9ca3af;margin:0">Metro Cool Admin System &nbsp;·&nbsp; Auto-generated report &nbsp;·&nbsp; Do not reply to this email</p>
-            <p style="font-size:11px;color:#d1d5db;margin:6px 0 0">© ${new Date().getFullYear()} Metro Cool. All rights reserved.</p>
+          <td style="padding:0 36px 32px;">
+            ${settlements.length === 0 ? `
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="background:#f8fafc;border:1.5px dashed #e2e8f0;border-radius:14px;">
+              <tr>
+                <td style="padding:48px 32px;text-align:center;">
+                  <p style="font-size:40px;margin:0;">📋</p>
+                  <p style="font-size:15px;font-weight:600;color:#64748b;margin:12px 0 4px;">No settlements recorded today</p>
+                  <p style="font-size:13px;color:#94a3b8;margin:0;">
+                    Completed bookings with captured payments will appear here.
+                  </p>
+                </td>
+              </tr>
+            </table>` : `
+            <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;
+                       letter-spacing:.6px;margin:0 0 10px;">Settlement Breakdown</p>
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="border-collapse:collapse;border-radius:12px;overflow:hidden;
+                     border:1px solid #e5e7eb;">
+              <!-- Table Header -->
+              <thead>
+                <tr style="background:linear-gradient(90deg,#1e3a8a,#2563eb);">
+                  <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
+                             white-space:nowrap;border-right:1px solid rgba(255,255,255,0.1);">Booking</th>
+                  <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
+                             border-right:1px solid rgba(255,255,255,0.1);">Technician</th>
+                  <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
+                             border-right:1px solid rgba(255,255,255,0.1);">Service</th>
+                  <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
+                             border-right:1px solid rgba(255,255,255,0.1);">Date</th>
+                  <th style="padding:11px 14px;text-align:right;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
+                             border-right:1px solid rgba(255,255,255,0.1);">Price</th>
+                  <th style="padding:11px 14px;text-align:right;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
+                             border-right:1px solid rgba(255,255,255,0.1);">Comm.</th>
+                  <th style="padding:11px 14px;text-align:right;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
+                             border-right:1px solid rgba(255,255,255,0.1);">Payable</th>
+                  <th style="padding:11px 14px;text-align:center;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+                <!-- Totals Row -->
+                <tr style="background:#dbeafe;border-top:2px solid #bfdbfe;">
+                  <td colspan="4" style="padding:13px 14px;font-weight:800;font-size:12px;
+                                        color:#1e40af;">TOTAL (${settlements.length} job${settlements.length !== 1 ? "s" : ""})</td>
+                  <td style="padding:13px 14px;text-align:right;font-weight:800;
+                             font-size:12px;color:#1e40af;">${formatINR(totalRevenue)}</td>
+                  <td style="padding:13px 14px;text-align:right;font-weight:800;
+                             font-size:12px;color:#7c3aed;">&#8722;${formatINR(totalCommission)}</td>
+                  <td style="padding:13px 14px;text-align:right;font-weight:800;
+                             font-size:12px;color:#15803d;">${formatINR(totalPayable)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>`}
+          </td>
+        </tr>
+
+        <!-- ═══ EXCEL NOTICE ═══ -->
+        <tr>
+          <td style="padding:0 36px 32px;">
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="background:#f0f9ff;border:1.5px solid #bae6fd;
+                     border-radius:12px;">
+              <tr>
+                <td style="padding:14px 18px;">
+                  <table cellpadding="0" cellspacing="0"><tr>
+                    <td style="font-size:22px;vertical-align:middle;padding-right:12px;">📎</td>
+                    <td style="vertical-align:middle;">
+                      <p style="font-size:13px;font-weight:700;color:#0369a1;margin:0;">
+                        Excel report attached
+                      </p>
+                      <p style="font-size:12px;color:#0284c7;margin:4px 0 0;">
+                        Open the attached <strong>.xlsx</strong> file for the full breakdown, sortable columns, and printable layout.
+                      </p>
+                    </td>
+                  </tr></table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ═══ FOOTER ═══ -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e5e7eb;
+                     padding:22px 36px;text-align:center;">
+            <p style="font-size:12px;color:#9ca3af;margin:0;">
+              Metro Cool Admin System &nbsp;·&nbsp; Auto-generated report &nbsp;·&nbsp; Do not reply
+            </p>
+            <p style="font-size:11px;color:#d1d5db;margin:6px 0 0;">
+              © ${new Date().getFullYear()} Metro Cool. All rights reserved.
+            </p>
           </td>
         </tr>
 
       </table>
+
     </td></tr>
   </table>
 
@@ -453,7 +644,7 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
 </html>`
 
     await transporter.sendMail({
-      from: `"Metro Cool Admin" <${process.env.MAIL_USER}>`,
+      from: `"Metro Cool" <${process.env.MAIL_USER}>`,
       to: email,
       subject: `Daily Settlement Report — ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}`,
       html,

@@ -10,24 +10,22 @@ export default function adminLayout({
   children: React.ReactNode;
 }) {
   return (
-<ProtectedRoute>
-    <div className="h-screen bg-gray-50/40 overflow-visible">
-      <div className="flex h-full">
+    <ProtectedRoute>
+      <div className="flex h-screen bg-[#f4f6fb] overflow-hidden">
         {/* SIDEBAR */}
         <Sidebar />
 
         {/* MAIN AREA */}
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
           {/* HEADER */}
           <Header />
 
           {/* CONTENT */}
-           <div className="flex-1 overflow-y-auto hide-scrollbar">
-    {children}
-  </div>
+          <div className="flex-1 overflow-y-auto hide-scrollbar">
+            {children}
+          </div>
         </div>
       </div>
-    </div>
-  </ProtectedRoute>
+    </ProtectedRoute>
   );
 }

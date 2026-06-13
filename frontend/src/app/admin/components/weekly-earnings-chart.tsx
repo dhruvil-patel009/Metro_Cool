@@ -7,8 +7,13 @@ import { Loader2 } from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
-const formatINR = (v: number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(v)
+const formatINR = (v: number) => {
+  const formatted = new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(v)
+  return `\u20B9${formatted}`
+}
 
 export function WeeklyEarningsChart() {
   const [data, setData] = useState<{ day: string; value: number; date?: string }[]>([])

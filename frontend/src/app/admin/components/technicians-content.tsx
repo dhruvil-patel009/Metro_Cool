@@ -273,8 +273,8 @@ export default function TechniciansContent() {
 
   /* ─── UI ─── */
   return (
-    <div className="min-h-screen bg-gray-50/40">
-      <div className="max-w-[1400px] mx-auto p-4 lg:p-6 space-y-6">
+    <div className="min-h-screen">
+      <div className="max-w-[1400px] mx-auto p-5 lg:p-7 space-y-6">
 
         {/* ── Page Title ── */}
         <div className="flex items-center justify-between">
