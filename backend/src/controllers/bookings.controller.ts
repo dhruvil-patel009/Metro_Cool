@@ -20,7 +20,7 @@ export const getBookedDates = async (req: Request, res: Response) => {
     .from("bookings")
     .select("booking_date")
     .eq("service_id", serviceId)
-    .eq("status", "confirmed") // ✅ only confirmed bookings block date
+    .in("status", ["confirmed", "draft"]) // ✅ both confirmed AND draft block dates
     .gte("booking_date", startDate)
     .lt("booking_date", endDateStr)
 
@@ -99,6 +99,29 @@ export const createBooking = async (req: any, res: Response) => {
     if (!profile) {
       return res.status(404).json({ message: "User not found" })
     }
+
+    // ✅ Check for existing draft booking (same user + service + date)
+    const { data: existingDraft } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("user_id", req.user.id)
+      .eq("service_id", serviceId)
+      .eq("booking_date", bookingDate)
+      .eq("status", "draft")
+      .maybeSingle()
+
+    if (existingDraft) {
+      // Return existing draft instead of failing on unique constraint
+      return res.status(201).json({ success: true, booking: existingDraft })
+    }
+
+    // ✅ Clean up any stale draft bookings for this user + service (different date)
+    await supabase
+      .from("bookings")
+      .delete()
+      .eq("user_id", req.user.id)
+      .eq("service_id", serviceId)
+      .eq("status", "draft")
 
     const { data, error } = await supabase
       .from("bookings")

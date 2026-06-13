@@ -98,7 +98,7 @@ export default function BookingConfirmPage() {
 
     const token = localStorage.getItem("accessToken")
 
-    fetch(`${API_URL}/me`, {
+    fetch(`${API_URL}/user/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
