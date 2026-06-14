@@ -71,6 +71,8 @@ interface AdminStatCardProps {
   iconBg?: string
   sub?: string
   loading?: boolean
+  accentColor?: string
+  accentLight?: string
 }
 
 export function AdminStatCard({
@@ -80,12 +82,24 @@ export function AdminStatCard({
   iconBg = "bg-blue-50",
   sub,
   loading,
+  accentColor,
+  accentLight,
 }: AdminStatCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100/80 shadow-sm hover:shadow-md transition-shadow">
+    <div className="relative bg-white rounded-2xl p-5 border border-gray-100/80 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group">
+      {/* Colored top accent */}
+      {accentColor && (
+        <div
+          className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl"
+          style={{ background: accentColor }}
+        />
+      )}
       <div className="flex items-start justify-between mb-3">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-        <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", iconBg)}>
+        <div
+          className={cn("w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110", !accentLight && iconBg)}
+          style={accentLight ? { background: accentLight } : undefined}
+        >
           {icon}
         </div>
       </div>

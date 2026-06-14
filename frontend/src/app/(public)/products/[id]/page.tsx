@@ -208,14 +208,17 @@ const selectedPrice = product
               <div className="mb-6">
                 <span className="mb-2 block text-sm font-medium">Capacity</span>
                 <div className="flex gap-3">
-                  {["1.0 Ton", "1.5 Ton", "2.0 Ton"].map((c) => (
+                  {(product.capacity_prices?.length > 0
+                    ? product.capacity_prices.map((c: any) => c.capacity)
+                    : ["1.0 Ton", "1.5 Ton", "2.0 Ton"]
+                  ).map((c: string) => (
                     <button
                       key={c}
                       onClick={() => setSelectedCapacity(c)}
                       className={`flex-1 cursor-pointer rounded-md border py-2 text-xs font-bold ${
                         c === selectedCapacity
                           ? "border-blue-600 bg-blue-50 text-blue-600"
-                          : ""
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
                       {c}
@@ -581,7 +584,7 @@ className={`w-full py-3 rounded-lg font-semibold transition
                   />
                   <h3 className="mt-3 text-sm font-bold">{p.title}</h3>
                   <p className="text-blue-600 font-bold">
-                    ${Number(p.price).toFixed(2)}
+                    {formatINR(Number(p.price))}
                   </p>
                 </Link>
               ))}

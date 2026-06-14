@@ -70,22 +70,26 @@ function Avatar({ src, name, size = 10 }: { src?: string | null; name: string; s
 
 /* ─── Stat Card ─── */
 function StatCard({
-  icon: Icon, label, value, iconBg, iconColor, badge,
+  icon: Icon, label, value, accentColor, accentLight, badge,
 }: {
   icon: React.ElementType; label: string; value: number | string
-  iconBg: string; iconColor: string; badge?: { text: string; color: string }
+  accentColor: string; accentLight: string; badge?: { text: string; color: string }
 }) {
   return (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group">
-      <div className="flex items-start justify-between mb-4">
-        <p className="text-sm font-medium text-gray-500">{label}</p>
-        <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-          <Icon className={`w-5 h-5 ${iconColor}`} />
+    <div className="relative bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group">
+      <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl" style={{ background: accentColor }} />
+      <div className="flex items-start justify-between mb-3">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"
+          style={{ background: accentLight }}
+        >
+          <Icon className="w-5 h-5" style={{ color: accentColor }} />
         </div>
       </div>
-      <p className="text-3xl font-bold text-gray-900">{value}</p>
+      <p className="text-2xl font-extrabold text-gray-900">{value}</p>
       {badge && (
-        <p className={`text-xs font-semibold mt-2 ${badge.color}`}>{badge.text}</p>
+        <p className={`text-xs font-semibold mt-1.5 ${badge.color}`}>{badge.text}</p>
       )}
     </div>
   )
@@ -293,12 +297,12 @@ export default function TechniciansContent() {
 
         {/* ── Stat Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={Users}     label="Total"    value={stats.total}    iconBg="bg-blue-50"   iconColor="text-blue-600" />
-          <StatCard icon={UserCheck} label="Active"   value={stats.active}   iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-          <StatCard icon={UserX}     label="Inactive" value={stats.inactive}  iconBg="bg-red-50"    iconColor="text-red-500" />
+          <StatCard icon={Users}     label="Total"    value={stats.total}    accentColor="#3b82f6" accentLight="#eff6ff" />
+          <StatCard icon={UserCheck} label="Active"   value={stats.active}   accentColor="#10b981" accentLight="#ecfdf5" />
+          <StatCard icon={UserX}     label="Inactive" value={stats.inactive}  accentColor="#ef4444" accentLight="#fef2f2" />
           <StatCard
             icon={Clock} label="Pending Approval" value={stats.pending}
-            iconBg="bg-amber-50" iconColor="text-amber-600"
+            accentColor="#f59e0b" accentLight="#fffbeb"
             badge={stats.pending > 0 ? { text: "⚠ Action required", color: "text-amber-600" } : undefined}
           />
         </div>

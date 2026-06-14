@@ -153,22 +153,25 @@ export function CategoriesContent() {
         <AdminStatCard
           label="Total Categories"
           value={categories.length}
-          icon={<Briefcase className="w-5 h-5 text-blue-600" />}
-          iconBg="bg-blue-50"
+          icon={<Briefcase className="w-5 h-5" style={{ color: "#6366f1" }} />}
+          accentColor="#6366f1"
+          accentLight="#eef2ff"
           loading={loading}
         />
         <AdminStatCard
           label="Active Categories"
           value={activeCategories}
-          icon={<Snowflake className="w-5 h-5 text-emerald-600" />}
-          iconBg="bg-emerald-50"
+          icon={<Snowflake className="w-5 h-5" style={{ color: "#10b981" }} />}
+          accentColor="#10b981"
+          accentLight="#ecfdf5"
           loading={loading}
         />
         <AdminStatCard
           label="Total Services"
           value={totalServices}
-          icon={<ClipboardList className="w-5 h-5 text-violet-600" />}
-          iconBg="bg-violet-50"
+          icon={<ClipboardList className="w-5 h-5" style={{ color: "#8b5cf6" }} />}
+          accentColor="#8b5cf6"
+          accentLight="#f5f3ff"
           loading={loading}
         />
       </div>

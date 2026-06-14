@@ -5,9 +5,10 @@ export const formatINR = (amount: number | string) => {
 
   if (isNaN(value)) return "₹0"
 
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0, // no paise
+  const formatted = new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(value)
+
+  return `₹${formatted}`
 }

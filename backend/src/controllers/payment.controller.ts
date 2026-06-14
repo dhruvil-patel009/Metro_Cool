@@ -661,3 +661,289 @@ export const getInvoice = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to generate invoice" })
   }
 }
+
+/* =========================================================
+   PRODUCT ORDER — CREATE RAZORPAY ORDER
+   Works with the orders table (product purchases).
+========================================================= */
+export const createProductRazorpayOrder = async (req: Request, res: Response) => {
+  try {
+    const { order_id, amount } = req.body
+
+    if (!order_id || !amount) {
+      return res.status(400).json({ message: "order_id and amount are required" })
+    }
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    // Verify order belongs to this user
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("id, user_id, payment_status")
+      .eq("id", order_id)
+      .eq("user_id", req.user.id)
+      .single()
+
+    if (orderError || !order) {
+      return res.status(404).json({ message: "Order not found" })
+    }
+
+    if (order.payment_status === "completed") {
+      return res.status(400).json({ message: "This order is already paid" })
+    }
+
+    const amountInPaise = Math.round(parseFloat(amount) * 100)
+    if (!amountInPaise || isNaN(amountInPaise) || amountInPaise < 100) {
+      return res.status(400).json({ message: "Invalid amount" })
+    }
+
+    const closureOTP = Math.floor(1000 + Math.random() * 9000).toString()
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: "INR",
+      receipt: order_id.slice(0, 40),
+      notes: {
+        order_id,
+        type: "product",
+        closure_otp: closureOTP,
+      },
+    })
+
+    return res.json({
+      success: true,
+      orderId: razorpayOrder.id,
+      key: process.env.RAZORPAY_KEY_ID,
+    })
+
+  } catch (err: any) {
+    console.error("Product Razorpay order failed:", err?.error?.description || err?.message)
+    return res.status(500).json({
+      message: "Razorpay order failed",
+      error: err?.error?.description || err?.message || "Unknown error",
+    })
+  }
+}
+
+/* =========================================================
+   PRODUCT ORDER — VERIFY PAYMENT
+   Verifies + updates the orders table for product purchases.
+========================================================= */
+export const verifyProductPayment = async (req: Request, res: Response) => {
+  try {
+    const {
+      order_id,
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+    } = req.body
+
+    if (!order_id || !razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+      return res.status(400).json({ error: "Missing required payment fields" })
+    }
+
+    // Verify HMAC signature
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex")
+
+    if (generatedSignature !== razorpay_signature) {
+      return res.status(400).json({ success: false, error: "Invalid payment signature" })
+    }
+
+    // Idempotency
+    const { data: existingPayment } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("razorpay_payment_id", razorpay_payment_id)
+      .maybeSingle()
+
+    if (existingPayment) {
+      return res.json({ success: true, message: "Already processed" })
+    }
+
+    // Fetch order
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", order_id)
+      .single()
+
+    if (orderError || !order) {
+      return res.status(404).json({ error: "Order not found" })
+    }
+
+    if (req.user && order.user_id !== req.user.id) {
+      return res.status(403).json({ error: "Not authorized for this order" })
+    }
+
+    // Fetch real payment method from Razorpay
+    let paymentMethod = "card"
+    try {
+      const pd = await razorpay.payments.fetch(razorpay_payment_id) as any
+      paymentMethod = pd?.method || "card"
+    } catch {}
+
+    // Update order payment status
+    await supabase
+      .from("orders")
+      .update({ payment_status: "completed" })
+      .eq("id", order_id)
+
+    // Insert payment row
+    const { data: paymentRow, error: insertError } = await supabase
+      .from("payments")
+      .insert({
+        booking_id: order_id,
+        user_id: order.user_id,
+        amount: order.total_amount,
+        currency: "INR",
+        payment_method: paymentMethod,
+        razorpay_payment_id,
+        razorpay_order_id,
+        status: "captured",
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error("Product payment insert error:", insertError)
+    }
+
+    // Generate invoice for product order
+    if (paymentRow) {
+      try {
+        const { data: orderItems } = await supabase
+          .from("order_items")
+          .select("title")
+          .eq("order_id", order_id)
+          .limit(1)
+          .single()
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("first_name, last_name, phone")
+          .eq("id", order.user_id)
+          .single()
+
+        const customerName = profile
+          ? `${profile.first_name} ${profile.last_name}`.trim()
+          : order.customer_name || "Customer"
+
+        const productName = (orderItems as any)?.title || "AC Product"
+
+        await buildAndUploadInvoice({
+          booking_id: order_id,
+          payment_id: razorpay_payment_id,
+          amount: order.total_amount,
+          customer_name: customerName,
+          customer_phone: (profile as any)?.phone || order.phone,
+          service_name: productName,
+          service_type: "product",
+          payment_method: paymentMethod,
+          payment_date: new Date().toISOString(),
+          payment_row_id: paymentRow.id,
+        })
+      } catch (invoiceErr) {
+        console.error("Product invoice generation failed (non-fatal):", invoiceErr)
+      }
+    }
+
+    return res.json({ success: true, message: "Product payment verified and recorded" })
+
+  } catch (err) {
+    console.error("Verify product payment error:", err)
+    return res.status(500).json({ error: "Verification failed" })
+  }
+}
+
+/* =========================================================
+   GET ORDER INVOICE (product orders)
+   Fetches or generates invoice for a product order
+========================================================= */
+export const getOrderInvoice = async (req: Request, res: Response) => {
+  const { orderId } = req.params
+
+  // Find payment row for this order
+  const { data: paymentRow } = await supabase
+    .from("payments")
+    .select("id, invoice_url, amount, user_id, razorpay_payment_id, payment_method, created_at")
+    .eq("booking_id", orderId)   // product orders store order_id in booking_id column
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Ownership check
+  if (req.user && paymentRow?.user_id !== req.user.id) {
+    const { data: profile } = await supabase
+      .from("profiles").select("role").eq("id", req.user.id).single()
+    if (profile?.role !== "admin") {
+      return res.status(403).json({ error: "Not authorized" })
+    }
+  }
+
+  // Return existing invoice if available
+  if (paymentRow?.invoice_url) {
+    return res.json({ invoice_url: paymentRow.invoice_url })
+  }
+
+  // Generate on-demand
+  try {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("*, order_items(title, price, qty)")
+      .eq("id", orderId)
+      .single()
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" })
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("first_name, last_name, phone")
+      .eq("id", order.user_id)
+      .single()
+
+    const customerName = profile
+      ? `${profile.first_name} ${profile.last_name}`.trim()
+      : order.customer_name || "Customer"
+
+    const productName = order.order_items?.[0]?.title || "AC Product"
+
+    const paymentId = paymentRow?.razorpay_payment_id || orderId
+    const amount = paymentRow?.amount || order.total_amount
+    const paymentRowId = paymentRow?.id
+
+    const invoicePath = await generateInvoice({
+      booking_id: orderId,
+      payment_id: paymentId,
+      amount,
+      customer_name: customerName,
+      customer_phone: (profile as any)?.phone || order.phone,
+      service_name: productName,
+      service_type: "product",
+      payment_method: (paymentRow as any)?.payment_method || "card",
+      payment_date: (paymentRow as any)?.created_at || new Date().toISOString(),
+      otp: "",
+    })
+
+    const invoiceUrl = await uploadInvoice(invoicePath, orderId)
+    try { require("fs").unlinkSync(invoicePath) } catch (_) {}
+
+    if (paymentRowId) {
+      await supabase
+        .from("payments")
+        .update({ invoice_url: invoiceUrl })
+        .eq("id", paymentRowId)
+    }
+
+    return res.json({ invoice_url: invoiceUrl })
+  } catch (err) {
+    console.error("Order invoice error:", err)
+    return res.status(500).json({ error: "Failed to generate invoice" })
+  }
+}
