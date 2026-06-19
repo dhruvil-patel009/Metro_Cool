@@ -7,10 +7,13 @@ import {
   ChevronRight, ChevronLeft, Clock, CheckCircle,
   ShoppingBag, Wrench, CalendarDays, Download,
   Star, Navigation, Loader2, AlertCircle, FileText,
-  IndianRupee,
+  IndianRupee, XCircle,
 } from "lucide-react"
 import { ProfileSidebar } from "../../components/profile-sidebar"
 import { toast } from "react-toastify"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
+import { Button } from "@/app/components/ui/button"
 
 import { apiFetch } from "@/app/lib/api"
 import { OrdersSkeletonList } from "@/app/components/ui/PageLoader"
@@ -41,6 +44,65 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [stats, setStats] = useState({ total: 0, completed: 0, upcoming: 0 })
   const [loading, setLoading] = useState(true)
+
+  /* Cancel modal state */
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState("")
+  const [cancelling, setCancelling] = useState(false)
+
+  const CANCEL_REASONS = [
+    "Changed my mind",
+    "Found another service provider",
+    "Booking was a mistake",
+    "Schedule conflict",
+    "Service no longer needed",
+    "Moving to a different address",
+    "Other",
+  ]
+
+  const openCancelModal = (id: string) => {
+    setCancelBookingId(id)
+    setCancelReason("")
+    setCancelModalOpen(true)
+  }
+
+  const handleCancelBooking = async () => {
+    if (!cancelBookingId || !cancelReason) return
+    setCancelling(true)
+    try {
+      const res = await apiFetch<{ success?: boolean; message?: string }>(
+        `/bookings/${cancelBookingId}/cancel`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ cancellation_reason: cancelReason }),
+        }
+      )
+      toast.success("Booking cancelled successfully")
+      setCancelModalOpen(false)
+      // Refresh orders
+      const data = await apiFetch<any>("/users/me/orders")
+      if (data) {
+        setStats(data.summary)
+        setOrders(data.orders.map((o: any) => {
+          const d = new Date(o.date)
+          return {
+            id: o.id, type: "service", title: o.service_title || "AC Service",
+            description: o.technician_name ? `${o.time} · Tech: ${o.technician_name}` : o.time,
+            day: String(d.getDate()).padStart(2, "0"),
+            month: d.toLocaleString("en-IN", { month: "short" }).toUpperCase(),
+            year: String(d.getFullYear()),
+            price: Number(o.price || 0), status: o.status,
+            canTrack: o.can_track, canReview: o.can_review, hasInvoice: o.invoice_available,
+          }
+        }))
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to cancel booking")
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   const filters = [
     { id: "all",       label: "All" },
@@ -190,10 +252,48 @@ export default function OrdersPage() {
             ) : (
               <div className="space-y-4">
                 {paginated.map(order => (
-                  <OrderCard key={order.id} order={order} />
+                  <OrderCard key={order.id} order={order} onCancel={() => openCancelModal(order.id)} />
                 ))}
               </div>
             )}
+
+            {/* ── Cancel Booking Modal ── */}
+            <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
+              <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-red-600">
+                    <AlertCircle className="w-5 h-5" />
+                    Cancel Booking
+                  </DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to cancel this booking? Please select a reason below.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <Select value={cancelReason} onValueChange={setCancelReason}>
+                    <SelectTrigger className="rounded-xl h-11">
+                      <SelectValue placeholder="Select cancellation reason" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CANCEL_REASONS.map((reason) => (
+                        <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setCancelModalOpen(false)} className="rounded-xl">Keep Booking</Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleCancelBooking}
+                      disabled={!cancelReason || cancelling}
+                      className="rounded-xl"
+                    >
+                      {cancelling ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" /> Cancelling…</> : "Confirm Cancel"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -236,13 +336,14 @@ export default function OrdersPage() {
 }
 
 /* ─── Order Card ─── */
-function OrderCard({ order }: { order: any }) {
+function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
   const router = useRouter()
   const [downloadingInvoice, setDownloadingInvoice] = useState(false)
 
   const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.open
   const isActive = ["assigned", "on_the_way", "working"].includes(order.status)
   const isCompleted = order.status === "completed" || order.status === "report_submitted"
+  const isCancellable = ["open", "assigned", "on_the_way", "working"].includes(order.status)
 
   const handleInvoice = async () => {
     setDownloadingInvoice(true)
@@ -325,6 +426,17 @@ function OrderCard({ order }: { order: any }) {
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
+                {/* Cancel — for active/open bookings */}
+                {isCancellable && (
+                  <button
+                    onClick={onCancel}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white border border-red-200 hover:border-red-400 hover:bg-red-50 text-red-600 rounded-xl text-sm font-semibold transition-all"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Cancel
+                  </button>
+                )}
+
                 {/* Track Arrival — for active jobs */}
                 {order.canTrack && (
                   <Link href={`/bookings?id=${order.id}`}>

@@ -235,6 +235,61 @@ export const getAllBookings = async (req: Request, res: Response) => {
 
 
 
+/* ======================================================
+   ❌ CANCEL BOOKING (Admin)
+   Sets job_status = 'cancelled' with a reason
+   ====================================================== */
+
+export const cancelBooking = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const { cancellation_reason } = req.body
+
+    if (!cancellation_reason) {
+      return res.status(400).json({ error: "Cancellation reason is required" })
+    }
+
+    // Check booking exists and is not already completed/cancelled
+    const { data: existing, error: fetchError } = await supabase
+      .from("bookings")
+      .select("id, job_status")
+      .eq("id", id)
+      .maybeSingle()
+
+    if (fetchError || !existing) {
+      return res.status(404).json({ error: "Booking not found" })
+    }
+
+    if (existing.job_status === "completed") {
+      return res.status(400).json({ error: "Cannot cancel a completed booking" })
+    }
+
+    if (existing.job_status === "cancelled") {
+      return res.status(400).json({ error: "Booking is already cancelled" })
+    }
+
+    // Update booking
+    const { data, error } = await supabase
+      .from("bookings")
+      .update({
+        job_status: "cancelled",
+        cancellation_reason,
+        cancelled_at: new Date().toISOString(),
+        cancelled_by: "admin",
+      })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    res.json({ success: true, message: "Booking cancelled successfully", booking: data })
+  } catch (err) {
+    console.error("Cancel booking error:", err)
+    res.status(500).json({ error: "Failed to cancel booking" })
+  }
+}
+
 /* ================= HELPER ================= */
 
 const normalizeStatus = (status: string) => {

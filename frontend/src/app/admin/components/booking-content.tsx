@@ -5,6 +5,7 @@ import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/ui/dialog"
 import {
   Calendar,
   ClipboardList,
@@ -17,8 +18,10 @@ import {
   MoreVertical,
   CalendarDays,
   Loader2,
+  AlertTriangle,
 } from "lucide-react"
 import { AdminEmptyState } from "./admin-page-shell"
+import { toast } from "react-toastify"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -89,6 +92,12 @@ export default function BookingsContent() {
   const [statusFilter, setStatusFilter] = useState("any")
   const [paymentFilter, setPaymentFilter] = useState("all")
 
+  /* Cancel modal state */
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState("")
+  const [cancelling, setCancelling] = useState(false)
+
   const start = (page - 1) * limit + 1
 const end = Math.min(page * limit, total)
 const totalPages = Math.ceil(total / limit)
@@ -142,6 +151,52 @@ const fetchBookings = async () => {
     fetchStats()
     fetchBookings()
   }, [page])
+
+  /* ================= CANCEL BOOKING ================= */
+
+  const openCancelModal = (id: string) => {
+    setCancelBookingId(id)
+    setCancelReason("")
+    setCancelModalOpen(true)
+  }
+
+  const handleCancelBooking = async () => {
+    if (!cancelBookingId || !cancelReason) return
+    setCancelling(true)
+    try {
+      const res = await fetch(`${API_URL}/admin/bookings/${cancelBookingId}/cancel`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ cancellation_reason: cancelReason }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to cancel")
+
+      toast.success("Booking cancelled successfully")
+      setCancelModalOpen(false)
+      fetchBookings()
+      fetchStats()
+    } catch (err: any) {
+      toast.error(err.message || "Failed to cancel booking")
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  const CANCEL_REASONS = [
+    "Customer requested cancellation",
+    "Customer not reachable",
+    "Address not found / unreachable",
+    "Service no longer needed",
+    "Duplicate booking",
+    "Technician unavailable",
+    "Admin decision",
+    "Other",
+  ]
 
   /* ================= FILTER ================= */
 
@@ -370,14 +425,16 @@ const fetchBookings = async () => {
                     <td className="px-5 py-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="sm" className="transition-opacity">
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>View Details</DropdownMenuItem>
                           <DropdownMenuItem>Assign Technician</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">Cancel Booking</DropdownMenuItem>
+                          {booking.status !== "Completed" && booking.status !== "Cancelled" && (
+                            <DropdownMenuItem className="text-red-600" onClick={() => openCancelModal(booking.id)}>Cancel Booking</DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -387,6 +444,44 @@ const fetchBookings = async () => {
             </tbody>
           </table>
         </div>
+
+        {/* ── Cancel Booking Modal ── */}
+        <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
+          <DialogContent className="sm:max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-gray-900">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                Cancel Booking
+              </DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. Please select a reason for cancellation.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <Select value={cancelReason} onValueChange={setCancelReason}>
+                <SelectTrigger className="rounded-xl h-11">
+                  <SelectValue placeholder="Select cancellation reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CANCEL_REASONS.map((reason) => (
+                    <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setCancelModalOpen(false)} className="rounded-xl">Keep Booking</Button>
+                <Button
+                  variant="outline"
+                  onClick={handleCancelBooking}
+                  disabled={!cancelReason || cancelling}
+                  className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                >
+                  {cancelling ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" /> Cancelling…</> : "Confirm Cancel"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Pagination */}
         <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-gray-50/40">
@@ -430,7 +525,9 @@ const fetchBookings = async () => {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>View Details</DropdownMenuItem>
                     <DropdownMenuItem>Assign Technician</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">Cancel Booking</DropdownMenuItem>
+                    {booking.status !== "Completed" && booking.status !== "Cancelled" && (
+                      <DropdownMenuItem className="text-red-600" onClick={() => openCancelModal(booking.id)}>Cancel Booking</DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

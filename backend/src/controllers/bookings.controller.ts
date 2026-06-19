@@ -362,6 +362,63 @@ export const updateJobStatus = async (req: any, res: Response) => {
   }
 }
 
+/* ======================================================
+   ❌ CANCEL BOOKING (Customer)
+   ====================================================== */
+
+export const cancelBooking = async (req: any, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    const bookingId = req.params.id
+    const { cancellation_reason } = req.body
+
+    if (!cancellation_reason) {
+      return res.status(400).json({ message: "Cancellation reason is required" })
+    }
+
+    // Verify booking belongs to this user
+    const { data: existing, error: fetchError } = await supabase
+      .from("bookings")
+      .select("id, job_status, user_id")
+      .eq("id", bookingId)
+      .eq("user_id", req.user.id)
+      .maybeSingle()
+
+    if (fetchError || !existing) {
+      return res.status(404).json({ message: "Booking not found" })
+    }
+
+    if (existing.job_status === "completed") {
+      return res.status(400).json({ message: "Cannot cancel a completed booking" })
+    }
+
+    if (existing.job_status === "cancelled") {
+      return res.status(400).json({ message: "Booking is already cancelled" })
+    }
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .update({
+        job_status: "cancelled",
+        cancellation_reason,
+        cancelled_at: new Date().toISOString(),
+        cancelled_by: "customer",
+      })
+      .eq("id", bookingId)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    res.json({ success: true, message: "Booking cancelled successfully", booking: data })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
 // export const notifyBookingUpdate = async (booking: any) => {
 
 //   if (!currentSubscription) {

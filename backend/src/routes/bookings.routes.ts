@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { completeBooking, createBooking, getAllBookings, getBookedDates, getBookingById, gettechnicianBookingById, updateJobStatus } from "../controllers/bookings.controller.js"
+import { completeBooking, createBooking, getAllBookings, getBookedDates, getBookingById, gettechnicianBookingById, updateJobStatus, cancelBooking } from "../controllers/bookings.controller.js"
 import { protect } from "../middlewares/auth.middleware.js"
 
 const router = Router()
@@ -14,5 +14,6 @@ router.get("/:id",protect, getBookingById) // ✅ ADD
 router.get("/techjobs/:id",protect, gettechnicianBookingById) // ✅ ADD
 
 router.put("/:id/status", protect, updateJobStatus)
+router.put("/:id/cancel", protect, cancelBooking)
 
 export default router
