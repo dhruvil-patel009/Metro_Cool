@@ -17,6 +17,8 @@ export function ProfileSidebar() {
 
   const [name, setName] = useState("—")
   const [image, setImage] = useState<string | null>(null)
+  const [orderCount, setOrderCount] = useState(0)
+  const [totalSpent, setTotalSpent] = useState(0)
 
 
   const router = useRouter()
@@ -51,9 +53,35 @@ export function ProfileSidebar() {
     }
   }
 
+  /* ================= LOAD ORDER STATS ================= */
+  const loadOrderStats = async () => {
+    try {
+      const data = await apiFetch<any>("/users/me/orders")
+      if (data?.summary) {
+        setOrderCount(data.summary.total || 0)
+      }
+      if (data?.orders) {
+        const spent = data.orders
+          .filter((o: any) => o.status === "completed")
+          .reduce((sum: number, o: any) => sum + Number(o.price || 0), 0)
+        setTotalSpent(spent)
+      }
+    } catch {
+      // silent fail
+    }
+  }
+
+  /* ================= FORMAT SPENT ================= */
+  const formatSpent = (v: number) => {
+    if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`
+    if (v >= 1000) return `₹${(v / 1000).toFixed(1)}k`
+    return `₹${v.toFixed(0)}`
+  }
+
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
     loadUser()
+    loadOrderStats()
   }, [])
 
   /* ================= LIVE UPDATE LISTENER ================= */
@@ -75,7 +103,7 @@ export function ProfileSidebar() {
   const menuItems =
     [
       { href: "/profile", label: "Profile Information", icon: User, badge: null },
-      { href: "/profile/orders", label: "Order History", icon: FileText, badge: "24" },
+      { href: "/profile/orders", label: "Order History", icon: FileText, badge: orderCount > 0 ? String(orderCount) : null },
       { href: "/profile/addresses", label: "Saved Addresses", icon: MapPin, badge: null },
       { href: "/profile/notifications", label: "Notifications", icon: Bell, badge: null },
     ]
@@ -106,11 +134,11 @@ export function ProfileSidebar() {
         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
           <div>
             <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Orders</div>
-            <div className="text-2xl font-bold text-gray-900">24</div>
+            <div className="text-2xl font-bold text-gray-900">{orderCount}</div>
           </div>
           <div>
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Saved</div>
-            <div className="text-2xl font-bold text-gray-900">₹1.2k</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Spent</div>
+            <div className="text-2xl font-bold text-gray-900">{formatSpent(totalSpent)}</div>
           </div>
         </div>
       </div>

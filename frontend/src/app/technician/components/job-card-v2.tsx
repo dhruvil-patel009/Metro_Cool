@@ -17,7 +17,7 @@ import { useQueryClient } from "@tanstack/react-query"
 
 interface JobCardProps {
   id: string
-  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed"
+  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed" | "cancelled" | "report_submitted"
   title: string
   customer: string
   location: string
@@ -220,6 +220,23 @@ router.push(`/technician/jobs/${id}`)
                 VIEW DETAILS
               </Button>
             </Link>
+          )}
+
+          {/* REPORT SUBMITTED */}
+          {job_status === "report_submitted" && (
+            <Link href={`/technician/jobs/${id}`}>
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 rounded-xl font-bold">
+                VIEW REPORT
+              </Button>
+            </Link>
+          )}
+
+          {/* CANCELLED */}
+          {job_status === "cancelled" && (
+            <span className="inline-flex items-center gap-2 text-red-500 text-sm font-bold px-4 py-2">
+              <CheckCircle2 className="w-4 h-4" />
+              Cancelled
+            </span>
           )}
 
         </div>

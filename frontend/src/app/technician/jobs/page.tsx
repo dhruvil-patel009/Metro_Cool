@@ -27,7 +27,7 @@ type Booking = {
   address: Address | string | null
 
   // IMPORTANT CHANGE
-  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed"
+  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed" | "cancelled" | "report_submitted"
   issues?: string[]
 
   services: {
@@ -92,65 +92,47 @@ export default function JobsPage() {
 
   /* ================= FETCH BOOKINGS ================= */
 
-  // useEffect(() => {
-  //   const fetchJobs = async () => {
-  //     try {
-  //       const token = localStorage.getItem("token")
-
-  //       const res = await fetch(
-  //         `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //           cache: "no-store",
-  //         }
-  //       )
-
-  //       const json = await res.json()
-  //       if (json.success) {
-  //         console.log("API BOOKINGS:", json.bookings)
-  //         setJobs(json.bookings)
-  //       }
-  //     } catch (err) {
-  //       console.error("Failed to load jobs", err)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-
-  //   fetchJobs()
-  // }, [])
-
   const fetchJobs = async (): Promise<Booking[]> => {
     try {
       const token = localStorage.getItem("token")
+      const headers = { Authorization: `Bearer ${token}` }
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          cache: "no-store",
+      // Fetch open jobs (available to accept) + my jobs (accepted/in-progress)
+      const [openRes, myRes] = await Promise.all([
+        fetch(`${base}/tech-jobs/open`, { headers, cache: "no-store" }),
+        fetch(`${base}/tech-jobs/my`, { headers, cache: "no-store" }),
+      ])
+
+      const openData = openRes.ok ? await openRes.json() : { bookings: [] }
+      const myData = myRes.ok ? await myRes.json() : { bookings: [] }
+
+      // Fetch completed jobs from bookings endpoint
+      const completedRes = await fetch(`${base}/bookings`, { headers, cache: "no-store" })
+      const completedData = completedRes.ok ? await completedRes.json() : { bookings: [] }
+
+      // Combine: open + my non-completed + completed/cancelled from all
+      const openBookings = Array.isArray(openData.bookings) ? openData.bookings : []
+      const myBookings = Array.isArray(myData.bookings) ? myData.bookings : []
+      const allBookings = Array.isArray(completedData.bookings) ? completedData.bookings : []
+
+      // Merge and deduplicate by id
+      const seen = new Set<string>()
+      const merged: Booking[] = []
+
+      for (const b of [...openBookings, ...myBookings, ...allBookings]) {
+        if (!seen.has(b.id)) {
+          seen.add(b.id)
+          merged.push(b)
         }
-      )
-
-      if (!res.ok) return [];
-
-      const json = await res.json();
-
-      // 🧠 GUARANTEE ARRAY
-      if (!json || !Array.isArray(json.bookings)) {
-        return [];
       }
 
-      return json.bookings;
+      return merged
     } catch (err) {
-      console.error("Jobs fetch failed:", err);
-      return [];
+      console.error("Jobs fetch failed:", err)
+      return []
     }
-  };
+  }
 
 
   const {
@@ -186,7 +168,7 @@ export default function JobsPage() {
       )
 
     // finished jobs
-    if (activeTab === "completed") return job.job_status === "completed"
+    if (activeTab === "completed") return job.job_status === "completed" || job.job_status === "report_submitted"
 
     return true
   })
@@ -217,7 +199,7 @@ export default function JobsPage() {
     {
       id: "completed",
       label: "Completed Jobs",
-      count: jobs.filter(j => j.job_status === "completed").length,
+      count: jobs.filter(j => j.job_status === "completed" || j.job_status === "report_submitted").length,
     },
   ]
 
