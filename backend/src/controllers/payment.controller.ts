@@ -623,6 +623,10 @@ export const getInvoice = async (req: Request, res: Response) => {
       .eq("id", bookingId)
       .single()
 
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found for this payment" })
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("first_name, last_name, phone")
@@ -634,6 +638,8 @@ export const getInvoice = async (req: Request, res: Response) => {
       : booking?.full_name || "Customer"
     const serviceName = (booking?.services as any)?.title || "AC Service"
     const otp = paymentRow.closure_otp || booking?.closure_otp || "----"
+
+    console.log(`[getInvoice] generating on-demand for booking: ${bookingId}, customer: ${customerName}, service: ${serviceName}`)
 
     const invoiceUrl = await buildAndUploadInvoice({
       booking_id: bookingId,
@@ -651,14 +657,16 @@ export const getInvoice = async (req: Request, res: Response) => {
     })
 
     if (!invoiceUrl) {
-      return res.status(500).json({ error: "Failed to generate invoice" })
+      console.error("[getInvoice] buildAndUploadInvoice returned null for booking:", bookingId)
+      return res.status(500).json({ error: "Failed to generate invoice. Please contact support." })
     }
 
+    console.log("[getInvoice] success, URL:", invoiceUrl)
     return res.json({ invoice_url: invoiceUrl })
 
-  } catch (err) {
-    console.error("On-demand invoice error:", err)
-    return res.status(500).json({ error: "Failed to generate invoice" })
+  } catch (err: any) {
+    console.error("[getInvoice] On-demand invoice error:", err?.message, err?.stack)
+    return res.status(500).json({ error: `Failed to generate invoice: ${err?.message || "Unknown error"}` })
   }
 }
 

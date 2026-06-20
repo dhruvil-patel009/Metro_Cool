@@ -352,11 +352,14 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
         `/payments/invoice/${order.id}`
       )
       if (!data?.invoice_url) {
+        console.error("[invoice] no URL returned:", data)
         toast.error(data?.error || "Invoice not ready yet. Please try again.")
         return
       }
+      console.log("[invoice] opening URL:", data.invoice_url)
       window.open(data.invoice_url, "_blank")
     } catch (err: any) {
+      console.error("[invoice] download error:", err)
       toast.error(err.message || "Failed to download invoice")
     } finally {
       setDownloadingInvoice(false)

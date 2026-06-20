@@ -313,12 +313,15 @@ export default function CompletionContent() {
       })
       const data = await res.json()
       if (!res.ok || !data?.invoice_url) {
+        console.error("[invoice] API error:", data)
         toast.error(data?.error || "Invoice not ready yet. Please try again in a moment.")
         return
       }
+      console.log("[invoice] opening URL:", data.invoice_url)
       window.open(data.invoice_url, "_blank")
-    } catch {
-      toast.error("Failed to download invoice")
+    } catch (err) {
+      console.error("[invoice] download error:", err)
+      toast.error("Failed to download invoice. Please try again.")
     } finally {
       setDownloadingInvoice(false)
     }

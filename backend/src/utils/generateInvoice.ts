@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit"
 import fs from "fs"
 import path from "path"
+import os from "os"
 import sharp from "sharp"
 
 /* ═══════════════════════════════════════════════════
@@ -37,9 +38,17 @@ async function getLogoPng(): Promise<Buffer | null> {
     path.join(process.cwd(), "..", "frontend", "public", "assets", "logo.svg"),
     path.join(process.cwd(), "..", "frontend", "public", "assets", "logo.png"),
     path.join(process.cwd(), "logo.png"),
+    path.join(process.cwd(), "..", "logo.png"),
+    path.join(process.cwd(), "public", "logo.png"),
+    path.join(process.cwd(), "src", "utils", "logo.png"),
   ]
+  console.log("[invoice-logo] searching for logo, cwd:", process.cwd())
   for (const p of candidates) {
-    if (!fs.existsSync(p)) continue
+    if (!fs.existsSync(p)) {
+      console.log("[invoice-logo] not found:", p)
+      continue
+    }
+    console.log("[invoice-logo] found:", p)
     try {
       _logoBuf = await sharp(fs.readFileSync(p))
         .resize(140, 140, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
@@ -49,6 +58,7 @@ async function getLogoPng(): Promise<Buffer | null> {
       return _logoBuf
     } catch (_) { /* try next */ }
   }
+  console.log("[invoice-logo] no logo found, will use text fallback")
   return null
 }
 
@@ -127,9 +137,11 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
 
   return new Promise<string>((resolve, reject) => {
     try {
-      const dir = path.join(process.cwd(), "invoices")
+      // Use OS temp directory — works on Vercel, AWS, VPS, local
+      const dir = path.join(os.tmpdir(), "metro-cool-invoices")
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
       const filePath = path.join(dir, `invoice_${data.booking_id}.pdf`)
+      console.log("[invoice] writing PDF to:", filePath)
 
       const doc = new PDFDocument({ size: "A4", margin: 0,
         info: {
