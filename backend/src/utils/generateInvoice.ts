@@ -2,7 +2,12 @@ import PDFDocument from "pdfkit"
 import fs from "fs"
 import path from "path"
 import os from "os"
+import { fileURLToPath } from "url"
 import sharp from "sharp"
+
+/* Get directory of THIS file — works in both dev (src/) and prod (dist/) */
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 /* ═══════════════════════════════════════════════════
    PALETTE
@@ -34,15 +39,27 @@ let _logoBuf: Buffer | null = null
 
 async function getLogoPng(): Promise<Buffer | null> {
   if (_logoBuf) return _logoBuf
+
+  // Build paths relative to THIS file (works in both src/ and dist/)
+  // __dirname = backend/src/utils/ (dev) or backend/dist/utils/ (prod)
   const candidates = [
-    path.join(process.cwd(), "..", "frontend", "public", "assets", "logo.svg"),
-    path.join(process.cwd(), "..", "frontend", "public", "assets", "logo.png"),
+    // Same folder as this file
+    path.join(__dirname, "logo.png"),
+    // backend/logo.png (from src/utils/ go up 2 levels)
+    path.join(__dirname, "..", "..", "logo.png"),
+    // backend/logo.png (from dist/utils/ go up 2 levels)
+    path.join(__dirname, "..", "..", "..", "logo.png"),
+    // process.cwd() based (fallback for various deploy setups)
     path.join(process.cwd(), "logo.png"),
     path.join(process.cwd(), "..", "logo.png"),
-    path.join(process.cwd(), "public", "logo.png"),
+    path.join(process.cwd(), "dist", "utils", "logo.png"),
     path.join(process.cwd(), "src", "utils", "logo.png"),
+    // Frontend assets (local dev only)
+    path.join(process.cwd(), "..", "frontend", "public", "assets", "logo.svg"),
+    path.join(process.cwd(), "..", "frontend", "public", "assets", "logo.png"),
   ]
-  console.log("[invoice-logo] searching for logo, cwd:", process.cwd())
+
+  console.log("[invoice-logo] searching for logo, cwd:", process.cwd(), "__dirname:", __dirname)
   for (const p of candidates) {
     if (!fs.existsSync(p)) {
       console.log("[invoice-logo] not found:", p)
@@ -56,7 +73,9 @@ async function getLogoPng(): Promise<Buffer | null> {
         .png()
         .toBuffer()
       return _logoBuf
-    } catch (_) { /* try next */ }
+    } catch (e: any) {
+      console.log("[invoice-logo] sharp failed for:", p, e?.message)
+    }
   }
   console.log("[invoice-logo] no logo found, will use text fallback")
   return null
