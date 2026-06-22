@@ -9,7 +9,6 @@ import {
   Camera,
   CheckCircle2,
   Phone,
-  Mail,
   Trash2,
 } from "lucide-react"
 import { ProfileSidebar } from "../components/profile-sidebar"
@@ -80,7 +79,7 @@ export default function ProfilePage() {
         return
       }
 
-      await apiFetch("/me", {
+      await apiFetch("/user/me", {
         method: "PUT",
         body: JSON.stringify({
           first_name: firstName,

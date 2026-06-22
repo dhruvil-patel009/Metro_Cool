@@ -8,8 +8,8 @@ export function Footer() {
       {
         "@type": "Organization",
         name: "Metro Cool",
-        url: "https://www.metrocool.com",
-        logo: "https://www.metrocool.com/logo.png",
+        url: "https://www.metro-cool.com",
+        logo: "https://www.metro-cool.com/logo.png",
         description:
           "Metro Cool provides professional AC repair, installation, maintenance and cooling solutions.",
         sameAs: [
@@ -20,18 +20,24 @@ export function Footer() {
       {
         "@type": "LocalBusiness",
         name: "Metro Cool Services",
-        url: "https://www.metrocool.com",
+        url: "https://www.metro-cool.com",
         description:
           "Trusted AC repair, AC installation, gas refill and annual maintenance services.",
         areaServed: {
-          "@type": "Country",
-          name: "United States"
+          "@type": "City",
+          name: "Ahmedabad"
+        },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Ahmedabad",
+          addressRegion: "Gujarat",
+          addressCountry: "IN"
         }
       }
     ]
   }
   return (
-    <footer className="bg-[#f4f4f4] pt-40 pb-12 border-t border-gray-100">
+    <footer className="bg-[#f4f4f4] pt-16 pb-12 border-t border-gray-100">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -70,22 +76,22 @@ export function Footer() {
             <h4 className="font-bold mb-6">Services</h4>
             <ul className="space-y-4 text-sm text-gray-500">
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/services" className="hover:text-blue-600">
                   AC Repair
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/services" className="hover:text-blue-600">
                   Installation
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/services" className="hover:text-blue-600">
                   Annual Maintenance
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/services" className="hover:text-blue-600">
                   Gas Refill
                 </Link>
               </li>
@@ -96,22 +102,22 @@ export function Footer() {
             <h4 className="font-bold mb-6">Quick Links</h4>
             <ul className="space-y-4 text-sm text-gray-500">
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/about" className="hover:text-blue-600">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/contact" className="hover:text-blue-600">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/privacy-policy" className="hover:text-blue-600">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/terms" className="hover:text-blue-600">
                   Terms of Service
                 </Link>
               </li>

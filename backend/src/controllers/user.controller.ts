@@ -64,6 +64,7 @@ export const getMe = async (req: any, res: Response) => {
       first_name,
       last_name,
       phone,
+      email,
       profile_photo
     `)
     .eq("id", userId)

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts",
-    "build": "tsc && node -e \"require('fs').copyFileSync('logo.png','dist/utils/logo.png')\"",
+    "build": "tsc && node --input-type=module -e \"import fs from 'fs'; fs.copyFileSync('logo.png','dist/utils/logo.png');\"",
     "start": "node dist/server.js"
   },
   "engines": {

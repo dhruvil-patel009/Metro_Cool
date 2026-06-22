@@ -401,7 +401,7 @@ const total       = +(serviceFee + gstAmount).toFixed(2)
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
                 <h3 className="font-bold text-lg mb-1">Booking Summary</h3>
-                <p className="text-xs text-gray-500 mb-6">Order #MC-82921</p>
+                <p className="text-xs text-gray-500 mb-6">Confirm your booking details</p>
 
                 {/* Service Info */}
                 <div className="mb-6 pb-6 border-b border-gray-100">

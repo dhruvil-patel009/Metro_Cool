@@ -40,7 +40,7 @@ export function ProfileSidebar() {
       }
 
       // 🔄 2. Fetch fresh data from API
-      const data = await apiFetch<UserMeResponse>("/me")
+      const data = await apiFetch<UserMeResponse>("/user/me")
 
       setName(`${data.first_name ?? ""} ${data.last_name ?? ""}`.trim())
       setImage(

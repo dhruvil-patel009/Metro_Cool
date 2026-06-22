@@ -206,7 +206,7 @@ localStorage.setItem(
     selectedAddons
   })
 )
-      router.push(`/services/${data.booking.id}/booking/confirm`)
+      router.push(`/services/${id}/booking/confirm`)
 
     } catch (err:any) {
 
@@ -444,7 +444,7 @@ ${isBooked || isPast
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sticky top-24">
                             <h3 className="font-bold text-lg mb-1">Booking Summary</h3>
-                            <p className="text-xs text-gray-500 mb-6">Order #MC-82921</p>
+                            <p className="text-xs text-gray-500 mb-6">Review your selection</p>
 
                             {/* Service Info */}
                             <div className="flex gap-4 p-4 bg-blue-50 rounded-lg mb-6">
@@ -477,7 +477,7 @@ ${isBooked || isPast
                                     <button className="text-blue-600 text-xs font-semibold hover:underline">Edit</button>
                                 </div>
                                 <p className="font-bold text-sm">
-                                    Thu, Oct {selectedDay}, {selectedYear}
+                                    {selectedDay ? `${MONTH_NAMES[selectedMonth]} ${selectedDay}, ${selectedYear}` : "Select a date"}
                                 </p>
                                 <p className="text-blue-600 text-sm font-semibold">
                                     {selectedTime} - {Number.parseInt(selectedTime) + 1}:30 {selectedTime.includes("AM") ? "AM" : "PM"}
@@ -506,7 +506,7 @@ ${isBooked || isPast
                                     </div>
                                     <button className="text-blue-600 text-xs font-semibold hover:underline">Edit</button>
                                 </div>
-                                <p className="text-sm font-semibold">123 Palm Avenue, Metro City</p>
+                                <p className="text-sm font-semibold">Address will be provided on next step</p>
                             </div>
 
                             {/* Price Breakdown */}

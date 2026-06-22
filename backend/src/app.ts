@@ -84,14 +84,6 @@ const corsOptions: cors.CorsOptions = {
 
 app.use(cors(corsOptions))
 
-// ⭐ REAL PREVENTION FOR PREFLIGHT LOOP
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204)
-  }
-  next()
-})
-
 
 
 

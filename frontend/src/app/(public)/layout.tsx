@@ -5,7 +5,7 @@ import { Footer } from "./components/footer";
 import { Navigation } from "./components/navigation";
 
 
-export default function AdminLayout({
+export default function PublicLayout({
     children,
 }: {
     children: React.ReactNode;
