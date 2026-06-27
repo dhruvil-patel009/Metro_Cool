@@ -20,10 +20,15 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { toast } from "react-toastify";
 import { ProductViewModal } from "./product-view-modal";
+import { EditProductModal } from "./edit-product-modal";
+import { DeleteConfirmModal } from "./delete-confirm-modal";
 
 export function ProductsTable() {
   const [products, setProducts] = useState<any[]>([]);
   const [viewProduct, setViewProduct] = useState<any | null>(null);
+  const [editProduct, setEditProduct] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,10 +38,25 @@ export function ProductsTable() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = async (id: string) => {
-    await deleteProduct(id);
-    setProducts((p) => p.filter((x) => x.id !== id));
-    toast.success("🗑️ Product deleted");
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteProduct(deleteTarget.id);
+      setProducts((p) => p.filter((x) => x.id !== deleteTarget.id));
+      toast.success("🗑️ Product deleted");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete product");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  const handleProductUpdated = (updated: any) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+    );
   };
 
   return (
@@ -65,7 +85,10 @@ export function ProductsTable() {
           <tbody>
             {products.map((p) => {
               const image =
-                p.thumbnail_image || p.main_image || null;
+                (Array.isArray(p.thumbnail_images) && p.thumbnail_images[0]) ||
+                p.thumbnail_image ||
+                p.main_image ||
+                null;
 
               return (
                 <tr key={p.id} className="border-t hover:bg-gray-50">
@@ -102,9 +125,9 @@ export function ProductsTable() {
 
                   {/* DISCOUNT */}
                   <td className="p-4">
-                    {p.discount_price ? (
+                    {p.old_price ? (
                       <span className="text-green-600 font-medium">
-                        ₹{p.discount_price}
+                        ₹{p.old_price}
                       </span>
                     ) : (
                       <span className="text-gray-400">—</span>
@@ -164,14 +187,16 @@ export function ProductsTable() {
                           View
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setEditProduct(p)}
+                        >
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
 
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDelete(p.id)}
+                          onClick={() => setDeleteTarget(p)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
@@ -193,127 +218,130 @@ export function ProductsTable() {
       </div>
 
       {/* MOBILE & TABLET CARDS */}
-<div className="lg:hidden bg-white rounded-xl shadow-sm p-4 space-y-4">
-  {products.map((p) => {
-    const image = p.thumbnail_image || p.main_image || null;
+      <div className="lg:hidden bg-white rounded-xl shadow-sm p-4 space-y-4">
+        {products.map((p) => {
+          const image =
+            (Array.isArray(p.thumbnail_images) && p.thumbnail_images[0]) ||
+            p.thumbnail_image ||
+            p.main_image ||
+            null;
 
-    return (
-      <div
-        key={p.id}
-        className="rounded-xl border border-gray-200 p-4 shadow-sm"
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex gap-3">
-            {image ? (
-              <img
-                src={image}
-                alt={p.title}
-                className="h-12 w-12 rounded-lg object-cover border"
-              />
-            ) : (
-              <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                <ImageIcon className="h-5 w-5 text-gray-400" />
-              </div>
-            )}
-
-            <div>
-              <p className="font-semibold text-gray-900">{p.title}</p>
-              <p className="text-xs text-gray-500">ID: {p.id}</p>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setViewProduct(p)}>
-                <Eye className="mr-2 h-4 w-4" />
-                View
-              </DropdownMenuItem>
-
-              <DropdownMenuItem>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => handleDelete(p.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Details */}
-        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="text-gray-500">Price</p>
-            <p className="font-medium">₹{p.price}</p>
-          </div>
-
-          <div>
-            <p className="text-gray-500">Discount</p>
-            {p.discount_price ? (
-              <p className="font-medium text-green-600">
-                ₹{p.discount_price}
-              </p>
-            ) : (
-              <p className="text-gray-400">—</p>
-            )}
-          </div>
-
-          <div>
-            <p className="text-gray-500">Rating</p>
-            <p>{p.rating ? `⭐ ${p.rating}` : "—"}</p>
-          </div>
-
-          <div>
-            <p className="text-gray-500">Stock</p>
-            <span
-              className={`font-medium ${
-                p.in_stock ? "text-green-600" : "text-red-500"
-              }`}
+          return (
+            <div
+              key={p.id}
+              className="rounded-xl border border-gray-200 p-4 shadow-sm"
             >
-              {p.in_stock ? "In Stock" : "Out"}
-            </span>
-          </div>
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-3">
+                  {image ? (
+                    <img
+                      src={image}
+                      alt={p.title}
+                      className="h-12 w-12 rounded-lg object-cover border"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <ImageIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                  )}
 
-          <div className="col-span-2">
-            <p className="text-gray-500">Catalog</p>
-            {p.catalog_pdf ? (
-              <a
-                href={p.catalog_pdf}
-                target="_blank"
-                className="inline-flex items-center gap-2 text-cyan-600 hover:underline"
-              >
-                <FileText className="h-4 w-4" />
-                PDF
-              </a>
-            ) : (
-              <p className="text-xs text-gray-400">No PDF</p>
-            )}
+                  <div>
+                    <p className="font-semibold text-gray-900">{p.title}</p>
+                    <p className="text-xs text-gray-500">ID: {p.id}</p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setViewProduct(p)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      View
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={() => setEditProduct(p)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => setDeleteTarget(p)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Details */}
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-gray-500">Price</p>
+                  <p className="font-medium">₹{p.price}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500">Old Price</p>
+                  {p.old_price ? (
+                    <p className="font-medium text-green-600">
+                      ₹{p.old_price}
+                    </p>
+                  ) : (
+                    <p className="text-gray-400">—</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-gray-500">Rating</p>
+                  <p>{p.rating ? `⭐ ${p.rating}` : "—"}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500">Stock</p>
+                  <span
+                    className={`font-medium ${
+                      p.in_stock ? "text-green-600" : "text-red-500"
+                    }`}
+                  >
+                    {p.in_stock ? "In Stock" : "Out"}
+                  </span>
+                </div>
+
+                <div className="col-span-2">
+                  <p className="text-gray-500">Catalog</p>
+                  {p.catalog_pdf ? (
+                    <a
+                      href={p.catalog_pdf}
+                      target="_blank"
+                      className="inline-flex items-center gap-2 text-cyan-600 hover:underline"
+                    >
+                      <FileText className="h-4 w-4" />
+                      PDF
+                    </a>
+                  ) : (
+                    <p className="text-xs text-gray-400">No PDF</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {products.length === 0 && (
+          <div className="p-6 text-center text-gray-500">
+            No products found
           </div>
-        </div>
+        )}
       </div>
-    );
-  })}
-
-  {products.length === 0 && (
-    <div className="p-6 text-center text-gray-500">
-      No products found
-    </div>
-  )}
-</div>
-
 
       {/* VIEW MODAL */}
       {viewProduct && (
@@ -322,6 +350,23 @@ export function ProductsTable() {
           onClose={() => setViewProduct(null)}
         />
       )}
+
+      {/* EDIT MODAL */}
+      <EditProductModal
+        product={editProduct}
+        isOpen={!!editProduct}
+        onClose={() => setEditProduct(null)}
+        onUpdated={handleProductUpdated}
+      />
+
+      {/* DELETE CONFIRMATION */}
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        productName={deleteTarget?.title || ""}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
       </>
       )}
     </>
