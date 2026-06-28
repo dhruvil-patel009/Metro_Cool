@@ -31,7 +31,18 @@ router.post(
   createProduct
 );
 
-router.put("/:id", protect, authorize("admin"), updateProduct);
+router.put(
+  "/:id",
+  protect,
+  authorize("admin"),
+  upload.fields([
+    { name: "mainImage", maxCount: 1 },
+    { name: "thumbnail", maxCount: 20 },
+    { name: "gallery", maxCount: 20 },
+    { name: "catalog", maxCount: 1 },
+  ]),
+  updateProduct
+);
 router.delete("/:id", protect, authorize("admin"), deleteProduct);
 router.post("/products/create", createProduct);
 

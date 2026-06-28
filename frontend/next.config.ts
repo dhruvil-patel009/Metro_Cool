@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
         hostname: "maps.googleapis.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+        pathname: "/**",
+      },
     ],
   },
 }

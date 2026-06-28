@@ -52,13 +52,24 @@ export const createProduct = async (formData: FormData) => {
 
 export const updateProduct = async (
   id: string,
-  payload: Partial<Product>
+  formData: FormData
 ) => {
-  return apiFetch(`/products/${id}`, {
+  const token = localStorage.getItem("accessToken");
+
+  const res = await fetch(`${API_URL}/products/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
   });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Failed to update product");
+  }
+
+  return res.json();
 };
 
 /* ================= DELETE ================= */
