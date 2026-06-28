@@ -31,17 +31,16 @@ export const useAuthStore = create<AuthState>()(
 
       /* ================= LOGIN ================= */
       login: (user, token) => {
-          localStorage.setItem("accessToken", token); // ⭐ IMPORTANT
         set({
           user,
           token,
         });
 
-        // ⭐ VERY IMPORTANT
-        // store token separately so API can access before zustand loads
         if (typeof window !== "undefined") {
           localStorage.setItem("accessToken", token);
           localStorage.setItem("token", token);
+          // Set cookie so Next.js middleware can check auth on server
+          document.cookie = `accessToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
       },
 
@@ -66,12 +65,14 @@ export const useAuthStore = create<AuthState>()(
     localStorage.removeItem("auth-storage");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("token");
+    // Clear the middleware cookie
+    document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax";
   }
 
   set({
     user: null,
     token: null,
-    hydrated: true, // ⭐ IMPORTANT
+    hydrated: true,
   });
 },
       /* ================= HYDRATE ================= */

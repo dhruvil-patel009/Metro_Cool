@@ -27,6 +27,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Performance: compress and optimize
+  compress: true,
+  poweredByHeader: false,
+  // Optimize page loading with prefetching
+  experimental: {
+    optimizeCss: true,
+  },
 }
 
 export default nextConfig

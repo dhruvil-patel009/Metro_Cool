@@ -32,6 +32,8 @@ export const handleSessionExpiry = () => {
   localStorage.removeItem("auth-storage")
   localStorage.removeItem("accessToken")
   localStorage.removeItem("token")
+  // Clear the middleware cookie
+  document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax"
 
   toast.error("Session expired — please log in again", {
     toastId: "session-expired",
@@ -42,7 +44,7 @@ export const handleSessionExpiry = () => {
   // Give the toast time to appear before redirect
   setTimeout(() => {
     _sessionExpired = false          // reset for next login
-    window.location.href = "/auth/login"
+    window.location.href = "/"
   }, 1600)
 }
 

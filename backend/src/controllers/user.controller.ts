@@ -7,7 +7,7 @@ import { supabase } from "../utils/supabase.js";
  */
 export const getMyProfile = async (req: Request, res: Response) => {
   try {
-    const userId = 1;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });

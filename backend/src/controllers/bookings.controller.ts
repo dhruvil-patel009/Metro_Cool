@@ -46,7 +46,14 @@ export const getAllBookings = async (req: any, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" })
     }
 
-    const { data, error } = await supabase
+    // Check user role — only admins can see all bookings
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", req.user.id)
+      .single()
+
+    let query = supabase
       .from("bookings")
       .select(`
         id,
@@ -67,6 +74,13 @@ export const getAllBookings = async (req: any, res: Response) => {
         )
       `)
       .order("created_at", { ascending: false })
+
+    // Non-admin users can only see their own bookings
+    if (profile?.role !== "admin") {
+      query = query.eq("user_id", req.user.id)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 

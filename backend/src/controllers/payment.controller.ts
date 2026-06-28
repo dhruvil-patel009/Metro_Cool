@@ -940,7 +940,7 @@ export const getOrderInvoice = async (req: Request, res: Response) => {
     })
 
     const invoiceUrl = await uploadInvoice(invoicePath, orderId)
-    try { require("fs").unlinkSync(invoicePath) } catch (_) {}
+    try { fs.unlinkSync(invoicePath) } catch (_) {}
 
     if (paymentRowId) {
       await supabase

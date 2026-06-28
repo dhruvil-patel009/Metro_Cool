@@ -11,8 +11,9 @@ export default function Providers({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             refetchOnWindowFocus: false,  // avoid spam refetch on tab switch
-            staleTime: 30 * 1000,         // 30s — data stays fresh longer
-            gcTime: 5 * 60 * 1000,        // 5min cache before GC
+            refetchOnMount: false,        // don't refetch if data is fresh
+            staleTime: 60 * 1000,         // 1min — data stays fresh longer
+            gcTime: 10 * 60 * 1000,       // 10min cache before GC
             retry: 1,
             retryDelay: 1000,
           },

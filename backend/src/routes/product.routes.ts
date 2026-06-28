@@ -44,6 +44,5 @@ router.put(
   updateProduct
 );
 router.delete("/:id", protect, authorize("admin"), deleteProduct);
-router.post("/products/create", createProduct);
 
 export default router;

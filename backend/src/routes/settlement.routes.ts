@@ -7,13 +7,14 @@ import {
   emailSettlementReport,
 } from "../controllers/settlement.controller.js"
 import { protect } from "../middlewares/auth.middleware.js"
+import { authorize } from "../middlewares/role.middleware.js"
 
 const router = Router()
 
-router.get("/", protect, getSettlements)
-router.patch("/mark-paid/:paymentId", protect, markPaid)
-router.patch("/mark-all-paid", protect, markAllPaid)
-router.get("/download", protect, downloadSettlementReport)
-router.post("/email", protect, emailSettlementReport)
+router.get("/", protect, authorize("admin"), getSettlements)
+router.patch("/mark-paid/:paymentId", protect, authorize("admin"), markPaid)
+router.patch("/mark-all-paid", protect, authorize("admin"), markAllPaid)
+router.get("/download", protect, authorize("admin"), downloadSettlementReport)
+router.post("/email", protect, authorize("admin"), emailSettlementReport)
 
 export default router
