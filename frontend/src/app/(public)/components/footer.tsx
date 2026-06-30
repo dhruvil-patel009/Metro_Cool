@@ -7,11 +7,15 @@ export function Footer() {
     "@graph": [
       {
         "@type": "Organization",
-        name: "Metro Cool",
+        name: "MetroCool",
         url: "https://www.metro-cool.com",
         logo: "https://www.metro-cool.com/logo.png",
         description:
-          "Metro Cool provides professional AC repair, installation, maintenance and cooling solutions.",
+          "MetroCool provides professional AC repair, installation, maintenance and cooling solutions.",
+        parentOrganization: {
+          "@type": "Organization",
+          name: "Comfort HVAC Solutions",
+        },
         sameAs: [
           "https://facebook.com/metrocool",
           "https://twitter.com/metrocool"
@@ -51,7 +55,12 @@ export function Footer() {
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                 <Snowflake className="text-white w-5 h-5" />
               </div>
-              <span className="text-xl font-bold">Metro Cool</span>
+              <div className="flex flex-col leading-tight">
+                <span className="text-xl font-bold">MetroCool</span>
+                <span className="text-[11px] font-medium text-gray-500">
+                  Powered by Comfort HVAC Solutions
+                </span>
+              </div>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed mb-6">
               Your trusted partner for all cooling solutions. We bring comfort to your home with expert services.
@@ -144,7 +153,7 @@ export function Footer() {
 
         <div className="text-center pt-12 border-t border-gray-200">
           <p className="text-xs text-gray-400 font-medium tracking-wide">
-            &copy; 2026 Metro Cool Services. All rights reserved.
+            &copy; 2026 MetroCool, powered by Comfort HVAC Solutions. All rights reserved.
           </p>
         </div>
       </div>

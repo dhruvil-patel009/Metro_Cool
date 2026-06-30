@@ -8,7 +8,7 @@ import { useState } from "react"
 import { toast } from "react-toastify"
 import Image from "next/image"
 import { useAuthStore } from "@/store/auth.store"
-import logo from "../../../../public/assets/logo.ico"
+import logo from "../../../../public/assets/logo.svg"
 
 export function Navigation() {
   const pathname = usePathname()
@@ -104,8 +104,14 @@ export function Navigation() {
 
           {/* LOGO */}
           <div className="flex items-center gap-2">
-            <Link href="/">
-              <Image src={logo} alt="Metro cool logo" width={120} />
+            <Link href="/" className="flex items-center gap-2.5">
+              <Image src={logo} alt="MetroCool logo" className="h-12 w-auto" priority />
+              <span className="flex flex-col leading-tight">
+                <span className="text-xl font-extrabold tracking-tight text-[#1d242d]">MetroCool</span>
+                <span className="text-[10px] sm:text-[11px] font-medium text-gray-500">
+                  Managed by Comfort HVAC Solutions
+                </span>
+              </span>
             </Link>
           </div>
 

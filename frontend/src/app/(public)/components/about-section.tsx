@@ -15,7 +15,7 @@ export function AboutSection() {
         foundingDate: "2016",
         parentOrganization: {
           "@type": "Organization",
-          name: "Comfort AC Solutions",
+          name: "Comfort HVAC Solutions",
         },
       },
       {
@@ -47,19 +47,20 @@ export function AboutSection() {
 
             <div className="space-y-6 text-gray-500 leading-relaxed mb-10">
               <p>
-                Founded in 2016, <span className="font-bold text-[#1d242d]">Comfort AC Solutions</span> began with a
-                mission to deliver precision cooling for residential, industrial, and IT environments. With over 9+
-                years of experience handling commercial chillers, industrial AC systems, and server-room cooling, we
-                noticed one major gap — the service booking experience was outdated.
+                Founded in 2016, <span className="font-bold text-[#1d242d]">Comfort HVAC Solutions</span> began with a
+                single mission — to deliver precision cooling for complex residential, industrial, and IT environments.
+                Over nearly a decade, we&apos;ve mastered everything from massive commercial chillers to the server
+                rooms that keep businesses running.
               </p>
               <p>
-                <span className="text-blue-600 font-bold">MetroCool</span> is the digital evolution of Comfort AC
-                Solutions. We bring industrial-grade AC expertise into a seamless, 60-second online booking
-                experience.
+                We realized that while cooling technology kept evolving, the experience of booking a service was stuck
+                in the past — unprofessional technicians, hidden costs, and messy work.
               </p>
               <p>
-                When customers book with MetroCool, they receive technicians trained by AC engineers — not just
-                general service workers.
+                <span className="text-blue-600 font-bold">MetroCool</span> is the digital evolution of Comfort HVAC
+                Solutions. We&apos;ve packed 9+ years of industrial-grade expertise into a seamless, 60-second booking
+                experience — so when you book with us, you get a technician trained by HVAC engineers, not just a
+                handyman.
               </p>
             </div>
           <Link href="about">
@@ -73,7 +74,7 @@ export function AboutSection() {
             <AboutCard
               icon={<History className="w-5 h-5 text-blue-600" />}
               title="Deep Roots"
-              desc="Backed by nearly a decade of AC expertise."
+              desc="Powered by Comfort HVAC Solutions' decade of experience."
             />
             <AboutCard
               icon={<Sparkles className="w-5 h-5 text-blue-600" />}
@@ -83,7 +84,7 @@ export function AboutSection() {
             <AboutCard
               icon={<Cpu className="w-5 h-5 text-blue-600" />}
               title="Engineering Mindset"
-              desc="Optimized cooling, not just cleaning."
+              desc='We optimize ACs for energy efficiency, not just "wash" them.'
             />
           </div>
         </div>
