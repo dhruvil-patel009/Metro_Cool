@@ -1,20 +1,22 @@
 import type { Metadata } from "next"
 import { Button } from "@/app/components/ui/button"
-import { Check, Zap, BadgeCheck, Clock, Users, TrendingUp, Sprout } from "lucide-react"
+import { BadgeCheck, Clock, Users, TrendingUp, Sprout, Sparkles, Cpu } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import TeamSection from "./TeamSection"
 
 export const metadata: Metadata = {
-  title: "About Metro Cool | Best AC Repair & Installation Services Since 2010",
+  title: "About MetroCool | Precision AC & Cooling Experts Since 2016",
   description:
-    "Metro Cool provides expert AC repair, installation, and maintenance services since 2010. 24/7 emergency support, certified technicians, and transparent pricing.",
+    "MetroCool is the digital evolution of Comfort HVAC Solutions. Since 2016 we've delivered precision cooling for homes, industries, and IT environments with technicians trained by HVAC engineers.",
   keywords: [
     "AC repair services",
     "air conditioning installation",
     "HVAC maintenance",
-    "emergency AC repair",
-    "Metro Cool",
+    "industrial cooling",
+    "server room cooling",
+    "Comfort HVAC Solutions",
+    "MetroCool",
     "AC technicians near me",
   ],
   metadataBase: new URL("https://www.metrocool.com"),
@@ -22,11 +24,11 @@ export const metadata: Metadata = {
     canonical: "/about",
   },
   openGraph: {
-    title: "About Metro Cool | Trusted AC Experts",
+    title: "About MetroCool | Precision Cooling Experts",
     description:
-      "Certified AC repair and installation experts providing 24/7 emergency services with 15+ years experience.",
+      "From Comfort HVAC Solutions to MetroCool — industrial-grade cooling expertise packed into a seamless 60-second booking experience.",
     url: "https://www.metrocool.com/about",
-    siteName: "Metro Cool",
+    siteName: "MetroCool",
     images: [
       {
         url: "/assets/ac-technician-installing-air-conditioning-unit.jpg",
@@ -40,9 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Metro Cool | AC Experts Since 2010",
+    title: "MetroCool | Precision Cooling Experts Since 2016",
     description:
-      "Trusted AC repair and installation services with certified technicians and emergency support.",
+      "Technicians trained by HVAC engineers, transparent pricing, and a signature Zero Mess promise.",
     images: ["/assets/ac-technician-installing-air-conditioning-unit.jpg"],
   },
   robots: {
@@ -55,12 +57,17 @@ export default function AboutPage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    name: "Metro Cool",
+    name: "MetroCool",
     image: "https://www.metrocool.com/assets/ac-technician-installing-air-conditioning-unit.jpg",
     url: "https://www.metrocool.com",
     telephone: "+1-000-000-0000",
     description:
-      "Metro Cool offers professional AC repair, installation and maintenance services with 24/7 emergency support.",
+      "MetroCool is the digital evolution of Comfort HVAC Solutions, offering precision AC repair, installation and industrial cooling services with technicians trained by HVAC engineers.",
+    foundingDate: "2016",
+    parentOrganization: {
+      "@type": "Organization",
+      name: "Comfort HVAC Solutions",
+    },
     openingHours: "Mo-Su 00:00-23:59",
   }
 
@@ -84,16 +91,16 @@ export default function AboutPage() {
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col items-center justify-center text-center animate-fade-in">
           <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full mb-6 shadow-sm">
-            <span className="text-sm font-medium text-gray-700">SINCE 2010</span>
+            <span className="text-sm font-medium text-gray-700">SINCE 2016</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            Redefining Comfort for
+            Precision Cooling for
             <br />
             <span className="text-blue-600">Modern Living</span>
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mb-8">
-            Metro Cool isn't just about fixing ACs. We're on a mission to engineer perfect climates for homes and
-            businesses, combining cutting-edge efficiency with old-school reliability.
+            MetroCool is the digital evolution of Comfort HVAC Solutions. We&apos;ve packed nearly a decade of
+            industrial-grade cooling expertise into a seamless, 60-second booking experience.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="#story">
@@ -123,7 +130,7 @@ export default function AboutPage() {
               <div className="text-sm text-gray-600 uppercase tracking-wide">Certifications</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">15+</div>
+              <div className="text-4xl font-bold text-gray-900 mb-2">9+</div>
               <div className="text-sm text-gray-600 uppercase tracking-wide">Years Experience</div>
             </div>
             <div className="text-center">
@@ -141,13 +148,14 @@ export default function AboutPage() {
             {/* Left - City Icon */}
             <div className="animate-fade-in">
               <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-4xl font-bold text-gray-900">City Icon</h2>
+                <h2 className="text-4xl font-bold text-gray-900">The MetroCool Story</h2>
                 <div className="w-12 h-1 bg-blue-600"></div>
               </div>
               <p className="text-gray-600 leading-relaxed mb-8">
-                It started with a simple belief: nobody should sweat (the small stuff—especially not indoors) or freeze
-                in their own living room. What began as a two-person operation in a suburban garage has grown into the
-                city's most trusted name in climate control.
+                In 2016, we founded Comfort HVAC Solutions with a single mission: to provide precision cooling for
+                complex residential, industrial, and IT environments. Over nearly a decade, we&apos;ve mastered
+                everything from massive commercial chillers to the server rooms that keep businesses running — and
+                MetroCool brings that expertise to your doorstep.
               </p>
               <div className="relative rounded-2xl overflow-hidden shadow-lg">
                 <Image
@@ -176,11 +184,12 @@ export default function AboutPage() {
                 </div>
                 <div className="pb-12">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-bold text-gray-900">Founded in a Garage</h3>
-                    <span className="text-blue-600 font-semibold">2010</span>
+                    <h3 className="text-xl font-bold text-gray-900">Comfort HVAC Solutions Founded</h3>
+                    <span className="text-blue-600 font-semibold">2016</span>
                   </div>
                   <p className="text-gray-600">
-                    Metro Cool is born. Just two techs, one van, and a lot of determination to do things right.
+                    We started with a single mission — to deliver precision cooling for complex residential,
+                    industrial, and IT environments.
                   </p>
                 </div>
               </div>
@@ -194,11 +203,12 @@ export default function AboutPage() {
                 </div>
                 <div className="pb-12">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-bold text-gray-900">First Fleet Expansion</h3>
-                    <span className="text-blue-600 font-semibold">2014</span>
+                    <h3 className="text-xl font-bold text-gray-900">Industrial &amp; IT Cooling</h3>
+                    <span className="text-blue-600 font-semibold">2018</span>
                   </div>
                   <p className="text-gray-600">
-                    Demand skyrocketed. We purchased 5 new vans and hired our first dedicated support team.
+                    We scaled up to handle massive commercial chillers and the critical server rooms that keep
+                    businesses running.
                   </p>
                 </div>
               </div>
@@ -212,11 +222,12 @@ export default function AboutPage() {
                 </div>
                 <div className="pb-12">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-bold text-gray-900">City-Wide Coverage</h3>
-                    <span className="text-blue-600 font-semibold">2018</span>
+                    <h3 className="text-xl font-bold text-gray-900">The Service Jacket Protocol</h3>
+                    <span className="text-blue-600 font-semibold">2021</span>
                   </div>
                   <p className="text-gray-600">
-                    Officially covering the entire metro area with guaranteed 2-hour emergency response times.
+                    We introduced our signature Zero Mess protocol — engineering-grade standards that keep your walls
+                    and floors spotless on every job.
                   </p>
                 </div>
               </div>
@@ -229,11 +240,12 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-bold text-gray-900">Green Tech Award</h3>
-                    <span className="text-blue-600 font-semibold">2023</span>
+                    <h3 className="text-xl font-bold text-gray-900">MetroCool Goes Digital</h3>
+                    <span className="text-blue-600 font-semibold">2025</span>
                   </div>
                   <p className="text-gray-600">
-                    Recognized for our commitment to installing energy-efficient systems that save money and the planet.
+                    We launched MetroCool — packing 9+ years of industrial-grade expertise into a seamless, 60-second
+                    booking experience.
                   </p>
                 </div>
               </div>
@@ -258,32 +270,32 @@ export default function AboutPage() {
               <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
                 <BadgeCheck className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Certified Expertise</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Deep Roots</h3>
               <p className="text-gray-600">
-                Every technician on our team is NATE-certified and undergoes 150+ hours of annual training on the latest
-                AC systems.
+                Powered by Comfort HVAC Solutions&apos; decade of experience, our technicians are trained by HVAC
+                engineers — not just general handymen.
               </p>
             </div>
 
             <div className="bg-gray-50 rounded-2xl p-8 text-center animate-fade-in" style={{ animationDelay: "0.1s" }}>
               <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
-                <Zap className="w-8 h-8 text-blue-600" />
+                <Sparkles className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Rapid Response</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Zero Mess Promise</h3>
               <p className="text-gray-600">
-                AC doesn't wait for a convenient time to break—and neither should you. We offer guaranteed same-day
-                service for emergency breakdowns.
+                Our signature &quot;Service Jacket&quot; protocol keeps your walls and floors clean — no dust, no
+                stains, no surprises left behind.
               </p>
             </div>
 
             <div className="bg-gray-50 rounded-2xl p-8 text-center animate-fade-in" style={{ animationDelay: "0.2s" }}>
               <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
-                <Check className="w-8 h-8 text-blue-600" />
+                <Cpu className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Transparent Pricing</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Engineering Mindset</h3>
               <p className="text-gray-600">
-                No hidden fees. No surprise invoices. We provide a full quote before we pick up a wrench, so you know
-                exactly what to expect.
+                We don&apos;t just &quot;wash&quot; ACs — we optimize them for energy efficiency, so your system runs
+                cooler, quieter, and cheaper.
               </p>
             </div>
           </div>
@@ -301,7 +313,7 @@ export default function AboutPage() {
           <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-12 text-center text-white shadow-2xl animate-scale-in">
             <h2 className="text-4xl font-bold mb-4">Ready to Feel the Difference?</h2>
             <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
-              Don't let the weather dictate your comfort. Schedule your service with Metro Cool today and experience
+              Don&apos;t let the weather dictate your comfort. Schedule your service with MetroCool today and experience
               AC done right.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">

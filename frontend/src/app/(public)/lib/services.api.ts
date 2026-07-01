@@ -15,8 +15,7 @@ export type ServiceDTO = {
 
 export async function getServices() {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/services`,
-    { cache: "no-store" }
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/services`
   )
 
   if (!res.ok) {

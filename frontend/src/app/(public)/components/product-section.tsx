@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronRight, ArrowRight, ArrowUpRight, Star, ShoppingCart } from "lucide-react"
+import { ChevronRight, ArrowUpRight, Star, ShoppingCart } from "lucide-react"
 import { getServices, ServiceDTO } from "../lib/services.api"
 import { formatINR } from "@/app/lib/currency"
+import { useQuery } from "@tanstack/react-query"
 
 /* ================= SERVICES TYPE ================= */
 
@@ -41,64 +41,45 @@ type UIProduct = {
 export function ProductsSection() {
 
 /* =========================================================
-   SERVICES FETCH
+   SERVICES FETCH (React Query — cached + fast)
 ========================================================= */
 
-  const [services, setServices] = useState<UIService[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getServices()
-      .then((data: ServiceDTO[]) => {
-        const mapped = data.map((service) => ({
-          id: service.id,
-          title: service.title,
-          category: service.category,
-          price: service.price,
-          originalPrice: service.price + 20,
-          shortDescription: service.short_description,
-          thumbnailImage: service.image_url || "/placeholder.svg",
-          rating: service.rating ?? 0,
-          badge: service.badge || undefined,
-          badgeColor: service.badge_color || "#2563eb",
-        }))
-
-        setServices(mapped)
-      })
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: services = [], isLoading: loading } = useQuery<UIService[]>({
+    queryKey: ["home-services"],
+    queryFn: async () => {
+      const data: ServiceDTO[] = await getServices()
+      return data.map((service) => ({
+        id: service.id,
+        title: service.title,
+        category: service.category,
+        price: service.price,
+        originalPrice: service.price + 20,
+        shortDescription: service.short_description,
+        thumbnailImage: service.image_url || "/placeholder.svg",
+        rating: service.rating ?? 0,
+        badge: service.badge || undefined,
+        badgeColor: service.badge_color || "#2563eb",
+      }))
+    },
+    staleTime: 60 * 1000, // 1 minute — services don't change often
+  })
 
 /* =========================================================
-   PRODUCTS FETCH
+   PRODUCTS FETCH (React Query — cached + fast)
 ========================================================= */
 
-  const [products, setProducts] = useState<UIProduct[]>([])
-  const [productLoading, setProductLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/products`
-        )
-
-        if (!res.ok) throw new Error("Failed to fetch products")
-
-        const data = await res.json()
-
-        // newest first
-        const sorted = [...data].reverse()
-
-        setProducts(sorted)
-      } catch (err) {
-        console.error("❌ Product fetch error:", err)
-      } finally {
-        setProductLoading(false)
-      }
-    }
-
-    fetchProducts()
-  }, [])
+  const { data: products = [], isLoading: productLoading } = useQuery<UIProduct[]>({
+    queryKey: ["home-products"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/products`
+      )
+      if (!res.ok) throw new Error("Failed to fetch products")
+      const data = await res.json()
+      return [...data].reverse()
+    },
+    staleTime: 60 * 1000, // 1 minute cache
+  })
 
 /* =========================================================
    UI

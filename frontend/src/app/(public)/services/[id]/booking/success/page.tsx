@@ -40,8 +40,6 @@ export default function BookingSuccessPage() {
   const params = useParams<{ id: string }>()
   const bookingId = params.id
 
-  console.log("BOOKING ID:", bookingId)
-  console.log(window.location.pathname)
   // 🔥 REAL booking state
   const [booking, setBooking] = useState<Booking | null>(null)
   const [loading, setLoading] = useState(true)
@@ -291,7 +289,7 @@ export default function BookingSuccessPage() {
               }`}
           >
             <Link
-              href="/r"
+              href="/"
               className="px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-bold hover:border-gray-400 transition-all"
             >
               Back to Home
@@ -309,7 +307,7 @@ export default function BookingSuccessPage() {
           <div className={`text-center transition-all duration-700 delay-900 ${mounted ? "opacity-100" : "opacity-0"}`}>
             <p className="text-sm text-gray-600">
               Need to reschedule?{" "}
-              <Link href="/support" className="text-blue-600 hover:underline font-semibold">
+              <Link href="/contact" className="text-blue-600 hover:underline font-semibold">
                 Contact Support
               </Link>
             </p>

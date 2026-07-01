@@ -55,13 +55,20 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }))
    🔥 CORS (FINAL FIX)
 ========================= */
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://metro-cool.vercel.app",
-  "https://metro-cool-p3g4.vercel.app",
-  "https://metro-cool.com",
-  "https://www.metro-cool.com"
-];
+const allowedOrigins = process.env.NODE_ENV === "production"
+  ? [
+      "https://metro-cool.vercel.app",
+      "https://metro-cool-p3g4.vercel.app",
+      "https://metro-cool.com",
+      "https://www.metro-cool.com",
+    ]
+  : [
+      "http://localhost:3000",
+      "https://metro-cool.vercel.app",
+      "https://metro-cool-p3g4.vercel.app",
+      "https://metro-cool.com",
+      "https://www.metro-cool.com",
+    ];
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
@@ -83,14 +90,6 @@ const corsOptions: cors.CorsOptions = {
 };
 
 app.use(cors(corsOptions))
-
-// ⭐ REAL PREVENTION FOR PREFLIGHT LOOP
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204)
-  }
-  next()
-})
 
 
 

@@ -7,7 +7,7 @@ import { supabase } from "../utils/supabase.js";
  */
 export const getMyProfile = async (req: Request, res: Response) => {
   try {
-    const userId = 1;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -64,6 +64,7 @@ export const getMe = async (req: any, res: Response) => {
       first_name,
       last_name,
       phone,
+      email,
       profile_photo
     `)
     .eq("id", userId)

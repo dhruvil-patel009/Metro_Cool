@@ -9,6 +9,7 @@ import {
   MapPin, CreditCard, Banknote, ChevronRight, Package, Loader2,
   Plus, Trash2, ShoppingCart,
 } from "lucide-react"
+import AuthGuard from "@/app/components/AuthGuard"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
@@ -137,7 +138,7 @@ export default function CheckoutPage() {
         name: "Metro Cool",
         handler: async function (response: any) {
           try {
-            await fetch(`${API_URL}/payments/product-verify`, {
+            const verifyRes = await fetch(`${API_URL}/payments/product-verify`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -150,6 +151,12 @@ export default function CheckoutPage() {
                 razorpay_signature: response.razorpay_signature,
               })
             })
+            if (!verifyRes.ok) {
+              toast.error("Payment verification failed. Please contact support.")
+              setIsProcessing(false)
+              razorpayOpened.current = false
+              return
+            }
             clearCart()
             router.push(`/checkout/order-success?order_id=${orderId}`)
           } catch {
@@ -239,6 +246,7 @@ export default function CheckoutPage() {
   }
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-[#f8fafc] py-8 px-4">
       <div className="max-w-7xl mx-auto">
 
@@ -515,5 +523,6 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+    </AuthGuard>
   )
 }

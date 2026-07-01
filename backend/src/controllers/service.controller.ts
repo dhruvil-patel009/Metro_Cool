@@ -51,9 +51,6 @@ export const createService = async (req: Request, res: Response) => {
       message: "Service created successfully",
       service: data,
     });
-
-    console.log("BODY:", req.body);
-console.log("FILE:", req.file);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -86,6 +83,8 @@ export const getActiveServices = async (_req: Request, res: Response) => {
 
   if (error) return res.status(400).json({ error: error.message });
 
+  // Cache for 60s on CDN/browser — public data rarely changes
+  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120");
   res.json(data);
 };
 
@@ -112,10 +111,23 @@ export const getServiceById = async (req: Request, res: Response) => {
 export const updateService = async (req: Request, res: Response) => {
   const { id } = req.params;
 
+  // Whitelist allowed fields to prevent arbitrary field injection
+  const allowedFields: Record<string, any> = {};
+  const permitted = [
+    "title", "service_code", "category", "price", "original_price",
+    "pricing_type", "short_description", "description", "image_url",
+    "rating", "badge", "badge_color", "is_active",
+  ];
+  for (const key of permitted) {
+    if (req.body[key] !== undefined) {
+      allowedFields[key] = req.body[key];
+    }
+  }
+
   const { data, error } = await supabase
     .from("services")
     .update({
-      ...req.body,
+      ...allowedFields,
       updated_at: new Date(),
     })
     .eq("id", id)

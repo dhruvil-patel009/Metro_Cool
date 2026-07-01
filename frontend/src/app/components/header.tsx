@@ -6,7 +6,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
-import logo from '../../../public/assets/logo.ico'
+import logo from '../../../public/assets/logo.svg'
 
 export default function Header() {
     const router = useRouter();
@@ -30,8 +30,14 @@ const handlelogin = () => {
             <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-20 items-center">
                     <div className="flex items-center gap-2">
-                        <Link href="#">
-                        <Image src={logo} alt="Metro cool logo" width={120} />
+                        <Link href="#" className="flex items-center gap-2.5">
+                        <Image src={logo} alt="MetroCool logo" className="h-12 w-auto" priority />
+                        <span className="flex flex-col leading-tight">
+                            <span className="text-xl font-extrabold tracking-tight text-[#1d242d]">MetroCool</span>
+                            <span className="text-[10px] sm:text-[11px] font-medium text-gray-500">
+                                Managed by Comfort HVAC Solutions
+                            </span>
+                        </span>
                         </Link>
                     </div>
 

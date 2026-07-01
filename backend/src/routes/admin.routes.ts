@@ -131,6 +131,6 @@ router.get("/profile", protect, authorize("admin"), getAdminProfile)
 router.put("/profile", protect, authorize("admin"), updateAdminProfile)
 router.get("/admins", protect, authorize("admin"), getAdmins)
 router.post("/create", protect, authorize("admin"), createAdmin)
-router.delete("/admins/:adminId", protect, deleteAdmin)
+router.delete("/admins/:adminId", protect, authorize("admin"), deleteAdmin)
 
 export default router;

@@ -20,9 +20,9 @@ export const getMyJobs = async (req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("bookings")
     .select("*,services (*)")
-    // .eq("technician_id", req.user.id)
+    .eq("technician_id", (req as any).user.id)
     .neq("job_status", "completed")
-    // .order("scheduled_date", { ascending: true });
+    .order("scheduled_date", { ascending: true });
 
     if (error) {
       console.log("SUPABASE ERROR:", error);

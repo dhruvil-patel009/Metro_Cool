@@ -15,7 +15,7 @@ export default function ProtectedRoute({
 
   useEffect(() => {
     if (hydrated && !user) {
-      router.replace("/auth/login");
+      router.replace("/");
     }
   }, [hydrated, user, router]);
 

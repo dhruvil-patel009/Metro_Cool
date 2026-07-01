@@ -4,7 +4,6 @@ import { supabase } from "../utils/supabase.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { transporter } from "../utils/mailer.js";
-import path from "path/win32";
 
 
 export const register = async (req: Request, res: Response) => {
@@ -253,9 +252,6 @@ export const loginWithMpin = async (req: Request, res: Response) => {
   try {
     let { identifier, mpin } = req.body;
 
-        let profilePhotoUrl: string | null = null;
-
-
     /* ---------------- VALIDATION ---------------- */
     if (!identifier || !mpin) {
       return res.status(400).json({
@@ -476,13 +472,13 @@ export const logout = async (_req: Request, res: Response) => {
     res.clearCookie("accessToken", {
     httpOnly: true,
     sameSite: "lax",
-    secure: false, // true in production (HTTPS)
+    secure: process.env.NODE_ENV === "production",
   });
 
   res.clearCookie("refreshToken", {
     httpOnly: true,
     sameSite: "lax",
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
   });
 
   return res.status(200).json({

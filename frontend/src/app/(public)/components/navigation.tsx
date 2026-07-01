@@ -8,7 +8,7 @@ import { useState } from "react"
 import { toast } from "react-toastify"
 import Image from "next/image"
 import { useAuthStore } from "@/store/auth.store"
-import logo from "../../../../public/assets/logo.ico"
+import logo from "../../../../public/assets/logo.svg"
 
 export function Navigation() {
   const pathname = usePathname()
@@ -44,7 +44,7 @@ export function Navigation() {
     "@context": "https://schema.org",
     "@type": "SiteNavigationElement",
     name: "Main Navigation",
-    url: "https://www.metrocool.com",
+    url: "https://www.metro-cool.com",
   }
 
   return (
@@ -104,8 +104,14 @@ export function Navigation() {
 
           {/* LOGO */}
           <div className="flex items-center gap-2">
-            <Link href="/">
-              <Image src={logo} alt="Metro cool logo" width={120} />
+            <Link href="/" className="flex items-center gap-2.5">
+              <Image src={logo} alt="MetroCool logo" className="h-12 w-auto" priority />
+              <span className="flex flex-col leading-tight">
+                <span className="text-xl font-extrabold tracking-tight text-[#1d242d]">MetroCool</span>
+                <span className="text-[10px] sm:text-[11px] font-medium text-gray-500">
+                  Managed by Comfort HVAC Solutions
+                </span>
+              </span>
             </Link>
           </div>
 
@@ -204,7 +210,7 @@ export function Navigation() {
             ) : (
               /* LOGIN BUTTON (GUEST) */
               <Link href="/auth/">
-                <button className="bg-blue-600 cursor-pointer text-white sm:px-6 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue:900 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200">
+                <button className="bg-blue-600 cursor-pointer text-white sm:px-6 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-900 transition-all shadow-sm hover:shadow-md hover:scale-105 duration-200">
                   Register
                 </button>
               </Link>

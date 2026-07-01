@@ -7,11 +7,15 @@ export function Footer() {
     "@graph": [
       {
         "@type": "Organization",
-        name: "Metro Cool",
-        url: "https://www.metrocool.com",
-        logo: "https://www.metrocool.com/logo.png",
+        name: "MetroCool",
+        url: "https://www.metro-cool.com",
+        logo: "https://www.metro-cool.com/logo.png",
         description:
-          "Metro Cool provides professional AC repair, installation, maintenance and cooling solutions.",
+          "MetroCool provides professional AC repair, installation, maintenance and cooling solutions.",
+        parentOrganization: {
+          "@type": "Organization",
+          name: "Comfort HVAC Solutions",
+        },
         sameAs: [
           "https://facebook.com/metrocool",
           "https://twitter.com/metrocool"
@@ -20,18 +24,24 @@ export function Footer() {
       {
         "@type": "LocalBusiness",
         name: "Metro Cool Services",
-        url: "https://www.metrocool.com",
+        url: "https://www.metro-cool.com",
         description:
           "Trusted AC repair, AC installation, gas refill and annual maintenance services.",
         areaServed: {
-          "@type": "Country",
-          name: "United States"
+          "@type": "City",
+          name: "Ahmedabad"
+        },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Ahmedabad",
+          addressRegion: "Gujarat",
+          addressCountry: "IN"
         }
       }
     ]
   }
   return (
-    <footer className="bg-[#f4f4f4] pt-40 pb-12 border-t border-gray-100">
+    <footer className="bg-[#f4f4f4] pt-16 pb-12 border-t border-gray-100">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -45,7 +55,12 @@ export function Footer() {
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                 <Snowflake className="text-white w-5 h-5" />
               </div>
-              <span className="text-xl font-bold">Metro Cool</span>
+              <div className="flex flex-col leading-tight">
+                <span className="text-xl font-bold">MetroCool</span>
+                <span className="text-[11px] font-medium text-gray-500">
+                  Powered by Comfort HVAC Solutions
+                </span>
+              </div>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed mb-6">
               Your trusted partner for all cooling solutions. We bring comfort to your home with expert services.
@@ -70,22 +85,22 @@ export function Footer() {
             <h4 className="font-bold mb-6">Services</h4>
             <ul className="space-y-4 text-sm text-gray-500">
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/services" className="hover:text-blue-600">
                   AC Repair
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/services" className="hover:text-blue-600">
                   Installation
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/services" className="hover:text-blue-600">
                   Annual Maintenance
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/services" className="hover:text-blue-600">
                   Gas Refill
                 </Link>
               </li>
@@ -96,22 +111,22 @@ export function Footer() {
             <h4 className="font-bold mb-6">Quick Links</h4>
             <ul className="space-y-4 text-sm text-gray-500">
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/about" className="hover:text-blue-600">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/contact" className="hover:text-blue-600">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/privacy-policy" className="hover:text-blue-600">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-blue-600">
+                <Link href="/terms" className="hover:text-blue-600">
                   Terms of Service
                 </Link>
               </li>
@@ -138,7 +153,7 @@ export function Footer() {
 
         <div className="text-center pt-12 border-t border-gray-200">
           <p className="text-xs text-gray-400 font-medium tracking-wide">
-            &copy; 2026 Metro Cool Services. All rights reserved.
+            &copy; 2026 MetroCool, powered by Comfort HVAC Solutions. All rights reserved.
           </p>
         </div>
       </div>

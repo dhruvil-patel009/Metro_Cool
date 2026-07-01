@@ -11,9 +11,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
 
-    // not logged in
+    // not logged in — send to home page (publicly accessible)
     if (!token) {
-      router.replace("/auth/login");
+      router.replace("/");
     }
   }, [token, hydrated, router]);
 

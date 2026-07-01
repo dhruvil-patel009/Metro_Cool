@@ -2,28 +2,30 @@
 
 import { ShoppingCart, Star, Check, Heart } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
+import { useQuery } from "@tanstack/react-query"
 
 export default function ProductsPage() {
   const { addToCart } = useCart()
   const router = useRouter()
 
-  const [products, setProducts]       = useState<any[]>([])
-  const [loading, setLoading]         = useState(true)
+  const { data: products = [], isLoading: loading } = useQuery<any[]>({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products`)
+      if (!res.ok) throw new Error("Failed to load products")
+      const data = await res.json()
+      return Array.isArray(data) ? data : []
+    },
+    staleTime: 60 * 1000,
+  })
+
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [addedIds, setAddedIds]       = useState<Set<string>>(new Set())
-
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products`)
-      .then(r => r.json())
-      .then(d => setProducts(Array.isArray(d) ? d : []))
-      .catch(() => toast.error("Failed to load products"))
-      .finally(() => setLoading(false))
-  }, [])
 
   const toggleBrand = (brand: string) =>
     setSelectedBrands(prev =>
