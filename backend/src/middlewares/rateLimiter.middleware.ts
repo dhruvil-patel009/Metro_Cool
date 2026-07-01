@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit"
+import { rateLimit } from "express-rate-limit"
 
 /**
  * Auth rate limiter — prevents brute-force attacks on login/register/forgot-mpin.
