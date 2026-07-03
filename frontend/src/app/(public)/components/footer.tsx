@@ -1,5 +1,7 @@
-import { Snowflake, Facebook, Twitter } from "lucide-react"
+import { Facebook, Twitter } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
+import logo from "../../../../public/assets/logo.svg"
 
 export function Footer() {
   const organizationSchema = {
@@ -51,16 +53,16 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-4 gap-12 mb-20">
           <div className="col-span-1 md:col-span-1">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <Snowflake className="text-white w-5 h-5" />
-              </div>
-              <div className="flex flex-col leading-tight">
-                <span className="text-xl font-bold">MetroCool</span>
-                <span className="text-[11px] font-medium text-gray-500">
-                  Powered by Comfort HVAC Solutions
+            <div className="mb-6">
+              <Link href="/" className="flex items-center gap-2.5">
+                <Image src={logo} alt="MetroCool logo" className="h-12 w-auto" />
+                <span className="flex flex-col leading-tight">
+                  <span className="text-xl font-extrabold tracking-tight text-[#1d242d]">MetroCool</span>
+                  <span className="text-[10px] sm:text-[11px] font-medium text-gray-500">
+                    Managed by Comfort HVAC Solutions
+                  </span>
                 </span>
-              </div>
+              </Link>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed mb-6">
               Your trusted partner for all cooling solutions. We bring comfort to your home with expert services.
