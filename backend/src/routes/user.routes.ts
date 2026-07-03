@@ -2,6 +2,7 @@ import { Router } from "express";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.middleware.js";
 import { getMe, updateMe } from "../controllers/user.controller.js";
+import { getUserNotifications } from "../controllers/notifications.controller.js";
 
 const router = Router();
 
@@ -17,5 +18,7 @@ router.get(
 router.get("/me", protect, getMe)
 router.put("/me", protect, authorize("user"), updateMe)
 
+/* ================= NOTIFICATIONS ================= */
+router.get("/notifications", protect, getUserNotifications)
 
 export default router;

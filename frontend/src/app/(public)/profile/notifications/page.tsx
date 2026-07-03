@@ -1,291 +1,240 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ChevronRight,
   Bell,
-  Car,
   CheckCircle2,
-  Tag,
-  Star,
-  Lock,
-  Check,
-  Settings2,
-  ExternalLink,
+  Package,
+  Wrench,
+  ShoppingBag,
+  XCircle,
+  Clock,
+  BellOff,
 } from "lucide-react"
-import type { LucideIcon } from "lucide-react"
-
-import { Switch } from "@/app/components/ui/switch"
-import { cn } from "@/app/lib/utils"
 import { ProfileSidebar } from "../../components/profile-sidebar"
+import { apiFetch } from "@/app/lib/api"
 
-/* =========================
-   TYPES
-========================= */
-
-interface NotificationItem {
-  id: number
+interface Notification {
+  id: string
   type: string
-  icon: LucideIcon
-  iconBg: string
   title: string
-  description: string
+  message: string
   time: string
-  unread: boolean
-
-  // ✅ OPTIONAL (this fixes the TS error)
-  actions?: string[]
-  rating?: boolean
+  read: boolean
+  link?: string
 }
-
-interface NotificationGroup {
-  group: string
-  items: NotificationItem[]
-}
-
-/* =========================
-   DATA
-========================= */
-
-const notifications: NotificationGroup[] = [
-  {
-    group: "TODAY",
-    items: [
-      {
-        id: 1,
-        type: "service",
-        icon: Car,
-        iconBg: "bg-blue-600 text-white",
-        title: "Technician En Route",
-        description:
-          "Mike R. is on the way for your Full Home Deep Clean. Estimated arrival in 15 mins.",
-        time: "Just now",
-        unread: true,
-        actions: ["Track Live", "View Order"],
-      },
-      {
-        id: 2,
-        type: "order",
-        icon: CheckCircle2,
-        iconBg: "bg-green-100 text-green-600",
-        title: "Order Confirmed",
-        description:
-          "Your booking for AC Repair & Service (#ORD-2839) has been confirmed successfully.",
-        time: "2 hours ago",
-        unread: true,
-      },
-      {
-        id: 3,
-        type: "promo",
-        icon: Tag,
-        iconBg: "bg-orange-100 text-orange-600",
-        title: "Flash Sale: 20% Off!",
-        description:
-          "Limited time offer on all smart thermostats. Upgrade your home cooling today.",
-        time: "5 hours ago",
-        unread: false,
-        actions: ["Shop Deals"],
-      },
-    ],
-  },
-  {
-    group: "YESTERDAY",
-    items: [
-      {
-        id: 4,
-        type: "feedback",
-        icon: Star,
-        iconBg: "bg-gray-100 text-gray-400",
-        title: "Rate your experience",
-        description:
-          "How was your recent plumbing checkup with David? Your feedback helps us improve.",
-        time: "Yesterday, 4:00 PM",
-        unread: false,
-        rating: true,
-      },
-      {
-        id: 5,
-        type: "account",
-        icon: Lock,
-        iconBg: "bg-purple-100 text-purple-600",
-        title: "Password Updated",
-        description:
-          "Your account password was successfully changed. If this wasn't you, please contact support.",
-        time: "Yesterday, 9:30 AM",
-        unread: false,
-      },
-    ],
-  },
-]
-
-const filters = [
-  { label: "All Alerts", count: null },
-  { label: "Unread", count: 3 },
-  { label: "Orders", count: null },
-  { label: "Promotions", count: null },
-]
-
-/* =========================
-   PAGE
-========================= */
 
 export default function NotificationsPage() {
-  const [activeFilter, setActiveFilter] = useState("All Alerts")
+  const router = useRouter()
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState("all")
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await apiFetch<{ notifications: Notification[] }>("/user/notifications")
+        setNotifications(data.notifications || [])
+      } catch {
+        setNotifications([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchNotifications()
+  }, [])
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "booking": return <Wrench className="w-5 h-5" />
+      case "completed": return <CheckCircle2 className="w-5 h-5" />
+      case "cancelled": return <XCircle className="w-5 h-5" />
+      case "order": return <ShoppingBag className="w-5 h-5" />
+      default: return <Bell className="w-5 h-5" />
+    }
+  }
+
+  const getIconStyle = (type: string) => {
+    switch (type) {
+      case "booking": return "bg-blue-50 text-blue-600"
+      case "completed": return "bg-emerald-50 text-emerald-600"
+      case "cancelled": return "bg-red-50 text-red-500"
+      case "order": return "bg-violet-50 text-violet-600"
+      default: return "bg-gray-100 text-gray-500"
+    }
+  }
+
+  const formatTime = (time: string) => {
+    const now = new Date()
+    const date = new Date(time)
+    const diff = now.getTime() - date.getTime()
+    const mins = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+
+    if (mins < 1) return "Just now"
+    if (mins < 60) return `${mins}m ago`
+    if (hours < 24) return `${hours}h ago`
+    if (days === 1) return "Yesterday"
+    if (days < 7) return `${days}d ago`
+    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+  }
+
+  const filtered = filter === "all"
+    ? notifications
+    : notifications.filter(n => {
+        if (filter === "bookings") return ["booking", "completed", "cancelled"].includes(n.type)
+        if (filter === "orders") return n.type === "order"
+        return true
+      })
+
+  // Group by today / earlier
+  const today = new Date().toDateString()
+  const todayItems = filtered.filter(n => new Date(n.time).toDateString() === today)
+  const earlierItems = filtered.filter(n => new Date(n.time).toDateString() !== today)
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-8">
-          <Link href="/">Home</Link>
-          <ChevronRight className="w-4 h-4" />
-          <Link href="/profile">My Account</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Notifications</span>
-        </div>
+        <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
+          <Link href="/" className="hover:text-gray-600 transition-colors">Home</Link>
+          <ChevronRight className="w-3 h-3" />
+          <Link href="/profile" className="hover:text-gray-600 transition-colors">My Account</Link>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-gray-700 font-medium">Notifications</span>
+        </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-3">
             <ProfileSidebar />
           </div>
 
-          {/* Notifications */}
-          <div className="lg:col-span-6">
-            <div className="flex justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold">Notifications</h1>
-                <p className="text-gray-500 mt-1">
-                  Stay updated with your orders and offers.
-                </p>
-              </div>
-              <button className="flex items-center gap-1 text-sm text-gray-400 hover:text-blue-600">
-                <Check className="w-4 h-4" />
-                Mark all as read
-              </button>
-            </div>
-
-            {/* Filters */}
-            <div className="flex gap-2 mb-8 overflow-x-auto">
-              {filters.map((f) => (
-                <button
-                  key={f.label}
-                  onClick={() => setActiveFilter(f.label)}
-                  className={cn(
-                    "px-5 py-2.5 rounded-xl text-sm font-semibold",
-                    activeFilter === f.label
-                      ? "bg-gray-900 text-white"
-                      : "bg-white border text-gray-500",
-                  )}
-                >
-                  {f.label}
-                  {f.count && (
-                    <span className="ml-2 text-xs bg-red-500 text-white px-2 rounded-md">
-                      {f.count}
+          {/* Main Content */}
+          <div className="lg:col-span-9">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              {/* Header */}
+              <div className="p-5 sm:p-6 border-b border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-[#1d242d]">Notifications</h1>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      Stay updated with your bookings and orders.
+                    </p>
+                  </div>
+                  {notifications.length > 0 && (
+                    <span className="text-xs text-gray-400 font-medium shrink-0">
+                      {notifications.length} notification{notifications.length !== 1 ? "s" : ""}
                     </span>
                   )}
-                </button>
-              ))}
-            </div>
+                </div>
 
-            {/* Notification List */}
-            <div className="space-y-10">
-              {notifications.map((group) => (
-                <div key={group.group}>
-                  <h2 className="text-xs font-bold text-gray-400 mb-4">
-                    {group.group}
-                  </h2>
+                {/* Filters */}
+                <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
+                  {[
+                    { key: "all", label: "All" },
+                    { key: "bookings", label: "Bookings" },
+                    { key: "orders", label: "Orders" },
+                  ].map(f => (
+                    <button
+                      key={f.key}
+                      onClick={() => setFilter(f.key)}
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                        filter === f.key
+                          ? "bg-[#1d242d] text-white"
+                          : "bg-gray-50 text-gray-500 border border-gray-100 hover:border-gray-200"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  <div className="space-y-4">
-                    {group.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className={cn(
-                          "bg-white p-6 rounded-3xl border relative",
-                          item.unread && "ring-1 ring-blue-100",
-                        )}
-                      >
-                        <div className="flex gap-4">
-                          <div
-                            className={cn(
-                              "w-12 h-12 rounded-2xl flex items-center justify-center",
-                              item.iconBg,
-                            )}
-                          >
-                            <item.icon className="w-6 h-6" />
-                          </div>
-
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <h3 className="font-bold">{item.title}</h3>
-                              <span className="text-xs text-gray-400">
-                                {item.time}
-                              </span>
-                            </div>
-
-                            <p className="text-sm text-gray-500 mb-4">
-                              {item.description}
-                            </p>
-
-                            {/* ✅ ACTIONS */}
-                            {item.actions && (
-                              <div className="flex gap-3">
-                                {item.actions.map((action) => (
-                                  <button
-                                    key={action}
-                                    className="px-4 py-1.5 text-xs font-bold border rounded-lg"
-                                  >
-                                    {action}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* ✅ RATING */}
-                            {item.rating && (
-                              <div className="flex gap-1">
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                  <Star
-                                    key={i}
-                                    className="w-5 h-5 text-gray-300 hover:text-yellow-400 cursor-pointer"
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </div>
+              {/* Notification List */}
+              <div className="divide-y divide-gray-50">
+                {loading ? (
+                  <div className="p-8 space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex gap-3 animate-pulse">
+                        <div className="w-10 h-10 bg-gray-100 rounded-xl shrink-0" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-100 rounded w-1/3" />
+                          <div className="h-3 bg-gray-50 rounded w-2/3" />
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                ) : filtered.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BellOff className="w-7 h-7 text-gray-300" />
+                    </div>
+                    <p className="font-semibold text-gray-700 mb-1">No notifications yet</p>
+                    <p className="text-sm text-gray-400">
+                      You'll see updates about your bookings and orders here.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {todayItems.length > 0 && (
+                      <div>
+                        <div className="px-5 sm:px-6 pt-4 pb-2">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Today</p>
+                        </div>
+                        {todayItems.map(item => (
+                          <button
+                            key={item.id}
+                            onClick={() => item.link && router.push(item.link)}
+                            className="w-full text-left px-5 sm:px-6 py-4 hover:bg-gray-50/50 transition-colors flex gap-3.5"
+                          >
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${getIconStyle(item.type)}`}>
+                              {getIcon(item.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-semibold text-[#1d242d] truncate">{item.title}</p>
+                                <span className="text-[11px] text-gray-400 shrink-0">{formatTime(item.time)}</span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.message}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
-          {/* Preferences */}
-          <div className="lg:col-span-3">
-            <div className="bg-white p-6 rounded-3xl border sticky top-8">
-              <h2 className="font-bold mb-6 flex items-center gap-2">
-                <Settings2 className="w-5 h-5" />
-                Preferences
-              </h2>
-
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span>Email Alerts</span>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex justify-between">
-                  <span>SMS Alerts</span>
-                  <Switch defaultChecked />
-                </div>
+                    {earlierItems.length > 0 && (
+                      <div>
+                        <div className="px-5 sm:px-6 pt-4 pb-2">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Earlier</p>
+                        </div>
+                        {earlierItems.map(item => (
+                          <button
+                            key={item.id}
+                            onClick={() => item.link && router.push(item.link)}
+                            className="w-full text-left px-5 sm:px-6 py-4 hover:bg-gray-50/50 transition-colors flex gap-3.5"
+                          >
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${getIconStyle(item.type)}`}>
+                              {getIcon(item.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-semibold text-[#1d242d] truncate">{item.title}</p>
+                                <span className="text-[11px] text-gray-400 shrink-0">{formatTime(item.time)}</span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.message}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-
-              <button className="mt-6 text-sm text-blue-600 flex items-center gap-1">
-                Advanced Settings
-                <ExternalLink className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>

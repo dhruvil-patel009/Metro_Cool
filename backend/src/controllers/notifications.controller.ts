@@ -2,6 +2,130 @@ import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
 
 /**
+ * GET /api/notifications
+ *
+ * User-facing notifications derived from their bookings & orders.
+ */
+export const getUserNotifications = async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.id
+    if (!userId) return res.status(401).json({ error: "Unauthorized" })
+
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // last 7 days
+
+    const [bookingsResult, ordersResult] = await Promise.all([
+      supabase
+        .from("bookings")
+        .select(`
+          id,
+          created_at,
+          booking_date,
+          time_slot,
+          job_status,
+          service_id,
+          services ( title )
+        `)
+        .eq("user_id", userId)
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(15),
+
+      supabase
+        .from("orders")
+        .select(`
+          id,
+          created_at,
+          payment_status,
+          total_amount
+        `)
+        .eq("user_id", userId)
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ])
+
+    const notifications: any[] = []
+
+    // Booking notifications
+    for (const b of bookingsResult.data || []) {
+      const serviceName = (b as any).services?.title || "AC Service"
+      let title = ""
+      let message = ""
+      let type = "booking"
+
+      switch (b.job_status) {
+        case "open":
+          title = "Booking Confirmed"
+          message = `Your ${serviceName} booking has been confirmed.`
+          break
+        case "assigned":
+          title = "Technician Assigned"
+          message = `A technician has been assigned for your ${serviceName}.`
+          break
+        case "on_the_way":
+          title = "Technician En Route"
+          message = `Your technician is on the way for ${serviceName}.`
+          break
+        case "working":
+          title = "Service Started"
+          message = `Your ${serviceName} is now in progress.`
+          break
+        case "completed":
+          title = "Service Completed"
+          message = `Your ${serviceName} has been completed successfully.`
+          type = "completed"
+          break
+        case "cancelled":
+          title = "Booking Cancelled"
+          message = `Your ${serviceName} booking was cancelled.`
+          type = "cancelled"
+          break
+        default:
+          title = "Booking Update"
+          message = `Your ${serviceName} booking status was updated.`
+      }
+
+      notifications.push({
+        id: `booking-${b.id}`,
+        type,
+        title,
+        message,
+        time: b.created_at,
+        read: false,
+        link: `/bookings?id=${b.id}`,
+      })
+    }
+
+    // Order notifications
+    for (const o of ordersResult.data || []) {
+      const isPaid = o.payment_status === "completed"
+      notifications.push({
+        id: `order-${o.id}`,
+        type: "order",
+        title: isPaid ? "Order Paid" : "Order Placed",
+        message: isPaid
+          ? `Payment of ₹${Number(o.total_amount).toLocaleString("en-IN")} confirmed.`
+          : `Your product order has been placed successfully.`,
+        time: o.created_at,
+        read: false,
+        link: `/profile/orders`,
+      })
+    }
+
+    // Sort by time
+    notifications.sort(
+      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+    )
+
+    res.setHeader("Cache-Control", "no-store")
+    res.json({ notifications: notifications.slice(0, 20) })
+  } catch (err) {
+    console.error("User notifications error:", err)
+    res.status(500).json({ error: "Failed to load notifications" })
+  }
+}
+
+/**
  * GET /api/admin/notifications
  *
  * Builds real-time notifications from live DB data:
