@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import AuthProvider from "@/providers/AuthProvider";
 import { ToastContainer } from 'react-toastify';
 import Providers from "./providers"
@@ -10,14 +10,11 @@ import Script from "next/script";
 
 
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 /* ================= SEO METADATA ================= */
@@ -105,7 +102,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${dmSans.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
         {/* Razorpay (Correct way) */}
 
