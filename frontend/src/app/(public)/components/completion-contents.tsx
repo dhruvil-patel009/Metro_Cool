@@ -330,7 +330,7 @@ export default function CompletionContent() {
   // ── Derived values ──
   const serviceName = booking?.service?.title || "AC Service"
   const serviceRef = booking?.id || ""
-  const technicianName = booking?.technician?.full_name || "Assigned Technician"
+  const technicianName = booking?.technician?.full_name || booking?.technician?.name || "Pending Assignment"
   const serviceDate = booking?.booking_date
     ? new Date(booking.booking_date).toLocaleDateString("en-IN", {
         day: "2-digit", month: "short", year: "numeric",
@@ -341,12 +341,12 @@ export default function CompletionContent() {
   // ── Error state ──
   if (bookingError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-white px-4">
         <div className="text-center space-y-4 max-w-sm">
-          <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+          <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto">
             <AlertCircle className="w-7 h-7 text-red-500" />
           </div>
-          <h2 className="text-lg font-bold text-gray-900">Booking not found</h2>
+          <h2 className="text-lg font-bold text-[#1d242d]">Booking not found</h2>
           <p className="text-sm text-gray-500">
             We couldn't load your booking. Please go back and try again, or contact support.
           </p>
@@ -364,41 +364,40 @@ export default function CompletionContent() {
   // ── Loading state ──
   if (!booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-3">
-          <Loader2 className="w-10 h-10 text-blue-600 animate-spin mx-auto" />
-          <p className="text-gray-500 font-medium">Loading booking details…</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="loader-wrapper">
+          <div className="loader"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <main className="min-h-screen bg-white py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
 
         {/* ── Header ── */}
-        <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Service Completion</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#1d242d]">Service Completion</h1>
             <p className="text-gray-500 mt-1 text-sm">Complete payment to receive your closure OTP</p>
           </div>
-          <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border ${
+          <span className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border self-start ${
             paymentConfirmed
-              ? "bg-green-50 text-green-700 border-green-200"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
               : "bg-amber-50 text-amber-700 border-amber-200"
           }`}>
             <span className={`w-2 h-2 rounded-full ${
-              paymentConfirmed ? "bg-green-500" : "bg-amber-500 animate-pulse"
+              paymentConfirmed ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
             }`} />
             {paymentConfirmed ? "Payment Completed" : "Payment Pending"}
           </span>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_380px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 lg:gap-6">
 
-          {/* ═══ LEFT ═══ */}
-          <div className="space-y-5">
+          {/* ═══ LEFT COLUMN ═══ */}
+          <div className="lg:col-span-3 space-y-5">
 
             {/* Booking info */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -413,12 +412,14 @@ export default function CompletionContent() {
                     <p className="text-xs text-gray-400">Ref #{serviceRef.slice(0, 8).toUpperCase()}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-gray-50 rounded-xl p-3">
                     <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
                       <User className="w-3.5 h-3.5" /> Technician
                     </div>
-                    <p className="font-semibold text-gray-900 text-sm truncate">{technicianName}</p>
+                    <p className={`font-semibold text-sm truncate ${booking?.technician ? "text-gray-900" : "text-gray-400 italic"}`}>
+                      {technicianName}
+                    </p>
                   </div>
                   <div className="bg-gray-50 rounded-xl p-3">
                     <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
@@ -501,8 +502,8 @@ export default function CompletionContent() {
             )}
           </div>
 
-          {/* ═══ RIGHT ═══ */}
-          <div className="space-y-5">
+          {/* ═══ RIGHT COLUMN ═══ */}
+          <div className="lg:col-span-2 space-y-5">
 
             {/* Payment card */}
             {!paymentConfirmed ? (

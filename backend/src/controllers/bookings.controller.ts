@@ -255,7 +255,7 @@ export const getBookingById = async (req: any, res: Response) => {
           first_name,
           last_name,
           phone,
-          avatar
+          profile_photo
         `)
         .eq("id", booking.technician_id)
         .eq("role", "technician")
@@ -264,10 +264,9 @@ export const getBookingById = async (req: any, res: Response) => {
       if (!techError && tech) {
         technician = {
           id: tech.id,
-          full_name: `${tech.first_name} ${tech.last_name}`,
+          full_name: `${tech.first_name} ${tech.last_name}`.trim(),
           phone: tech.phone,
-          avatar: tech.avatar,
-          experience_years: 3, // optional placeholder
+          avatar: tech.profile_photo || null,
         }
       }
     }

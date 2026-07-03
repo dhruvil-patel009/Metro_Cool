@@ -247,22 +247,22 @@ export default function CheckoutPage() {
 
   return (
     <AuthGuard>
-    <div className="min-h-screen bg-[#f8fafc] py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
 
         {/* Breadcrumb */}
-        <nav className="mb-6 flex items-center gap-2 text-xs text-slate-500">
-          <button onClick={() => router.push("/products")} className="hover:text-blue-600">Products</button>
+        <nav className="mb-5 flex items-center gap-1.5 text-xs text-gray-400">
+          <button onClick={() => router.push("/products")} className="hover:text-gray-600 transition-colors">Products</button>
           <ChevronRight className="h-3 w-3" />
-          <span className="text-slate-900 font-medium">Checkout</span>
+          <span className="text-gray-700 font-medium">Checkout</span>
         </nav>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Checkout</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#1d242d] mb-6">Checkout</h1>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
           {/* LEFT COLUMN */}
-          <div className="lg:col-span-2 space-y-5">
+          <div className="lg:col-span-3 space-y-5">
 
             {/* SAVED ADDRESSES */}
             {savedAddresses.length > 0 && (
@@ -315,7 +315,7 @@ export default function CheckoutPage() {
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
                       placeholder="John Doe"
-                      className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
                   <div>
@@ -324,7 +324,7 @@ export default function CheckoutPage() {
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
                       placeholder="9876543210"
-                      className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -334,7 +334,7 @@ export default function CheckoutPage() {
                     value={street}
                     onChange={e => setStreet(e.target.value)}
                     placeholder="123, Main Street"
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -344,7 +344,7 @@ export default function CheckoutPage() {
                       value={apt}
                       onChange={e => setApt(e.target.value)}
                       placeholder="Apt 4B"
-                      className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
                   <div>
@@ -353,7 +353,7 @@ export default function CheckoutPage() {
                       value={city}
                       onChange={e => setCity(e.target.value)}
                       placeholder="Ahmedabad"
-                      className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
                   <div>
@@ -362,7 +362,7 @@ export default function CheckoutPage() {
                       value={zip}
                       onChange={e => setZip(e.target.value)}
                       placeholder="380001"
-                      className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -428,7 +428,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* RIGHT COLUMN — ORDER SUMMARY */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-24">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                 <Package className="w-4 h-4 text-blue-600" />

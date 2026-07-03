@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
   CheckCircle, Package, ArrowRight, ShoppingBag,
@@ -17,12 +17,14 @@ const formatINR = (v: number) =>
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const orderId = searchParams.get("order_id")
 
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(!!orderId)
   const [downloadingInvoice, setDownloadingInvoice] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!orderId) return
@@ -60,20 +62,22 @@ function OrderSuccessContent() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-[#f8fafc] px-4 py-12">
-      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 max-w-lg w-full">
+    <div className="min-h-[80vh] flex items-center justify-center bg-white px-4 py-10 sm:py-14">
+      <div className={`bg-white sm:border sm:border-gray-100 sm:shadow-sm rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full transition-all duration-700 ${
+        mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+      }`}>
 
         {/* Success Icon */}
-        <div className="text-center mb-6">
-          <div className="relative mx-auto w-20 h-20 mb-4">
-            <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-30" />
-            <div className="relative w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
-              <CheckCircle className="w-10 h-10 text-emerald-500" strokeWidth={2.5} />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="relative mx-auto w-18 h-18 sm:w-20 sm:h-20 mb-4">
+            <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-20" />
+            <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-emerald-50 border-4 border-emerald-100 flex items-center justify-center">
+              <CheckCircle className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-500" strokeWidth={2.5} />
             </div>
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Order Placed Successfully!</h1>
-          <p className="text-gray-500 text-sm leading-relaxed">
-            Thank you for your purchase. Your order has been confirmed.
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1d242d] mb-2">Order Placed Successfully!</h1>
+          <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto">
+            Thank you for your purchase. Your order has been confirmed and will be delivered soon.
           </p>
         </div>
 
@@ -156,7 +160,7 @@ function OrderSuccessContent() {
             <button
               onClick={handleDownloadInvoice}
               disabled={downloadingInvoice}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-emerald-700 transition-all disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-60 shadow-sm shadow-emerald-200"
             >
               {downloadingInvoice
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
@@ -165,14 +169,14 @@ function OrderSuccessContent() {
           )}
           <Link
             href="/products"
-            className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all"
+            className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm shadow-blue-200"
           >
             <ShoppingBag className="w-4 h-4" />
             Continue Shopping
           </Link>
           <Link
             href="/profile/orders"
-            className="w-full inline-flex items-center justify-center gap-2 text-gray-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all border border-gray-200"
+            className="w-full inline-flex items-center justify-center gap-2 text-gray-600 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-all border-2 border-gray-200"
           >
             View My Orders
             <ArrowRight className="w-4 h-4" />

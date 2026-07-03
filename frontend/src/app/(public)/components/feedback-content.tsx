@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Star, CheckCircle } from "lucide-react"
+import { Star, CheckCircle, ArrowRight } from "lucide-react"
 import { toast } from "react-toastify"
 import AuthGuard from "@/app/components/AuthGuard"
 
@@ -12,13 +12,8 @@ export default function FeedbackContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  // 🔥 Booking ID from URL
   const bookingId = searchParams.get("id")
-
-  // 🔥 Booking State
   const [booking, setBooking] = useState<any>(null)
-
-  // Feedback state
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -28,38 +23,41 @@ export default function FeedbackContent() {
   /* ---------------- FETCH BOOKING ---------------- */
   useEffect(() => {
     if (!bookingId) return
-
     const token = localStorage.getItem("accessToken")
 
     fetch(`${API_URL}/bookings/${bookingId}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     })
-      .then(res => res.json())
-      .then(data => setBooking(data.booking))
+      .then((res) => res.json())
+      .then((data) => setBooking(data.booking))
   }, [bookingId])
 
   /* ---------------- LOADING ---------------- */
   if (!booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading feedback...
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="loader-wrapper">
+          <div className="loader"></div>
+        </div>
       </div>
     )
   }
 
-  /* ---------------- MAP DB → UI ---------------- */
+  /* ---------------- DERIVED DATA ---------------- */
   const serviceTitle = booking.service?.title || "Service"
-  const serviceimg =
+  const serviceImg =
     booking.service?.image_url || "/assets/technician-working-on-ac-unit.jpg"
+  const technicianName =
+    booking.technician?.full_name || booking.technician?.name || "Your Technician"
 
-  const bookingDate = new Date(booking.booking_date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
+  const bookingDate = new Date(booking.booking_date).toLocaleDateString("en-IN", {
     day: "numeric",
+    month: "short",
+    year: "numeric",
   })
 
-  const orderId = `#${booking.id.slice(0, 6).toUpperCase()}`
+  const orderId = `#${booking.id.slice(0, 8)}`
 
   /* ---------------- TAGS ---------------- */
   const tags = [
@@ -76,23 +74,34 @@ export default function FeedbackContent() {
     "Poor Service",
     "Below Average",
     "Good Service",
-    "Excellent Service!",
+    "Excellent!",
     "Outstanding!",
   ]
 
+  const ratingColors = [
+    "",
+    "text-red-500",
+    "text-orange-500",
+    "text-yellow-600",
+    "text-blue-600",
+    "text-emerald-600",
+  ]
+
   const toggleTag = (tagId: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    setSelectedTags((prev) =>
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
     )
   }
 
-  /* ---------------- 🔥 SUBMIT FEEDBACK ---------------- */
+  /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async () => {
-    if (!rating) return
+    if (!rating) {
+      toast.error("Please select a rating")
+      return
+    }
 
     try {
       setSubmitting(true)
-
       const token = localStorage.getItem("accessToken")
 
       const res = await fetch(`${API_URL}/feedbacks`, {
@@ -110,19 +119,15 @@ export default function FeedbackContent() {
         }),
       })
 
-      if (!res.ok) {
-        throw new Error("Failed to submit feedback")
-      }
+      if (!res.ok) throw new Error("Failed to submit feedback")
 
-      toast("Thank you for your feedback! 🎉improve Your feedback helps usour service.")
-
+      toast.success("Thank you for your feedback! 🎉")
 
       setTimeout(() => {
         router.push(`/bookings/completion?id=${bookingId}`)
       }, 1000)
     } catch (err) {
-      toast("❌ Something went wrong Please try again later.")
-
+      toast.error("Something went wrong. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -132,122 +137,153 @@ export default function FeedbackContent() {
     router.push(`/bookings/completion?id=${bookingId}`)
   }
 
-  /* ======================= UI (UNCHANGED) ======================= */
-
   return (
     <AuthGuard>
-      <main className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+      <main className="min-h-screen bg-white py-8 sm:py-12 px-4">
+        <div className="max-w-xl mx-auto">
+          {/* Card */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Top accent */}
+            <div className="h-1.5 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600" />
 
-            <div className="p-8 sm:p-10">
-              {/* Header */}
-              <div className="flex items-start gap-4 mb-10 pb-8 border-b border-gray-100">
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-2xl bg-blue-600 overflow-hidden">
+            <div className="p-5 sm:p-8">
+              {/* Service Info Header */}
+              <div className="flex items-start gap-4 mb-8 pb-6 border-b border-gray-100">
+                <div className="relative shrink-0">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100">
                     <img
-                      src={serviceimg}
+                      src={serviceImg}
                       alt="Service"
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <CheckCircle className="w-3.5 h-3.5 text-white" />
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <CheckCircle className="w-3 h-3 text-white" />
                   </div>
                 </div>
 
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h2 className="text-xl font-bold">{serviceTitle}</h2>
-                    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">
-                      COMPLETED
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h2 className="text-base sm:text-lg font-bold text-[#1d242d] truncate">
+                      {serviceTitle}
+                    </h2>
+                    <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      Completed
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Service provided by <span className="font-semibold">John Doe</span>
+                  <p className="text-sm text-gray-500">
+                    Service by <span className="font-medium text-[#1d242d]">{technicianName}</span>
                   </p>
-                  <div className="flex gap-4 text-xs text-gray-500">
-                    <div>{bookingDate}</div>
-                    <div>Order {orderId}</div>
+                  <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                    <span>{bookingDate}</span>
+                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                    <span>Order {orderId}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Rating */}
-              <div className="mb-10 text-center">
-                <h1 className="text-3xl font-bold mb-2">How was your experience?</h1>
-                <p className="text-gray-600 mb-8">
+              {/* Rating Section */}
+              <div className="text-center mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#1d242d] mb-1.5">
+                  How was your experience?
+                </h1>
+                <p className="text-sm text-gray-500 mb-6">
                   Your feedback helps us maintain high quality service.
                 </p>
 
-                <div className="flex justify-center gap-2 mb-4">
-                  {[1, 2, 3, 4, 5].map(star => (
+                {/* Star Rating */}
+                <div className="flex justify-center gap-1.5 sm:gap-2 mb-3">
+                  {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       onClick={() => setRating(star)}
                       onMouseEnter={() => setHoveredRating(star)}
                       onMouseLeave={() => setHoveredRating(0)}
+                      className="transition-transform hover:scale-110 active:scale-95"
                     >
                       <Star
-                        className={`w-12 h-12 ${star <= (hoveredRating || rating)
-                            ? "fill-yellow-400 text-yellow-400"
+                        className={`w-10 h-10 sm:w-12 sm:h-12 transition-colors ${
+                          star <= (hoveredRating || rating)
+                            ? "fill-amber-400 text-amber-400"
                             : "fill-gray-200 text-gray-200"
-                          }`}
+                        }`}
                       />
                     </button>
                   ))}
                 </div>
 
                 {rating > 0 && (
-                  <p className="text-blue-600 font-semibold text-lg">
+                  <p className={`text-sm sm:text-base font-semibold ${ratingColors[rating]}`}>
                     {ratingLabels[rating]}
                   </p>
                 )}
               </div>
 
-              {/* Tags */}
-              <div className="mb-8 flex flex-wrap gap-3">
-                {tags.map(tag => (
-                  <button
-                    key={tag.id}
-                    onClick={() => toggleTag(tag.id)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium ${selectedTags.includes(tag.id)
-                        ? "bg-blue-600 text-white"
-                        : "border border-gray-200"
-                      }`}
-                  >
-                    {tag.icon} {tag.label}
-                  </button>
-                ))}
+              {/* Quick Tags */}
+              {rating > 0 && (
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">
+                    What stood out? <span className="font-normal text-gray-400">(Optional)</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <button
+                        key={tag.id}
+                        onClick={() => toggleTag(tag.id)}
+                        className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+                          selectedTags.includes(tag.id)
+                            ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                            : "bg-gray-50 border border-gray-200 text-gray-700 hover:border-blue-200 hover:bg-blue-50"
+                        }`}
+                      >
+                        {tag.icon} {tag.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Comment Box */}
+              {rating > 0 && (
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                    Additional comments <span className="font-normal text-gray-400">(Optional)</span>
+                  </p>
+                  <textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    rows={3}
+                    placeholder="Tell us more about your experience..."
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none transition-all"
+                  />
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="space-y-3 pt-2">
+                <button
+                  disabled={rating === 0 || submitting}
+                  onClick={handleSubmit}
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-[0.98] shadow-sm shadow-blue-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Submitting..." : "Submit Feedback"}
+                  {!submitting && <ArrowRight className="w-4 h-4" />}
+                </button>
+
+                <button
+                  onClick={handleSkip}
+                  className="w-full py-3 text-sm text-gray-400 font-medium hover:text-gray-600 transition-colors"
+                >
+                  Skip for now
+                </button>
               </div>
-
-              {/* Comment */}
-              <textarea
-                value={feedback}
-                onChange={e => setFeedback(e.target.value)}
-                rows={4}
-                placeholder="Share your experience..."
-                className="w-full border rounded-xl p-4 mb-6"
-              />
-
-              {/* Actions */}
-              <button
-                disabled={rating === 0 || submitting}
-                onClick={handleSubmit}
-                className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold disabled:bg-gray-300"
-              >
-                Submit Feedback
-              </button>
-
-              <button
-                onClick={handleSkip}
-                className="w-full mt-4 text-gray-500"
-              >
-                Skip this step
-              </button>
             </div>
           </div>
+
+          {/* Footer text */}
+          <p className="text-center text-xs text-gray-400 mt-5">
+            Your feedback is anonymous and helps us improve our service quality.
+          </p>
         </div>
       </main>
     </AuthGuard>
