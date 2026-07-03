@@ -45,6 +45,15 @@ export const metadata: Metadata = {
     canonical: "/",
   },
 
+  icons: {
+    icon: [
+      { url: "/assets/logo.ico" },
+      { url: "/assets/icon-light-32x32.png", media: "(prefers-color-scheme: light)" },
+      { url: "/assets/icon-dark-32x32.png", media: "(prefers-color-scheme: dark)" },
+    ],
+    apple: "/assets/apple-icon.png",
+  },
+
   openGraph: {
     title: "Metro Cool AC Service Ahmedabad",
     description:

@@ -10,21 +10,18 @@ import {
   UserCheck,
   ShieldCheck,
   Calendar,
-  Users,
   Truck,
   Share2,
-  Heart,
-  SearchCheck,
-  Droplets,
-  Wind,
-  Trash2,
   ChevronDown,
   Headphones,
   CheckCircle2,
   ThumbsUp,
+  SearchCheck,
+  Droplets,
+  Wind,
+  Trash2,
 } from "lucide-react"
 
-import { Card } from "@/app/components/ui/card"
 import { formatINR } from "@/app/lib/currency"
 import { getFullServiceDetails } from "../../lib/serviceDetails.api"
 
@@ -43,57 +40,41 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
   const [selectedAddons, setSelectedAddons] = useState<string[]>([])
 
   const totalPrice =
-  service?.price +
-  service?.addons
-    ?.filter((addon: any) => selectedAddons.includes(addon.id))
-    .reduce((sum: number, addon: any) => sum + addon.price, 0) || 0
-/* 🔵 ADDED : Dynamic total price with selected addons */
-
+    service?.price +
+      service?.addons
+        ?.filter((addon: any) => selectedAddons.includes(addon.id))
+        .reduce((sum: number, addon: any) => sum + addon.price, 0) || 0
 
   const toggleAddon = (id: string) => {
-    setSelectedAddons(prev =>
-      prev.includes(id)
-        ? prev.filter(a => a !== id)
-        : [...prev, id]
+    setSelectedAddons((prev) =>
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
     )
   }
 
-  /* =========================
-     FETCH ALL DATA (NO UI CHANGE)
-  ========================= */
   useEffect(() => {
     async function load() {
       try {
         const data = await getFullServiceDetails(id)
-
         const main = data.service
 
         setService({
           ...main,
-
           longDescription: main.description,
           originalPrice: main.original_price ?? main.price + 20,
-
           included: data.includes || [],
           addons: data.addons || [],
           faqs: data.faqs || [],
-
           duration: main.duration_minutes
             ? `${main.duration_minutes} mins`
             : "60–90 mins",
-
           expertise: "Certified Technician",
           warranty: "30 Day Service Warranty",
           reviews: main.review_count ?? 120,
-
-          discount:
-            main.original_price
-              ? Math.round(
-                ((main.original_price - main.price) /
-                  main.original_price) *
-                100
+          discount: main.original_price
+            ? Math.round(
+                ((main.original_price - main.price) / main.original_price) * 100
               ) + "%"
-              : "10%",
+            : "10%",
         })
       } catch (e) {
         console.error(e)
@@ -102,13 +83,9 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
         setLoading(false)
       }
     }
-
     load()
   }, [id])
 
-  /* =========================
-     LOADING STATE
-  ========================= */
   if (loading) {
     return (
       <div className="loader-wrapper">
@@ -117,274 +94,132 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
     )
   }
 
-  /* =========================
-     NOT FOUND
-  ========================= */
   if (!service) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">Service Not Found</h1>
-            <Link href="/services" className="text-blue-600 hover:underline">
-              Return to Services
-            </Link>
-          </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-[#1d242d] mb-2">Service Not Found</h1>
+          <Link href="/services" className="text-sm text-blue-600 hover:underline">
+            ← Return to Services
+          </Link>
         </div>
       </div>
     )
   }
 
-  /* =========================
-   PAGE (UI 100% SAME)
-========================= */
-
   return (
-    <div className="min-h-screen bg-white font-sans text-[#1a1a1a] animate-fade-in">
-
-      <main className="max-w-fit mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-screen bg-white">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Breadcrumbs */}
-        <nav className="flex items-center space-x-2 text-xs text-gray-400 mb-8">
-          <Link href="/" className="hover:text-[#0060ff] flex items-center gap-1">
-            <Calendar className="w-3 h-3" /> Home
+        <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6 sm:mb-8 flex-wrap">
+          <Link href="/" className="hover:text-gray-600 transition-colors">
+            Home
           </Link>
           <ChevronRight className="w-3 h-3" />
-          <Link href="/services" className="hover:text-[#0060ff]">
+          <Link href="/services" className="hover:text-gray-600 transition-colors">
             Services
           </Link>
-          {/* <ChevronRight className="w-3 h-3" />
-          <Link href="/services" className="hover:text-[#0060ff]">
-            {service.category}
-          </Link> */}
           <ChevronRight className="w-3 h-3" />
-          <span className="text-gray-900 font-medium text-pretty">{service.title}</span>
+          <span className="text-gray-700 font-medium truncate max-w-[180px] sm:max-w-none">
+            {service.title}
+          </span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Main Content */}
-          <div className="lg:col-span-8">
-            {/* Header Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          {/* ============ MAIN CONTENT ============ */}
+          <div className="lg:col-span-7 xl:col-span-8">
+            {/* Header */}
             <div className="mb-6">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex flex-wrap items-center gap-3 mb-3">
                 {service.badge && (
                   <span
-                    className="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border"
-                    style={{
-                      backgroundColor: service.badge_color,
-                      color: "#fff",
-                    }}
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider text-white"
+                    style={{ backgroundColor: service.badge_color }}
                   >
                     {service.badge}
                   </span>
                 )}
-                <div className="flex items-center gap-1 text-sm">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold">{service.rating}</span>
-                  <span className="text-gray-400 text-xs">{service.reviews} reviews</span>
+                <div className="flex items-center gap-1.5">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span className="text-sm font-bold text-[#1d242d]">{service.rating}</span>
+                  <span className="text-xs text-gray-400">({service.reviews} reviews)</span>
                 </div>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight leading-tight">{service.title}</h1>
-              <p className="text-gray-500 text-lg leading-relaxed max-w-2xl">{service.longDescription}</p>
+
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1d242d] leading-tight mb-3">
+                {service.title}
+              </h1>
+              <p className="text-gray-500 text-sm sm:text-base leading-relaxed max-w-2xl">
+                {service.longDescription}
+              </p>
             </div>
 
-            {/* Quick Info */}
-            <div className="flex flex-wrap gap-8 mb-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0060ff]">
-                  <Clock className="w-5 h-5" />
-                </div>
+            {/* Quick Info Pills */}
+            <div className="flex flex-wrap gap-3 sm:gap-4 mb-8">
+              <div className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100">
+                <Clock className="w-4 h-4 text-blue-600" />
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Duration</p>
-                  <p className="font-bold text-sm">{service.duration}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold leading-none">Duration</p>
+                  <p className="text-xs font-bold text-[#1d242d] mt-0.5">{service.duration}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                  <UserCheck className="w-5 h-5" />
-                </div>
+              <div className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100">
+                <UserCheck className="w-4 h-4 text-violet-600" />
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Expertise</p>
-                  <p className="font-bold text-sm">{service.expertise}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold leading-none">Expertise</p>
+                  <p className="text-xs font-bold text-[#1d242d] mt-0.5">{service.expertise}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
+              <div className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Warranty</p>
-                  <p className="font-bold text-sm">{service.warranty}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold leading-none">Warranty</p>
+                  <p className="text-xs font-bold text-[#1d242d] mt-0.5">{service.warranty}</p>
                 </div>
               </div>
             </div>
 
             {/* Hero Image */}
-            <div className="relative rounded-md overflow-hidden mb-12 group">
-              <Image
-                src={service.image_url || "/placeholder.svg"}
-                alt={service.title}
-                width={500}
-                height={450}
-                className="object-cover transition-transform duration-700 group-hover:scale-105 w-auto"
-              />
-              <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-lg">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs font-bold">Available</span>
+            <div className="relative rounded-2xl overflow-hidden mb-10 sm:mb-12 border border-gray-100">
+              <div className="relative aspect-[16/9] sm:aspect-[16/8]">
+                <Image
+                  src={service.image_url || "/placeholder.svg"}
+                  alt={service.title}
+                  fill
+                  className="object-cover"
+                />
               </div>
-              <div className="absolute top-6 right-6 flex gap-2">
-                {/* <button className="p-2.5 bg-white/90 backdrop-blur cursor-pointer rounded-full shadow hover:bg-white transition-colors">
-                  <Share2 className="w-4 h-4 text-gray-700" />
-                </button> */}
-                {/* <button className="group p-2.5 cursor-pointer bg-white/90 backdrop-blur rounded-full shadow hover:bg-white transition-colors">
-                  <Heart className="w-4 h-4 text-gray-700 fill-transparent group-hover:fill-red-500 group-hover:text-red-500 transition-all" />
-                </button> */}
-
+              <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-gray-100">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-xs font-semibold text-[#1d242d]">Available Now</span>
               </div>
             </div>
 
             {/* What's Included */}
-            <div className="mb-16">
-              <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-                <span className="w-1.5 h-8 bg-[#0060ff] rounded-full"></span>
-                What&apos;s Included
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {service.included.map((item: any, i: number) => {
-                  const Icon =
-                    iconMap[item.icon as keyof typeof iconMap] || SearchCheck
-                  return (
-                    <div
-                      key={i}
-                      className="
-    flex items-start gap-4 
-    p-5 
-    rounded-2xl 
-    border border-gray-200 
-    bg-white 
-    hover:shadow-md 
-    hover:border-blue-100
-    transition-all duration-200
-  "
-                    >
-                      {/* ICON BOX */}
-                      <div className="
-    min-w-[52px] min-h-[52px]
-    rounded-xl
-    bg-blue-50
-    text-[#0060ff]
-    flex items-center justify-center
-  ">
-                        <Icon className="w-6 h-6" strokeWidth={2.2} />
-                      </div>
-
-                      {/* TEXT */}
-                      <div className="flex flex-col">
-                        <h3 className="font-semibold text-gray-900 text-[15px] leading-tight">
-                          {item.title}
-                        </h3>
-
-                        <p className="text-gray-500 text-sm leading-relaxed mt-1 max-w-[260px]">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Enhance Your Service */}
-            {service.addons.length > 0 && (
-              <div className="mb-16">
-                <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-                  <span className="w-1.5 h-8 bg-[#0060ff] rounded-full"></span>
-                  Enhance Your Service
+            {service.included.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1d242d] mb-6 flex items-center gap-3">
+                  <span className="w-1 h-7 bg-blue-600 rounded-full" />
+                  What&apos;s Included
                 </h2>
-                <div className="space-y-5">
-                  {service.addons.map((addon: any) => {
-                    const isSelected = selectedAddons.includes(addon.id)
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {service.included.map((item: any, i: number) => {
+                    const Icon = iconMap[item.icon as keyof typeof iconMap] || SearchCheck
                     return (
                       <div
-                        key={addon.id}
-                        onClick={() => toggleAddon(addon.id)}
-                        className={`
-          flex items-center justify-between
-          rounded-2xl
-          border
-          p-4 sm:p-5
-          cursor-pointer
-          transition-all duration-200
-          ${isSelected
-                            ? "border-[#0060ff] bg-blue-50/40 shadow-sm"
-                            : "border-gray-200 bg-white hover:border-blue-200 hover:shadow-sm"
-                          }
-        `}
+                        key={i}
+                        className="flex items-start gap-4 p-4 sm:p-5 rounded-xl border border-gray-100 bg-white hover:border-blue-100 hover:shadow-sm transition-all"
                       >
-                        {/* LEFT */}
-                        <div className="flex items-center gap-4 sm:gap-5">
-
-                          {/* IMAGE */}
-                          <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0">
-                            <Image
-                              src={addon.image || "/placeholder.svg"}
-                              alt={addon.title}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-
-                          {/* TEXT */}
-                          <div className="max-w-[240px] sm:max-w-md">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold text-gray-900 text-[15px]">
-                                {addon.title}
-                              </h3>
-
-                              {addon.badge && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-[#0060ff] uppercase tracking-wide">
-                                  {addon.badge}
-                                </span>
-                              )}
-                            </div>
-
-                            <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                              {addon.description}
-                            </p>
-                          </div>
+                        <div className="w-11 h-11 shrink-0 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                          <Icon className="w-5 h-5" />
                         </div>
-
-                        {/* RIGHT */}
-                        <div className="flex items-center gap-4 sm:gap-6">
-
-                          {/* PRICE */}
-                          <span className="font-semibold text-gray-900 text-[15px]">
-                            +{formatINR(addon.price)}
-                          </span>
-
-                          {/* CUSTOM CHECKBOX */}
-                          <div
-                            className={`
-              w-6 h-6 rounded-md border-2 flex items-center justify-center transition
-              ${isSelected
-                                ? "bg-[#0060ff] border-[#0060ff]"
-                                : "border-gray-300 bg-white"
-                              }
-            `}
-                          >
-                            {isSelected && (
-                              <svg
-                                className="w-4 h-4 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                viewBox="0 0 24 24"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-
+                        <div>
+                          <h3 className="font-semibold text-[#1d242d] text-sm">
+                            {item.title}
+                          </h3>
+                          <p className="text-gray-500 text-xs leading-relaxed mt-1">
+                            {item.description}
+                          </p>
                         </div>
                       </div>
                     )
@@ -393,67 +228,118 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
               </div>
             )}
 
-            {/* Common Questions */}
+            {/* Enhance Your Service (Addons) */}
+            {service.addons.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1d242d] mb-6 flex items-center gap-3">
+                  <span className="w-1 h-7 bg-blue-600 rounded-full" />
+                  Enhance Your Service
+                </h2>
+                <div className="space-y-3">
+                  {service.addons.map((addon: any) => {
+                    const isSelected = selectedAddons.includes(addon.id)
+                    return (
+                      <div
+                        key={addon.id}
+                        onClick={() => toggleAddon(addon.id)}
+                        className={`flex items-center gap-4 p-4 sm:p-5 rounded-xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-blue-300 bg-blue-50/50 shadow-sm"
+                            : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
+                        }`}
+                      >
+                        {/* Image */}
+                        <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 border border-gray-100">
+                          <Image
+                            src={addon.image || "/placeholder.svg"}
+                            alt={addon.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+
+                        {/* Text */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-[#1d242d] text-sm">
+                              {addon.title}
+                            </h3>
+                            {addon.badge && (
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-600 uppercase tracking-wide">
+                                {addon.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1 sm:line-clamp-none leading-relaxed">
+                            {addon.description}
+                          </p>
+                        </div>
+
+                        {/* Price + Checkbox */}
+                        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                          <span className="text-sm font-bold text-[#1d242d]">
+                            +{formatINR(addon.price)}
+                          </span>
+                          <div
+                            className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                              isSelected
+                                ? "bg-blue-600 border-blue-600"
+                                : "border-gray-300 bg-white"
+                            }`}
+                          >
+                            {isSelected && (
+                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* FAQs */}
             {service.faqs.length > 0 && (
-              <div className="mb-16">
-                <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-                  <span className="w-1.5 h-8 bg-[#0060ff] rounded-full"></span>
+              <div className="mb-12">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1d242d] mb-6 flex items-center gap-3">
+                  <span className="w-1 h-7 bg-blue-600 rounded-full" />
                   Common Questions
                 </h2>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {service.faqs.map((faq: any, i: number) => {
                     const isOpen = openFaq === i
-
                     return (
                       <div
                         key={i}
-                        className="
-          rounded-2xl
-          border border-gray-200
-          bg-white
-          transition-all duration-200
-        "
+                        className={`rounded-xl border transition-all ${
+                          isOpen
+                            ? "border-blue-200 bg-blue-50/30"
+                            : "border-gray-100 bg-white hover:border-gray-200"
+                        }`}
                       >
-                        {/* QUESTION */}
                         <button
                           onClick={() => setOpenFaq(isOpen ? null : i)}
-                          className="
-            w-full
-            flex items-center justify-between
-            text-left
-            px-6 py-5
-            font-semibold
-            text-gray-800
-            hover:bg-gray-50
-            rounded-2xl
-          "
+                          className="w-full flex items-center justify-between gap-4 text-left px-5 py-4"
                         >
-                          <span className="text-[15px]">
+                          <span className={`text-sm font-semibold ${isOpen ? "text-blue-700" : "text-[#1d242d]"}`}>
                             {faq.question}
                           </span>
-
                           <ChevronDown
-                            className={`
-              w-5 h-5 text-gray-400
-              transition-transform duration-300
-              ${isOpen ? "rotate-180 text-[#0060ff]" : ""}
-            `}
+                            className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                              isOpen ? "rotate-180 text-blue-600" : "text-gray-400"
+                            }`}
                           />
                         </button>
-
-                        {/* ANSWER */}
-                        <div
-                          className={`
-            grid transition-all duration-300 ease-in-out
-            ${isOpen ? "grid-rows-[1fr] opacity-100 mt-2" : "grid-rows-[0fr] opacity-0"}
-          `}
-                        >
-                          <div className="overflow-hidden">
-                            <p className="px-6 pb-6 text-sm text-gray-500 leading-relaxed">
+                        {isOpen && (
+                          <div className="px-5 pb-4 -mt-1">
+                            <p className="text-sm text-gray-500 leading-relaxed">
                               {faq.answer}
                             </p>
                           </div>
-                        </div>
+                        )}
                       </div>
                     )
                   })}
@@ -462,111 +348,98 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-4">
-            <div className="sticky top-24 space-y-6">
+          {/* ============ SIDEBAR ============ */}
+          <div className="lg:col-span-5 xl:col-span-4">
+            <div className="lg:sticky lg:top-24 space-y-5">
               {/* Booking Card */}
-              <div className="bg-white rounded-md border border-gray-100 shadow-xl shadow-gray-100/50 overflow-hidden">
-                <div className="p-8 pb-0 flex justify-between items-start">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Total Estimate</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-5xl font-black font-semibold tracking-tighter">
-                        {formatINR(totalPrice)}
-
-                        <span className="text-2xl">.00</span>
-                      </span>
-                      <span className="text-gray-400 line-through text-lg">{formatINR(service.originalPrice)}</span>
-                    </div>
-                    <p className="text-[10px] text-gray-400 mt-1">Taxes & fees included</p>
-                  </div>
-                  <div className="relative">
-                    <div className="bg-[#e8f5e9] text-[#2e7d32] text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-lg shadow-gray-100/80 overflow-hidden">
+                {/* Price Header */}
+                <div className="p-5 sm:p-6 pb-0">
+                  <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">
+                    Total Estimate
+                  </p>
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-3xl sm:text-4xl font-bold text-[#1d242d]">
+                      {formatINR(totalPrice)}
+                    </span>
+                    <span className="text-base text-gray-400 line-through">
+                      {formatINR(service.originalPrice)}
+                    </span>
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
                       SAVE {service.discount}
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rotate-45 transform translate-x-3 translate-y-3"></div>
+                    </span>
                   </div>
+                  <p className="text-[11px] text-gray-400 mt-1.5">Taxes & fees included</p>
                 </div>
 
-                <div className="p-8 space-y-6">
-                  <div className="space-y-4 py-6 border-y border-gray-50">
+                {/* Details */}
+                <div className="p-5 sm:p-6 space-y-5">
+                  <div className="space-y-3 py-4 border-y border-gray-100">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 text-gray-500">
-                        <Calendar className="w-5 h-5" />
-                        <span className="text-sm font-medium">Date</span>
+                      <div className="flex items-center gap-2.5 text-gray-500">
+                        <Calendar className="w-4 h-4" />
+                        <span className="text-sm">Date</span>
                       </div>
-                      <span className="text-sm font-bold">Tomorrow, 10:00 AM</span>
+                      <span className="text-sm font-semibold text-[#1d242d]">Tomorrow, 10:00 AM</span>
                     </div>
-                    {/* <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 text-gray-500">
-                        <Users className="w-5 h-5" />
-                        <span className="text-sm font-medium">Team Size</span>
-                      </div>
-                      <span className="text-sm font-bold">1 Technician</span>
-                    </div> */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 text-gray-500">
-                        <Truck className="w-5 h-5" />
-                        <span className="text-sm font-medium">Visit Fee</span>
+                      <div className="flex items-center gap-2.5 text-gray-500">
+                        <Truck className="w-4 h-4" />
+                        <span className="text-sm">Visit Fee</span>
                       </div>
-                      <span className="bg-green-50 text-green-600 text-[10px] font-black px-2 py-0.5 rounded tracking-widest uppercase">
-                        Free
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                        FREE
                       </span>
                     </div>
                   </div>
 
+                  {/* CTA */}
                   <Link
                     href={{
-    pathname: `/services/${service.id}/booking`,
-    query: {
-      addons: JSON.stringify(selectedAddons),
-      total: totalPrice
-    }
-  }}
-                    className="w-full bg-[#0060ff] text-white py-5 rounded-md font-bold text-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200"
+                      pathname: `/services/${service.id}/booking`,
+                      query: {
+                        addons: JSON.stringify(selectedAddons),
+                        total: totalPrice,
+                      },
+                    }}
+                    className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-sm shadow-blue-200 active:scale-[0.98]"
                   >
-                    Book Appointment <ChevronRight className="w-5 h-5" />
+                    Book Appointment
+                    <ChevronRight className="w-5 h-5" />
                   </Link>
 
-                  <div className="flex gap-3">
-                    <div className="flex-1 bg-gray-50 p-4 rounded-md flex flex-col items-center gap-2 text-center">
-                      <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                      <span className="text-[8px] uppercase tracking-widest font-bold text-gray-500">
-                        Secure Payment
-                      </span>
+                  {/* Trust Badges */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 rounded-xl p-3 flex flex-col items-center gap-1.5 text-center border border-gray-100">
+                      <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                      <span className="text-[10px] font-semibold text-gray-500">Secure Payment</span>
                     </div>
-                    <div className="flex-1 bg-gray-50 p-4 rounded-md flex flex-col items-center gap-2 text-center">
-                      <ThumbsUp className="w-5 h-5 text-blue-600" />
-                      <span className="text-[8px] uppercase tracking-widest font-bold text-gray-500">
-                        Satisfaction Guarantee
-                      </span>
+                    <div className="bg-gray-50 rounded-xl p-3 flex flex-col items-center gap-1.5 text-center border border-gray-100">
+                      <ThumbsUp className="w-4 h-4 text-blue-600" />
+                      <span className="text-[10px] font-semibold text-gray-500">Satisfaction Guarantee</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Assistance Card */}
-              <div className="bg-[#111827] rounded-md p-8 text-white relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500"></div>
-                <div className="flex items-start gap-4 relative z-10">
-                  <div className="w-12 h-12 bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm">
-                    <Headphones className="w-6 h-6 text-white" />
+              <div className="bg-[#1d242d] rounded-2xl p-6 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-12 -mt-12" />
+                <div className="relative z-10 flex items-start gap-4">
+                  <div className="w-11 h-11 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                    <Headphones className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-1">Need Assistance?</h3>
-                    <p className="text-gray-400 text-xs mb-4">Our experts are here 24/7.</p>
+                    <h3 className="text-base font-bold mb-0.5">Need Assistance?</h3>
+                    <p className="text-gray-400 text-xs mb-3">Our experts are available 24/7</p>
                     <a
-                      href="tel:800METRO"
-                      className="inline-flex items-center gap-1 text-sm font-bold hover:text-blue-400 transition-colors uppercase tracking-widest"
+                      href="tel:+919824897099"
+                      className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors"
                     >
-                      Call 800-METRO <Share2 className="w-3 h-3 rotate-45" />
+                      +91 982 489 7099
+                      <Share2 className="w-3 h-3 rotate-45" />
                     </a>
                   </div>
-                </div>
-                <div className="absolute bottom-4 right-4 grid grid-cols-2 gap-1 opacity-20">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                  ))}
                 </div>
               </div>
             </div>
