@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.middleware.js";
-import { getAdminNotifications } from "../controllers/notifications.controller.js";
+import { getAdminNotifications, getNotificationPreferences, updateNotificationPreferences } from "../controllers/notifications.controller.js";
 import {
   approveTechnician,
   rejectTechnician,
@@ -22,6 +22,8 @@ import {
   updateAdminProfile,
   getAdmins,
   createAdmin,
+  updateAdmin,
+  toggleAdminStatus,
   deleteAdmin,
 } from "../controllers/admin.controller.js";
 
@@ -40,6 +42,8 @@ router.get(
 
 /* ================= NOTIFICATIONS ================= */
 router.get("/notifications", protect, authorize("admin"), getAdminNotifications);
+router.get("/notification-preferences", protect, authorize("admin"), getNotificationPreferences);
+router.put("/notification-preferences", protect, authorize("admin"), updateNotificationPreferences);
 
 /* ================= TECHNICIANS ================= */
 
@@ -131,6 +135,8 @@ router.get("/profile", protect, authorize("admin"), getAdminProfile)
 router.put("/profile", protect, authorize("admin"), updateAdminProfile)
 router.get("/admins", protect, authorize("admin"), getAdmins)
 router.post("/create", protect, authorize("admin"), createAdmin)
+router.patch("/admins/:adminId", protect, authorize("admin"), updateAdmin)
+router.patch("/admins/:adminId/status", protect, authorize("admin"), toggleAdminStatus)
 router.delete("/admins/:adminId", protect, authorize("admin"), deleteAdmin)
 
 export default router;

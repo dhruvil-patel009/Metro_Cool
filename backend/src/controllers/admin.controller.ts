@@ -500,7 +500,7 @@ export const getAdmins = async (req: Request, res: Response) => {
       phone: a.phone,
       role: a.role,
       avatar: a.profile_photo,
-      status: a.id === currentUserId ? "current" : "active",
+      status: "active",
       isCurrent: a.id === currentUserId,
     }))
 
@@ -594,6 +594,69 @@ export const createAdmin = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to create admin" });
   }
 };
+
+/////////////////////////////////////////////////// UPDATE ADMIN ///////////////////////////////////////
+
+export const updateAdmin = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { adminId } = req.params;
+    const { first_name, last_name, phone, email } = req.body;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ first_name, last_name, phone, email })
+      .eq("id", adminId)
+      .eq("role", "admin")
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.json({ message: "Admin updated successfully", admin: data });
+  } catch (err) {
+    console.error("UPDATE ADMIN ERROR:", err);
+    return res.status(500).json({ error: "Failed to update admin" });
+  }
+};
+
+/////////////////////////////////////////////////// TOGGLE ADMIN STATUS ///////////////////////////////////////
+
+export const toggleAdminStatus = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { adminId } = req.params;
+    const { active } = req.body;
+
+    if (adminId === req.user.id) {
+      return res.status(400).json({ error: "You cannot change your own status" });
+    }
+
+    // Use Supabase auth to ban/unban the user
+    const { error } = await supabase.auth.admin.updateUserById(adminId, {
+      ban_duration: active ? "none" : "876000h", // ~100 years ban = disabled
+    });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.json({ message: "Admin status updated", active });
+  } catch (err) {
+    console.error("TOGGLE ADMIN STATUS ERROR:", err);
+    return res.status(500).json({ error: "Failed to toggle admin status" });
+  }
+};
+
+/////////////////////////////////////////////////// DELETE ADMIN ///////////////////////////////////////
 
 export const deleteAdmin = async (req: Request, res: Response) => {
   try {

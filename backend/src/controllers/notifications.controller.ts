@@ -2,6 +2,81 @@ import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
 
 /**
+ * GET /api/admin/notification-preferences
+ * Returns the admin's notification preferences
+ */
+export const getNotificationPreferences = async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.id
+    if (!userId) return res.status(401).json({ error: "Unauthorized" })
+
+    const { data, error } = await supabase
+      .from("notification_preferences")
+      .select("*")
+      .eq("admin_id", userId)
+      .maybeSingle()
+
+    if (error) throw error
+
+    // Return defaults if no record exists
+    if (!data) {
+      return res.json({
+        new_technician_registration: true,
+        new_booking_created: true,
+        settlement_reports: true,
+        system_errors: true,
+      })
+    }
+
+    res.json({
+      new_technician_registration: data.new_technician_registration ?? true,
+      new_booking_created: data.new_booking_created ?? true,
+      settlement_reports: data.settlement_reports ?? true,
+      system_errors: data.system_errors ?? true,
+    })
+  } catch (err) {
+    console.error("Get notification preferences error:", err)
+    res.status(500).json({ error: "Failed to load notification preferences" })
+  }
+}
+
+/**
+ * PUT /api/admin/notification-preferences
+ * Saves the admin's notification preferences
+ */
+export const updateNotificationPreferences = async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.id
+    if (!userId) return res.status(401).json({ error: "Unauthorized" })
+
+    const {
+      new_technician_registration,
+      new_booking_created,
+      settlement_reports,
+      system_errors,
+    } = req.body
+
+    const { error } = await supabase
+      .from("notification_preferences")
+      .upsert({
+        admin_id: userId,
+        new_technician_registration,
+        new_booking_created,
+        settlement_reports,
+        system_errors,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "admin_id" })
+
+    if (error) throw error
+
+    res.json({ message: "Notification preferences saved" })
+  } catch (err) {
+    console.error("Update notification preferences error:", err)
+    res.status(500).json({ error: "Failed to save notification preferences" })
+  }
+}
+
+/**
  * GET /api/notifications
  *
  * User-facing notifications derived from their bookings & orders.

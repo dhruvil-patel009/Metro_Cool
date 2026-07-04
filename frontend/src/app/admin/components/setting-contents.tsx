@@ -1,13 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { User, Shield, Bell, Camera, Mail, Plus, MoreVertical, CheckCircle } from "lucide-react"
+import { User, Shield, Bell, Camera, Mail, Plus, MoreVertical, CheckCircle, AlertTriangle } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Textarea } from "@/app/components/ui/textarea"
 import { Switch } from "@/app/components/ui/switch"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/app/components/ui/dialog"
 import AddAdminModal from "./add-admin-model"
+import EditAdminModal from "./edit-admin-modal"
 import { cn } from "@/app/lib/utils"
 
 type SettingsSection = "profile" | "admin" | "notifications"
@@ -39,14 +41,21 @@ const SECTION_TABS: { key: SettingsSection; label: string; icon: React.ElementTy
 ]
 
 export default function SettingsContent() {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken")
-      : null
+  const getToken = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("accessToken")
+    }
+    return null
+  }
 
   const [activeSection, setActiveSection] = useState<SettingsSection>("profile")
   const [hasChanges, setHasChanges] = useState(false)
   const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false)
+  const [isEditAdminModalOpen, setIsEditAdminModalOpen] = useState(false)
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [adminToDelete, setAdminToDelete] = useState<Admin | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const [profileId, setProfileId] = useState<string>("")
 
   const [firstName, setFirstName] = useState("")
@@ -60,7 +69,7 @@ export default function SettingsContent() {
 
   const [notifications, setNotifications] = useState({
     newTechnicianRegistration: true,
-    newBookingCreated: false,
+    newBookingCreated: true,
     settlementReports: true,
     systemErrors: true,
   })
@@ -75,6 +84,8 @@ export default function SettingsContent() {
   }
 
   const fetchProfile = async () => {
+    const token = getToken()
+    if (!token) return
     const res = await fetch(`${API_URL}/admin/profile`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
@@ -89,28 +100,36 @@ export default function SettingsContent() {
   }
 
   const fetchAdmins = async () => {
-    const res = await fetch(`${API_URL}/admin/admins`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    })
-    const json = await res.json()
-    if (!Array.isArray(json.data)) { setAdmins([]); return }
-    setAdmins(
-      json.data.map((a: any) => ({
-        id: a.id,
-        first_name: a.name?.split(" ")[0] ?? "",
-        last_name: a.name?.split(" ").slice(1).join(" ") ?? "",
-        name: a.name,
-        email: a.email,
-        phone: a.phone ?? null,
-        profile_photo: a.avatar ?? null,
-        role: a.role,
-        active: a.status !== "inactive",
-      })),
-    )
+    const token = getToken()
+    if (!token) return
+    try {
+      const res = await fetch(`${API_URL}/admin/admins`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      })
+      if (!res.ok) { console.error("fetchAdmins failed:", res.status); return }
+      const json = await res.json()
+      if (!Array.isArray(json.data)) { setAdmins([]); return }
+      setAdmins(
+        json.data.map((a: any) => ({
+          id: a.id,
+          first_name: a.name?.split(" ")[0] ?? "",
+          last_name: a.name?.split(" ").slice(1).join(" ") ?? "",
+          name: a.name,
+          email: a.email,
+          phone: a.phone ?? null,
+          profile_photo: a.avatar ?? null,
+          role: a.role,
+          active: a.status !== "inactive",
+        })),
+      )
+    } catch (err) {
+      console.error("fetchAdmins error:", err)
+    }
   }
 
   const handleSaveChanges = async () => {
+    const token = getToken()
     await fetch(`${API_URL}/admin/profile`, {
       method: "PUT",
       headers: {
@@ -133,6 +152,7 @@ export default function SettingsContent() {
 
   const toggleAdminStatus = async (adminId: string, current: boolean) => {
     if (isCurrentAdmin(adminId)) return
+    const token = getToken()
     await fetch(`${API_URL}/admin/admins/${adminId}/status`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -141,23 +161,36 @@ export default function SettingsContent() {
     setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, active: !current } : a))
   }
 
-  const deleteAdmin = async (adminId: string) => {
+  const openDeleteConfirm = (admin: Admin) => {
+    setAdminToDelete(admin)
+    setDeleteConfirmOpen(true)
+  }
+
+  const deleteAdmin = async () => {
+    if (!adminToDelete) return
     try {
-      if (isCurrentAdmin(adminId)) return
-      if (!confirm("Are you sure you want to remove this admin?")) return
-      const res = await fetch(`${API_URL}/admin/admins/${adminId}`, {
+      setDeleteLoading(true)
+      const token = getToken()
+      const res = await fetch(`${API_URL}/admin/admins/${adminToDelete.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
       if (!res.ok) { alert(data?.error || "Failed to delete admin"); return }
-      setAdmins(prev => prev.filter(a => a.id !== adminId))
-      await fetchAdmins()
-      alert("Admin removed successfully")
+      setAdmins(prev => prev.filter(a => a.id !== adminToDelete.id))
+      setDeleteConfirmOpen(false)
+      setAdminToDelete(null)
     } catch (err) {
       console.error(err)
       alert("Something went wrong while deleting admin")
+    } finally {
+      setDeleteLoading(false)
     }
+  }
+
+  const openEditAdmin = (admin: Admin) => {
+    setEditingAdmin(admin)
+    setIsEditAdminModalOpen(true)
   }
 
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,14 +200,63 @@ export default function SettingsContent() {
     setHasChanges(true)
   }
 
-  const handleAddAdmin = (newAdmin: any) => {
-    setAdmins([...admins, newAdmin])
-    setHasChanges(true)
+  const handleAddAdmin = async () => {
+    await fetchAdmins()
+  }
+
+  const fetchNotificationPreferences = async () => {
+    const token = getToken()
+    if (!token) return
+    try {
+      const res = await fetch(`${API_URL}/admin/notification-preferences`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setNotifications({
+        newTechnicianRegistration: data.new_technician_registration ?? true,
+        newBookingCreated: data.new_booking_created ?? true,
+        settlementReports: data.settlement_reports ?? true,
+        systemErrors: data.system_errors ?? true,
+      })
+    } catch (err) {
+      console.error("fetchNotificationPreferences error:", err)
+    }
+  }
+
+  const saveNotificationPreferences = async (updated: typeof notifications) => {
+    const token = getToken()
+    if (!token) return
+    try {
+      await fetch(`${API_URL}/admin/notification-preferences`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          new_technician_registration: updated.newTechnicianRegistration,
+          new_booking_created: updated.newBookingCreated,
+          settlement_reports: updated.settlementReports,
+          system_errors: updated.systemErrors,
+        }),
+      })
+    } catch (err) {
+      console.error("saveNotificationPreferences error:", err)
+    }
+  }
+
+  const handleNotificationToggle = (key: keyof typeof notifications, checked: boolean) => {
+    const updated = { ...notifications, [key]: checked }
+    setNotifications(updated)
+    saveNotificationPreferences(updated)
   }
 
   useEffect(() => {
     fetchProfile()
     fetchAdmins()
+    fetchNotificationPreferences()
   }, [])
 
   return (
@@ -413,9 +495,11 @@ export default function SettingsContent() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => openEditAdmin(admin)}>
+                            Edit
+                          </DropdownMenuItem>
                           {admin.id !== profileId && (
-                            <DropdownMenuItem className="text-red-600" onClick={() => deleteAdmin(admin.id)}>
+                            <DropdownMenuItem className="text-red-600" onSelect={() => openDeleteConfirm(admin)}>
                               Remove
                             </DropdownMenuItem>
                           )}
@@ -453,9 +537,11 @@ export default function SettingsContent() {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => openEditAdmin(admin)}>
+                        Edit
+                      </DropdownMenuItem>
                       {admin.id !== profileId && (
-                        <DropdownMenuItem className="text-red-600" onClick={() => deleteAdmin(admin.id)}>
+                        <DropdownMenuItem className="text-red-600" onSelect={() => openDeleteConfirm(admin)}>
                           Remove
                         </DropdownMenuItem>
                       )}
@@ -527,6 +613,13 @@ export default function SettingsContent() {
                 accent: "#f59e0b",
                 accentLight: "#fffbeb",
               },
+              {
+                key: "systemErrors" as const,
+                title: "System Errors",
+                desc: "Get alerted when critical system errors occur.",
+                accent: "#ef4444",
+                accentLight: "#fef2f2",
+              },
             ].map(item => (
               <div key={item.key} className="flex items-start justify-between gap-4 p-5 hover:bg-gray-50/50 transition-colors">
                 <div className="flex items-start gap-3">
@@ -543,10 +636,7 @@ export default function SettingsContent() {
                 </div>
                 <Switch
                   checked={notifications[item.key]}
-                  onCheckedChange={(checked) => {
-                    setNotifications({ ...notifications, [item.key]: checked })
-                    setHasChanges(true)
-                  }}
+                  onCheckedChange={(checked) => handleNotificationToggle(item.key, checked)}
                   className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 flex-shrink-0 mt-0.5"
                 />
               </div>
@@ -555,11 +645,56 @@ export default function SettingsContent() {
         </div>
       )}
 
+      {/* ── Add Admin Modal ── */}
       <AddAdminModal
         isOpen={isAddAdminModalOpen}
         onClose={() => setIsAddAdminModalOpen(false)}
         onAdd={handleAddAdmin}
       />
+
+      {/* ── Edit Admin Modal ── */}
+      <EditAdminModal
+        isOpen={isEditAdminModalOpen}
+        admin={editingAdmin}
+        onClose={() => { setIsEditAdminModalOpen(false); setEditingAdmin(null) }}
+        onUpdated={fetchAdmins}
+      />
+
+      {/* ── Delete Confirmation Dialog ── */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={(open) => { if (!open) { setDeleteConfirmOpen(false); setAdminToDelete(null) } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-2">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <DialogTitle className="text-center">Delete Admin Account</DialogTitle>
+            <DialogDescription className="text-center">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-900">
+                {adminToDelete?.first_name} {adminToDelete?.last_name}
+              </span>
+              &apos;s admin account? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 sm:gap-3 mt-4">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => { setDeleteConfirmOpen(false); setAdminToDelete(null) }}
+              disabled={deleteLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              onClick={deleteAdmin}
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? "Deleting..." : "Yes, Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

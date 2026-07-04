@@ -109,7 +109,7 @@ export default function AddAdminModal({ isOpen, onClose, onAdd }: Props) {
       if (!res.ok) throw new Error("Create admin failed")
 
       const createdAdmin = await res.json()
-      onAdd(createdAdmin)
+      await onAdd(createdAdmin)
       onClose()
     } catch (err) {
       console.error(err)
