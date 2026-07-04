@@ -1,10 +1,10 @@
 "use client"
 
-import { Search, Bell, ChevronRight } from "lucide-react"
+import { Search, ChevronRight } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
-import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
-import { useAuthStore } from "@/store/auth.store";
+import { useAuthStore } from "@/store/auth.store"
+import { NotificationDropdown } from "./notification-dropdown"
 
 
 export function Header() {
@@ -29,7 +29,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center sm:gap-6">
-        <div className="relative w-full max-w-lg">
+        <div className="relative w-full max-w-lg hidden sm:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             className="pl-10 bg-slate-50 border-none h-10 ring-offset-0 focus-visible:ring-1 focus-visible:ring-slate-200"
@@ -37,10 +37,7 @@ export function Header() {
           />
         </div>
 
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5 text-muted-foreground" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-        </Button>
+        <NotificationDropdown />
 
         <div className="flex items-center gap-3 sm:pl-4">
           <div className="text-right hidden lg:block">

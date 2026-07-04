@@ -59,11 +59,51 @@ export default function ProfilePage() {
     staleTime: 60_000,
   })
 
+  /* ── Photo upload ── */
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowed = ["image/jpeg", "image/png", "image/webp"]
+    if (!allowed.includes(file.type)) {
+      toast.error("Only JPG, PNG or WEBP images allowed")
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB")
+      return
+    }
+
+    setUploadingPhoto(true)
+    try {
+      const formData = new FormData()
+      formData.append("profile_photo", file)
+
+      const res = await fetch(`${API}/technician/profile/photo`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: formData,
+      })
+
+      if (!res.ok) throw new Error("Upload failed")
+
+      qc.invalidateQueries({ queryKey: ["tech-profile"] })
+      toast.success("Profile photo updated!")
+    } catch {
+      toast.error("Failed to upload photo")
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
   /* ── Edit dialog ── */
   const [editOpen,    setEditOpen]    = useState(false)
   const [firstName,   setFirstName]   = useState("")
   const [lastName,    setLastName]    = useState("")
   const [phone,       setPhone]       = useState("")
+  const [email,       setEmail]       = useState("")
 
   // Pre-fill when profile loads
   useEffect(() => {
@@ -71,6 +111,7 @@ export default function ProfilePage() {
       setFirstName(profile.first_name || "")
       setLastName(profile.last_name  || "")
       setPhone(profile.phone         || "")
+      setEmail(profile.email         || "")
     }
   }, [profile])
 
@@ -82,7 +123,7 @@ export default function ProfilePage() {
           Authorization:  `Bearer ${getToken()}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ first_name: firstName, last_name: lastName, phone }),
+        body: JSON.stringify({ first_name: firstName, last_name: lastName, phone, email }),
       })
       if (!res.ok) throw new Error("Update failed")
     },
@@ -146,7 +187,7 @@ export default function ProfilePage() {
           <Card className="p-6 border border-slate-200 shadow-sm">
             <div className="flex items-start gap-5">
               {/* Avatar */}
-              <div className="relative shrink-0">
+              <div className="relative shrink-0 group/avatar">
                 <Avatar className="w-20 h-20 border-4 border-white shadow-lg ring-2 ring-slate-100">
                   <AvatarImage
                     src={profile?.profile_photo || ""}
@@ -156,6 +197,21 @@ export default function ProfilePage() {
                     {initials}
                   </AvatarFallback>
                 </Avatar>
+                {/* Upload overlay */}
+                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer">
+                  {uploadingPhoto ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Edit2 className="w-4 h-4 text-white" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                    disabled={uploadingPhoto}
+                  />
+                </label>
                 {/* Online dot */}
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white" />
               </div>
@@ -298,15 +354,31 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="you@example.com" />
+            </div>
+            <div className="space-y-2">
               <Label>Phone</Label>
-              <Input value={phone} onChange={e => setPhone(e.target.value)} inputMode="numeric" />
+              <Input
+                value={phone}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 10)
+                  setPhone(val)
+                }}
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="10 digit number"
+              />
+              {phone.length > 0 && phone.length < 10 && (
+                <p className="text-xs text-red-500 font-medium">{10 - phone.length} more digits needed</p>
+              )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
             <Button
               onClick={() => updateMutation.mutate()}
-              disabled={updateMutation.isPending}
+              disabled={updateMutation.isPending || phone.length !== 10}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {updateMutation.isPending

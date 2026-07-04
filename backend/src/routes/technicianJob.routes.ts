@@ -9,7 +9,7 @@ import {
   completeJob,
   verifyOtpAndCloseJob,
 } from "../controllers/technicianjob.controller.js"
-import { getMyJobs, getOpenJobs } from "../controllers/technicianJobsList.controller.js"
+import { getMyJobs, getOpenJobs, getAllMyJobs } from "../controllers/technicianJobsList.controller.js"
 
 const router = express.Router()
 
@@ -22,5 +22,6 @@ router.patch("/:id/verify-otp", protect, authorize("technician"), verifyOtpAndCl
 
 router.get("/open", protect, authorize("technician"), getOpenJobs)
 router.get("/my",   protect, authorize("technician"), getMyJobs)
+router.get("/all",  protect, authorize("technician"), getAllMyJobs)
 
 export default router

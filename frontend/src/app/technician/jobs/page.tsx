@@ -26,7 +26,6 @@ type Booking = {
   phone: string
   address: Address | string | null
 
-  // IMPORTANT CHANGE
   job_status: "open" | "assigned" | "on_the_way" | "working" | "completed" | "cancelled" | "report_submitted"
   issues?: string[]
 
@@ -46,18 +45,14 @@ export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [mounted, setMounted] = useState(false)
 
-  /* ---------- FIX SSR LOCALSTORAGE ISSUE ---------- */
   useEffect(() => {
     setMounted(true)
   }, [])
-
-
 
   /* ================= ADDRESS HELPERS ================= */
 
   const parseAddress = (address: any): Address | null => {
     if (!address) return null
-
     if (typeof address === "string") {
       try {
         return JSON.parse(address)
@@ -65,29 +60,13 @@ export default function JobsPage() {
         return null
       }
     }
-
     return address
   }
 
   const getLocationText = (address: any) => {
     const a = parseAddress(address)
     if (!a) return "—"
-
-    return `${a.street ?? ""}, ${a.city ?? ""}`.trim() || "—"
-  }
-
-  const getFullAddress = (address: any) => {
-    const a = parseAddress(address)
-    if (!a) return ""
-
-    return [
-      a.street,
-      a.apt,
-      a.city,
-      a.zipCode,
-    ]
-      .filter(Boolean)
-      .join(", ")
+    return [a.street, a.city].filter(Boolean).join(", ") || "—"
   }
 
   /* ================= FETCH BOOKINGS ================= */
@@ -138,12 +117,11 @@ export default function JobsPage() {
   const {
     data: jobs = [],
     isLoading,
-    isFetching,
   } = useQuery({
     queryKey: ["technician-all-jobs"],
     queryFn: fetchJobs,
-    enabled: mounted,              // ⭐ prevent server crash
-    refetchInterval: 5000,         // ⭐ auto live refresh
+    enabled: mounted,
+    refetchInterval: 5000,
     staleTime: 2000,
   })
 
@@ -152,32 +130,24 @@ export default function JobsPage() {
       setActiveTab(tabFromUrl)
     }
   }, [tabFromUrl])
+
   /* ================= FILTERS ================= */
 
   const tabFilteredJobs = (jobs ?? []).filter((job) => {
-
-    // jobs waiting for technician
     if (activeTab === "new") return job.job_status === "open"
-
-    // technician accepted & in progress
     if (activeTab === "accepted")
       return (
         job.job_status === "assigned" ||
         job.job_status === "on_the_way" ||
         job.job_status === "working"
       )
-
-    // finished jobs
     if (activeTab === "completed") return job.job_status === "completed" || job.job_status === "report_submitted"
-
     return true
   })
 
-
-
   const filteredJobs = tabFilteredJobs.filter(
     (job) =>
-      job.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.id.includes(searchQuery),
   )
 
@@ -185,11 +155,13 @@ export default function JobsPage() {
     {
       id: "new",
       label: "New Jobs",
+      shortLabel: "New",
       count: jobs.filter(j => j.job_status === "open").length,
     },
     {
       id: "accepted",
       label: "Accepted Jobs",
+      shortLabel: "Accepted",
       count: jobs.filter(j =>
         j.job_status === "assigned" ||
         j.job_status === "on_the_way" ||
@@ -199,29 +171,31 @@ export default function JobsPage() {
     {
       id: "completed",
       label: "Completed Jobs",
+      shortLabel: "Done",
       count: jobs.filter(j => j.job_status === "completed" || j.job_status === "report_submitted").length,
     },
   ]
 
 
   if (!mounted) return null
+
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 px-2 sm:px-0">
       {/* ================= HEADER ================= */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
         <div className="space-y-1">
-          <h1 className="text-4xl font-semibold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
             Jobs
           </h1>
-          <p className="text-slate-500 font-medium">
+          <p className="text-slate-500 font-medium text-sm sm:text-base">
             Manage and track your daily assignments
           </p>
         </div>
 
-        <div className="relative w-full md:w-96">
+        <div className="relative w-full sm:w-80 md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <Input
-            className="pl-12 bg-white border-slate-200 h-14 rounded-2xl shadow-sm"
+            className="pl-12 bg-white border-slate-200 h-12 sm:h-14 rounded-2xl shadow-sm"
             placeholder="Search by customer or ID"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -230,22 +204,23 @@ export default function JobsPage() {
       </div>
 
       {/* ================= TABS ================= */}
-      <div className="flex items-center gap-2 bg-slate-50/50 sm:p-1.5 p-1 rounded-2xl border border-slate-100 w-fit">
+      <div className="flex items-center gap-1 sm:gap-2 bg-slate-50/50 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-slate-100 w-full sm:w-fit overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex items-center gap-2.5 sm:px-6 px-2 py-3 rounded-xl text-sm font-bold transition-all relative",
+              "flex items-center gap-1.5 sm:gap-2.5 px-3 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap flex-1 sm:flex-none justify-center",
               activeTab === tab.id
                 ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-100"
                 : "text-slate-500 hover:text-slate-700",
             )}
           >
-            {tab.label}
+            <span className="hidden sm:inline">{tab.label}</span>
+            <span className="sm:hidden">{tab.shortLabel}</span>
             <span
               className={cn(
-                "px-2 py-0.5 rounded-md text-[10px] font-black",
+                "px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-black",
                 activeTab === tab.id
                   ? "bg-blue-100 text-blue-600"
                   : "bg-slate-200 text-slate-500",
@@ -257,7 +232,7 @@ export default function JobsPage() {
             {activeTab === tab.id && (
               <motion.div
                 layoutId="activeTab"
-                className="absolute inset-0 bg-white rounded-xl -z-10"
+                className="absolute inset-0 bg-white rounded-lg sm:rounded-xl -z-10"
               />
             )}
           </button>
@@ -266,15 +241,16 @@ export default function JobsPage() {
 
       {/* LOADER */}
       {isLoading && (
-        <div className="py-32 text-center text-slate-400 font-semibold animate-pulse">
+        <div className="py-24 sm:py-32 text-center text-slate-400 font-semibold animate-pulse">
           Loading technician jobs...
         </div>
       )}
+
       {/* ================= JOB LIST ================= */}
-      <div className="space-y-8">
+      <div className="space-y-4 sm:space-y-6">
         <AnimatePresence mode="popLayout">
           {!isLoading && filteredJobs.map((job) => (
-            <motion.div key={job.id} layout className="space-y-4">
+            <motion.div key={job.id} layout>
               <JobCardV2
                 id={job.id}
                 job_status={job.job_status}
@@ -290,12 +266,14 @@ export default function JobsPage() {
         </AnimatePresence>
 
         {!isLoading && filteredJobs.length === 0 && (
-          <div className="py-20 text-center space-y-4">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
-              <Search className="w-8 h-8 text-slate-300" />
+          <div className="py-16 sm:py-20 text-center space-y-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
+              <Search className="w-7 h-7 sm:w-8 sm:h-8 text-slate-300" />
             </div>
-            <p className="text-slate-500 font-medium">
-              No jobs found matching your search.
+            <p className="text-slate-500 font-medium text-sm sm:text-base">
+              {searchQuery
+                ? "No jobs found matching your search."
+                : "No jobs in this category yet."}
             </p>
           </div>
         )}

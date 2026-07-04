@@ -2,6 +2,7 @@ import { Router } from "express";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.middleware.js";
 import { supabase } from "../utils/supabase.js";
+import { upload } from "../middlewares/upload.middleware.js";
 
 const router = Router();
 
@@ -53,15 +54,24 @@ router.get("/profile", protect, authorize("technician"), async (req: any, res) =
 router.put("/profile", protect, authorize("technician"), async (req: any, res) => {
   try {
     const userId = req.user.id
-    const { first_name, last_name, phone } = req.body
+    const { first_name, last_name, phone, email } = req.body
 
     if (!first_name || !last_name || !phone) {
       return res.status(400).json({ error: "first_name, last_name and phone are required" })
     }
 
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ error: "Phone must be exactly 10 digits" })
+    }
+
+    const updateData: any = { first_name, last_name, phone, updated_at: new Date().toISOString() }
+    if (email !== undefined) {
+      updateData.email = email
+    }
+
     const { error } = await supabase
       .from("profiles")
-      .update({ first_name, last_name, phone, updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq("id", userId)
 
     if (error) throw error
@@ -70,6 +80,54 @@ router.put("/profile", protect, authorize("technician"), async (req: any, res) =
   } catch (err) {
     console.error("Technician profile update error:", err)
     res.status(500).json({ error: "Failed to update profile" })
+  }
+})
+
+/* ── PUT /api/technician/profile/photo — upload profile photo ── */
+router.put("/profile/photo", protect, authorize("technician"), upload.single("profile_photo"), async (req: any, res) => {
+  try {
+    const userId = req.user.id
+    const file = req.file as Express.Multer.File
+
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" })
+    }
+
+    const ext = file.originalname.split(".").pop()
+    const path = `profiles/${userId}.${ext}`
+
+    // Upload to Supabase storage (upsert replaces existing)
+    const { error: uploadError } = await supabase.storage
+      .from("secure-documents")
+      .upload(path, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+      })
+
+    if (uploadError) {
+      console.error("Photo upload error:", uploadError)
+      return res.status(400).json({ error: "Photo upload failed" })
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from("secure-documents")
+      .getPublicUrl(path)
+
+    const profilePhotoUrl = urlData.publicUrl
+
+    // Update profile record
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update({ profile_photo: profilePhotoUrl, updated_at: new Date().toISOString() })
+      .eq("id", userId)
+
+    if (dbError) throw dbError
+
+    res.json({ success: true, profile_photo: profilePhotoUrl })
+  } catch (err) {
+    console.error("Profile photo update error:", err)
+    res.status(500).json({ error: "Failed to update profile photo" })
   }
 })
 
@@ -123,6 +181,130 @@ router.get("/stats", protect, authorize("technician"), async (req: any, res) => 
   } catch (err) {
     console.error("Technician stats error:", err)
     res.status(500).json({ error: "Failed to load stats" })
+  }
+})
+
+/* ── GET /api/technician/notifications — real-time notifications for technician ── */
+router.get("/notifications", protect, authorize("technician"), async (req: any, res) => {
+  try {
+    const technicianId = req.user.id
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+    // Get all bookings assigned to this technician (last 7 days activity)
+    const { data: bookings, error: bookingsError } = await supabase
+      .from("bookings")
+      .select(`
+        id,
+        created_at,
+        updated_at,
+        booking_date,
+        time_slot,
+        job_status,
+        full_name,
+        total_amount,
+        service_id,
+        services ( title )
+      `)
+      .eq("technician_id", technicianId)
+      .gte("updated_at", since)
+      .order("updated_at", { ascending: false })
+      .limit(20)
+
+    if (bookingsError) throw bookingsError
+
+    // Get open jobs created in last 7 days (new job alerts)
+    const { data: openJobs, error: openError } = await supabase
+      .from("bookings")
+      .select(`
+        id,
+        created_at,
+        booking_date,
+        time_slot,
+        full_name,
+        services ( title )
+      `)
+      .eq("job_status", "open")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    if (openError) throw openError
+
+    const notifications: any[] = []
+
+    // Notifications from assigned bookings
+    for (const b of bookings || []) {
+      const serviceName = (b as any).services?.title || "AC Service"
+      let title = ""
+      let message = ""
+      let type = "job"
+
+      switch (b.job_status) {
+        case "assigned":
+          title = "Job Assigned"
+          message = `You have been assigned to ${serviceName} for ${b.full_name}`
+          type = "assigned"
+          break
+        case "on_the_way":
+          title = "On The Way"
+          message = `You're heading to ${b.full_name} for ${serviceName}`
+          type = "in_progress"
+          break
+        case "working":
+          title = "Work Started"
+          message = `${serviceName} is in progress for ${b.full_name}`
+          type = "in_progress"
+          break
+        case "completed":
+          title = "Job Completed"
+          message = `${serviceName} completed. ${b.total_amount ? "₹" + Number(b.total_amount).toLocaleString("en-IN") + " earned" : ""}`
+          type = "completed"
+          break
+        case "report_submitted":
+          title = "Report Submitted"
+          message = `Service report submitted for ${serviceName}`
+          type = "completed"
+          break
+        default:
+          title = "Job Update"
+          message = `${serviceName} status updated`
+      }
+
+      notifications.push({
+        id: `job-${b.id}-${b.job_status}`,
+        type,
+        title,
+        message,
+        time: b.updated_at || b.created_at,
+        read: false,
+        booking_id: b.id,
+      })
+    }
+
+    // Notifications for new available jobs
+    for (const j of openJobs || []) {
+      const serviceName = (j as any).services?.title || "AC Service"
+      notifications.push({
+        id: `new-${j.id}`,
+        type: "new_job",
+        title: "New Job Available",
+        message: `${serviceName} requested by ${j.full_name} on ${j.booking_date}`,
+        time: j.created_at,
+        read: false,
+        booking_id: j.id,
+      })
+    }
+
+    // Sort by time
+    notifications.sort(
+      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+    )
+
+    res.setHeader("Cache-Control", "no-store")
+    res.json({ notifications: notifications.slice(0, 25) })
+  } catch (err) {
+    console.error("Technician notifications error:", err)
+    res.status(500).json({ error: "Failed to load notifications" })
   }
 })
 

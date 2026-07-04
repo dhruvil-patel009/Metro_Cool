@@ -69,13 +69,33 @@ const fmtAddress = (addr: any) => {
 
 /* ─── API fetch ─── */
 const fetchBookings = async (): Promise<Booking[]> => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings`, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-    cache: "no-store",
-  })
-  if (!res.ok) return []
-  const json = await res.json()
-  return Array.isArray(json.bookings) ? json.bookings : []
+  const token = getToken()
+  const headers = { Authorization: `Bearer ${token}` }
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL
+
+  // Fetch: all my jobs (includes completed) + open jobs available
+  const [allRes, openRes] = await Promise.all([
+    fetch(`${base}/tech-jobs/all`, { headers, cache: "no-store" }),
+    fetch(`${base}/tech-jobs/open`, { headers, cache: "no-store" }),
+  ])
+
+  const allData = allRes.ok ? await allRes.json() : { bookings: [] }
+  const openData = openRes.ok ? await openRes.json() : { bookings: [] }
+
+  const allBookings = Array.isArray(allData.bookings) ? allData.bookings : []
+  const openBookings = Array.isArray(openData.bookings) ? openData.bookings : []
+
+  // Merge and deduplicate
+  const seen = new Set<string>()
+  const merged: Booking[] = []
+  for (const b of [...allBookings, ...openBookings]) {
+    if (!seen.has(b.id)) {
+      seen.add(b.id)
+      merged.push(b)
+    }
+  }
+
+  return merged
 }
 
 /* ════════════════════════════════════════════════════
@@ -124,7 +144,7 @@ export default function SchedulePage() {
     return `${currentYear}-${m}-${d}`
   }
 
-  const todayKey = today.toISOString().slice(0, 10)
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
 
   /* ── Upcoming / filtered list ── */
   const listBookings = useMemo(() => {

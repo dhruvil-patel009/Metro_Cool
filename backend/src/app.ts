@@ -27,6 +27,7 @@ import webhookHandlerRoutes from "./routes/webhookHandler.routes.js";
 import { razorpayWebhook } from "./controllers/payment.controller.js";
 import pushRoutes from "./routes/push.routes.js";
 import ordersRoutes from "./routes/orders.routes.js";
+import supportRoutes from "./routes/support.routes.js";
 
 
 const app = express();
@@ -151,6 +152,8 @@ app.use("/api/technicians", technicianRoutes)
 
 
 app.use("/api/orders", ordersRoutes)
+
+app.use("/api/support", supportRoutes)
 
 // Payment 
 

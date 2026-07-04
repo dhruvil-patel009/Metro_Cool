@@ -5,7 +5,6 @@ import { StatCards } from "./components/state-cards";
 import { JobList } from "./components/job-list";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { fetchMyJobs } from "../lib/technician";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL!
 const getToken = () =>
@@ -21,11 +20,42 @@ const fetchStats = async () => {
   return res.json()
 }
 
+const fetchDashboardJobs = async () => {
+  const token = getToken()
+  const headers = { Authorization: `Bearer ${token}` }
+
+  const [myRes, openRes] = await Promise.all([
+    fetch(`${API}/tech-jobs/my`, { headers, cache: "no-store" }),
+    fetch(`${API}/tech-jobs/open`, { headers, cache: "no-store" }),
+  ])
+
+  const myData = myRes.ok ? await myRes.json() : { bookings: [], serverTime: new Date().toISOString() }
+  const openData = openRes.ok ? await openRes.json() : { bookings: [] }
+
+  const myBookings = Array.isArray(myData.bookings) ? myData.bookings : []
+  const openBookings = Array.isArray(openData.bookings) ? openData.bookings : []
+
+  // Merge and deduplicate
+  const seen = new Set<string>()
+  const merged: any[] = []
+  for (const b of [...myBookings, ...openBookings]) {
+    if (!seen.has(b.id)) {
+      seen.add(b.id)
+      merged.push(b)
+    }
+  }
+
+  return {
+    bookings: merged,
+    serverTime: myData.serverTime || new Date().toISOString(),
+  }
+}
+
 export default function Dashboard() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["technician-jobs"],
-    queryFn: fetchMyJobs,
+    queryFn: fetchDashboardJobs,
     refetchInterval: 30000,
   })
 
@@ -60,7 +90,7 @@ export default function Dashboard() {
   const today = serverDate.format("dddd, MMM D")
 
   const todayJobs = bookings.filter((job: any) =>
-    dayjs(job.booking_date || job.scheduled_date).isSame(serverDate, "day")
+    dayjs(job.booking_date).isSame(serverDate, "day")
   )
 
   const authStorage = JSON.parse(localStorage.getItem("auth-storage") || "{}")
@@ -70,7 +100,7 @@ export default function Dashboard() {
     <>
       <section className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
             Welcome back, {technicianName} 👋
           </h1>
           <div className="flex items-center py-4 gap-4 text-slate-500 font-medium">
