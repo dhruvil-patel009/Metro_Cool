@@ -15,6 +15,7 @@ import { authHeaders } from "../../lib/authHeader"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
 import { cn } from "@/app/lib/utils"
+import { DeleteConfirmModal } from "@/app/components/ui/delete-confirm-modal"
 
 /* ─── Types ─── */
 type ApiTechnician = {
@@ -113,6 +114,10 @@ export default function TechniciansContent() {
   const [requests, setRequests] = useState<ApiTechnician[]>([])
   const [requestActionId, setRequestActionId] = useState<string | null>(null)
 
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<TechnicianUI | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
   // Stats state
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, pending: 0 })
 
@@ -200,11 +205,11 @@ export default function TechniciansContent() {
     }
   }
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete ${name}? This cannot be undone.`)) return
-    setActionId(id)
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      const res = await fetch(`${BASE}/admin/technicians/${id}`, {
+      const res = await fetch(`${BASE}/admin/technicians/${deleteTarget.id}`, {
         method: "DELETE", headers: authHeaders(),
       })
       if (!res.ok) throw new Error()
@@ -214,7 +219,8 @@ export default function TechniciansContent() {
     } catch {
       toast.error("Delete failed")
     } finally {
-      setActionId(null)
+      setDeleting(false)
+      setDeleteTarget(null)
     }
   }
 
@@ -476,7 +482,7 @@ export default function TechniciansContent() {
                                 <UserCheck className="w-4 h-4 mr-2" /> Activate
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem onClick={() => handleDelete(tech.id, tech.name)} className="text-red-600">
+                            <DropdownMenuItem onClick={() => setDeleteTarget(tech)} className="text-red-600">
                               <XCircle className="w-4 h-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -540,7 +546,7 @@ export default function TechniciansContent() {
                             <UserCheck className="w-4 h-4 mr-2" /> Activate
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => handleDelete(tech.id, tech.name)} className="text-red-600">
+                        <DropdownMenuItem onClick={() => setDeleteTarget(tech)} className="text-red-600">
                           <XCircle className="w-4 h-4 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -684,6 +690,16 @@ export default function TechniciansContent() {
         </div>
 
       </div>
+
+      {/* DELETE CONFIRMATION */}
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete Technician?"
+        itemName={deleteTarget?.name || ""}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   )
 }

@@ -21,7 +21,7 @@ import {
 import { toast } from "react-toastify";
 import { ProductViewModal } from "./product-view-modal";
 import { EditProductModal } from "./edit-product-modal";
-import { DeleteConfirmModal } from "./delete-confirm-modal";
+import { DeleteConfirmModal } from "@/app/components/ui/delete-confirm-modal";
 
 export function ProductsTable() {
   const [products, setProducts] = useState<any[]>([]);
@@ -362,7 +362,8 @@ export function ProductsTable() {
       {/* DELETE CONFIRMATION */}
       <DeleteConfirmModal
         isOpen={!!deleteTarget}
-        productName={deleteTarget?.title || ""}
+        title="Delete Product?"
+        itemName={deleteTarget?.title || ""}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}

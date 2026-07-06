@@ -12,6 +12,7 @@ import {
 } from "@/app/components/ui/dropdown-menu"
 import { AdminPageShell, AdminStatCard, AdminEmptyState } from "./admin-page-shell"
 import { toast } from "react-toastify"
+import { DeleteConfirmModal } from "@/app/components/ui/delete-confirm-modal"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -58,6 +59,8 @@ export default function UsersContent() {
   const limit = 10
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState("")
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const token =
     typeof window !== "undefined"
@@ -106,11 +109,12 @@ export default function UsersContent() {
   useEffect(() => { fetchStats() }, [])
   useEffect(() => { fetchUsers() }, [page])
 
-  const deleteUser = async (userId: string) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return
+  const deleteUser = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
 
     try {
-      const res = await fetch(`${API_URL}/admin/users/${userId}`, {
+      const res = await fetch(`${API_URL}/admin/users/${deleteTarget.id}`, {
         method: "DELETE",
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       })
@@ -120,12 +124,15 @@ export default function UsersContent() {
         return
       }
 
-      setUsers(prev => prev.filter(u => u.id !== userId))
+      setUsers(prev => prev.filter(u => u.id !== deleteTarget.id))
       setTotal(prev => Math.max(0, prev - 1))
       fetchStats()
       toast.success("User deleted")
     } catch {
       toast.error("Something went wrong")
+    } finally {
+      setDeleting(false)
+      setDeleteTarget(null)
     }
   }
 
@@ -241,7 +248,7 @@ export default function UsersContent() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => deleteUser(user.id)}
+                          onClick={() => setDeleteTarget(user)}
                         >
                           Delete User
                         </DropdownMenuItem>
@@ -293,7 +300,7 @@ export default function UsersContent() {
                   <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="text-red-600" onClick={() => deleteUser(user.id)}>
+                  <DropdownMenuItem className="text-red-600" onClick={() => setDeleteTarget(user)}>
                     Delete User
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -306,6 +313,16 @@ export default function UsersContent() {
           </div>
         ))}
       </div>
+
+      {/* DELETE CONFIRMATION */}
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete User?"
+        itemName={deleteTarget ? `${deleteTarget.first_name} ${deleteTarget.last_name}` : ""}
+        onConfirm={deleteUser}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </AdminPageShell>
   )
 }

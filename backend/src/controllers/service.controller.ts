@@ -170,11 +170,23 @@ export const toggleServiceStatus = async (req: Request, res: Response) => {
 export const deleteService = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const { error } = await supabase.from("services").delete().eq("id", id);
+  try {
+    // Delete dependent records first to avoid foreign key constraint violations
+    await supabase.from("service_feedbacks").delete().eq("service_id", id);
+    await supabase.from("service_likes").delete().eq("service_id", id);
+    await supabase.from("service_includes").delete().eq("service_id", id);
+    await supabase.from("service_addons").delete().eq("service_id", id);
+    await supabase.from("service_faqs").delete().eq("service_id", id);
 
-  if (error) return res.status(400).json({ error: error.message });
+    const { error } = await supabase.from("services").delete().eq("id", id);
 
-  res.json({ message: "Service deleted successfully" });
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.json({ message: "Service deleted successfully" });
+  } catch (err) {
+    console.error("Delete service error:", err);
+    res.status(500).json({ error: "Failed to delete service" });
+  }
 };
 
 

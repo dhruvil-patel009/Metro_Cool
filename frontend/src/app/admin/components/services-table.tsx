@@ -15,6 +15,8 @@ import { cn } from "@/app/lib/utils";
 import { apiFetch } from "@/app/lib/api";
 import { deleteService, getAllServicesAdmin } from "@/app/lib/services.api";
 import { EditServiceModal } from "../components/edit-service-modal";
+import { DeleteConfirmModal } from "@/app/components/ui/delete-confirm-modal";
+import { toast } from "react-toastify";
 
 interface Service {
   id: string;
@@ -41,7 +43,8 @@ export function ServicesTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [editingService, setEditingService] = useState<any>(null);
-
+  const [deleteTarget, setDeleteTarget] = useState<Service | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const itemsPerPage = 5;
 
@@ -101,10 +104,19 @@ export function ServicesTable({
     );
   };
 
-  
-  const handleDelete = async (id: string) => {
-    await deleteService(id);
-    setServices((prev) => prev.filter((s) => s.id !== id));
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteService(deleteTarget.id);
+      setServices((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+      toast.success("🗑️ Service deleted");
+    } catch {
+      toast.error("Failed to delete service");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   if (loading) {
@@ -151,7 +163,7 @@ export function ServicesTable({
             <DropdownMenuItem>View</DropdownMenuItem>
             <DropdownMenuItem
               className="text-red-600"
-              onClick={() => handleDelete(service.id)}
+              onClick={() => setDeleteTarget(service)}
             >
               Delete
             </DropdownMenuItem>
@@ -330,7 +342,7 @@ export function ServicesTable({
                       <DropdownMenuItem   onClick={() => setEditingService(service)}
 >Edit</DropdownMenuItem>
                       <DropdownMenuItem>View</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600"  onClick={() => handleDelete(service.id)}>
+                      <DropdownMenuItem className="text-red-600"  onClick={() => setDeleteTarget(service)}>
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -425,6 +437,16 @@ getAllServicesAdmin().then(
     }}
   />
   )}
+
+      {/* DELETE CONFIRMATION */}
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete Service?"
+        itemName={deleteTarget?.title || ""}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     
     </>
   );
