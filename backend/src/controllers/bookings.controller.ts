@@ -1,5 +1,6 @@
 import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
+import { sendBookingNotification } from "../utils/adminNotifications.js"
 
 
 export const getBookedDates = async (req: Request, res: Response) => {
@@ -194,6 +195,42 @@ export const completeBooking = async (req: any, res: Response) => {
       .single()
 
     if (error) throw error
+
+    // ── Send admin email notification ─────────────────────
+    console.log("[completeBooking] ✅ Booking confirmed, sending admin notification...")
+    try {
+      // Fetch service name
+      const { data: service } = await supabase
+        .from("services")
+        .select("title")
+        .eq("id", data.service_id)
+        .single()
+
+      // Fetch user profile for email
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, phone, email")
+        .eq("id", req.user.id)
+        .single()
+
+      const customerName = profile
+        ? `${profile.first_name} ${profile.last_name}`.trim()
+        : data.full_name || "Customer"
+
+      await sendBookingNotification({
+        bookingId: data.id,
+        customerName,
+        customerPhone: profile?.phone || data.phone || "",
+        customerEmail: profile?.email,
+        customerAddress: address || "",
+        serviceName: service?.title || "AC Service",
+        bookingDate: data.booking_date,
+        timeSlot: data.time_slot || "",
+        totalAmount: pricing.total,
+      })
+    } catch (notifyErr) {
+      console.error("[completeBooking] ❌ Notification error (non-fatal):", notifyErr)
+    }
 
     res.json({ success: true, booking: data })
   } catch (err: any) {

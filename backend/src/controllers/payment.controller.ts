@@ -6,6 +6,7 @@ import { supabase } from "../utils/supabase.js"
 import { uploadInvoice } from "../utils/uploadInvoice.js"
 import { generateInvoice } from "../utils/generateInvoice.js"
 import { env } from "../config/env.js"
+import { sendPaymentCompletedNotification, sendOrderNotification } from "../utils/adminNotifications.js"
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -234,7 +235,7 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
     // ── 6. Fetch user profile ─────────────────────────────
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name")
+      .select("first_name, last_name, phone, email")
       .eq("id", booking.user_id)
       .single()
 
@@ -304,6 +305,19 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       payment_bank: paymentBank,
       payment_date: new Date().toISOString(),
       payment_row_id: paymentRow.id,
+    })
+
+    // ── Send admin email notification (non-blocking) ─────
+    sendPaymentCompletedNotification({
+      bookingId: booking_id,
+      customerName,
+      customerPhone: (profile as any)?.phone || booking.phone || "",
+      customerEmail: (profile as any)?.email,
+      serviceName,
+      bookingDate: booking.booking_date,
+      timeSlot: booking.time_slot || "",
+      amountPaid: booking.total_amount,
+      paymentMethod: paymentMethod === "card" ? "Card" : paymentMethod === "upi" ? "UPI" : paymentMethod || "Online",
     })
 
     return res.json({ success: true, message: "Payment verified and recorded" })
@@ -393,7 +407,7 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
     // ── Fetch profile ────────────────────────────────────
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name")
+      .select("first_name, last_name, phone, email")
       .eq("id", booking.user_id)
       .single()
 
@@ -448,6 +462,19 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
       payment_bank: payment.bank,
       payment_date: new Date().toISOString(),
       payment_row_id: paymentRow.id,
+    })
+
+    // ── Send admin email notification (non-blocking) ─────
+    sendPaymentCompletedNotification({
+      bookingId,
+      customerName,
+      customerPhone: (profile as any)?.phone || booking.phone || "",
+      customerEmail: (profile as any)?.email,
+      serviceName,
+      bookingDate: booking.booking_date,
+      timeSlot: booking.time_slot || "",
+      amountPaid: booking.total_amount,
+      paymentMethod: (payment.method === "card" ? "Card" : payment.method === "upi" ? "UPI" : payment.method) || "Online",
     })
 
     return res.status(200).send("OK")
@@ -534,7 +561,7 @@ export const markCashPayment = async (req: Request, res: Response) => {
     // ── Generate invoice (non-fatal) ─────────────────────
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name")
+      .select("first_name, last_name, phone, email")
       .eq("id", user_id)
       .single()
 
@@ -556,6 +583,19 @@ export const markCashPayment = async (req: Request, res: Response) => {
       payment_method: "cash",
       payment_date: new Date().toISOString(),
       payment_row_id: paymentRow.id,
+    })
+
+    // ── Send admin email notification (non-blocking) ─────
+    sendPaymentCompletedNotification({
+      bookingId: booking_id,
+      customerName,
+      customerPhone: (profile as any)?.phone || booking.phone || "",
+      customerEmail: (profile as any)?.email,
+      serviceName,
+      bookingDate: booking.booking_date,
+      timeSlot: booking.time_slot || "",
+      amountPaid: booking.total_amount,
+      paymentMethod: "Cash",
     })
 
     return res.json({ success: true })
@@ -826,14 +866,12 @@ export const verifyProductPayment = async (req: Request, res: Response) => {
       try {
         const { data: orderItems } = await supabase
           .from("order_items")
-          .select("title")
+          .select("title, qty, price, capacity")
           .eq("order_id", order_id)
-          .limit(1)
-          .single()
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("first_name, last_name, phone")
+          .select("first_name, last_name, phone, email")
           .eq("id", order.user_id)
           .single()
 
@@ -841,7 +879,7 @@ export const verifyProductPayment = async (req: Request, res: Response) => {
           ? `${profile.first_name} ${profile.last_name}`.trim()
           : order.customer_name || "Customer"
 
-        const productName = (orderItems as any)?.title || "AC Product"
+        const productName = orderItems?.[0]?.title || "AC Product"
 
         await buildAndUploadInvoice({
           booking_id: order_id,
@@ -854,6 +892,24 @@ export const verifyProductPayment = async (req: Request, res: Response) => {
           payment_method: paymentMethod,
           payment_date: new Date().toISOString(),
           payment_row_id: paymentRow.id,
+        })
+
+        // ── Send admin email notification (non-blocking) ─────
+        const deliveryAddress = [order.street, order.city, order.zip].filter(Boolean).join(", ")
+        sendOrderNotification({
+          orderId: order_id,
+          customerName,
+          customerPhone: (profile as any)?.phone || order.phone || "",
+          customerEmail: (profile as any)?.email,
+          items: (orderItems || []).map((item: any) => ({
+            title: item.title,
+            qty: item.qty,
+            price: item.price,
+            capacity: item.capacity,
+          })),
+          totalAmount: order.total_amount,
+          paymentStatus: "\u2705 Paid (Online)",
+          deliveryAddress,
         })
       } catch (invoiceErr) {
         console.error("Product invoice generation failed (non-fatal):", invoiceErr)

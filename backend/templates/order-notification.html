@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Product Order</title>
+</head>
+
+<body style="margin:0;padding:0;background:#eef2f7;font-family:Inter,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+
+        <table width="620" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:14px;overflow:hidden;
+          box-shadow:0 12px 30px rgba(15,23,42,0.12);">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#020617,#0f172a);
+              padding:28px;text-align:center;color:#ffffff;">
+              <h1 style="margin:0;font-size:26px;letter-spacing:0.3px;">
+                Metro Cool
+              </h1>
+              <p style="margin-top:6px;font-size:14px;opacity:0.9;">
+                New Product Order Received
+              </p>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:32px;color:#0f172a;">
+
+              <!-- Order Details Section -->
+              <table width="100%" style="margin-bottom:24px;">
+                <tr>
+                  <td style="font-size:16px;font-weight:700;color:#0f172a;padding-bottom:12px;border-bottom:2px solid #e5e7eb;">
+                    &#128230; Order Details
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" style="
+                background:#f8fafc;
+                border-radius:12px;
+                margin-bottom:24px;
+                border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%">
+                      <tr>
+                        <td style="font-size:14px;color:#475569;padding:6px 0;">Order ID</td>
+                        <td style="font-size:14px;font-weight:600;text-align:right;padding:6px 0;">{{orderId}}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:14px;color:#475569;padding:6px 0;">Date</td>
+                        <td style="font-size:14px;font-weight:600;text-align:right;padding:6px 0;">{{date}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Customer Information Section -->
+              <table width="100%" style="margin-bottom:24px;">
+                <tr>
+                  <td style="font-size:16px;font-weight:700;color:#0f172a;padding-bottom:12px;border-bottom:2px solid #e5e7eb;">
+                    &#128100; Customer Information
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" style="
+                background:#f8fafc;
+                border-radius:12px;
+                margin-bottom:24px;
+                border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%">
+                      <tr>
+                        <td style="font-size:14px;color:#475569;padding:6px 0;">Name</td>
+                        <td style="font-size:14px;font-weight:600;text-align:right;padding:6px 0;">{{customerName}}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:14px;color:#475569;padding:6px 0;">Phone</td>
+                        <td style="font-size:14px;font-weight:600;text-align:right;padding:6px 0;">{{customerPhone}}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:14px;color:#475569;padding:6px 0;">Email</td>
+                        <td style="font-size:14px;font-weight:600;text-align:right;padding:6px 0;">{{customerEmail}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Product Details Section -->
+              <table width="100%" style="margin-bottom:24px;">
+                <tr>
+                  <td style="font-size:16px;font-weight:700;color:#0f172a;padding-bottom:12px;border-bottom:2px solid #e5e7eb;">
+                    &#128722; Product Details
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" style="
+                background:#f8fafc;
+                border-radius:12px;
+                margin-bottom:24px;
+                border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%">
+                      {{productRows}}
+                      <tr>
+                        <td colspan="2" style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:8px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:14px;color:#475569;padding:6px 0;">Total Amount</td>
+                        <td style="font-size:16px;font-weight:700;text-align:right;color:#0ea5e9;padding:6px 0;">{{totalAmount}}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:14px;color:#475569;padding:6px 0;">Payment Status</td>
+                        <td style="font-size:14px;font-weight:600;text-align:right;padding:6px 0;">
+                          <span style="background:#dcfce7;color:#166534;padding:4px 10px;border-radius:6px;font-size:13px;">
+                            {{paymentStatus}}
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Delivery Address Section -->
+              <table width="100%" style="margin-bottom:24px;">
+                <tr>
+                  <td style="font-size:16px;font-weight:700;color:#0f172a;padding-bottom:12px;border-bottom:2px solid #e5e7eb;">
+                    &#128205; Delivery Address
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" style="
+                background:#f8fafc;
+                border-radius:12px;
+                margin-bottom:24px;
+                border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:20px;">
+                    <p style="margin:0;font-size:14px;font-weight:600;line-height:1.6;">
+                      {{deliveryAddress}}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#f1f5f9;padding:16px;text-align:center;
+              font-size:12px;color:#64748b;">
+              &copy; 2026 Metro Cool. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

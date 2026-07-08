@@ -1,5 +1,6 @@
 import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
+import { sendOrderNotification } from "../utils/adminNotifications.js"
 
 // Safe column list — only columns that definitely exist in orders table
 // If payment_method doesn't exist in your DB, remove it from this list
@@ -79,10 +80,10 @@ export const markCODOrder = async (req: Request, res: Response) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" })
     if (!order_id) return res.status(400).json({ error: "order_id is required" })
 
-    // Verify ownership
+    // Verify ownership and fetch order details
     const { data: order } = await supabase
       .from("orders")
-      .select("id")
+      .select("id, customer_name, phone, street, city, zip, total_amount, user_id")
       .eq("id", order_id)
       .eq("user_id", req.user.id)
       .single()
@@ -98,6 +99,44 @@ export const markCODOrder = async (req: Request, res: Response) => {
     if (error) {
       console.error("COD update error:", error)
       return res.status(500).json({ error: "Failed to update order" })
+    }
+
+    // ── Send admin email notification (non-blocking) ─────
+    try {
+      const { data: orderItems } = await supabase
+        .from("order_items")
+        .select("title, qty, price, capacity")
+        .eq("order_id", order_id)
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, phone, email")
+        .eq("id", req.user.id)
+        .single()
+
+      const customerName = profile
+        ? `${profile.first_name} ${profile.last_name}`.trim()
+        : order.customer_name || "Customer"
+
+      const deliveryAddress = [order.street, order.city, order.zip].filter(Boolean).join(", ")
+
+      sendOrderNotification({
+        orderId: order_id,
+        customerName,
+        customerPhone: (profile as any)?.phone || order.phone || "",
+        customerEmail: (profile as any)?.email,
+        items: (orderItems || []).map((item: any) => ({
+          title: item.title,
+          qty: item.qty,
+          price: item.price,
+          capacity: item.capacity,
+        })),
+        totalAmount: order.total_amount,
+        paymentStatus: "\uD83D\uDCB5 Cash on Delivery",
+        deliveryAddress,
+      })
+    } catch (notifyErr) {
+      console.error("COD order notification failed (non-fatal):", notifyErr)
     }
 
     res.json({ success: true })
