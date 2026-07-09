@@ -47,6 +47,9 @@ export default function ServiceCompletionReportPage() {
   const [photos, setPhotos] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  /* ── Validation errors ── */
+  const [errors, setErrors] = useState<{ issue?: boolean; fix?: boolean; photos?: boolean }>({})
+
   /* ── OTP ── */
   const [currentStep, setCurrentStep] = useState<"report" | "otp" | "completed">("report")
   const [otpValues, setOtpValues] = useState<string[]>(Array(OTP_LEN).fill(""))
@@ -63,6 +66,23 @@ export default function ServiceCompletionReportPage() {
       .then(r => r.json())
       .then(d => { if (d.success) setBooking(d.booking) })
       .catch(console.error)
+  }, [jobId])
+
+  /* ── Check if report already exists (resume OTP flow) ── */
+  useEffect(() => {
+    if (!jobId) return
+    fetch(`${API}/service-report/job/${jobId}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.report) {
+          // Report already submitted — go directly to OTP step
+          setCurrentStep("otp")
+          setTimeout(() => inputRefs.current[0]?.focus(), 400)
+        }
+      })
+      .catch(() => { /* no report found, stay on report step */ })
   }, [jobId])
 
   /* ── OTP input handlers ── */
@@ -138,10 +158,16 @@ export default function ServiceCompletionReportPage() {
 
   /* ── Submit service report ── */
   const submitServiceReport = async () => {
-    if (!issueDescription.trim() || !fixApplied.trim()) {
-      alert("Please fill in the Issue Description and Fix Applied fields.")
+    const newErrors: { issue?: boolean; fix?: boolean; photos?: boolean } = {}
+    if (!issueDescription.trim()) newErrors.issue = true
+    if (!fixApplied.trim()) newErrors.fix = true
+    if (photoFiles.length === 0) newErrors.photos = true
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
       return
     }
+    setErrors({})
 
     try {
       setIsSubmitting(true)
@@ -239,11 +265,12 @@ export default function ServiceCompletionReportPage() {
                     </label>
                     <textarea
                       value={issueDescription}
-                      onChange={e => setIssueDescription(e.target.value)}
+                      onChange={e => { setIssueDescription(e.target.value); setErrors(prev => ({ ...prev, issue: false })) }}
                       placeholder="Describe the diagnosed problem in detail..."
                       rows={4}
-                      className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-medium leading-relaxed resize-none transition-all"
+                      className={`w-full p-4 rounded-2xl bg-white border ${errors.issue ? 'border-red-400 ring-4 ring-red-50' : 'border-slate-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-medium leading-relaxed resize-none transition-all`}
                     />
+                    {errors.issue && <p className="text-red-500 text-sm font-medium">Issue description is required</p>}
                   </div>
 
                   {/* Fix */}
@@ -254,11 +281,12 @@ export default function ServiceCompletionReportPage() {
                     </label>
                     <textarea
                       value={fixApplied}
-                      onChange={e => setFixApplied(e.target.value)}
+                      onChange={e => { setFixApplied(e.target.value); setErrors(prev => ({ ...prev, fix: false })) }}
                       placeholder="List parts replaced and repairs performed..."
                       rows={4}
-                      className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-medium leading-relaxed resize-none transition-all"
+                      className={`w-full p-4 rounded-2xl bg-white border ${errors.fix ? 'border-red-400 ring-4 ring-red-50' : 'border-slate-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-medium leading-relaxed resize-none transition-all`}
                     />
+                    {errors.fix && <p className="text-red-500 text-sm font-medium">Fix applied is required</p>}
                   </div>
 
                   {/* Notes */}
@@ -283,9 +311,10 @@ export default function ServiceCompletionReportPage() {
                   <div className="space-y-3">
                     <label className="flex items-center gap-2 text-slate-900 font-bold">
                       <Camera className="w-5 h-5 text-blue-500" />
-                      Proof of Work
+                      Proof of Work <span className="text-red-500 text-sm">*</span>
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {errors.photos && <p className="text-red-500 text-sm font-medium">At least one proof of work photo is required</p>}
+                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 ${errors.photos ? 'p-3 rounded-2xl border-2 border-dashed border-red-300 bg-red-50/30' : ''}`}>
                       <label className="aspect-[4/3] rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-300 hover:border-blue-400 hover:text-blue-400 transition-all cursor-pointer group">
                         <Plus className="w-6 h-6 group-hover:scale-110 transition-transform" />
                         <span className="text-[10px] font-bold uppercase tracking-widest">Add Photo</span>
@@ -295,6 +324,7 @@ export default function ServiceCompletionReportPage() {
                             const files = Array.from(e.target.files || [])
                             setPhotoFiles(p => [...p, ...files])
                             setPhotos(p => [...p, ...files.map(f => URL.createObjectURL(f))])
+                            setErrors(prev => ({ ...prev, photos: false }))
                           }}
                         />
                       </label>

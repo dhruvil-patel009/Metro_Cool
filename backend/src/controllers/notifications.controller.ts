@@ -16,7 +16,16 @@ export const getNotificationPreferences = async (req: any, res: Response) => {
       .eq("admin_id", userId)
       .maybeSingle()
 
-    if (error) throw error
+    if (error) {
+      // If table doesn't exist, return defaults silently
+      console.error("Get notification preferences error:", error)
+      return res.json({
+        new_technician_registration: true,
+        new_booking_created: true,
+        settlement_reports: true,
+        system_errors: true,
+      })
+    }
 
     // Return defaults if no record exists
     if (!data) {
@@ -36,7 +45,13 @@ export const getNotificationPreferences = async (req: any, res: Response) => {
     })
   } catch (err) {
     console.error("Get notification preferences error:", err)
-    res.status(500).json({ error: "Failed to load notification preferences" })
+    // Return defaults on any error
+    res.json({
+      new_technician_registration: true,
+      new_booking_created: true,
+      settlement_reports: true,
+      system_errors: true,
+    })
   }
 }
 

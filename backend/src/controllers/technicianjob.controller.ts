@@ -54,7 +54,7 @@ export const submitReport = async (req: Request, res: Response) => {
 /* ── COMPLETE JOB ── */
 export const completeJob = async (req: Request, res: Response) => {
   try {
-    await supabase.from("bookings").update({ job_status: "completed" }).eq("id", req.params.id)
+    await supabase.from("bookings").update({ job_status: "report_submitted" }).eq("id", req.params.id)
     return res.json({ success: true })
   } catch (err) {
     return res.status(500).json({ success: false })
@@ -103,6 +103,14 @@ export const verifyOtpAndCloseJob = async (req: Request, res: Response) => {
     // Idempotent — already closed is fine
     if (booking.job_status === "completed") {
       return res.json({ success: true, alreadyClosed: true })
+    }
+
+    // Must be in report_submitted or completed state to verify OTP
+    if (booking.job_status !== "report_submitted" && booking.job_status !== "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Job must have a submitted report before OTP verification.",
+      })
     }
 
     const stored = String(booking.closure_otp || "").trim()

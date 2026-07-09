@@ -11,6 +11,7 @@ import {
   Briefcase,
   Menu,
   LogOut,
+  ClipboardCheck,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -27,6 +28,7 @@ const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/technician" },
   { label: "Schedule", icon: Calendar, href: "/technician/schedule" },
   { label: "Jobs", icon: Briefcase, href: "/technician/jobs" },
+  { label: "Service Reports", icon: ClipboardCheck, href: "/technician/service-reports" },
   { label: "Earnings", icon: IndianRupee, href: "/technician/earnings" },
 ];
 

@@ -30,7 +30,7 @@ type Booking = {
   id: string;
   booking_date: string;
   time_slot: string;
-  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed"
+  job_status: "open" | "assigned" | "on_the_way" | "working" | "report_submitted" | "completed"
   issues?: string[];
   instructions?: string;
   address: Address | string | null;
@@ -94,9 +94,9 @@ export function WorkingView({
         if (json.success) {
           setBooking(json.booking);
 
-          // if job already completed redirect to jobs list
-          if (json.booking.job_status === "completed") {
-            router.push("/technician/jobs");
+          // if job already has report submitted or completed, redirect to reports/OTP page
+          if (json.booking.job_status === "completed" || json.booking.job_status === "report_submitted") {
+            router.push(`/technician/jobs/${jobId}/reports`);
           }
         }
       } catch (err) {

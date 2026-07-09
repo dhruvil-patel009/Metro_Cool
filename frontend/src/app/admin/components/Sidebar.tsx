@@ -7,6 +7,7 @@ import {
   LayoutDashboard, Briefcase, Users, UserCircle,
   Calendar, CreditCard, Settings, LogOut, Menu,
   PackageSearch, ChevronLeft, ChevronRight, Layers, Zap, Headphones,
+  ClipboardCheck,
 } from "lucide-react"
 import { cn } from "@/app/lib/utils"
 import { toast } from "react-toastify"
@@ -33,6 +34,7 @@ const menuGroups = [
     label: "Operations",
     items: [
       { icon: Calendar,        label: "Bookings",     href: "/admin/Bookings",     accent: "#f43f5e" },
+      { icon: ClipboardCheck,  label: "Service Reports", href: "/admin/ServiceReports", accent: "#14b8a6" },
       { icon: CreditCard,      label: "Settlements",  href: "/admin/Settlements",  accent: "#f59e0b" },
       { icon: Headphones,      label: "Support",      href: "/admin/support",      accent: "#8b5cf6" },
     ],

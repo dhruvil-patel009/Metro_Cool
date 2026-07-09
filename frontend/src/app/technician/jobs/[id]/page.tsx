@@ -13,6 +13,7 @@ import {
   Edit2,
   Car,
   User,
+  ClipboardCheck,
 } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import Link from "next/link"
@@ -34,7 +35,7 @@ type Booking = {
   time_slot: string
   issues?: string[]
   instructions?: string
-  job_status: "open" | "assigned" | "on_the_way" | "working" | "completed"
+  job_status: "open" | "assigned" | "on_the_way" | "working" | "report_submitted" | "completed"
   address: Address | string | null
   user: {
     full_name: string
@@ -236,6 +237,18 @@ export default function JobDetailsPage() {
               <Car className="w-6 h-6" />
               {updating ? "Starting..." : "START WORK"}
             </Button>
+          )}
+
+          {/* When report submitted but OTP not verified — show resume button */}
+          {(jobStatus === "report_submitted" || jobStatus === "completed") && (
+            <Link href={`/technician/jobs/${booking.id}/reports`}>
+              <Button
+                className="w-full lg:w-auto cursor-pointer bg-orange-500 hover:bg-orange-600 text-white font-black text-lg px-8 py-6 rounded-2xl shadow-lg flex items-center justify-center gap-3"
+              >
+                <ClipboardCheck className="w-6 h-6" />
+                COMPLETE OTP VERIFICATION
+              </Button>
+            </Link>
           )}
 
         </motion.div>

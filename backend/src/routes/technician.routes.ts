@@ -196,7 +196,6 @@ router.get("/notifications", protect, authorize("technician"), async (req: any, 
       .select(`
         id,
         created_at,
-        updated_at,
         booking_date,
         time_slot,
         job_status,
@@ -206,8 +205,8 @@ router.get("/notifications", protect, authorize("technician"), async (req: any, 
         services ( title )
       `)
       .eq("technician_id", technicianId)
-      .gte("updated_at", since)
-      .order("updated_at", { ascending: false })
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
       .limit(20)
 
     if (bookingsError) throw bookingsError
@@ -275,7 +274,7 @@ router.get("/notifications", protect, authorize("technician"), async (req: any, 
         type,
         title,
         message,
-        time: b.updated_at || b.created_at,
+        time: b.created_at,
         read: false,
         booking_id: b.id,
       })
