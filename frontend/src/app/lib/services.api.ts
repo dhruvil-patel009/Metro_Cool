@@ -13,6 +13,8 @@ export interface CreateServicePayload {
   badgeColor?: string;
   imageUrl?: string;
   isActive?: boolean;
+  commissionType?: "percentage" | "flat";
+  commissionValue?: number;
 }
 export interface Service {
   id: string
@@ -88,8 +90,10 @@ export const updateService = async (
     rating: payload.rating,
     badge: payload.badge,
     badge_color: payload.badgeColor,
-    image_url: payload.imageUrl,   // ✅ FIX
-    is_active: payload.isActive,   // ✅ FIX
+    image_url: payload.imageUrl,
+    is_active: payload.isActive,
+    commission_type: payload.commissionType,
+    commission_value: payload.commissionValue,
   };
 
   return apiFetch(`/services/${id}`, {

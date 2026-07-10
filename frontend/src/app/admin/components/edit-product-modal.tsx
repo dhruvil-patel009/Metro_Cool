@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Plus, Pencil, Tag, FileText, Star, Layers } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
@@ -19,7 +19,7 @@ interface Props {
 export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props) {
   if (!isOpen || !product) return null;
 
-  /* ================= BASIC ================= */
+  /* ================= STATE ================= */
   const [title, setTitle] = useState(product.title || "");
   const [shortDesc, setShortDesc] = useState(product.short_desc || "");
   const [description, setDescription] = useState(product.description || "");
@@ -32,24 +32,18 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
   const [reviewCount, setReviewCount] = useState(String(product.review_count || "0"));
   const [oldPrice, setOldPrice] = useState(String(product.old_price || ""));
 
-  /* ================= VARIANTS ================= */
   const [variants, setVariants] = useState(
     Array.isArray(product.capacity_prices) && product.capacity_prices.length > 0
-      ? product.capacity_prices.map((cp: any) => ({
-          capacity: cp.capacity,
-          price: String(cp.price),
-        }))
+      ? product.capacity_prices.map((cp: any) => ({ capacity: cp.capacity, price: String(cp.price) }))
       : [{ capacity: "1 Ton", price: String(product.price || "") }]
   );
 
-  /* ================= SPECIFICATIONS ================= */
   const [specs, setSpecs] = useState(
     Array.isArray(product.specifications) && product.specifications.length > 0
       ? product.specifications
       : [{ label: "", value: "" }]
   );
 
-  /* ================= FEATURES ================= */
   const [featuresList, setFeaturesList] = useState(
     Array.isArray(product.features) && product.features.length > 0
       ? product.features
@@ -57,21 +51,15 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
   );
 
   /* ================= FILES ================= */
-  // Existing images (URLs from server)
-  const [existingMainImage, setExistingMainImage] = useState<string | null>(
-    product.main_image || null
-  );
+  const [existingMainImage, setExistingMainImage] = useState<string | null>(product.main_image || null);
   const [existingThumbnails, setExistingThumbnails] = useState<string[]>(
     Array.isArray(product.thumbnail_images) ? product.thumbnail_images : []
   );
   const [existingGallery, setExistingGallery] = useState<string[]>(
     Array.isArray(product.gallery_images) ? product.gallery_images : []
   );
-  const [existingCatalog, setExistingCatalog] = useState<string | null>(
-    product.catalog_pdf || null
-  );
+  const [existingCatalog, setExistingCatalog] = useState<string | null>(product.catalog_pdf || null);
 
-  // New files to upload
   const [newMainImage, setNewMainImage] = useState<File | null>(null);
   const [newThumbnails, setNewThumbnails] = useState<File[]>([]);
   const [newGallery, setNewGallery] = useState<File[]>([]);
@@ -81,20 +69,12 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
-    if (!title) {
-      toast.error("Title is required");
-      return;
-    }
-
-    if (variants.some((v: any) => !v.price)) {
-      toast.error("Please enter price for all capacities");
-      return;
-    }
+    if (!title) { toast.error("Title is required"); return; }
+    if (variants.some((v: any) => !v.price)) { toast.error("Please enter price for all capacities"); return; }
 
     setSaving(true);
     try {
       const basePrice = Math.min(...variants.map((v: any) => Number(v.price)));
-
       const formData = new FormData();
 
       formData.append("title", title);
@@ -113,18 +93,16 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
       formData.append("specifications", JSON.stringify(specs.filter((s: any) => s.label)));
       formData.append("features", JSON.stringify(featuresList.filter((f: any) => f.title)));
 
-      // Existing images that are still kept
       formData.append("existing_thumbnails", JSON.stringify(existingThumbnails));
       formData.append("existing_gallery", JSON.stringify(existingGallery));
 
-      // New file uploads
       if (newMainImage) formData.append("mainImage", newMainImage);
       newThumbnails.forEach((t) => formData.append("thumbnail", t));
       newGallery.forEach((g) => formData.append("gallery", g));
       if (newCatalog) formData.append("catalog", newCatalog);
 
       const result: any = await updateProduct(product.id, formData);
-      toast.success("✅ Product updated successfully");
+      toast.success("Product updated successfully");
       onUpdated(result?.product || { ...product, title, price: basePrice });
       onClose();
     } catch (err: any) {
@@ -136,452 +114,350 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
 
   /* ================= UI ================= */
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-4xl rounded-2xl p-6 space-y-6 overflow-y-auto max-h-[90vh]">
-        <h2 className="text-xl font-bold">Edit Product</h2>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl my-4 sm:my-8 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
 
-        {/* BASIC */}
-        <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
-          <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Input placeholder="Short Description" value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} />
-          <Input placeholder="Brand" value={brand} onChange={(e) => setBrand(e.target.value)} />
-          <Input placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
-          <Input placeholder="Badge (Best Seller)" value={badge} onChange={(e) => setBadge(e.target.value)} />
-          <Input
-            type="number"
-            step="0.1"
-            min="0"
-            max="5"
-            placeholder="Rating (ex: 4.5)"
-            value={rating}
-            onChange={(e) => setRating(e.target.value)}
-          />
-          <Input
-            type="number"
-            placeholder="Review Count (ex: 120)"
-            value={reviewCount}
-            onChange={(e) => setReviewCount(e.target.value)}
-          />
-          <Input
-            type="number"
-            placeholder="Old Price / MRP ₹ (for strike price)"
-            value={oldPrice}
-            onChange={(e) => setOldPrice(e.target.value)}
-          />
-        </div>
-
-        {/* BADGE COLOR */}
-        <div>
-          <p className="font-semibold mb-2">Badge Color</p>
-          <div className="flex gap-3">
-            {["#ef4444", "#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6"].map((color) => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setBadgeColor(color)}
-                className={`w-8 h-8 rounded-full border-2 ${
-                  badgeColor === color ? "border-black" : "border-gray-200"
-                }`}
-                style={{ backgroundColor: color }}
-              />
-            ))}
+        {/* ─── Header ─── */}
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
+              <Pencil className="w-4 h-4 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Edit Product</h2>
+              <p className="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-none">{product.title}</p>
+            </div>
           </div>
-        </div>
-
-        {/* DESCRIPTION */}
-        <Textarea
-          placeholder="Product description..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-
-        {/* VARIANTS */}
-        <div>
-          <p className="font-semibold mb-2">Capacity & Price</p>
-          {variants.map((v: any, index: number) => (
-            <div key={index} className="flex gap-3 mb-2">
-              <select
-                value={v.capacity}
-                onChange={(e) => {
-                  const updated = [...variants];
-                  updated[index].capacity = e.target.value;
-                  setVariants(updated);
-                }}
-                className="border rounded-md p-2 w-40"
-              >
-                <option>1 Ton</option>
-                <option>1.5 Ton</option>
-                <option>2 Ton</option>
-                <option>2.5 Ton</option>
-              </select>
-
-              <Input
-                type="number"
-                placeholder="Price ₹"
-                value={v.price}
-                onChange={(e) => {
-                  const updated = [...variants];
-                  updated[index].price = e.target.value;
-                  setVariants(updated);
-                }}
-              />
-
-              <button onClick={() => setVariants((prev: any[]) => prev.filter((_, i) => i !== index))}>
-                <X size={16} />
-              </button>
-            </div>
-          ))}
           <button
-            type="button"
-            onClick={() => setVariants([...variants, { capacity: "1 Ton", price: "" }])}
-            className="text-blue-600 text-sm font-semibold"
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
-            + Add Capacity
+            <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
 
-        {/* SPECIFICATIONS */}
-        <div>
-          <p className="font-semibold mb-2">Specifications</p>
-          {specs.map((s: any, i: number) => (
-            <div key={i} className="flex gap-2 mb-2">
-              <Input
-                placeholder="Label"
-                value={s.label}
-                onChange={(e) => {
-                  const u = [...specs];
-                  u[i].label = e.target.value;
-                  setSpecs(u);
-                }}
-              />
-              <Input
-                placeholder="Value"
-                value={s.value}
-                onChange={(e) => {
-                  const u = [...specs];
-                  u[i].value = e.target.value;
-                  setSpecs(u);
-                }}
-              />
-              <button onClick={() => setSpecs(specs.filter((_: any, idx: number) => idx !== i))}>
-                <X size={16} />
-              </button>
-            </div>
-          ))}
-          <button
-            onClick={() => setSpecs([...specs, { label: "", value: "" }])}
-            className="text-blue-600 text-sm"
-          >
-            + Add Specification
-          </button>
-        </div>
+        {/* ─── Scrollable Body ─── */}
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 space-y-6">
 
-        {/* FEATURES */}
-        <div>
-          <p className="font-semibold mb-2">Features</p>
-          {featuresList.map((f: any, i: number) => (
-            <div key={i} className="flex gap-2 mb-2">
-              <Input
-                placeholder="Feature title"
-                value={f.title}
-                onChange={(e) => {
-                  const u = [...featuresList];
-                  u[i].title = e.target.value;
-                  setFeaturesList(u);
-                }}
-              />
-              <Input
-                placeholder="Description"
-                value={f.description}
-                onChange={(e) => {
-                  const u = [...featuresList];
-                  u[i].description = e.target.value;
-                  setFeaturesList(u);
-                }}
-              />
-              <button onClick={() => setFeaturesList(featuresList.filter((_: any, idx: number) => idx !== i))}>
-                <X size={16} />
-              </button>
-            </div>
-          ))}
-          <button
-            onClick={() => setFeaturesList([...featuresList, { title: "", description: "" }])}
-            className="text-blue-600 text-sm"
-          >
-            + Add Feature
-          </button>
-        </div>
+          {/* ══════ SECTION: Basic Info ══════ */}
+          <SectionHeader icon={<Tag className="w-4 h-4" />} title="Basic Information" />
 
-        {/* ================= IMAGES SECTION ================= */}
-        <div className="space-y-4">
-          <p className="font-semibold text-lg">Images & Files</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Product Title" required>
+              <Input placeholder="e.g. Daikin 1.5 Ton Split AC" value={title} onChange={(e) => setTitle(e.target.value)} />
+            </FormField>
+            <FormField label="Short Description">
+              <Input placeholder="Brief product summary" value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} />
+            </FormField>
+            <FormField label="Brand">
+              <Input placeholder="e.g. Daikin, Voltas, LG" value={brand} onChange={(e) => setBrand(e.target.value)} />
+            </FormField>
+            <FormField label="Category">
+              <Input placeholder="e.g. Split AC, Window AC" value={category} onChange={(e) => setCategory(e.target.value)} />
+            </FormField>
+          </div>
 
-          {/* MAIN IMAGE */}
-          <div>
-            <p className="font-medium mb-2">Main Image</p>
-            {newMainImage ? (
-              <div className="relative inline-block">
-                <img
-                  src={URL.createObjectURL(newMainImage)}
-                  className="h-40 w-full max-w-xs object-cover rounded-xl border"
-                />
+          <FormField label="Full Description">
+            <Textarea
+              placeholder="Detailed product description..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </FormField>
+
+          {/* ══════ SECTION: Pricing & Capacity ══════ */}
+          <SectionHeader icon={<Layers className="w-4 h-4" />} title="Capacity & Pricing" />
+
+          <div className="space-y-3">
+            {variants.map((v: any, index: number) => (
+              <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 bg-gray-50 rounded-xl">
+                <select
+                  value={v.capacity}
+                  onChange={(e) => {
+                    const updated = [...variants];
+                    updated[index].capacity = e.target.value;
+                    setVariants(updated);
+                  }}
+                  className="w-full sm:w-36 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option>0.8 Ton</option>
+                  <option>1 Ton</option>
+                  <option>1.5 Ton</option>
+                  <option>2 Ton</option>
+                  <option>2.5 Ton</option>
+                </select>
+                <div className="flex-1 w-full">
+                  <Input
+                    type="number"
+                    placeholder="Price in ₹"
+                    value={v.price}
+                    onChange={(e) => {
+                      const updated = [...variants];
+                      updated[index].price = e.target.value;
+                      setVariants(updated);
+                    }}
+                  />
+                </div>
+                {variants.length > 1 && (
+                  <button
+                    onClick={() => setVariants((prev: any[]) => prev.filter((_, i) => i !== index))}
+                    className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors shrink-0"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setVariants([...variants, { capacity: "1 Ton", price: "" }])}
+              className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <Plus size={14} /> Add Another Capacity
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <FormField label="MRP / Old Price (₹)">
+              <Input type="number" placeholder="Strike-through price" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} />
+            </FormField>
+            <FormField label="Rating">
+              <Input type="number" step="0.1" min="0" max="5" placeholder="4.5" value={rating} onChange={(e) => setRating(e.target.value)} />
+            </FormField>
+            <FormField label="Review Count">
+              <Input type="number" placeholder="0" value={reviewCount} onChange={(e) => setReviewCount(e.target.value)} />
+            </FormField>
+          </div>
+
+          {/* ══════ Badge ══════ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Badge Text">
+              <Input placeholder="e.g. Best Seller, New" value={badge} onChange={(e) => setBadge(e.target.value)} />
+            </FormField>
+            <FormField label="Badge Color">
+              <div className="flex items-center gap-2 mt-1">
+                {["#ef4444", "#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6", "#06b6d4"].map(color => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setBadgeColor(color)}
+                    className={`w-7 h-7 rounded-full border-2 transition-all ${
+                      badgeColor === color ? "border-gray-800 scale-110" : "border-gray-200 hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </FormField>
+          </div>
+
+          {/* ══════ SECTION: Specifications ══════ */}
+          <SectionHeader icon={<FileText className="w-4 h-4" />} title="Specifications" />
+
+          <div className="space-y-2">
+            {specs.map((s: any, i: number) => (
+              <div key={i} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div className="flex-1">
+                  <Input placeholder="Label (e.g. Cooling Capacity)" value={s.label}
+                    onChange={(e) => { const u = [...specs]; u[i].label = e.target.value; setSpecs(u); }} />
+                </div>
+                <div className="flex-1">
+                  <Input placeholder="Value (e.g. 5200W)" value={s.value}
+                    onChange={(e) => { const u = [...specs]; u[i].value = e.target.value; setSpecs(u); }} />
+                </div>
                 <button
-                  type="button"
-                  onClick={() => setNewMainImage(null)}
-                  className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow hover:bg-red-50"
+                  onClick={() => setSpecs(specs.filter((_: any, idx: number) => idx !== i))}
+                  className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors shrink-0 self-start sm:self-center"
                 >
                   <X size={14} />
+                </button>
+              </div>
+            ))}
+            <button onClick={() => setSpecs([...specs, { label: "", value: "" }])}
+              className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              <Plus size={14} /> Add Specification
+            </button>
+          </div>
+
+          {/* ══════ SECTION: Features ══════ */}
+          <SectionHeader icon={<Star className="w-4 h-4" />} title="Features" />
+
+          <div className="space-y-2">
+            {featuresList.map((f: any, i: number) => (
+              <div key={i} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div className="flex-1">
+                  <Input placeholder="Feature title" value={f.title}
+                    onChange={(e) => { const u = [...featuresList]; u[i].title = e.target.value; setFeaturesList(u); }} />
+                </div>
+                <div className="flex-1">
+                  <Input placeholder="Feature description" value={f.description}
+                    onChange={(e) => { const u = [...featuresList]; u[i].description = e.target.value; setFeaturesList(u); }} />
+                </div>
+                <button
+                  onClick={() => setFeaturesList(featuresList.filter((_: any, idx: number) => idx !== i))}
+                  className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors shrink-0 self-start sm:self-center"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+            <button onClick={() => setFeaturesList([...featuresList, { title: "", description: "" }])}
+              className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              <Plus size={14} /> Add Feature
+            </button>
+          </div>
+
+          {/* ══════ SECTION: Images ══════ */}
+          <SectionHeader icon={<ImageIcon className="w-4 h-4" />} title="Images & Files" />
+
+          {/* Main Image */}
+          <FormField label="Main Image">
+            {newMainImage ? (
+              <div className="relative inline-block">
+                <img src={URL.createObjectURL(newMainImage)} alt="Main" className="h-36 w-full max-w-[200px] object-cover rounded-xl border border-gray-200" />
+                <button type="button" onClick={() => setNewMainImage(null)}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-red-50 transition-colors">
+                  <X size={12} className="text-red-500" />
                 </button>
               </div>
             ) : existingMainImage ? (
               <div className="relative inline-block">
-                <img
-                  src={existingMainImage}
-                  className="h-40 w-full max-w-xs object-cover rounded-xl border"
-                />
-                <button
-                  type="button"
-                  onClick={() => setExistingMainImage(null)}
-                  className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow hover:bg-red-50"
-                >
-                  <X size={14} />
+                <img src={existingMainImage} alt="Main" className="h-36 w-full max-w-[200px] object-cover rounded-xl border border-gray-200" />
+                <button type="button" onClick={() => setExistingMainImage(null)}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-red-50 transition-colors">
+                  <X size={12} className="text-red-500" />
                 </button>
               </div>
             ) : (
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-sm text-gray-500 hover:border-blue-400 transition max-w-xs">
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 p-8 text-sm text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all max-w-[200px]">
                 <ImageIcon className="h-5 w-5" />
-                Upload Main Image
-                <input
-                  hidden
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setNewMainImage(e.target.files?.[0] || null)}
-                />
+                <span>Upload</span>
+                <input hidden type="file" accept="image/*" onChange={(e) => { setNewMainImage(e.target.files?.[0] || null); setExistingMainImage(null); }} />
               </label>
             )}
             {(existingMainImage || newMainImage) && (
-              <label className="inline-block mt-2 cursor-pointer text-blue-600 text-sm font-medium hover:underline">
+              <label className="inline-block mt-2 cursor-pointer text-blue-600 text-xs font-medium hover:underline">
                 Replace Image
-                <input
-                  hidden
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setNewMainImage(file);
-                      setExistingMainImage(null);
-                    }
-                  }}
-                />
+                <input hidden type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setNewMainImage(f); setExistingMainImage(null); } }} />
               </label>
             )}
-          </div>
+          </FormField>
 
-          {/* THUMBNAILS */}
-          <div>
-            <p className="font-medium mb-2">
-              Thumbnails{" "}
-              <span className="text-xs text-gray-400">
-                ({existingThumbnails.length + newThumbnails.length} images)
-              </span>
-            </p>
-            <div className="grid grid-cols-5 gap-3">
-              {/* Existing thumbnails */}
+          {/* Thumbnails */}
+          <FormField label={`Thumbnails (${existingThumbnails.length + newThumbnails.length} images)`}>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {existingThumbnails.map((url, i) => (
-                <div key={`existing-${i}`} className="relative">
-                  <img
-                    src={url}
-                    className="h-20 w-full object-cover rounded-lg border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setExistingThumbnails((prev) => prev.filter((_, idx) => idx !== i))
-                    }
-                    className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow hover:bg-red-50"
-                  >
-                    <X size={12} />
+                <div key={`et-${i}`} className="relative group">
+                  <img src={url} alt="" className="h-20 w-full object-cover rounded-lg border border-gray-200" />
+                  <button type="button"
+                    onClick={() => setExistingThumbnails(prev => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white rounded-full shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X size={10} className="text-red-500" />
                   </button>
                 </div>
               ))}
-
-              {/* New thumbnails */}
               {newThumbnails.map((f, i) => (
-                <div key={`new-${i}`} className="relative">
-                  <img
-                    src={URL.createObjectURL(f)}
-                    className="h-20 w-full object-cover rounded-lg border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setNewThumbnails((prev) => prev.filter((_, idx) => idx !== i))
-                    }
-                    className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow hover:bg-red-50"
-                  >
-                    <X size={12} />
+                <div key={`nt-${i}`} className="relative group">
+                  <img src={URL.createObjectURL(f)} alt="" className="h-20 w-full object-cover rounded-lg border border-blue-200" />
+                  <button type="button"
+                    onClick={() => setNewThumbnails(prev => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white rounded-full shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X size={10} className="text-red-500" />
                   </button>
                 </div>
               ))}
-
-              {/* Upload button */}
-              <label className="h-20 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition text-gray-400">
-                <Upload size={18} />
-                <input
-                  hidden
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    setNewThumbnails((prev) => [...prev, ...files]);
-                    e.target.value = "";
-                  }}
-                />
+              <label className="h-20 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors text-gray-400 hover:text-blue-500">
+                <Plus size={18} />
+                <input hidden type="file" multiple accept="image/*" onChange={(e) => { setNewThumbnails(prev => [...prev, ...Array.from(e.target.files || [])]); e.target.value = ""; }} />
               </label>
             </div>
-          </div>
+          </FormField>
 
-          {/* GALLERY */}
-          <div>
-            <p className="font-medium mb-2">
-              Gallery{" "}
-              <span className="text-xs text-gray-400">
-                ({existingGallery.length + newGallery.length} images)
-              </span>
-            </p>
-            <div className="grid grid-cols-5 gap-3">
-              {/* Existing gallery */}
+          {/* Gallery */}
+          <FormField label={`Gallery Images (${existingGallery.length + newGallery.length} images)`}>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {existingGallery.map((url, i) => (
-                <div key={`existing-${i}`} className="relative">
-                  <img
-                    src={url}
-                    className="h-20 w-full object-cover rounded-lg border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setExistingGallery((prev) => prev.filter((_, idx) => idx !== i))
-                    }
-                    className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow hover:bg-red-50"
-                  >
-                    <X size={12} />
+                <div key={`eg-${i}`} className="relative group">
+                  <img src={url} alt="" className="h-20 w-full object-cover rounded-lg border border-gray-200" />
+                  <button type="button"
+                    onClick={() => setExistingGallery(prev => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white rounded-full shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X size={10} className="text-red-500" />
                   </button>
                 </div>
               ))}
-
-              {/* New gallery */}
               {newGallery.map((f, i) => (
-                <div key={`new-${i}`} className="relative">
-                  <img
-                    src={URL.createObjectURL(f)}
-                    className="h-20 w-full object-cover rounded-lg border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setNewGallery((prev) => prev.filter((_, idx) => idx !== i))
-                    }
-                    className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow hover:bg-red-50"
-                  >
-                    <X size={12} />
+                <div key={`ng-${i}`} className="relative group">
+                  <img src={URL.createObjectURL(f)} alt="" className="h-20 w-full object-cover rounded-lg border border-blue-200" />
+                  <button type="button"
+                    onClick={() => setNewGallery(prev => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white rounded-full shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X size={10} className="text-red-500" />
                   </button>
                 </div>
               ))}
-
-              {/* Upload button */}
-              <label className="h-20 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition text-gray-400">
-                <Upload size={18} />
-                <input
-                  hidden
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    setNewGallery((prev) => [...prev, ...files]);
-                    e.target.value = "";
-                  }}
-                />
+              <label className="h-20 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors text-gray-400 hover:text-blue-500">
+                <Plus size={18} />
+                <input hidden type="file" multiple accept="image/*" onChange={(e) => { setNewGallery(prev => [...prev, ...Array.from(e.target.files || [])]); e.target.value = ""; }} />
               </label>
             </div>
-          </div>
+          </FormField>
 
-          {/* CATALOG PDF */}
-          <div>
-            <p className="font-medium mb-2">Catalog PDF</p>
+          {/* Catalog PDF */}
+          <FormField label="Catalog PDF">
             {newCatalog ? (
-              <div className="flex items-center justify-between gap-3 rounded-lg border bg-slate-50 p-3">
-                <span className="font-medium truncate max-w-[240px]">
-                  {newCatalog.name}
-                </span>
-                <button type="button" onClick={() => setNewCatalog(null)} className="text-red-500">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-red-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 truncate flex-1">{newCatalog.name}</span>
+                <button onClick={() => setNewCatalog(null)} className="text-red-500 hover:text-red-600">
                   <X size={16} />
                 </button>
               </div>
             ) : existingCatalog ? (
-              <div className="flex items-center justify-between gap-3 rounded-lg border bg-slate-50 p-3">
-                <a
-                  href={existingCatalog}
-                  target="_blank"
-                  className="text-cyan-600 hover:underline text-sm truncate max-w-[240px]"
-                >
-                  📄 View Current PDF
-                </a>
-                <div className="flex gap-2">
-                  <label className="text-blue-600 text-sm font-medium cursor-pointer hover:underline">
-                    Replace
-                    <input
-                      hidden
-                      type="file"
-                      accept="application/pdf"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setNewCatalog(file);
-                          setExistingCatalog(null);
-                        }
-                      }}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setExistingCatalog(null)}
-                    className="text-red-500"
-                  >
-                    <X size={16} />
-                  </button>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-cyan-600" />
                 </div>
+                <a href={existingCatalog} target="_blank" className="text-sm font-medium text-cyan-600 hover:underline truncate flex-1">
+                  View Current PDF
+                </a>
+                <label className="text-xs text-blue-600 font-medium cursor-pointer hover:underline">
+                  Replace
+                  <input hidden type="file" accept="application/pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setNewCatalog(f); setExistingCatalog(null); } }} />
+                </label>
+                <button onClick={() => setExistingCatalog(null)} className="text-red-500 hover:text-red-600">
+                  <X size={16} />
+                </button>
               </div>
             ) : (
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm text-gray-500 hover:border-blue-400 transition">
-                <Upload />
-                Upload Catalog PDF
-                <input
-                  hidden
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => setNewCatalog(e.target.files?.[0] || null)}
-                />
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 p-5 text-sm text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all">
+                <Upload className="w-4 h-4" />
+                <span>Upload PDF Brochure</span>
+                <input hidden type="file" accept="application/pdf" onChange={(e) => setNewCatalog(e.target.files?.[0] || null)} />
               </label>
             )}
+          </FormField>
+
+          {/* ══════ Stock Toggle ══════ */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">In Stock</p>
+              <p className="text-xs text-gray-500">Product available for purchase</p>
+            </div>
+            <Switch checked={inStock} onCheckedChange={setInStock} />
           </div>
         </div>
 
-        {/* STOCK */}
-        <div className="flex justify-between items-center">
-          <span className="font-medium">In Stock</span>
-          <Switch checked={inStock} onCheckedChange={setInStock} />
-        </div>
-
-        {/* ACTIONS */}
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
+        {/* ─── Footer ─── */}
+        <div className="flex items-center justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100 shrink-0">
+          <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
           <Button
-            className="bg-blue-600 hover:bg-blue-900"
+            className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
             onClick={handleSubmit}
             disabled={saving}
           >
@@ -589,6 +465,29 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ═══════════════ HELPER COMPONENTS ═══════════════ */
+
+function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <div className="flex items-center gap-2 pt-2 pb-1 border-b border-gray-100">
+      <span className="text-blue-600">{icon}</span>
+      <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide">{title}</h3>
+    </div>
+  );
+}
+
+function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {children}
     </div>
   );
 }

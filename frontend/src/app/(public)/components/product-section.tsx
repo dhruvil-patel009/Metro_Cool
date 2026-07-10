@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronRight, ArrowUpRight, Star, ShoppingCart } from "lucide-react"
+import { ChevronRight, ArrowUpRight, Star } from "lucide-react"
 import { getServices, ServiceDTO } from "../lib/services.api"
 import { formatINR } from "@/app/lib/currency"
 import { useQuery } from "@tanstack/react-query"
@@ -181,106 +181,111 @@ export function ProductsSection() {
 
 {/* ================= PRODUCTS SECTION ================= */}
 
-<section className="py-16 bg-[#f9fafb]">
+<section className="py-12 sm:py-16 bg-[#f9fafb]">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <div className="text-center mb-12">
+    <div className="text-center mb-8 sm:mb-12">
       <h2 className="text-2xl md:text-4xl font-bold mb-2">
         Featured Products
       </h2>
-      <p className="text-gray-500">
+      <p className="text-gray-500 text-sm sm:text-base">
         Genuine parts and top-rated appliances
       </p>
     </div>
 
     {/* PRODUCT GRID */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
 
-      {products.slice(0, 4).map((product) => (
-        <Link
-          key={product.id}
-          href={`/products/${product.id}`}
-          className="group relative h-[420px] bg-white rounded-md overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-        >
-          {/* IMAGE */}
-          <div className="absolute inset-0">
-            <img
-              src={product.main_image || "/placeholder.svg"}
-              alt={product.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-          </div>
+      {products.slice(0, 4).map((product) => {
+        const discount = product.old_price && Number(product.old_price) > Number(product.price)
+          ? Math.round(((Number(product.old_price) - Number(product.price)) / Number(product.old_price)) * 100)
+          : 0
+        const savings = product.old_price ? Number(product.old_price) - Number(product.price) : 0
 
-          {/* CONTENT */}
-          <div className="relative h-full p-5 flex flex-col justify-between pointer-events-none">
+        return (
+          <Link
+            key={product.id}
+            href={`/products/${product.id}`}
+            className="group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-xl transition-all duration-300 flex flex-col"
+          >
+            {/* Image */}
+            <div className="relative aspect-square overflow-hidden bg-gray-50">
+              <img
+                src={product.main_image || "/placeholder.svg"}
+                alt={product.title}
+                className="w-full h-full object-contain p-3 sm:p-4 transition-transform duration-500 group-hover:scale-105"
+              />
+              {/* Discount Badge */}
+              {discount > 0 && (
+                <div className="absolute top-0 left-0">
+                  <div className="bg-[#cc0c39] text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-br-lg shadow-sm">
+                    {discount}% OFF
+                  </div>
+                </div>
+              )}
+              {product.badge && !discount && (
+                <div className="absolute top-0 left-0">
+                  <div className="text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm"
+                    style={{ backgroundColor: product.badge_color || "#2563eb" }}>
+                    {product.badge}
+                  </div>
+                </div>
+              )}
+            </div>
 
-            {product.badge && (
-              <span
-                className="px-3 py-1.5 text-white text-[10px] font-bold rounded-full uppercase tracking-widest absolute top-4 left-4"
-                style={{ backgroundColor: product.badge_color || "#2563eb" }}
-              >
-                {product.badge}
-              </span>
-            )}
-
-            <div className="pointer-events-auto mt-auto">
-
-              {/* Rating */}
-              <div className="flex items-center gap-1 mb-2">
-                {[1,2,3,4,5].map((s)=>(
-                  <Star
-                    key={s}
-                    className={`w-3.5 h-3.5 ${
-                      s <= Math.floor(product.rating || 0)
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-white/30"
-                    }`}
-                  />
-                ))}
-                <span className="text-xs text-white/70 ml-1">
-                  ({Number(product.rating || 0).toFixed(1)})
-                </span>
-              </div>
+            {/* Content */}
+            <div className="p-3 sm:p-4 flex flex-col flex-1">
+              {/* Brand */}
+              {product.brand && (
+                <p className="text-[10px] sm:text-[11px] text-blue-600 font-semibold uppercase tracking-wide mb-1">
+                  {product.brand}
+                </p>
+              )}
 
               {/* Title */}
-              <h3 className="font-bold text-xl text-white mb-2 line-clamp-2">
+              <h3 className="font-semibold text-xs sm:text-sm text-gray-900 mb-1.5 line-clamp-2 leading-snug group-hover:text-blue-700 transition-colors">
                 {product.title}
               </h3>
 
-              {/* Description */}
-              <p className="text-xs text-white/70 mb-5 line-clamp-2">
-                {product.short_desc}
-              </p>
-
-              {/* Price */}
-              <div className="flex justify-between items-center">
-                <div>
-                  {product.old_price && (
-                    <span className="text-xs text-white/40 line-through">
-                      ₹{Number(product.old_price).toLocaleString()}
-                    </span>
-                  )}
-                  <div className="text-2xl font-bold text-white">
-                    ₹{Number(product.price).toLocaleString()}
-                  </div>
+              {/* Rating */}
+              <div className="flex items-center gap-1 mb-2">
+                <div className="flex items-center gap-0.5 bg-green-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                  <span>{Number(product.rating || 0).toFixed(1)}</span>
+                  <Star className="w-2.5 h-2.5 fill-white" />
                 </div>
-
-                <div className="bg-blue-600 p-3 rounded-md hover:bg-blue-700">
-                  <ShoppingCart className="w-5 h-5 text-white" />
-                </div>
+                <span className="text-[10px] sm:text-xs text-gray-400">
+                  ({product.review_count || 0})
+                </span>
               </div>
 
+              {/* Pricing */}
+              <div className="mt-auto space-y-0.5">
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span className="text-base sm:text-lg font-bold text-gray-900">
+                    ₹{Number(product.price).toLocaleString("en-IN")}
+                  </span>
+                  {product.old_price && Number(product.old_price) > Number(product.price) && (
+                    <span className="text-[10px] sm:text-xs text-gray-400 line-through">
+                      ₹{Number(product.old_price).toLocaleString("en-IN")}
+                    </span>
+                  )}
+                </div>
+                {savings > 0 && (
+                  <p className="text-[10px] sm:text-xs text-green-600 font-medium">
+                    Save ₹{savings.toLocaleString("en-IN")}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        )
+      })}
 
     </div>
 
     {/* VIEW ALL BUTTON */}
     {products.length > 4 && (
-      <div className="text-center mt-12">
+      <div className="text-center mt-10 sm:mt-12">
         <Link
           href="/products"
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 py-3 rounded-lg shadow-md transition duration-200"

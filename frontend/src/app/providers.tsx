@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactNode, useState } from "react"
 import { CartProvider } from "./context/CartContext"
+import { RoomSizeProvider } from "./context/RoomSizeContext"
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -27,7 +28,9 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <CartProvider>
-        {children}
+        <RoomSizeProvider>
+          {children}
+        </RoomSizeProvider>
       </CartProvider>
     </QueryClientProvider>
   )

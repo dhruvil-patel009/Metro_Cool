@@ -19,28 +19,38 @@ export const createService = async (req: Request, res: Response) => {
        rating,
       badge,
       badgeColor,
+      commissionType,
+      commissionValue,
     } = req.body || {};
 
     if (!title || !serviceCode || !category || !price) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    const insertPayload: Record<string, any> = {
+      title,
+      service_code: serviceCode,
+      category,
+      price,
+      original_price: originalPrice,
+      pricing_type: pricingType || "fixed",
+      short_description: shortdescription,
+      description,
+      image_url: imageUrl,
+      rating: rating ?? 4.5,
+      badge,
+      badge_color: badgeColor || "blue",
+    };
+
+    // Commission fields — only include if provided (requires DB columns to exist)
+    if (commissionType !== undefined || commissionValue !== undefined) {
+      insertPayload.commission_type = commissionType || "percentage";
+      insertPayload.commission_value = commissionValue ?? 20;
+    }
+
     const { data, error } = await supabase
       .from("services")
-      .insert({
-         title,
-        service_code: serviceCode,
-        category,
-        price,
-        original_price: originalPrice,
-        pricing_type: pricingType || "fixed",
-        short_description: shortdescription,
-        description,
-        image_url: imageUrl,
-        rating: rating ?? 4.5,
-        badge,
-        badge_color: badgeColor || "blue",
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
@@ -117,6 +127,7 @@ export const updateService = async (req: Request, res: Response) => {
     "title", "service_code", "category", "price", "original_price",
     "pricing_type", "short_description", "description", "image_url",
     "rating", "badge", "badge_color", "is_active",
+    "commission_type", "commission_value",
   ];
   for (const key of permitted) {
     if (req.body[key] !== undefined) {

@@ -99,6 +99,7 @@ export default function BookingsContent() {
       case "assigned": return 1
       case "on_the_way": return 2
       case "working": return 3
+      case "report_submitted":
       case "completed": return 4
       default: return 0
     }
@@ -116,7 +117,7 @@ export default function BookingsContent() {
     const step = getStepFromStatus(booking.job_status)
     setCurrentStep(step)
 
-    if (booking.job_status === "completed" && !hasRedirected) {
+    if ((booking.job_status === "completed" || booking.job_status === "report_submitted") && !hasRedirected) {
       setHasRedirected(true)
       toast.success("Service completed 🎉")
       setTimeout(() => {
@@ -148,6 +149,11 @@ export default function BookingsContent() {
         tag = "metro-cool-working"
         break
       case "completed":
+        title = "Service Completed ✓"
+        message = "Your AC service has been completed successfully. Please rate your experience."
+        tag = "metro-cool-completed"
+        break
+      case "report_submitted":
         title = "Service Completed ✓"
         message = "Your AC service has been completed successfully. Please rate your experience."
         tag = "metro-cool-completed"

@@ -49,10 +49,10 @@ const buildSettlements = async (todayOnly = false) => {
   const settlements = []
 
   for (const payment of payments) {
-    // Fetch booking + service title
+    // Fetch booking + service title & commission config
     const { data: booking } = await supabase
       .from("bookings")
-      .select("*, services(title)")
+      .select("*, services(title, commission_type, commission_value)")
       .eq("id", payment.booking_id)
       .maybeSingle()
 
@@ -74,7 +74,20 @@ const buildSettlements = async (todayOnly = false) => {
     }
 
     const price = Number(payment.amount)
-    const commission = +(price * 0.2).toFixed(2)
+
+    // Per-service commission: read from the linked service record, fallback to 20%
+    const serviceData = (booking as any)?.services
+    const commissionType: string = serviceData?.commission_type || "percentage"
+    const commissionValue: number = serviceData?.commission_value ?? 20
+    let commission: number
+
+    if (commissionType === "flat") {
+      commission = +Math.min(commissionValue, price).toFixed(2)
+    } else {
+      // percentage (default)
+      commission = +(price * (commissionValue / 100)).toFixed(2)
+    }
+
     const payable = +(price - commission).toFixed(2)
 
     const dateStr = booking?.completed_at || payment.created_at
@@ -97,6 +110,8 @@ const buildSettlements = async (todayOnly = false) => {
         }),
       },
       price,
+      commissionType,
+      commissionValue,
       commission,
       payable,
       status: payment.payout_status === "paid" ? "Paid" : "Pending",

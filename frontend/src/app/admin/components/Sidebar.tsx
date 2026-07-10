@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Briefcase, Users, UserCircle,
   Calendar, CreditCard, Settings, LogOut, Menu,
   PackageSearch, ChevronLeft, ChevronRight, Layers, Zap, Headphones,
-  ClipboardCheck,
+  ClipboardCheck, Percent,
 } from "lucide-react"
 import { cn } from "@/app/lib/utils"
 import { toast } from "react-toastify"
@@ -36,6 +36,7 @@ const menuGroups = [
       { icon: Calendar,        label: "Bookings",     href: "/admin/Bookings",     accent: "#f43f5e" },
       { icon: ClipboardCheck,  label: "Service Reports", href: "/admin/ServiceReports", accent: "#14b8a6" },
       { icon: CreditCard,      label: "Settlements",  href: "/admin/Settlements",  accent: "#f59e0b" },
+      { icon: Percent,         label: "Commission",   href: "/admin/CommissionSettings", accent: "#8b5cf6" },
       { icon: Headphones,      label: "Support",      href: "/admin/support",      accent: "#8b5cf6" },
     ],
   },
@@ -97,7 +98,7 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-4">
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar py-3 px-2 space-y-4">
         {menuGroups.map((group) => (
           <div key={group.label}>
             {isOpen && (

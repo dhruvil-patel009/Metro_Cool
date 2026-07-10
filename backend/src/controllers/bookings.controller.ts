@@ -188,6 +188,7 @@ export const completeBooking = async (req: any, res: Response) => {
         tax: pricing.tax,
         total_amount: pricing.total,
         status: "confirmed",
+        job_status: "open",
       })
       .eq("id", bookingId)
       .eq("user_id", req.user.id)

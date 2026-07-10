@@ -32,6 +32,8 @@ export function AddServiceModal({ isOpen, onClose }: AddServiceModalProps) {
   const [rating, setRating] = useState("4.5")
 const [badge, setBadge] = useState("")
 const [badgeColor, setBadgeColor] = useState("#2563eb") // blue-600 default
+const [commissionType, setCommissionType] = useState<"percentage" | "flat">("percentage")
+const [commissionValue, setCommissionValue] = useState("10")
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -92,6 +94,8 @@ setBadgeColor("#2563eb")
       badgeColor,
       imageUrl: serviceImage || "",
       isActive,
+      commissionType,
+      commissionValue: Number(commissionValue),
     });
 
     
@@ -115,6 +119,8 @@ toast.error(
     setShortDescription("")
     setIsActive(true)
     setServiceImage(null)
+    setCommissionType("percentage")
+    setCommissionValue("10")
     onClose()
   }
 
@@ -335,6 +341,86 @@ toast.error(
   </div>
 </div>
 
+
+              {/* Commission Configuration */}
+              <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-5 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+                    <svg className="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="18" rx="2"/>
+                      <path d="M2 9h20"/>
+                      <path d="M9 21V9"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-sm font-semibold text-blue-900 uppercase tracking-wide">Commission Configuration</h3>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">Commission Type</label>
+                    <Select value={commissionType} onValueChange={(v) => setCommissionType(v as "percentage" | "flat")}>
+                      <SelectTrigger className="h-11 border-gray-300 bg-white text-black">
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Percentage (%)</SelectItem>
+                        <SelectItem value="flat">Flat (₹)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">Commission Value</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max={commissionType === "percentage" ? "100" : undefined}
+                      step="0.5"
+                      value={commissionValue}
+                      onChange={(e) => setCommissionValue(e.target.value)}
+                      placeholder={commissionType === "percentage" ? "e.g. 10" : "e.g. 200"}
+                      className="h-11 border-gray-300 focus-visible:ring-blue-500 bg-white text-black"
+                    />
+                  </div>
+                </div>
+
+                {/* Live Settlement Preview */}
+                <div className="rounded-lg border-l-4 border-blue-500 bg-white px-4 py-3 shadow-sm">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Live Settlement Preview</p>
+                  <p className="text-sm text-gray-700">
+                    {price ? (
+                      <>
+                        &quot;For <span className="font-bold text-gray-900">₹{Number(price).toLocaleString("en-IN")}</span> service at{" "}
+                        <span className="font-bold text-blue-600">
+                          {commissionType === "percentage"
+                            ? `${commissionValue || 0}%`
+                            : `₹${Number(commissionValue || 0).toLocaleString("en-IN")}`}
+                        </span>{" "}
+                        commission: Admin ={" "}
+                        <span className="font-bold text-green-600">
+                          ₹{commissionType === "percentage"
+                            ? Math.round(Number(price) * (Number(commissionValue || 0) / 100)).toLocaleString("en-IN")
+                            : Math.min(Number(commissionValue || 0), Number(price)).toLocaleString("en-IN")}
+                        </span>
+                        , Technician ={" "}
+                        <span className="font-bold text-blue-700">
+                          ₹{commissionType === "percentage"
+                            ? Math.round(Number(price) - Number(price) * (Number(commissionValue || 0) / 100)).toLocaleString("en-IN")
+                            : Math.max(0, Number(price) - Number(commissionValue || 0)).toLocaleString("en-IN")}
+                        </span>&quot;
+                      </>
+                    ) : (
+                      <span className="text-gray-400 italic">Enter a price to see live preview</span>
+                    )}
+                  </p>
+                </div>
+
+                <p className="text-xs text-gray-500 flex items-center gap-1">
+                  <svg className="h-3.5 w-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                  </svg>
+                  Commission is deducted from technician payment during settlement
+                </p>
+              </div>
 
               {/* Service Status */}
               <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
