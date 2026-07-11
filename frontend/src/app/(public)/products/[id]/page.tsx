@@ -59,8 +59,12 @@ export default function ProductDetailsPage() {
   /* ---------------- FETCH PRODUCT ---------------- */
   useEffect(() => {
     if (!id) return
+    setLoading(true)
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/${id}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Product not found")
+        return res.json()
+      })
       .then((data) => {
         setProduct(data)
         const capacities = data.capacity_prices?.map((c: any) => c.capacity) || []
@@ -75,7 +79,10 @@ export default function ProductDetailsPage() {
           setSelectedCapacity(data.capacity_prices?.[0]?.capacity)
         }
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error("Failed to load product:", err)
+        setProduct(null)
+      })
       .finally(() => setLoading(false))
   }, [id, recommendedCapacity])
 
@@ -83,11 +90,18 @@ export default function ProductDetailsPage() {
   useEffect(() => {
     if (!product?.category) return
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load related products")
+        return res.json()
+      })
       .then((data) => {
         setRelatedProducts(
           data.filter((p: any) => p.id !== product.id && p.category === product.category).slice(0, 4)
         )
+      })
+      .catch((err) => {
+        console.error("Related products error:", err)
+        setRelatedProducts([])
       })
   }, [product])
 
@@ -680,12 +694,14 @@ export default function ProductDetailsPage() {
           </button>
         </div>
 
-        {/* Success banner */}
-        <div className="px-4 sm:px-5 pt-3 shrink-0">
-          <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg p-2.5 text-xs font-medium flex items-center gap-2">
-            <Check className="w-3.5 h-3.5" /> Item added to cart
+        {/* Success banner - only show briefly after adding */}
+        {addedToCart && (
+          <div className="px-4 sm:px-5 pt-3 shrink-0">
+            <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg p-2.5 text-xs font-medium flex items-center gap-2">
+              <Check className="w-3.5 h-3.5" /> Item added to cart
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-3">

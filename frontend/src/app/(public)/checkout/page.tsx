@@ -7,7 +7,7 @@ import { toast } from "react-toastify"
 import { formatINR } from "@/app/lib/currency"
 import {
   MapPin, CreditCard, Banknote, ChevronRight, Package, Loader2,
-  Plus, Trash2, ShoppingCart,
+  Plus, Minus, Trash2, ShoppingCart,
 } from "lucide-react"
 import AuthGuard from "@/app/components/AuthGuard"
 
@@ -454,7 +454,7 @@ export default function CheckoutPage() {
                             }}
                             className="px-2 py-1 hover:bg-gray-50 rounded-l-lg"
                           >
-                            <Plus className="w-3 h-3 rotate-180" />
+                            <Minus className="w-3 h-3 rotate-180" />
                           </button>
                           <span className="px-2 text-sm font-semibold">{item.qty}</span>
                           <button

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Confirmed</title>
+</head>
+
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:'Segoe UI',Inter,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:20px;overflow:hidden;
+          box-shadow:0 8px 40px rgba(15,23,42,0.08);">
+
+          <!-- ═══════════════ HEADER ═══════════════ -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0ea5e9 100%);
+              padding:40px 40px 36px;text-align:center;">
+              <!-- Logo Circle -->
+              <table cellpadding="0" cellspacing="0" align="center">
+                <tr>
+                  <td style="width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:14px;text-align:center;vertical-align:middle;">
+                    <span style="font-size:24px;color:#ffffff;">&#10052;</span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin:16px 0 0;font-size:26px;color:#ffffff;font-weight:800;letter-spacing:0.3px;">
+                Metro Cool
+              </h1>
+              <p style="margin:6px 0 0;font-size:13px;color:#7dd3fc;letter-spacing:1px;">
+                COOLING SOLUTIONS &bull; SERVICE &bull; CARE
+              </p>
+            </td>
+          </tr>
+
+          <!-- ═══════════════ SUCCESS ICON ═══════════════ -->
+          <tr>
+            <td align="center" style="padding:32px 40px 0;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="width:72px;height:72px;background:#ecfdf5;border-radius:50%;text-align:center;vertical-align:middle;border:3px solid #a7f3d0;">
+                    <span style="font-size:32px;">&#10003;</span>
+                  </td>
+                </tr>
+              </table>
+              <h2 style="margin:20px 0 8px;font-size:22px;color:#0f172a;font-weight:800;">
+                Booking Confirmed!
+              </h2>
+              <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;max-width:380px;">
+                Hi <strong>{{customerName}}</strong>, your service has been successfully booked. Our expert technician will be at your doorstep on time.
+              </p>
+            </td>
+          </tr>
+
+          <!-- ═══════════════ BODY ═══════════════ -->
+          <tr>
+            <td style="padding:28px 40px 36px;">
+
+              <!-- Booking Reference -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%);border-radius:14px;border:1px solid #bfdbfe;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px 24px;text-align:center;">
+                    <p style="margin:0 0 4px;font-size:11px;color:#3b82f6;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">
+                      Booking Reference
+                    </p>
+                    <p style="margin:0;font-size:22px;color:#0f172a;font-weight:800;letter-spacing:1px;">
+                      {{bookingId}}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Service Details Card -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="border-radius:14px;border:1px solid #e2e8f0;margin-bottom:20px;overflow:hidden;">
+                <tr>
+                  <td style="background:#f8fafc;padding:14px 24px;border-bottom:1px solid #e2e8f0;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;">
+                          &#128736; Service Details
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:13px;color:#64748b;padding:8px 0;vertical-align:top;">Service</td>
+                        <td style="font-size:14px;font-weight:700;color:#0f172a;text-align:right;padding:8px 0;">{{serviceName}}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="border-bottom:1px dashed #e2e8f0;"></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#64748b;padding:8px 0;">
+                          &#128197; Date
+                        </td>
+                        <td style="font-size:14px;font-weight:600;color:#0f172a;text-align:right;padding:8px 0;">{{bookingDate}}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="border-bottom:1px dashed #e2e8f0;"></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#64748b;padding:8px 0;">
+                          &#128336; Time Slot
+                        </td>
+                        <td style="font-size:14px;font-weight:600;color:#0f172a;text-align:right;padding:8px 0;">{{timeSlot}}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="border-bottom:1px dashed #e2e8f0;"></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#64748b;padding:8px 0;">
+                          &#128205; Address
+                        </td>
+                        <td style="font-size:13px;font-weight:600;color:#0f172a;text-align:right;padding:8px 0;max-width:220px;">{{customerAddress}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Amount Card -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:14px;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:24px;text-align:center;">
+                    <p style="margin:0 0 4px;font-size:11px;color:#7dd3fc;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;">
+                      Total Amount
+                    </p>
+                    <p style="margin:0;font-size:32px;color:#ffffff;font-weight:800;">
+                      {{totalAmount}}
+                    </p>
+                    <p style="margin:8px 0 0;font-size:12px;color:#94a3b8;">
+                      Inclusive of all taxes &bull; No hidden charges
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- What's Next Section -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="border-radius:14px;border:1px solid #e2e8f0;margin-bottom:24px;overflow:hidden;">
+                <tr>
+                  <td style="background:#f8fafc;padding:14px 24px;border-bottom:1px solid #e2e8f0;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;">
+                          &#128161; What Happens Next
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width:32px;vertical-align:top;padding:6px 0;">
+                          <span style="display:inline-block;width:24px;height:24px;background:#dbeafe;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:700;color:#2563eb;">1</span>
+                        </td>
+                        <td style="padding:6px 0 6px 12px;font-size:13px;color:#334155;line-height:1.5;">
+                          <strong>Technician Assigned</strong> — We'll assign a certified expert for your service
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="width:32px;vertical-align:top;padding:6px 0;">
+                          <span style="display:inline-block;width:24px;height:24px;background:#dbeafe;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:700;color:#2563eb;">2</span>
+                        </td>
+                        <td style="padding:6px 0 6px 12px;font-size:13px;color:#334155;line-height:1.5;">
+                          <strong>Arrival Notification</strong> — You'll receive an update when the technician is on the way
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="width:32px;vertical-align:top;padding:6px 0;">
+                          <span style="display:inline-block;width:24px;height:24px;background:#dbeafe;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:700;color:#2563eb;">3</span>
+                        </td>
+                        <td style="padding:6px 0 6px 12px;font-size:13px;color:#334155;line-height:1.5;">
+                          <strong>Service Completed</strong> — Pay securely after the work is done to your satisfaction
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://www.metro-cool.com/bookings"
+                      style="display:inline-block;background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:12px;letter-spacing:0.3px;">
+                      Track Your Booking &#8594;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Support Info -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#fef9f3;border-radius:12px;border:1px solid #fed7aa;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width:36px;vertical-align:top;">
+                          <span style="font-size:20px;">&#128222;</span>
+                        </td>
+                        <td style="padding-left:8px;">
+                          <p style="margin:0;font-size:13px;font-weight:700;color:#92400e;">Need to reschedule?</p>
+                          <p style="margin:4px 0 0;font-size:12px;color:#a16207;line-height:1.5;">
+                            Call us at <strong>+91 982 489 7099</strong> or reply to this email. We're happy to help!
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- ═══════════════ FOOTER ═══════════════ -->
+          <tr>
+            <td style="background:#f1f5f9;border-top:1px solid #e2e8f0;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:12px;color:#64748b;">
+                You received this email because you booked a service with Metro Cool.
+              </p>
+              <p style="margin:0;font-size:11px;color:#94a3b8;">
+                &copy; 2026 Metro Cool &bull; Ahmedabad, Gujarat &bull; All rights reserved
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

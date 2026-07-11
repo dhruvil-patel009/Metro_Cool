@@ -1,8 +1,8 @@
 "use client"
 
-import { ShoppingCart, Star, Check, Heart, SlidersHorizontal, X, Tag, ChevronRight, Zap } from "lucide-react"
+import { ShoppingCart, Star, Check, Heart, SlidersHorizontal, X, ChevronRight, Zap, ArrowUpDown } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
 import { useRoomSize } from "@/app/context/RoomSizeContext"
@@ -10,6 +10,8 @@ import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { ACCapacityRecommendation } from "../components/ac-capacity-recommendation"
+
+type SortOption = "relevance" | "price-low" | "price-high" | "rating" | "newest"
 
 export default function ProductsPage() {
   const { addToCart } = useCart()
@@ -30,26 +32,59 @@ export default function ProductsPage() {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [showMobileFilter, setShowMobileFilter] = useState(false)
+  const [sortBy, setSortBy] = useState<SortOption>("relevance")
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000])
+  const [showSortDropdown, setShowSortDropdown] = useState(false)
 
   const toggleBrand = (brand: string) =>
     setSelectedBrands(prev =>
       prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]
     )
 
-  /* ── Filtering: brand + capacity from room size context ── */
-  const filteredProducts = products.filter(p => {
-    const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(p.brand)
-    const capacityMatch = !recommendedCapacity || (
-      p.capacity_prices?.some((cp: any) =>
-        cp.capacity?.toLowerCase().includes(recommendedCapacity.toLowerCase().replace(" ton", ""))
-      ) ||
-      p.title?.toLowerCase().includes(recommendedCapacity.toLowerCase().replace(" ", "")) ||
-      p.title?.toLowerCase().includes(recommendedCapacity.toLowerCase())
-    )
-    return brandMatch && capacityMatch
-  })
+  /* ── Filtering: brand + capacity + price range ── */
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = products.filter(p => {
+      const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(p.brand)
+      const capacityMatch = !recommendedCapacity || (
+        p.capacity_prices?.some((cp: any) =>
+          cp.capacity?.toLowerCase().includes(recommendedCapacity.toLowerCase().replace(" ton", ""))
+        ) ||
+        p.title?.toLowerCase().includes(recommendedCapacity.toLowerCase().replace(" ", "")) ||
+        p.title?.toLowerCase().includes(recommendedCapacity.toLowerCase())
+      )
+      const price = Number(p.price) || 0
+      const priceMatch = price >= priceRange[0] && price <= priceRange[1]
+      return brandMatch && capacityMatch && priceMatch
+    })
+
+    // Sort
+    switch (sortBy) {
+      case "price-low":
+        filtered.sort((a, b) => Number(a.price) - Number(b.price))
+        break
+      case "price-high":
+        filtered.sort((a, b) => Number(b.price) - Number(a.price))
+        break
+      case "rating":
+        filtered.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+        break
+      case "newest":
+        filtered.reverse()
+        break
+      default:
+        break
+    }
+
+    return filtered
+  }, [products, selectedBrands, recommendedCapacity, priceRange, sortBy])
 
   const brands = Array.from(new Set(products.map(p => p.brand).filter(Boolean)))
+
+  // Get price bounds for the range filter
+  const maxPrice = useMemo(() => {
+    if (products.length === 0) return 500000
+    return Math.max(...products.map(p => Number(p.price) || 0), 100000)
+  }, [products])
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.preventDefault()
@@ -67,6 +102,14 @@ export default function ProductsPage() {
     return Math.round(((oldPrice - price) / oldPrice) * 100)
   }
 
+  const sortLabels: Record<SortOption, string> = {
+    relevance: "Relevance",
+    "price-low": "Price: Low to High",
+    "price-high": "Price: High to Low",
+    rating: "Highest Rated",
+    newest: "Newest First",
+  }
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center bg-[#f8f9fa]">
@@ -80,6 +123,37 @@ export default function ProductsPage() {
     <div className="space-y-6">
       {/* Room Size Guide */}
       <ACCapacityRecommendation />
+
+      {/* Divider */}
+      <div className="border-t border-gray-100" />
+
+      {/* Price Range Filter */}
+      <div>
+        <h3 className="font-bold text-xs uppercase tracking-wide text-gray-500 mb-3">Price Range</h3>
+        <div className="space-y-3">
+          <input
+            type="range"
+            min={0}
+            max={maxPrice}
+            step={1000}
+            value={priceRange[1]}
+            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+            className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600"
+          />
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>{formatINR(priceRange[0])}</span>
+            <span>{formatINR(priceRange[1])}</span>
+          </div>
+          {priceRange[1] < maxPrice && (
+            <button
+              onClick={() => setPriceRange([0, maxPrice])}
+              className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Reset price filter
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Divider */}
       <div className="border-t border-gray-100" />
@@ -140,28 +214,65 @@ export default function ProductsPage() {
         </nav>
 
         {/* ═══ Page Header ═══ */}
-        <div className="flex items-end justify-between gap-4 mb-5 sm:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#1d242d]">Air Conditioners</h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""} available
+              {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? "s" : ""} available
               {recommendedCapacity && (
                 <span className="text-blue-600 font-medium"> for {recommendedCapacity}</span>
               )}
             </p>
           </div>
-          <button
-            onClick={() => setShowMobileFilter(true)}
-            className="lg:hidden flex items-center gap-2 px-3.5 py-2.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Filters</span>
-            {(selectedBrands.length > 0 || recommendedCapacity) && (
-              <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
-                {selectedBrands.length + (recommendedCapacity ? 1 : 0)}
-              </span>
-            )}
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                className="flex items-center gap-2 px-3.5 py-2.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{sortLabels[sortBy]}</span>
+                <span className="sm:hidden">Sort</span>
+              </button>
+
+              {showSortDropdown && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setShowSortDropdown(false)} />
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-40 py-1 overflow-hidden">
+                    {(Object.keys(sortLabels) as SortOption[]).map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => { setSortBy(option); setShowSortDropdown(false) }}
+                        className={`w-full text-left px-4 py-2.5 text-xs font-medium transition-colors ${
+                          sortBy === option
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {sortLabels[option]}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Filter Button */}
+            <button
+              onClick={() => setShowMobileFilter(true)}
+              className="lg:hidden flex items-center gap-2 px-3.5 py-2.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Filters</span>
+              {(selectedBrands.length > 0 || recommendedCapacity || priceRange[1] < maxPrice) && (
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {selectedBrands.length + (recommendedCapacity ? 1 : 0) + (priceRange[1] < maxPrice ? 1 : 0)}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
@@ -195,13 +306,21 @@ export default function ProductsPage() {
           <div className="flex-1 min-w-0">
 
             {/* Active filter chips */}
-            {(recommendedCapacity || selectedBrands.length > 0) && (
+            {(recommendedCapacity || selectedBrands.length > 0 || priceRange[1] < maxPrice) && (
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 {recommendedCapacity && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full text-xs font-medium text-blue-700">
                     <Zap className="w-3 h-3" />
                     {recommendedCapacity} ({selectedRoom?.label})
                     <button onClick={clearSelection} className="ml-0.5 hover:text-red-500 transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {priceRange[1] < maxPrice && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full text-xs font-medium text-emerald-700">
+                    Up to {formatINR(priceRange[1])}
+                    <button onClick={() => setPriceRange([0, maxPrice])} className="ml-0.5 hover:text-red-500 transition-colors">
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -218,14 +337,14 @@ export default function ProductsPage() {
             )}
 
             {/* Empty State */}
-            {filteredProducts.length === 0 ? (
+            {filteredAndSortedProducts.length === 0 ? (
               <div className="bg-white rounded-2xl border border-gray-100 p-10 sm:p-16 text-center shadow-sm">
                 <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
                   <ShoppingCart className="w-7 h-7 text-gray-400" />
                 </div>
                 <p className="font-bold text-gray-800 text-lg">No products found</p>
                 <p className="text-sm text-gray-400 mt-2 max-w-xs mx-auto">
-                  Try adjusting your room size or removing brand filters to see more results.
+                  Try adjusting your filters, room size, or price range to see more results.
                 </p>
                 <div className="flex flex-wrap justify-center gap-2 mt-5">
                   {selectedBrands.length > 0 && (
@@ -240,11 +359,17 @@ export default function ProductsPage() {
                       Show all capacities
                     </button>
                   )}
+                  {priceRange[1] < maxPrice && (
+                    <button onClick={() => setPriceRange([0, maxPrice])}
+                      className="px-4 py-2 text-sm text-emerald-600 bg-emerald-50 hover:bg-emerald-100 font-medium rounded-lg transition-colors">
+                      Reset price range
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4">
-                {filteredProducts.map((product: any) => {
+                {filteredAndSortedProducts.map((product: any) => {
                   const isAdded = addedIds.has(product.id)
                   const discount = getDiscount(Number(product.price), product.old_price ? Number(product.old_price) : undefined)
                   const savings = product.old_price ? Number(product.old_price) - Number(product.price) : 0

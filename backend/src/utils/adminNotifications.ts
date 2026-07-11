@@ -16,6 +16,7 @@ console.log("[admin-notify] MAIL_PASS:", process.env.MAIL_PASS ? "✅ SET (hidde
 console.log("[admin-notify] ADMIN_EMAIL:", env.ADMIN_EMAIL)
 console.log("[admin-notify] Templates dir:", templatesDir)
 console.log("[admin-notify] booking-notification.html exists:", fs.existsSync(path.join(templatesDir, "booking-notification.html")))
+console.log("[admin-notify] booking-confirmation-customer.html exists:", fs.existsSync(path.join(templatesDir, "booking-confirmation-customer.html")))
 console.log("[admin-notify] payment-completed.html exists:", fs.existsSync(path.join(templatesDir, "payment-completed.html")))
 console.log("[admin-notify] order-notification.html exists:", fs.existsSync(path.join(templatesDir, "order-notification.html")))
 console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -75,33 +76,58 @@ export async function sendBookingNotification(data: BookingNotificationData): Pr
   console.log("[admin-notify] Sending to:", env.ADMIN_EMAIL)
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-  try {
-    const html = loadTemplate("booking-notification.html", {
-      bookingId: data.bookingId,
-      date: formatDate(),
-      customerName: data.customerName,
-      customerPhone: data.customerPhone || "N/A",
-      customerEmail: data.customerEmail || "N/A",
-      customerAddress: data.customerAddress || "N/A",
-      serviceName: data.serviceName,
-      bookingDate: formatDate(data.bookingDate),
-      timeSlot: data.timeSlot || "N/A",
-      totalAmount: formatCurrency(data.totalAmount),
-    })
+  const templateReplacements = {
+    bookingId: data.bookingId,
+    date: formatDate(),
+    customerName: data.customerName,
+    customerPhone: data.customerPhone || "N/A",
+    customerEmail: data.customerEmail || "N/A",
+    customerAddress: data.customerAddress || "N/A",
+    serviceName: data.serviceName,
+    bookingDate: formatDate(data.bookingDate),
+    timeSlot: data.timeSlot || "N/A",
+    totalAmount: formatCurrency(data.totalAmount),
+  }
 
-    console.log("[admin-notify] ✅ Template loaded successfully")
-    console.log("[admin-notify] Sending email...")
+  try {
+    // ── 1. Send ADMIN notification ──
+    const adminHtml = loadTemplate("booking-notification.html", templateReplacements)
+
+    console.log("[admin-notify] ✅ Admin template loaded successfully")
+    console.log("[admin-notify] Sending admin email...")
 
     const info = await transporter.sendMail({
       from: `"Metro Cool" <${process.env.MAIL_USER}>`,
       to: env.ADMIN_EMAIL,
       subject: `🔔 New Booking - ${data.serviceName} | ${data.customerName}`,
-      html,
+      html: adminHtml,
     })
 
-    console.log("[admin-notify] ✅ BOOKING EMAIL SENT!")
+    console.log("[admin-notify] ✅ ADMIN BOOKING EMAIL SENT!")
     console.log("[admin-notify] Message ID:", info.messageId)
     console.log("[admin-notify] Response:", info.response)
+
+    // ── 2. Send CUSTOMER confirmation email ──
+    if (data.customerEmail && data.customerEmail !== "N/A") {
+      try {
+        const customerHtml = loadTemplate("booking-confirmation-customer.html", templateReplacements)
+
+        console.log("[admin-notify] Sending customer confirmation email to:", data.customerEmail)
+
+        const custInfo = await transporter.sendMail({
+          from: `"Metro Cool" <${process.env.MAIL_USER}>`,
+          to: data.customerEmail,
+          subject: `✅ Booking Confirmed - ${data.serviceName} | Metro Cool`,
+          html: customerHtml,
+        })
+
+        console.log("[admin-notify] ✅ CUSTOMER CONFIRMATION EMAIL SENT!")
+        console.log("[admin-notify] Message ID:", custInfo.messageId)
+      } catch (custErr: any) {
+        console.error("[admin-notify] ⚠️ Failed to send customer email (non-fatal):", custErr.message)
+      }
+    }
+
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
   } catch (err: any) {
     console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

@@ -3,154 +3,238 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>New Service Booking</title>
+  <title>New Booking Alert</title>
 </head>
 
-<body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Inter,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;">
+<body style="margin:0;padding:0;background:#0f172a;font-family:'Segoe UI',Inter,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;">
     <tr>
       <td align="center" style="padding:40px 16px;">
 
         <table width="600" cellpadding="0" cellspacing="0"
-          style="background:#ffffff;border-radius:16px;overflow:hidden;
-          box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          style="background:#1e293b;border-radius:20px;overflow:hidden;
+          box-shadow:0 20px 60px rgba(0,0,0,0.4);border:1px solid #334155;">
 
-          <!-- HEADER -->
+          <!-- ═══════════════ HEADER — DARK THEME ═══════════════ -->
           <tr>
-            <td style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%);
-              padding:32px 40px;text-align:center;">
-              <h1 style="margin:0;font-size:24px;color:#ffffff;font-weight:700;letter-spacing:0.5px;">
-                Metro Cool
-              </h1>
-              <p style="margin:8px 0 0;font-size:13px;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;">
-                New Service Booking
+            <td style="padding:32px 40px 24px;border-bottom:1px solid #334155;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width:40px;height:40px;background:linear-gradient(135deg,#0ea5e9,#2563eb);border-radius:10px;text-align:center;vertical-align:middle;">
+                          <span style="font-size:18px;color:#ffffff;">&#10052;</span>
+                        </td>
+                        <td style="padding-left:12px;">
+                          <p style="margin:0;font-size:18px;font-weight:800;color:#f1f5f9;letter-spacing:0.3px;">Metro Cool</p>
+                          <p style="margin:2px 0 0;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;">Admin Dashboard</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td align="right" valign="top">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background:#7c3aed;border-radius:20px;padding:6px 14px;">
+                          <span style="font-size:11px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">&#128276; New Booking</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ═══════════════ ALERT BANNER ═══════════════ -->
+          <tr>
+            <td style="padding:24px 40px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:linear-gradient(135deg,#1e40af 0%,#7c3aed 100%);border-radius:14px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0;font-size:11px;color:#c4b5fd;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">
+                            Service Booking
+                          </p>
+                          <p style="margin:8px 0 0;font-size:20px;color:#ffffff;font-weight:800;">
+                            {{serviceName}}
+                          </p>
+                          <p style="margin:6px 0 0;font-size:12px;color:#a5b4fc;">
+                            Booked on {{date}}
+                          </p>
+                        </td>
+                        <td align="right" valign="middle">
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="width:52px;height:52px;background:rgba(255,255,255,0.15);border-radius:12px;text-align:center;vertical-align:middle;">
+                                <span style="font-size:24px;">&#128197;</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ═══════════════ BODY CONTENT ═══════════════ -->
+          <tr>
+            <td style="padding:24px 40px 36px;">
+
+              <!-- Booking ID Row -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#0f172a;border-radius:12px;border:1px solid #334155;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Booking ID</td>
+                        <td style="font-size:15px;font-weight:700;color:#38bdf8;text-align:right;font-family:monospace;letter-spacing:0.5px;">{{bookingId}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Customer Info Card -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#0f172a;border-radius:14px;border:1px solid #334155;margin-bottom:20px;overflow:hidden;">
+                <tr>
+                  <td style="padding:14px 20px;border-bottom:1px solid #334155;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">
+                          &#128100; Customer Information
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:12px;color:#64748b;padding:6px 0;">Name</td>
+                        <td style="font-size:13px;font-weight:600;color:#e2e8f0;text-align:right;padding:6px 0;">{{customerName}}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="border-bottom:1px solid #1e293b;"></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:12px;color:#64748b;padding:6px 0;">Phone</td>
+                        <td style="font-size:13px;font-weight:600;color:#e2e8f0;text-align:right;padding:6px 0;">
+                          <a href="tel:{{customerPhone}}" style="color:#38bdf8;text-decoration:none;">{{customerPhone}}</a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="border-bottom:1px solid #1e293b;"></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:12px;color:#64748b;padding:6px 0;">Email</td>
+                        <td style="font-size:13px;font-weight:600;color:#e2e8f0;text-align:right;padding:6px 0;">
+                          <a href="mailto:{{customerEmail}}" style="color:#38bdf8;text-decoration:none;">{{customerEmail}}</a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="border-bottom:1px solid #1e293b;"></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:12px;color:#64748b;padding:6px 0;vertical-align:top;">Address</td>
+                        <td style="font-size:13px;font-weight:600;color:#e2e8f0;text-align:right;padding:6px 0;max-width:220px;">{{customerAddress}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Schedule Card -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#0f172a;border-radius:14px;border:1px solid #334155;margin-bottom:20px;overflow:hidden;">
+                <tr>
+                  <td style="padding:14px 20px;border-bottom:1px solid #334155;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">
+                          &#128197; Schedule
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:12px;color:#64748b;padding:6px 0;">Scheduled Date</td>
+                        <td style="font-size:14px;font-weight:700;color:#fbbf24;text-align:right;padding:6px 0;">{{bookingDate}}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="border-bottom:1px solid #1e293b;"></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:12px;color:#64748b;padding:6px 0;">Time Slot</td>
+                        <td style="font-size:14px;font-weight:700;color:#fbbf24;text-align:right;padding:6px 0;">{{timeSlot}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Amount Card -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:linear-gradient(135deg,#064e3b 0%,#065f46 100%);border-radius:14px;border:1px solid #10b981;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0;font-size:11px;color:#6ee7b7;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">Total Amount</p>
+                          <p style="margin:8px 0 0;font-size:28px;color:#ffffff;font-weight:800;">{{totalAmount}}</p>
+                        </td>
+                        <td align="right" valign="middle">
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="background:rgba(255,255,255,0.1);border-radius:10px;padding:8px 14px;">
+                                <span style="font-size:12px;color:#a7f3d0;font-weight:600;">Pending Payment</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Quick Actions -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+                <tr>
+                  <td align="center" style="padding:8px 0;">
+                    <a href="https://www.metro-cool.com/admin/bookings"
+                      style="display:inline-block;background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:12px;letter-spacing:0.3px;">
+                      View in Dashboard &#8594;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- ═══════════════ FOOTER ═══════════════ -->
+          <tr>
+            <td style="background:#0f172a;border-top:1px solid #334155;padding:20px 40px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:11px;color:#475569;">
+                This is an automated admin notification from Metro Cool
               </p>
-            </td>
-          </tr>
-
-          <!-- BADGE -->
-          <tr>
-            <td align="center" style="padding:24px 40px 0;">
-              <table cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="background:#dbeafe;border-radius:24px;padding:8px 20px;">
-                    <span style="font-size:13px;font-weight:600;color:#1d4ed8;">
-                      &#128197; Booking Confirmed
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- BODY -->
-          <tr>
-            <td style="padding:24px 40px 32px;">
-
-              <!-- Booking Info Card -->
-              <table width="100%" cellpadding="0" cellspacing="0"
-                style="background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:20px;">
-                <tr>
-                  <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-                    <span style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">
-                      Booking Info
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:16px 20px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Booking ID</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;">{{bookingId}}</td>
-                      </tr>
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Booked On</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;">{{date}}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Customer Card -->
-              <table width="100%" cellpadding="0" cellspacing="0"
-                style="background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:20px;">
-                <tr>
-                  <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-                    <span style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">
-                      Customer
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:16px 20px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Name</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;">{{customerName}}</td>
-                      </tr>
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Phone</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;">{{customerPhone}}</td>
-                      </tr>
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Email</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;">{{customerEmail}}</td>
-                      </tr>
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Address</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;max-width:200px;">{{customerAddress}}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Service Card -->
-              <table width="100%" cellpadding="0" cellspacing="0"
-                style="background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:20px;">
-                <tr>
-                  <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-                    <span style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">
-                      Service Details
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:16px 20px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Service</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;">{{serviceName}}</td>
-                      </tr>
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Scheduled Date</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;">{{bookingDate}}</td>
-                      </tr>
-                      <tr>
-                        <td style="font-size:13px;color:#64748b;padding:4px 0;">Time Slot</td>
-                        <td style="font-size:13px;font-weight:600;color:#1e293b;text-align:right;padding:4px 0;">{{timeSlot}}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="2" style="padding-top:12px;border-top:1px dashed #e2e8f0;margin-top:8px;"></td>
-                      </tr>
-                      <tr>
-                        <td style="font-size:14px;color:#1e293b;font-weight:600;padding:4px 0;">Total Amount</td>
-                        <td style="font-size:16px;font-weight:700;color:#0ea5e9;text-align:right;padding:4px 0;">{{totalAmount}}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 40px;text-align:center;">
-              <p style="margin:0;font-size:12px;color:#94a3b8;">
+              <p style="margin:0;font-size:10px;color:#334155;">
                 &copy; 2026 Metro Cool &bull; All rights reserved
               </p>
             </td>
