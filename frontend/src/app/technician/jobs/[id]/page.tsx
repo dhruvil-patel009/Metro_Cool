@@ -378,8 +378,180 @@ export default function JobDetailsPage() {
           </div>
 
         </div>
+
+        {/* ═══ SERVICE REPORT (shown when submitted/completed) ═══ */}
+        {(jobStatus === "report_submitted" || jobStatus === "completed") && (
+          <ServiceReportSection jobId={booking.id} />
+        )}
+
       </main>
     </div>
   )
 
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   SERVICE REPORT SECTION — Shows submitted report on job page
+═══════════════════════════════════════════════════════ */
+
+function ServiceReportSection({ jobId }: { jobId: string }) {
+  const [report, setReport] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        const token = localStorage.getItem("accessToken") || localStorage.getItem("token")
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/service-report/job/${jobId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        const data = await res.json()
+        if (data.success && data.report) {
+          setReport(data.report)
+        }
+      } catch (err) {
+        console.error("Failed to fetch service report", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchReport()
+  }, [jobId])
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
+        <div className="flex items-center gap-3 animate-pulse">
+          <div className="w-10 h-10 rounded-xl bg-slate-100" />
+          <div className="h-4 w-48 bg-slate-100 rounded" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!report) return null
+
+  const formatDate = (d: string) => {
+    if (!d) return "—"
+    return new Date(d).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl border border-emerald-200 shadow-sm overflow-hidden"
+      >
+        {/* Header */}
+        <div className="px-6 md:px-8 py-5 border-b border-emerald-100 bg-emerald-50/50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <ClipboardCheck className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Service Completion Report</h3>
+              <p className="text-xs text-slate-400">Submitted {formatDate(report.created_at)}</p>
+            </div>
+          </div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+            {report.status?.toUpperCase() || "SUBMITTED"}
+          </span>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 md:p-8 space-y-6">
+          {/* Issue Description */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Issue Found</p>
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-sm">
+                {report.issue_description || "—"}
+              </p>
+            </div>
+          </div>
+
+          {/* Fix Applied */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Fix Applied</p>
+            <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-sm">
+                {report.fix_applied || "—"}
+              </p>
+            </div>
+          </div>
+
+          {/* Additional Notes */}
+          {report.additional_notes && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Additional Notes</p>
+              <div className="p-4 bg-amber-50/50 rounded-xl border border-amber-100">
+                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-sm">
+                  {report.additional_notes}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Photos */}
+          {report.photos && report.photos.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Proof of Work Photos</p>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                  {report.photos.length} photo{report.photos.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {report.photos.map((url: string, i: number) => (
+                  <div
+                    key={i}
+                    className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-100 shadow-sm cursor-pointer group relative"
+                    onClick={() => setLightboxImg(url)}
+                  >
+                    <img
+                      src={url}
+                      alt={`Proof ${i + 1}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Lightbox */}
+      {lightboxImg && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightboxImg(null)}
+        >
+          <button
+            onClick={() => setLightboxImg(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+          >
+            ✕
+          </button>
+          <img
+            src={lightboxImg}
+            alt="Full view"
+            className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
+  )
 }

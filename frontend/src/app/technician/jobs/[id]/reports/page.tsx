@@ -181,16 +181,25 @@ export default function ServiceCompletionReportPage() {
 
       const res = await fetch(`${API}/service-report/create`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
         body: formData,
       })
       const data = await res.json()
-      if (!data.success) throw new Error()
+      if (!data.success) throw new Error(data.message || "Report submission failed")
+
+      // Update booking status to "report_submitted"
+      await fetch(`${API}/tech-jobs/${jobId}/report`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      })
 
       setCurrentStep("otp")
       // Auto-focus first OTP box
       setTimeout(() => inputRefs.current[0]?.focus(), 400)
-    } catch {
-      alert("Report submission failed. Please try again.")
+    } catch (err: any) {
+      alert(err.message || "Report submission failed. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

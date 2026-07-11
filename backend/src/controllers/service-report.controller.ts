@@ -72,26 +72,88 @@
     }
     };
 
+    /* ── Helper: enrich a report with booking + profile data ── */
+    async function enrichReport(report: any) {
+      if (!report || !report.job_id) return report;
+
+      // Fetch booking
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select("id, booking_date, job_status, full_name, phone, user_id, technician_id, issues, instructions, address")
+        .eq("id", report.job_id)
+        .single();
+
+      if (!booking) {
+        return { ...report, bookings: null };
+      }
+
+      // Fetch technician profile
+      let techName = "Technician";
+      let techPhone = "";
+      let techEmail = "";
+      if (booking.technician_id) {
+        const { data: tech } = await supabase
+          .from("profiles")
+          .select("first_name, last_name, phone, email")
+          .eq("id", booking.technician_id)
+          .single();
+        if (tech) {
+          techName = `${tech.first_name || ""} ${tech.last_name || ""}`.trim() || "Technician";
+          techPhone = tech.phone || "";
+          techEmail = tech.email || "";
+        }
+      }
+
+      // Fetch customer profile email
+      let customerEmail = "";
+      if (booking.user_id) {
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("id", booking.user_id)
+          .single();
+        customerEmail = userProfile?.email || "";
+      }
+
+      return {
+        ...report,
+        bookings: {
+          id: booking.id,
+          booking_date: booking.booking_date,
+          job_status: booking.job_status,
+          issues: booking.issues,
+          instructions: booking.instructions,
+          address: booking.address,
+          user: {
+            full_name: booking.full_name || "Customer",
+            phone: booking.phone || "",
+            email: customerEmail,
+          },
+          technician: {
+            full_name: techName,
+            phone: techPhone,
+            email: techEmail,
+          },
+        },
+      };
+    }
+
     /* ── GET ALL SERVICE REPORTS (Admin) ── */
     export const getAllServiceReports = async (req: Request, res: Response) => {
       try {
         const { data: reports, error } = await supabase
           .from("service_reports")
-          .select(`
-            *,
-            bookings:job_id (
-              id,
-              booking_date,
-              job_status,
-              user:user_id ( full_name, phone, email ),
-              technician:technician_id ( full_name, phone, email )
-            )
-          `)
+          .select("*")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        return res.json({ success: true, reports: reports || [] });
+        // Enrich each report with booking + profile data
+        const enriched = await Promise.all(
+          (reports || []).map((report) => enrichReport(report))
+        );
+
+        return res.json({ success: true, reports: enriched });
       } catch (err: any) {
         console.error("Get All Service Reports Error:", err);
         return res.status(500).json({ success: false, message: err.message });
@@ -120,22 +182,18 @@
         // Get reports for these bookings
         const { data: reports, error } = await supabase
           .from("service_reports")
-          .select(`
-            *,
-            bookings:job_id (
-              id,
-              booking_date,
-              job_status,
-              user:user_id ( full_name, phone, email ),
-              technician:technician_id ( full_name, phone, email )
-            )
-          `)
+          .select("*")
           .in("job_id", jobIds)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        return res.json({ success: true, reports: reports || [] });
+        // Enrich each report
+        const enriched = await Promise.all(
+          (reports || []).map((report) => enrichReport(report))
+        );
+
+        return res.json({ success: true, reports: enriched });
       } catch (err: any) {
         console.error("Get My Service Reports Error:", err);
         return res.status(500).json({ success: false, message: err.message });
@@ -149,25 +207,15 @@
 
         const { data: report, error } = await supabase
           .from("service_reports")
-          .select(`
-            *,
-            bookings:job_id (
-              id,
-              booking_date,
-              job_status,
-              issues,
-              instructions,
-              address,
-              user:user_id ( full_name, phone, email ),
-              technician:technician_id ( full_name, phone, email )
-            )
-          `)
+          .select("*")
           .eq("id", id)
           .single();
 
         if (error) throw error;
 
-        return res.json({ success: true, report });
+        const enriched = await enrichReport(report);
+
+        return res.json({ success: true, report: enriched });
       } catch (err: any) {
         console.error("Get Service Report By ID Error:", err);
         return res.status(500).json({ success: false, message: err.message });
@@ -181,25 +229,15 @@
 
         const { data: report, error } = await supabase
           .from("service_reports")
-          .select(`
-            *,
-            bookings:job_id (
-              id,
-              booking_date,
-              job_status,
-              issues,
-              instructions,
-              address,
-              user:user_id ( full_name, phone, email ),
-              technician:technician_id ( full_name, phone, email )
-            )
-          `)
+          .select("*")
           .eq("job_id", jobId)
           .single();
 
         if (error) throw error;
 
-        return res.json({ success: true, report });
+        const enriched = await enrichReport(report);
+
+        return res.json({ success: true, report: enriched });
       } catch (err: any) {
         console.error("Get Service Report By Job ID Error:", err);
         return res.status(500).json({ success: false, message: err.message });

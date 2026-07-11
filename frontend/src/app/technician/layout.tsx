@@ -39,9 +39,9 @@ export default function RootLayout({
         <div className="flex h-screen">
           <Sidebar />
 
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col overflow-hidden">
             <Header />
-            <main className="flex-1 sm:py-8 sm:px-8 py-8 px-2 overflow-auto">
+            <main className="flex-1 py-6 px-4 sm:py-8 sm:px-6 lg:px-8 overflow-auto bg-slate-50/40">
               {children}
             </main>
           </div>

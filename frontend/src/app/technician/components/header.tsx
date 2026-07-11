@@ -1,54 +1,72 @@
 "use client"
 
-import { Search, ChevronRight } from "lucide-react"
+import { Search, ChevronRight, Bell } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
 import { Input } from "@/app/components/ui/input"
 import { useAuthStore } from "@/store/auth.store"
+import { usePathname } from "next/navigation"
 import { NotificationDropdown } from "./notification-dropdown"
 
+/* Route → label mapping */
+const routeLabels: Record<string, string> = {
+  "/technician":               "Dashboard",
+  "/technician/schedule":      "Schedule",
+  "/technician/jobs":          "Jobs",
+  "/technician/service-reports": "Service Reports",
+  "/technician/earnings":      "Earnings",
+  "/technician/profile":       "Profile",
+  "/technician/support":       "Support",
+}
 
 export function Header() {
+  const user = useAuthStore((s) => s.user)
+  const pathname = usePathname()
 
-  const user = useAuthStore((s) => s.user);
   const fullName = user
     ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
-    : "Guest";
+    : "Guest"
 
   const initials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
-    : "G";
+    : "G"
 
-  const profileImage = user?.profile_photo || "";
+  const profileImage = user?.profile_photo || ""
+
+  // Determine page title from route
+  const pageTitle = Object.entries(routeLabels).find(
+    ([route]) => pathname === route
+  )?.[1] || (pathname.includes("/technician/jobs/") ? "Job Details" : "Dashboard")
 
   return (
-    <header className="h-16 border-b bg-white flex items-center lg:justify-between justify-start pl-10 pr-2 sticky top-0 z-10">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="mx-2 text-lg text-black lg:text-lg font-medium">Dashboard</span>
-        <ChevronRight className="w-4 h-4 hidden md:block" />
-        <span className="font-medium hidden md:block text-foreground">Overview</span>
+    <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-sm flex items-center justify-between pl-12 md:pl-6 pr-4 sm:pr-6 sticky top-0 z-10">
+      {/* Left: Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-slate-400 font-medium hidden sm:inline">Technician</span>
+        <ChevronRight className="w-3.5 h-3.5 text-slate-300 hidden sm:block" />
+        <span className="font-semibold text-slate-900">{pageTitle}</span>
       </div>
 
-      <div className="flex items-center sm:gap-6">
-        <div className="relative w-full max-w-lg hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      {/* Right: Search + Notifications + Profile */}
+      <div className="flex items-center gap-3 sm:gap-5">
+        {/* Search - desktop only */}
+        <div className="relative w-64 hidden lg:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            className="pl-10 bg-slate-50 border-none h-10 ring-offset-0 focus-visible:ring-1 focus-visible:ring-slate-200"
+            className="pl-9 bg-slate-50 border-slate-200 h-9 rounded-lg text-sm focus-visible:ring-1 focus-visible:ring-blue-200 focus-visible:border-blue-300"
             placeholder="Search jobs, customers..."
           />
         </div>
 
+        {/* Notifications */}
         <NotificationDropdown />
 
-        <div className="flex items-center gap-3 sm:pl-4">
-          <div className="text-right hidden lg:block">
-            <div className="text-sm font-semibold text-gray-900">
-              {fullName}
-            </div>
-            <div className="text-xs text-gray-500 capitalize">
-              {user?.role ?? "Visitor"}
-            </div>
+        {/* Profile */}
+        <div className="flex items-center gap-2.5">
+          <div className="text-right hidden md:block">
+            <p className="text-sm font-semibold text-slate-900 leading-tight">{fullName}</p>
+            <p className="text-[11px] text-slate-400 capitalize">{user?.role ?? "Technician"}</p>
           </div>
-          <Avatar className="h-9 w-9 border-2 border-slate-100">
+          <Avatar className="h-9 w-9 border-2 border-slate-100 shadow-sm">
             {profileImage ? (
               <AvatarImage
                 src={profileImage}
@@ -56,7 +74,7 @@ export function Header() {
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <AvatarFallback className="bg-blue-600 text-white font-semibold">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-700 text-white text-xs font-bold">
                 {initials}
               </AvatarFallback>
             )}
