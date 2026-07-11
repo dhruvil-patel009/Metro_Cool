@@ -43,15 +43,15 @@ export function ACCapacityRecommendation() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                {/* Radio */}
+                {/* Checkbox */}
                 <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                  className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
                     isSelected
                       ? "border-blue-600 bg-blue-600"
                       : "border-gray-300 group-hover:border-blue-400"
                   }`}
                 >
-                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
                 </div>
 
                 {/* Labels */}

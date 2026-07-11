@@ -25,6 +25,9 @@ import {
 
 import { formatINR } from "@/app/lib/currency"
 import { getFullServiceDetails } from "../../lib/serviceDetails.api"
+import { useAuthStore } from "@/store/auth.store"
+import { toast } from "react-toastify"
+import { useRouter } from "next/navigation"
 
 const iconMap: Record<string, any> = {
   SearchCheck,
@@ -43,6 +46,8 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
   const [error, setError] = useState<string | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [selectedAddons, setSelectedAddons] = useState<string[]>([])
+  const { token } = useAuthStore()
+  const router = useRouter()
 
   // Calculate total price safely using useMemo
   const totalPrice = useMemo(() => {
@@ -490,19 +495,23 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   </div>
 
                   {/* CTA */}
-                  <Link
-                    href={{
-                      pathname: `/services/${service.id}/booking`,
-                      query: {
-                        addons: selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : undefined,
-                        total: String(totalPrice),
-                      },
+                  <button
+                    onClick={() => {
+                      if (!token) {
+                        toast.info("Please login to book a service")
+                        router.push("/auth")
+                        return
+                      }
+                      const query = new URLSearchParams()
+                      if (selectedAddons.length > 0) query.set("addons", JSON.stringify(selectedAddons))
+                      query.set("total", String(totalPrice))
+                      router.push(`/services/${service.id}/booking?${query.toString()}`)
                     }}
                     className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-md shadow-blue-200 active:scale-[0.98]"
                   >
                     Book Appointment
                     <ChevronRight className="w-5 h-5" />
-                  </Link>
+                  </button>
 
                   {/* Trust Badges */}
                   <div className="grid grid-cols-2 gap-3">

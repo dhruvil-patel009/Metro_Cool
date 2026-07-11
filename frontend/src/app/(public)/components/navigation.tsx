@@ -1,13 +1,14 @@
 "use client"
 
 import { cn } from "@/app/lib/utils"
-import { Menu, User, LogOut } from "lucide-react"
+import { Menu, User, LogOut, ShoppingCart } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "react-toastify"
 import Image from "next/image"
 import { useAuthStore } from "@/store/auth.store"
+import { useCart } from "@/app/context/CartContext"
 import logo from "../../../../public/assets/logo.svg"
 
 export function Navigation() {
@@ -19,6 +20,10 @@ export function Navigation() {
 
   // ⭐ Zustand Auth
   const { user, token, hydrated, logout } = useAuthStore()
+
+  // 🛒 Cart
+  const { cart } = useCart()
+  const cartCount = cart.reduce((sum, item) => sum + item.qty, 0)
 
   // ⭐ wait for zustand persistence
   if (!hydrated) return null
@@ -95,6 +100,22 @@ export function Navigation() {
               Book Service
             </button>
           </Link>
+
+          {cartCount > 0 && (
+            <Link
+              href="/cart"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between px-3 py-3 rounded-lg bg-blue-50 text-blue-600"
+            >
+              <span className="text-sm font-medium flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                View Cart
+              </span>
+              <span className="text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                {cartCount}
+              </span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -142,6 +163,20 @@ export function Navigation() {
 
           {/* RIGHT SIDE */}
           <div className="flex items-center gap-3">
+
+            {/* 🛒 CART ICON */}
+            <Link
+              href="/cart"
+              className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="View cart"
+            >
+              <ShoppingCart className="w-5 h-5 text-gray-600" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </Link>
 
 
 

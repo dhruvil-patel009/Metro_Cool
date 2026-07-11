@@ -31,6 +31,8 @@ import { useRouter } from "next/navigation"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
 import { useRoomSize, ROOM_OPTIONS, RoomOption } from "@/app/context/RoomSizeContext"
+import { useAuthStore } from "@/store/auth.store"
+import { toast } from "react-toastify"
 import { FaTrashAlt } from "react-icons/fa"
 
 export default function ProductDetailsPage() {
@@ -55,6 +57,17 @@ export default function ProductDetailsPage() {
 
   const { cart, addToCart, removeFromCart, updateQty, total } = useCart()
   const { recommendedCapacity, selectedRoom, setSelectedRoom, clearSelection } = useRoomSize()
+  const { token } = useAuthStore()
+
+  /** Redirect to login if not authenticated, returns true if logged in */
+  const requireAuth = () => {
+    if (!token) {
+      toast.info("Please login to continue")
+      router.push("/auth")
+      return false
+    }
+    return true
+  }
 
   /* ---------------- FETCH PRODUCT ---------------- */
   useEffect(() => {
@@ -396,6 +409,7 @@ export default function ProductDetailsPage() {
                 <div className="space-y-3 pt-1">
                   <button
                     onClick={() => {
+                      if (!requireAuth()) return
                       addToCart({
                         id: product.id,
                         title: product.title,
@@ -419,6 +433,7 @@ export default function ProductDetailsPage() {
 
                   <button
                     onClick={() => {
+                      if (!requireAuth()) return
                       addToCart({
                         id: product.id,
                         title: product.title,

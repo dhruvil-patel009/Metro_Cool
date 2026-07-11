@@ -38,8 +38,11 @@ export default function CheckoutPage() {
 
   const razorpayOpened = useRef(false)
 
+  const FREE_SHIPPING_THRESHOLD = 10000
+  const SHIPPING_FEE = 499
+  const shippingCost = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
   const tax = total * 0.18
-  const finalAmount = total + tax
+  const finalAmount = total + tax + shippingCost
 
   /* LOAD ADDRESSES */
   const applyAddress = (addr: any) => {
@@ -488,8 +491,17 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Shipping</span>
-                  <span className="font-medium text-emerald-600">FREE</span>
+                  {shippingCost === 0 ? (
+                    <span className="font-medium text-emerald-600">FREE</span>
+                  ) : (
+                    <span className="font-medium">{formatINR(shippingCost)}</span>
+                  )}
                 </div>
+                {shippingCost > 0 && (
+                  <p className="text-[11px] text-amber-600 font-medium">
+                    Add {formatINR(FREE_SHIPPING_THRESHOLD - total)} more for free shipping
+                  </p>
+                )}
                 <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
                   <span>Total</span>
                   <span className="text-blue-600">{formatINR(Math.round(finalAmount))}</span>

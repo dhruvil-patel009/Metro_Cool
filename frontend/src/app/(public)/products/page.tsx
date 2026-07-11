@@ -6,6 +6,7 @@ import { useState, useMemo } from "react"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
 import { useRoomSize } from "@/app/context/RoomSizeContext"
+import { useAuthStore } from "@/store/auth.store"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
@@ -16,6 +17,7 @@ type SortOption = "relevance" | "price-low" | "price-high" | "rating" | "newest"
 export default function ProductsPage() {
   const { addToCart } = useCart()
   const { recommendedCapacity, selectedRoom, clearSelection } = useRoomSize()
+  const { token } = useAuthStore()
   const router = useRouter()
 
   const { data: products = [], isLoading: loading } = useQuery<any[]>({
@@ -89,6 +91,11 @@ export default function ProductsPage() {
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.preventDefault()
     e.stopPropagation()
+    if (!token) {
+      toast.info("Please login to add items to cart")
+      router.push("/auth")
+      return
+    }
     const capacity = product.capacity_prices?.[0]?.capacity || "1.5 Ton"
     const price = product.capacity_prices?.[0]?.price ?? product.price
     addToCart({ id: product.id, title: product.title, image: product.main_image || "/placeholder.svg", capacity, price: Number(price), qty: 1 })
