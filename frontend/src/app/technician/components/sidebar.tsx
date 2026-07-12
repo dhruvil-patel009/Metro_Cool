@@ -12,6 +12,7 @@ import {
   Menu,
   LogOut,
   ClipboardCheck,
+  Gift,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -30,6 +31,7 @@ const navItems = [
   { label: "Jobs", icon: Briefcase, href: "/technician/jobs" },
   { label: "Service Reports", icon: ClipboardCheck, href: "/technician/service-reports" },
   { label: "Earnings", icon: IndianRupee, href: "/technician/earnings" },
+  { label: "Referrals", icon: Gift, href: "/technician/referrals" },
 ];
 
 const systemItems = [

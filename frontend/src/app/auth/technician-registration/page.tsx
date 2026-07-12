@@ -2,11 +2,11 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Card } from "@/app/components/ui/card"
-import { Wallet, BadgeCheck, BarChart3, User, CreditCard, Phone, Mail, Tag, Lock } from "lucide-react"
+import { Wallet, BadgeCheck, BarChart3, User, CreditCard, Phone, Mail, Tag, Lock, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
 import SuccessModal from "./successModel";
@@ -36,6 +36,12 @@ export default function TechnicianRegistration() {
   const [aadhaarPan, setAadhaarPan] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
+
+  // Promo code validation state
+  const [promoValidating, setPromoValidating] = useState(false);
+  const [promoValid, setPromoValid] = useState<boolean | null>(null);
+  const [promoMessage, setPromoMessage] = useState<string>("");
+  const promoDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
 const handleReturnToHome = () => {
   router.push('/');
@@ -78,6 +84,49 @@ const handleReturnToHome = () => {
       setAadhaarPan(file);
       setAadhaarPreview(URL.createObjectURL(file));
     }
+  };
+
+  // Validate promo code with debounce
+  const validatePromoCode = useCallback((code: string) => {
+    if (promoDebounceRef.current) {
+      clearTimeout(promoDebounceRef.current);
+    }
+
+    if (!code.trim()) {
+      setPromoValid(null);
+      setPromoMessage("");
+      setPromoValidating(false);
+      return;
+    }
+
+    setPromoValidating(true);
+    promoDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/referral/validate/${code.trim()}`
+        );
+        const data = await res.json();
+
+        if (data.valid) {
+          setPromoValid(true);
+          setPromoMessage(data.message || `Referred by ${data.referrerName}`);
+        } else {
+          setPromoValid(false);
+          setPromoMessage(data.message || "Invalid referral code");
+        }
+      } catch {
+        setPromoValid(false);
+        setPromoMessage("Could not validate code");
+      } finally {
+        setPromoValidating(false);
+      }
+    }, 600);
+  }, []);
+
+  const handlePromoCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase();
+    setForm({ ...form, promoCode: value });
+    validatePromoCode(value);
   };
 
 const handleSubmit = async (e: React.FormEvent) => {
@@ -500,11 +549,38 @@ const handleServiceRemove = (service: string) => {
                     <Input
                       id="promoCode"
                       name="promoCode"
-                      placeholder="Enter code"
-                      onChange={handleChange}
-                      className="pl-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                      placeholder="Enter referral code"
+                      value={form.promoCode}
+                      onChange={handlePromoCodeChange}
+                      className={`pl-10 pr-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400 ${
+                        promoValid === true ? "border-green-500 focus:ring-green-500" :
+                        promoValid === false ? "border-red-400 focus:ring-red-400" : ""
+                      }`}
                     />
+                    {/* Validation icon */}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {promoValidating && (
+                        <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                      )}
+                      {!promoValidating && promoValid === true && (
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      )}
+                      {!promoValidating && promoValid === false && (
+                        <XCircle className="w-4 h-4 text-red-400" />
+                      )}
+                    </div>
                   </div>
+                  {/* Validation message */}
+                  {promoMessage && (
+                    <p className={`text-xs mt-1 ${
+                      promoValid ? "text-green-600" : "text-red-500"
+                    }`}>
+                      {promoMessage}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Have a referral code from another technician? Enter it to give them a reward.
+                  </p>
                 </div>
 
                 {/* Submit Button */}

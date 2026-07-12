@@ -37,12 +37,28 @@ router.get("/profile", protect, authorize("technician"), async (req: any, res) =
       .eq("id", userId)
       .maybeSingle()
 
+    // Fetch referral code
+    const { data: referralCode } = await supabase
+      .from("referral_codes")
+      .select("code, created_at")
+      .eq("technician_id", userId)
+      .eq("is_active", true)
+      .maybeSingle()
+
+    // Count referrals
+    const { count: referralCount } = await supabase
+      .from("referral_rewards")
+      .select("id", { count: "exact", head: true })
+      .eq("referrer_id", userId)
+
     res.json({
       ...profile,
       services:         details?.services || [],
       experience_years: details?.experience_years || null,
       approval_status:  details?.approval_status || "pending",
       tech_status:      details?.status || "inactive",
+      referral_code:    referralCode?.code || null,
+      total_referrals:  referralCount || 0,
     })
   } catch (err) {
     console.error("Technician profile error:", err)

@@ -213,6 +213,36 @@ export const register = async (req: Request, res: Response) => {
       }
 
       technicianData = data;
+
+      /* ======================================================
+         7.5️⃣ REFERRAL REWARD — validate promo code & reward referrer
+      ====================================================== */
+      if (promoCode && promoCode.trim()) {
+        const trimmedCode = promoCode.trim().toUpperCase();
+
+        // Look up the referral code
+        const { data: referralCode } = await supabase
+          .from("referral_codes")
+          .select("id, technician_id, is_active")
+          .eq("code", trimmedCode)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (referralCode && referralCode.technician_id !== userId) {
+          // Create reward for the referrer (5% commission discount for next 3 jobs)
+          await supabase
+            .from("referral_rewards")
+            .insert({
+              referrer_id: referralCode.technician_id,
+              referred_id: userId,
+              referral_code_id: referralCode.id,
+              reward_type: "commission_discount",
+              reward_value: 5,
+              reward_status: "active",
+              jobs_remaining: 3,
+            });
+        }
+      }
     }
 
     /* ======================================================

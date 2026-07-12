@@ -138,3 +138,41 @@ to public
 using (
   bucket_id = 'services'
 );
+
+
+=========================== Referral System Tables ================================
+
+-- Each technician gets a unique referral code
+create table referral_codes (
+  id uuid default gen_random_uuid() primary key,
+  technician_id uuid references profiles(id) on delete cascade not null,
+  code text unique not null,
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- Track referral rewards when a new technician uses a referral code
+create table referral_rewards (
+  id uuid default gen_random_uuid() primary key,
+  referrer_id uuid references profiles(id) on delete cascade not null,
+  referred_id uuid references profiles(id) on delete cascade not null,
+  referral_code_id uuid references referral_codes(id) on delete cascade not null,
+  reward_type text default 'commission_discount',
+  reward_value numeric default 5,           -- e.g. 5% commission discount
+  reward_status text default 'active' check (reward_status in ('active','used','expired')),
+  jobs_remaining int default 3,             -- discount applies for next 3 jobs
+  created_at timestamptz default now(),
+  expires_at timestamptz default (now() + interval '90 days')
+);
+
+-- RLS
+alter table referral_codes enable row level security;
+alter table referral_rewards enable row level security;
+
+create policy "Technician can read own referral code"
+on referral_codes for select
+using (auth.uid() = technician_id);
+
+create policy "Technician can read own rewards"
+on referral_rewards for select
+using (auth.uid() = referrer_id);
