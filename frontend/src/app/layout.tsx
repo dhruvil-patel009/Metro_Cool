@@ -128,7 +128,21 @@ export default function RootLayout({
             <SessionGuard />
             <main className="flex-1">{children}</main>
           </AuthProvider>
-          <ToastContainer position="top-right" />
+          <ToastContainer
+            position="top-center"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover
+            theme="colored"
+            limit={3}
+            toastClassName="!rounded-xl !shadow-2xl !font-sans !text-sm !font-medium"
+            bodyClassName="!font-sans !text-sm"
+          />
         </Providers>
       </body>
     </html>
