@@ -345,7 +345,7 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
   })
 
   // Title row
-  sheet.mergeCells("A1:H1")
+  sheet.mergeCells("A1:K1")
   const titleCell = sheet.getCell("A1")
   titleCell.value = `Metro Cool — Daily Settlement Report (${reportDate})`
   titleCell.font = { bold: true, size: 14, color: { argb: "FF1E3A5F" } }
@@ -359,7 +359,7 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
   // Header row
   const headerRow = sheet.addRow([
     "Booking ID", "Technician", "Service", "Date", "Time",
-    "Price (₹)", "Commission 20% (₹)", "Payable (₹)", "Status",
+    "Price (₹)", "Commission (₹)", "Promo Code", "Promo Discount (₹)", "Payable (₹)", "Status",
   ])
   headerRow.eachCell(cell => {
     cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 }
@@ -373,19 +373,25 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
 
   // Columns width
   sheet.columns = [
-    { key: "bookingId",   width: 22 },
-    { key: "technician",  width: 22 },
-    { key: "service",     width: 24 },
-    { key: "date",        width: 14 },
-    { key: "time",        width: 12 },
-    { key: "price",       width: 14 },
-    { key: "commission",  width: 18 },
-    { key: "payable",     width: 14 },
-    { key: "status",      width: 12 },
+    { key: "bookingId",      width: 22 },
+    { key: "technician",     width: 22 },
+    { key: "service",        width: 24 },
+    { key: "date",           width: 14 },
+    { key: "time",           width: 12 },
+    { key: "price",          width: 14 },
+    { key: "commission",     width: 18 },
+    { key: "promoCode",      width: 16 },
+    { key: "promoDiscount",  width: 18 },
+    { key: "payable",        width: 14 },
+    { key: "status",         width: 12 },
   ]
 
   // Data rows
   settlements.forEach((s, i) => {
+    const promoLabel = s.promoCode
+      ? `${s.promoCode}${s.promoReferrerName ? ` (${s.promoReferrerName})` : ""}`
+      : "—"
+
     const row = sheet.addRow([
       `#${String(s.bookingId).slice(0, 8).toUpperCase()}`,
       s.technician.name,
@@ -393,7 +399,9 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
       s.dateTime.date,
       s.dateTime.time,
       s.price,
-      s.commission,
+      s.originalCommission || s.commission,
+      promoLabel,
+      s.promoDiscount || 0,
       s.payable,
       s.status,
     ])
@@ -406,12 +414,25 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
         fgColor: { argb: isEven ? "FFF8FAFF" : "FFFFFFFF" },
       }
       cell.alignment = { horizontal: colNo >= 6 ? "right" : "left", vertical: "middle" }
+
+      // Promo Code column — center align and purple color
+      if (colNo === 8) {
+        cell.alignment = { horizontal: "center", vertical: "middle" }
+        if (s.promoCode) {
+          cell.font = { bold: true, color: { argb: "FF7C3AED" } }
+        }
+      }
+      // Promo Discount column — green color if discount exists
+      if (colNo === 9 && s.promoDiscount > 0) {
+        cell.font = { bold: true, color: { argb: "FF16A34A" } }
+      }
+      // Status column
       if (s.status === "Paid") {
-        if (colNo === 9) {
+        if (colNo === 11) {
           cell.font = { color: { argb: "FF16A34A" }, bold: true }
         }
       } else {
-        if (colNo === 9) {
+        if (colNo === 11) {
           cell.font = { color: { argb: "FFD97706" }, bold: true }
         }
       }
@@ -422,12 +443,13 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
   // Summary rows
   sheet.addRow([])
   const totalPrice = settlements.reduce((s, r) => s + r.price, 0)
-  const totalComm = settlements.reduce((s, r) => s + r.commission, 0)
+  const totalComm = settlements.reduce((s, r) => s + (r.originalCommission || r.commission), 0)
+  const totalPromoDiscount = settlements.reduce((s, r) => s + (r.promoDiscount || 0), 0)
   const totalPayable = settlements.reduce((s, r) => s + r.payable, 0)
 
   const summaryRow = sheet.addRow([
     "TOTAL", "", "", "", "",
-    totalPrice, totalComm, totalPayable, "",
+    totalPrice, totalComm, "", totalPromoDiscount, totalPayable, "",
   ])
   summaryRow.eachCell(cell => {
     cell.font = { bold: true, size: 11 }
@@ -510,7 +532,15 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
         <td style="padding:11px 14px;font-size:13px;text-align:right;
                    font-weight:600;color:#111827;">${formatINR(s.price)}</td>
         <td style="padding:11px 14px;font-size:13px;text-align:right;
-                   color:#dc2626;font-weight:600;">&#8722;${formatINR(s.commission)}</td>
+                   color:#dc2626;font-weight:600;">&#8722;${formatINR(s.originalCommission || s.commission)}</td>
+        <td style="padding:11px 14px;text-align:center;">
+          ${s.promoCode
+            ? `<span style="background:#f3e8ff;color:#7c3aed;border:1px solid #d8b4fe;
+                            padding:2px 8px;border-radius:6px;font-size:10px;
+                            font-weight:700;white-space:nowrap;">${s.promoCode}</span>
+               ${s.promoDiscount > 0 ? `<br/><span style="font-size:10px;color:#16a34a;font-weight:600;">-${formatINR(s.promoDiscount)}</span>` : ""}`
+            : `<span style="color:#d1d5db;font-size:11px;">—</span>`}
+        </td>
         <td style="padding:11px 14px;font-size:13px;text-align:right;
                    font-weight:700;color:#15803d;">${formatINR(s.payable)}</td>
         <td style="padding:11px 14px;text-align:center;">
@@ -754,6 +784,9 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
                   <th style="padding:11px 14px;text-align:right;font-size:10px;font-weight:700;
                              color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
                              border-right:1px solid rgba(255,255,255,0.1);">Comm.</th>
+                  <th style="padding:11px 14px;text-align:center;font-size:10px;font-weight:700;
+                             color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
+                             border-right:1px solid rgba(255,255,255,0.1);">Promo</th>
                   <th style="padding:11px 14px;text-align:right;font-size:10px;font-weight:700;
                              color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
                              border-right:1px solid rgba(255,255,255,0.1);">Payable</th>
@@ -771,6 +804,8 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
                              font-size:12px;color:#1e40af;">${formatINR(totalRevenue)}</td>
                   <td style="padding:13px 14px;text-align:right;font-weight:800;
                              font-size:12px;color:#7c3aed;">&#8722;${formatINR(totalCommission)}</td>
+                  <td style="padding:13px 14px;text-align:center;font-weight:800;
+                             font-size:12px;color:#16a34a;">${settlements.reduce((a: number, s: any) => a + (s.promoDiscount || 0), 0) > 0 ? `-${formatINR(settlements.reduce((a: number, s: any) => a + (s.promoDiscount || 0), 0))}` : "—"}</td>
                   <td style="padding:13px 14px;text-align:right;font-weight:800;
                              font-size:12px;color:#15803d;">${formatINR(totalPayable)}</td>
                   <td></td>
