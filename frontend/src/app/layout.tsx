@@ -141,7 +141,6 @@ export default function RootLayout({
             theme="colored"
             limit={3}
             toastClassName="!rounded-xl !shadow-2xl !font-sans !text-sm !font-medium"
-            bodyClassName="!font-sans !text-sm"
           />
         </Providers>
       </body>
