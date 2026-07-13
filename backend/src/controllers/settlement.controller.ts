@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
 import { transporter } from "../utils/mailer.js"
 import ExcelJS from "exceljs"
+import { consumeReferralDiscount } from "./referral.controller.js"
 
 const formatINR = (v: number) => {
   const formatted = new Intl.NumberFormat("en-IN", {
@@ -88,7 +89,65 @@ const buildSettlements = async (todayOnly = false) => {
       commission = +(price * (commissionValue / 100)).toFixed(2)
     }
 
-    const payable = +(price - commission).toFixed(2)
+    // ── Check for active referral/promo discount for this technician ──
+    let promoDiscount = 0
+    let promoCode: string | null = null
+    let promoReferrerName: string | null = null
+
+    if (technicianId) {
+      // Get technician's promo_code used during registration
+      const { data: techDetails } = await supabase
+        .from("technician_details")
+        .select("promo_code")
+        .eq("id", technicianId)
+        .maybeSingle()
+
+      if (techDetails?.promo_code) {
+        promoCode = techDetails.promo_code
+      }
+
+      // Check if this technician has active referral rewards (as referrer)
+      const { data: activeRewards } = await supabase
+        .from("referral_rewards")
+        .select("id, reward_value, jobs_remaining, referral_code_id")
+        .eq("referrer_id", technicianId)
+        .eq("reward_status", "active")
+        .gt("jobs_remaining", 0)
+        .order("created_at", { ascending: true })
+        .limit(1)
+
+      if (activeRewards && activeRewards.length > 0) {
+        const reward = activeRewards[0]
+        // reward_value is the percentage discount on commission (e.g. 5 = 5% off commission)
+        promoDiscount = +(commission * (Number(reward.reward_value) / 100)).toFixed(2)
+
+        // Get the referral code text for display
+        if (reward.referral_code_id) {
+          const { data: refCode } = await supabase
+            .from("referral_codes")
+            .select("code, technician_id")
+            .eq("id", reward.referral_code_id)
+            .maybeSingle()
+
+          if (refCode) {
+            promoCode = refCode.code
+            // Get the referrer's name
+            const { data: referrerProfile } = await supabase
+              .from("profiles")
+              .select("first_name, last_name")
+              .eq("id", refCode.technician_id)
+              .maybeSingle()
+
+            if (referrerProfile) {
+              promoReferrerName = `${referrerProfile.first_name} ${referrerProfile.last_name}`.trim()
+            }
+          }
+        }
+      }
+    }
+
+    const effectiveCommission = +(commission - promoDiscount).toFixed(2)
+    const payable = +(price - effectiveCommission).toFixed(2)
 
     const dateStr = booking?.completed_at || payment.created_at
     settlements.push({
@@ -112,7 +171,11 @@ const buildSettlements = async (todayOnly = false) => {
       price,
       commissionType,
       commissionValue,
-      commission,
+      commission: effectiveCommission,
+      originalCommission: commission,
+      promoDiscount,
+      promoCode,
+      promoReferrerName,
       payable,
       status: payment.payout_status === "paid" ? "Paid" : "Pending",
     })
@@ -132,6 +195,111 @@ export const getSettlements = async (req: Request, res: Response) => {
   } catch (err) {
     console.error("SETTLEMENT ERROR:", err)
     res.status(500).json({ error: "Failed to load settlements" })
+  }
+}
+
+/* =========================================================
+   GET PROMO CODE SUMMARY — Admin view of all promo/referral activity
+   Shows which technician used which promo, who referred them,
+   and how much discount has been applied vs remaining
+========================================================= */
+export const getPromoCodeSummary = async (_req: Request, res: Response) => {
+  try {
+    // 1. Get all technicians who registered with a promo code
+    const { data: techsWithPromo, error: techError } = await supabase
+      .from("technician_details")
+      .select(`
+        id,
+        promo_code,
+        profiles!technician_details_id_fkey (
+          first_name,
+          last_name,
+          phone
+        )
+      `)
+      .not("promo_code", "is", null)
+
+    if (techError) throw techError
+
+    // 2. Get all referral rewards
+    const { data: rewards, error: rewardsError } = await supabase
+      .from("referral_rewards")
+      .select(`
+        id,
+        referrer_id,
+        referred_id,
+        reward_value,
+        reward_status,
+        jobs_remaining,
+        created_at,
+        expires_at
+      `)
+      .order("created_at", { ascending: false })
+
+    if (rewardsError) throw rewardsError
+
+    // 3. Enrich with names
+    const summary = []
+    for (const reward of rewards || []) {
+      const { data: referrer } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, phone")
+        .eq("id", reward.referrer_id)
+        .maybeSingle()
+
+      const { data: referred } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, phone")
+        .eq("id", reward.referred_id)
+        .maybeSingle()
+
+      // Get the promo code used by the referred technician
+      const { data: referredTech } = await supabase
+        .from("technician_details")
+        .select("promo_code")
+        .eq("id", reward.referred_id)
+        .maybeSingle()
+
+      summary.push({
+        id: reward.id,
+        referrer: {
+          id: reward.referrer_id,
+          name: referrer ? `${referrer.first_name} ${referrer.last_name}`.trim() : "Unknown",
+          phone: referrer?.phone || "",
+        },
+        referred: {
+          id: reward.referred_id,
+          name: referred ? `${referred.first_name} ${referred.last_name}`.trim() : "Unknown",
+          phone: referred?.phone || "",
+          promoCodeUsed: referredTech?.promo_code || null,
+        },
+        discountPercent: reward.reward_value,
+        status: reward.reward_status,
+        jobsRemaining: reward.jobs_remaining,
+        createdAt: reward.created_at,
+        expiresAt: reward.expires_at,
+      })
+    }
+
+    // 4. Calculate totals
+    const activeRewards = summary.filter(s => s.status === "active")
+    const usedRewards = summary.filter(s => s.status === "used")
+
+    res.json({
+      totalReferrals: summary.length,
+      activeReferrals: activeRewards.length,
+      usedReferrals: usedRewards.length,
+      techniciansWithPromo: (techsWithPromo || []).map(t => ({
+        id: t.id,
+        name: (t as any).profiles ? `${(t as any).profiles.first_name} ${(t as any).profiles.last_name}`.trim() : "Unknown",
+        phone: (t as any).profiles?.phone || "",
+        promoCode: t.promo_code,
+      })),
+      referralRewards: summary,
+    })
+  } catch (err) {
+    console.error("PROMO SUMMARY ERROR:", err)
+    res.status(500).json({ error: "Failed to load promo code summary" })
   }
 }
 

@@ -19,6 +19,10 @@ interface Settlement {
   commissionType: string
   commissionValue: number
   commission: number
+  originalCommission?: number
+  promoDiscount?: number
+  promoCode?: string | null
+  promoReferrerName?: string | null
   payable: number
   status: "Pending" | "Paid"
 }
@@ -351,6 +355,7 @@ export default function SettlementsContent() {
                   <th className="px-4 lg:px-5 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Date</th>
                   <th className="px-4 lg:px-5 py-3.5 text-right text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Price</th>
                   <th className="px-4 lg:px-5 py-3.5 text-right text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Commission</th>
+                  <th className="px-4 lg:px-5 py-3.5 text-center text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Promo</th>
                   <th className="px-4 lg:px-5 py-3.5 text-right text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Payable</th>
                   <th className="px-4 lg:px-5 py-3.5 text-center text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
                   <th className="px-4 lg:px-5 py-3.5 text-center text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Action</th>
@@ -380,6 +385,23 @@ export default function SettlementsContent() {
                       <p className="text-[10px] text-gray-400 mt-0.5">
                         {s.commissionType === "flat" ? "Flat" : `${s.commissionValue ?? 20}%`}
                       </p>
+                    </td>
+                    <td className="px-4 lg:px-5 py-3.5 text-center">
+                      {s.promoCode ? (
+                        <div>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 ring-1 ring-violet-200 text-[10px] font-bold tracking-wide">
+                            {s.promoCode}
+                          </span>
+                          {s.promoDiscount && s.promoDiscount > 0 ? (
+                            <p className="text-[10px] text-green-600 font-medium mt-0.5">-{formatINR(s.promoDiscount)} off</p>
+                          ) : null}
+                          {s.promoReferrerName && (
+                            <p className="text-[9px] text-gray-400 mt-0.5">by {s.promoReferrerName}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-gray-300">—</span>
+                      )}
                     </td>
                     <td className="px-4 lg:px-5 py-3.5 text-right font-bold text-gray-900">{formatINR(s.payable)}</td>
                     <td className="px-4 lg:px-5 py-3.5 text-center">
@@ -418,6 +440,13 @@ export default function SettlementsContent() {
                   </td>
                   <td className="px-4 lg:px-5 py-4 text-right font-bold text-gray-900">{formatINR(totalServiceValue)}</td>
                   <td className="px-4 lg:px-5 py-4 text-right font-bold text-red-500">-{formatINR(totalCommission)}</td>
+                  <td className="px-4 lg:px-5 py-4 text-center">
+                    {settlements.some(s => s.promoDiscount && s.promoDiscount > 0) && (
+                      <span className="text-[10px] font-semibold text-green-600">
+                        -{formatINR(settlements.reduce((a, s) => a + (s.promoDiscount || 0), 0))}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 lg:px-5 py-4 text-right font-bold text-gray-900">{formatINR(totalPayable)}</td>
                   <td colSpan={2} />
                 </tr>
@@ -507,6 +536,21 @@ export default function SettlementsContent() {
                   <p className="text-sm font-bold text-emerald-600 mt-0.5">{formatINR(s.payable)}</p>
                 </div>
               </div>
+
+              {/* Promo Code Badge (mobile) */}
+              {s.promoCode && (
+                <div className="px-4 py-2 border-t border-gray-100 bg-violet-50/50 flex items-center gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-violet-100 text-violet-700 ring-1 ring-violet-200 text-[10px] font-bold tracking-wide">
+                    🎟️ {s.promoCode}
+                  </span>
+                  {s.promoDiscount && s.promoDiscount > 0 ? (
+                    <span className="text-[10px] text-green-600 font-semibold">-{formatINR(s.promoDiscount)} discount</span>
+                  ) : null}
+                  {s.promoReferrerName && (
+                    <span className="text-[9px] text-gray-500 ml-auto">Ref: {s.promoReferrerName}</span>
+                  )}
+                </div>
+              )}
 
               {/* Action */}
               {s.status === "Pending" && (
