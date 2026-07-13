@@ -26,34 +26,44 @@ export const testimonials = [
   {
     quote:
       "The technician was on time and very professional. He explained the issue with my AC clearly and fixed it within an hour. Highly recommended!",
-    author: "Sarah Jenkins",
+    author: "Rahul Sharma",
     role: "Homeowner",
-    image: "/assets/testimonial-image.avif",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul&backgroundColor=b6e3f4",
   },
   {
     quote:
       "I ordered a new AC unit and installation service. The process was seamless, and the price was very competitive compared to other local vendors.",
-    author: "Michael Ross",
+    author: "Priya Patel",
     role: "Business Owner",
-    image: "/assets/testimonial-image.avif",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya&backgroundColor=ffd5dc",
   },
   {
-    quote: "Quick response and excellent service quality. I will definitely recommend them to my friends.",
-    author: "Emily Watson",
+    quote:
+      "Quick response and excellent service quality. My split AC was leaking and they fixed it same day. Will definitely recommend to friends and family.",
+    author: "Amit Verma",
     role: "Apartment Owner",
-    image: "/assets/testimonial-image.avif",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Amit&backgroundColor=c0aede",
   },
   {
-    quote: "Quick response and excellent service quality. I will definitely recommend them to my friends.",
-    author: "Emily Watson",
-    role: "Apartment Owner",
-    image: "/assets/testimonial-image.avif",
+    quote:
+      "Booked an AC gas refill through the app. The technician arrived on time, was very polite, and the cooling is back to normal. Great experience!",
+    author: "Sneha Reddy",
+    role: "Working Professional",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sneha&backgroundColor=d1f4d1",
   },
   {
-    quote: "Quick response and excellent service quality. I will definitely recommend them to my friends.",
-    author: "Emily Watson",
-    role: "Apartment Owner",
-    image: "/assets/testimonial-image.avif",
+    quote:
+      "Very affordable annual maintenance plan. They cleaned both my ACs thoroughly and now they run like new. Excellent value for money.",
+    author: "Vikram Singh",
+    role: "Villa Owner",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram&backgroundColor=ffeab6",
+  },
+  {
+    quote:
+      "Purchased a 2 Ton inverter AC from MetroCool. Free installation was a bonus. The delivery was on time and the team was very helpful with setup.",
+    author: "Deepika Nair",
+    role: "Interior Designer",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Deepika&backgroundColor=ffccd5",
   },
 ]
 

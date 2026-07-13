@@ -35,10 +35,13 @@ export function Footer() {
         },
         address: {
           "@type": "PostalAddress",
+          streetAddress: "A-401, Suvas Oram, Opp. Hotel Safari, Odhav Ring Road, Odhav",
           addressLocality: "Ahmedabad",
           addressRegion: "Gujarat",
+          postalCode: "382415",
           addressCountry: "IN"
-        }
+        },
+        taxID: "24AALFC4976A1ZK"
       }
     ]
   }
@@ -67,6 +70,13 @@ export function Footer() {
             <p className="text-sm text-gray-500 leading-relaxed mb-6">
               Your trusted partner for all cooling solutions. We bring comfort to your home with expert services.
             </p>
+            <div className="text-xs text-gray-500 space-y-1.5 mb-6">
+              <p className="font-medium text-gray-700">📍 Shop Address:</p>
+              <p>A-401, Suvas Oram, Opp. Hotel Safari,</p>
+              <p>Odhav Ring Road, Odhav,</p>
+              <p>Ahmedabad, Gujarat 382415, IN</p>
+              <p className="pt-1 font-medium text-gray-600">GSTIN: 24AALFC4976A1ZK</p>
+            </div>
             <div className="flex gap-4">
               <Link
                 href="#"

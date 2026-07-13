@@ -101,7 +101,7 @@ export function Navigation() {
             </button>
           </Link>
 
-          {cartCount > 0 && (
+          {isLoggedIn && cartCount > 0 && (
             <Link
               href="/cart"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -164,19 +164,21 @@ export function Navigation() {
           {/* RIGHT SIDE */}
           <div className="flex items-center gap-3">
 
-            {/* 🛒 CART ICON */}
-            <Link
-              href="/cart"
-              className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              aria-label="View cart"
-            >
-              <ShoppingCart className="w-5 h-5 text-gray-600" />
-              {cartCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
-                  {cartCount > 99 ? "99+" : cartCount}
-                </span>
-              )}
-            </Link>
+            {/* 🛒 CART ICON — only show when logged in */}
+            {isLoggedIn && (
+              <Link
+                href="/cart"
+                className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="View cart"
+              >
+                <ShoppingCart className="w-5 h-5 text-gray-600" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
 
 

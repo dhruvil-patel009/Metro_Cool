@@ -273,9 +273,10 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       fieldLabel(doc, "From", ML, IR_Y)
       doc.fillColor(C.text).fontSize(10.5).font("Helvetica-Bold")
         .text("Metro Cool", ML, IR_Y + 13, { lineBreak: false })
-      doc.fillColor(C.muted).fontSize(8.5).font("Helvetica")
-        .text("www.metro-cool.com", ML, IR_Y + 29, { lineBreak: false })
-        .text("support@metro-cool.com", ML, IR_Y + 41, { lineBreak: false })
+      doc.fillColor(C.muted).fontSize(8).font("Helvetica")
+        .text("A-401, Suvas Oram, Opp. Hotel Safari,", ML, IR_Y + 27, { lineBreak: false })
+        .text("Odhav Ring Road, Odhav, Ahmedabad 382415", ML, IR_Y + 38, { lineBreak: false })
+        .text("GSTIN: 24AALFC4976A1ZK", ML, IR_Y + 49, { lineBreak: false })
 
       /* Vertical separator after col 1 */
       vRule(doc, ML + COL_W, IR_Y, COL_H)
@@ -507,10 +508,10 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       /* Left — company block */
       doc.fillColor(C.navy).fontSize(10).font("Helvetica-Bold")
         .text("Metro Cool", ML, FY, { lineBreak: false })
-      doc.fillColor(C.muted).fontSize(8.5).font("Helvetica")
-        .text("AC Repair & Maintenance Services", ML, FY + 14, { lineBreak: false })
-      doc.fillColor(C.teal).fontSize(8.5).font("Helvetica")
-        .text("www.metro-cool.com  |  support@metro-cool.com", ML, FY + 27, { lineBreak: false })
+      doc.fillColor(C.muted).fontSize(8).font("Helvetica")
+        .text("A-401, Suvas Oram, Opp. Hotel Safari, Odhav Ring Road, Odhav, Ahmedabad 382415", ML, FY + 14, { lineBreak: false })
+      doc.fillColor(C.muted).fontSize(8).font("Helvetica")
+        .text("GSTIN: 24AALFC4976A1ZK  |  support@metro-cool.com  |  www.metro-cool.com", ML, FY + 27, { lineBreak: false })
 
       /* Right — terms */
       const FTX = ML + IW * 0.44

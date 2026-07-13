@@ -129,7 +129,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
           </AuthProvider>
           <ToastContainer
-            position="top-center"
+            position="top-right"
             autoClose={3000}
             hideProgressBar={false}
             newestOnTop
