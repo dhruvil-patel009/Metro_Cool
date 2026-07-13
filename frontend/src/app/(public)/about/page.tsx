@@ -255,48 +255,70 @@ export default function AboutPage() {
       </section>
 
       {/* Why MetroCool Section */}
-      <section className="py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why MetroCool?</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              We don't just promise cool air, we promise peace of mind. Here's what sets our service apart from the
-              competition.
+          {/* Header */}
+          <div className="text-center mb-12 sm:mb-16">
+            <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-2">Why Choose Us</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Why MetroCool?</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+              We don&apos;t just promise cool air, we promise peace of mind. Here&apos;s what sets our service apart from the competition.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gray-50 rounded-2xl p-8 text-center animate-fade-in">
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
-                <BadgeCheck className="w-8 h-8 text-blue-600" />
+          {/* Cards Grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {/* Card 1 */}
+            <div className="group relative bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 sm:p-8 border border-blue-100/60 hover:border-blue-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                <BadgeCheck className="w-7 h-7 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Deep Roots</h3>
-              <p className="text-gray-600">
-                Powered by Comfort HVAC Solutions&apos; decade of experience, our technicians are trained by HVAC
-                engineers — not just general handymen.
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">Deep Roots</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Powered by Comfort HVAC Solutions&apos; decade of experience, our technicians are trained by HVAC engineers — not just general handymen.
               </p>
             </div>
 
-            <div className="bg-gray-50 rounded-2xl p-8 text-center animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-8 h-8 text-blue-600" />
+            {/* Card 2 */}
+            <div className="group relative bg-gradient-to-br from-emerald-50 to-white rounded-2xl p-6 sm:p-8 border border-emerald-100/60 hover:border-emerald-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div className="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                <Sparkles className="w-7 h-7 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Zero Mess Promise</h3>
-              <p className="text-gray-600">
-                Our signature &quot;Service Jacket&quot; protocol keeps your walls and floors clean — no dust, no
-                stains, no surprises left behind.
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">Zero Mess Promise</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Our signature &quot;Service Jacket&quot; protocol keeps your walls and floors clean — no dust, no stains, no surprises left behind.
               </p>
             </div>
 
-            <div className="bg-gray-50 rounded-2xl p-8 text-center animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6">
-                <Cpu className="w-8 h-8 text-blue-600" />
+            {/* Card 3 */}
+            <div className="group relative bg-gradient-to-br from-violet-50 to-white rounded-2xl p-6 sm:p-8 border border-violet-100/60 hover:border-violet-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 sm:col-span-2 lg:col-span-1">
+              <div className="w-14 h-14 rounded-xl bg-violet-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                <Cpu className="w-7 h-7 text-violet-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Engineering Mindset</h3>
-              <p className="text-gray-600">
-                We don&apos;t just &quot;wash&quot; ACs — we optimize them for energy efficiency, so your system runs
-                cooler, quieter, and cheaper.
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">Engineering Mindset</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                We don&apos;t just &quot;wash&quot; ACs — we optimize them for energy efficiency, so your system runs cooler, quieter, and cheaper.
               </p>
+            </div>
+          </div>
+
+          {/* Bottom Stats Row */}
+          <div className="mt-10 sm:mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="text-center p-4 sm:p-5 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">9+</p>
+              <p className="text-xs text-gray-500 mt-1">Years Experience</p>
+            </div>
+            <div className="text-center p-4 sm:p-5 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">5000+</p>
+              <p className="text-xs text-gray-500 mt-1">Happy Customers</p>
+            </div>
+            <div className="text-center p-4 sm:p-5 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">4.8★</p>
+              <p className="text-xs text-gray-500 mt-1">Average Rating</p>
+            </div>
+            <div className="text-center p-4 sm:p-5 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">60s</p>
+              <p className="text-xs text-gray-500 mt-1">Booking Time</p>
             </div>
           </div>
         </div>
