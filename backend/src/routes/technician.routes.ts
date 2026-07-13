@@ -325,16 +325,34 @@ router.get("/notifications", protect, authorize("technician"), async (req: any, 
 
 /* ── GET all technicians (public list for service pages) ── */
 router.get("/", async (req, res) => {
+  // Only return approved & active technicians for public display
+  const { data: techDetails, error: tdError } = await supabase
+    .from("technician_details")
+    .select("id")
+    .eq("approval_status", "approved")
+    .eq("status", "active")
+
+  if (tdError) {
+    return res.status(500).json({ error: tdError.message })
+  }
+
+  const approvedIds = (techDetails || []).map((t) => t.id)
+
+  if (approvedIds.length === 0) {
+    return res.json([])
+  }
+
   const { data, error } = await supabase
     .from("profiles")
     .select("id, first_name, middle_name, last_name, profile_photo")
     .eq("role", "technician")
+    .in("id", approvedIds)
 
   if (error) {
     return res.status(500).json({ error: error.message })
   }
 
-  const technicians = data.map((t) => ({
+  const technicians = (data || []).map((t) => ({
     id: t.id,
     name: [t.first_name, t.middle_name, t.last_name].filter(Boolean).join(" "),
     role: "AC Technician",

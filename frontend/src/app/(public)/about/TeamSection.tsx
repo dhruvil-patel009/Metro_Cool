@@ -44,16 +44,60 @@ export default function TeamSection() {
     )
   }
 
-  /* ── Empty State ── */
+  /* ── Empty State — show team highlights instead of blank ── */
   if (technicians.length === 0) {
     return (
       <section id="team" className="py-16 sm:py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-            <Users className="w-7 h-7 text-gray-400" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-1.5">Our Team</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Meet the Experts</h2>
+            <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto">
+              Skilled and certified technicians delivering precision cooling solutions
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Our Team</h2>
-          <p className="text-gray-500">Our expert technicians will appear here soon.</p>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-10">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-sm text-center">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mx-auto mb-3">
+                <Users className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">10+</p>
+              <p className="text-xs text-gray-500 mt-1">Expert Technicians</p>
+            </div>
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-sm text-center">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                <Wrench className="w-5 h-5 text-emerald-600" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">5000+</p>
+              <p className="text-xs text-gray-500 mt-1">Jobs Completed</p>
+            </div>
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-sm text-center">
+              <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center mx-auto mb-3">
+                <Award className="w-5 h-5 text-amber-600" />
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">4.8★</p>
+              <p className="text-xs text-gray-500 mt-1">Avg. Rating</p>
+            </div>
+          </div>
+
+          {/* Highlights */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 sm:p-10 text-center">
+            <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
+              Certified & Trained Professionals
+            </p>
+            <p className="text-sm text-gray-500 max-w-lg mx-auto leading-relaxed mb-6">
+              Our technicians are trained by HVAC engineers, certified in split AC, window AC, VRF, and industrial cooling systems. Every job comes with our Zero Mess guarantee.
+            </p>
+            <Link
+              href="/services"
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all text-sm"
+            >
+              Book a Service
+            </Link>
+          </div>
         </div>
       </section>
     )
