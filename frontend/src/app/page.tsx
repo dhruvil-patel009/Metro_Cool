@@ -7,6 +7,7 @@ import { HeroSection } from "./(public)/components/hero-section";
 import { ProductsSection } from "./(public)/components/product-section";
 import { ServicesSection } from "./(public)/components/services-section";
 import { TestimonialsSection } from "./(public)/components/testimonial-section";
+import { WhyChooseUs } from "./(public)/components/why-choose-us";
 import { Navigation } from "./(public)/components/navigation";
 
 export default function HomePage() {
@@ -16,6 +17,7 @@ export default function HomePage() {
       <HeroSection />
       <ServicesSection />
       <ProductsSection />
+      <WhyChooseUs />
       <AboutSection />
       <TestimonialsSection />
       <CTASection />

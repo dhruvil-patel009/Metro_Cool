@@ -1,4 +1,6 @@
-import { Facebook, Twitter } from "lucide-react"
+"use client"
+
+import { Facebook, Twitter, Instagram, Mail, MapPin, Phone } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import logo from "../../../../public/assets/logo.svg"
@@ -20,8 +22,8 @@ export function Footer() {
         },
         sameAs: [
           "https://facebook.com/metrocool",
-          "https://twitter.com/metrocool"
-        ]
+          "https://twitter.com/metrocool",
+        ],
       },
       {
         "@type": "LocalBusiness",
@@ -29,144 +31,162 @@ export function Footer() {
         url: "https://www.metro-cool.com",
         description:
           "Trusted AC repair, AC installation, gas refill and annual maintenance services.",
-        areaServed: {
-          "@type": "City",
-          name: "Ahmedabad"
-        },
+        areaServed: { "@type": "City", name: "Ahmedabad" },
         address: {
           "@type": "PostalAddress",
-          streetAddress: "A-401, Suvas Oram, Opp. Hotel Safari, Odhav Ring Road, Odhav",
+          streetAddress:
+            "A-401, Suvas Oram, Opp. Hotel Safari, Odhav Ring Road, Odhav",
           addressLocality: "Ahmedabad",
           addressRegion: "Gujarat",
           postalCode: "382415",
-          addressCountry: "IN"
+          addressCountry: "IN",
         },
-        taxID: "24AALFC4976A1ZK"
-      }
-    ]
+        taxID: "24AALFC4976A1ZK",
+      },
+    ],
   }
+
   return (
-    <footer className="bg-[#f4f4f4] pt-16 pb-12 border-t border-gray-100">
+    <footer className="bg-gray-900 pt-16 sm:pt-20 pb-8 relative overflow-hidden">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(organizationSchema),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-4 gap-12 mb-20">
-          <div className="col-span-1 md:col-span-1">
+
+      {/* Background Decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 mb-14">
+          {/* Brand Column */}
+          <div className="sm:col-span-2 lg:col-span-1">
             <div className="mb-6">
               <Link href="/" className="flex items-center gap-2.5">
-                <Image src={logo} alt="MetroCool logo" className="h-12 w-auto" />
+                <Image src={logo} alt="MetroCool logo" className="h-10 w-auto" />
                 <span className="flex flex-col leading-tight">
-                  <span className="text-xl font-extrabold tracking-tight text-[#1d242d]">MetroCool</span>
-                  <span className="text-[10px] sm:text-[11px] font-medium text-gray-500">
+                  <span className="text-lg font-extrabold tracking-tight text-white">
+                    MetroCool
+                  </span>
+                  <span className="text-[10px] font-medium text-gray-500">
                     Managed by Comfort HVAC Solutions
                   </span>
                 </span>
               </Link>
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed mb-6">
-              Your trusted partner for all cooling solutions. We bring comfort to your home with expert services.
+            <p className="text-sm text-gray-400 leading-relaxed mb-6">
+              Your trusted partner for all cooling solutions. Expert AC services at your doorstep.
             </p>
-            <div className="text-xs text-gray-500 space-y-1.5 mb-6">
-              <p className="font-medium text-gray-700">📍 Shop Address:</p>
-              <p>A-401, Suvas Oram, Opp. Hotel Safari,</p>
-              <p>Odhav Ring Road, Odhav,</p>
-              <p>Ahmedabad, Gujarat 382415, IN</p>
-              <p className="pt-1 font-medium text-gray-600">GSTIN: 24AALFC4976A1ZK</p>
-            </div>
-            <div className="flex gap-4">
-              <Link
-                href="#"
-                className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 shadow-sm border border-gray-100 hover:text-blue-600 transition-colors"
-              >
-                <Facebook className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 shadow-sm border border-gray-100 hover:text-blue-600 transition-colors"
-              >
-                <Twitter className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
 
-          <div>
-            <h4 className="font-bold mb-6">Services</h4>
-            <ul className="space-y-4 text-sm text-gray-500">
-              <li>
-                <Link href="/services" className="hover:text-blue-600">
-                  AC Repair
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-blue-600">
-                  Installation
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-blue-600">
-                  Annual Maintenance
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-blue-600">
-                  Gas Refill
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold mb-6">Quick Links</h4>
-            <ul className="space-y-4 text-sm text-gray-500">
-              <li>
-                <Link href="/about" className="hover:text-blue-600">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-blue-600">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy-policy" className="hover:text-blue-600">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="hover:text-blue-600">
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold mb-6">Newsletter</h4>
-            <p className="text-sm text-gray-500 mb-6">Subscribe to get special offers and updates.</p>
-            <div className="space-y-3">
-              <div className="relative">
-                <input
-                  type="email"
-                  placeholder="Your email address"
-                  className="w-full px-4 py-3 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
+            {/* Contact Info */}
+            <div className="space-y-3 mb-6">
+              <div className="flex items-start gap-3 text-sm text-gray-400">
+                <MapPin className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                <span>A-401, Suvas Oram, Opp. Hotel Safari, Odhav Ring Road, Ahmedabad 382415</span>
               </div>
-              <button className="w-full bg-blue-600 cursor-pointer text-white py-3 rounded-md font-bold hover:bg-blue-700 transition-all">
+              <div className="flex items-center gap-3 text-sm text-gray-400">
+                <Phone className="w-4 h-4 text-blue-400 shrink-0" />
+                <span>+91 XXXXXXXXXX</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-400">
+                <Mail className="w-4 h-4 text-blue-400 shrink-0" />
+                <span>support@metro-cool.com</span>
+              </div>
+            </div>
+
+            {/* Social */}
+            <div className="flex gap-3">
+              {[
+                { icon: <Facebook className="w-4 h-4" />, href: "#" },
+                { icon: <Twitter className="w-4 h-4" />, href: "#" },
+                { icon: <Instagram className="w-4 h-4" />, href: "#" },
+              ].map((social, i) => (
+                <Link
+                  key={i}
+                  href={social.href}
+                  className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-200"
+                >
+                  {social.icon}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Services */}
+          <div>
+            <h4 className="font-bold text-white mb-5 text-sm uppercase tracking-wider">
+              Services
+            </h4>
+            <ul className="space-y-3 text-sm">
+              {["AC Repair", "Installation", "Annual Maintenance", "Gas Refill", "Deep Cleaning"].map(
+                (item) => (
+                  <li key={item}>
+                    <Link
+                      href="/services"
+                      className="text-gray-400 hover:text-blue-400 transition-colors duration-200"
+                    >
+                      {item}
+                    </Link>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="font-bold text-white mb-5 text-sm uppercase tracking-wider">
+              Quick Links
+            </h4>
+            <ul className="space-y-3 text-sm">
+              {[
+                { label: "About Us", href: "/about" },
+                { label: "Products", href: "/products" },
+                { label: "Contact", href: "/contact" },
+                { label: "Privacy Policy", href: "/privacy-policy" },
+                { label: "Terms of Service", href: "/terms" },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link
+                    href={item.href}
+                    className="text-gray-400 hover:text-blue-400 transition-colors duration-200"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Newsletter */}
+          <div>
+            <h4 className="font-bold text-white mb-5 text-sm uppercase tracking-wider">
+              Newsletter
+            </h4>
+            <p className="text-sm text-gray-400 mb-5">
+              Subscribe for exclusive offers, tips, and updates.
+            </p>
+            <div className="space-y-3">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+              />
+              <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all cursor-pointer">
                 Subscribe
               </button>
             </div>
           </div>
         </div>
 
-        <div className="text-center pt-12 border-t border-gray-200">
-          <p className="text-xs text-gray-400 font-medium tracking-wide">
+        {/* Divider & Bottom */}
+        <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <p className="text-xs text-gray-500">
             &copy; 2026 MetroCool, powered by Comfort HVAC Solutions. All rights reserved.
           </p>
+          {/* <p className="text-xs text-gray-600">
+            GSTIN: 24AALFC4976A1ZK
+          </p> */}
         </div>
       </div>
     </footer>
