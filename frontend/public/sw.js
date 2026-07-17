@@ -28,8 +28,8 @@ self.addEventListener("push", (event) => {
 
   const options = {
     body: data.body,
-    icon: "/profile.png",
-    badge: "/profile.png",
+    icon: "/assets/logo.ico",
+    badge: "/assets/icon-light-32x32.png",
     vibrate: [200, 100, 200],
     data: {
       url: data.url,
