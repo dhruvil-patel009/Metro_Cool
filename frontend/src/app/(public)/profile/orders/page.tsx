@@ -27,13 +27,13 @@ const formatINR = (v: number) =>
 
 /* ─── Status config ─── */
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  open:           { label: "Pending",     color: "bg-amber-50 text-amber-700 border-amber-200",   dot: "bg-amber-500" },
-  assigned:       { label: "Assigned",    color: "bg-blue-50 text-blue-700 border-blue-200",       dot: "bg-blue-500 animate-pulse" },
-  on_the_way:     { label: "On the Way",  color: "bg-indigo-50 text-indigo-700 border-indigo-200", dot: "bg-indigo-500 animate-pulse" },
-  working:        { label: "In Progress", color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500 animate-pulse" },
-  report_submitted: { label: "Completed", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-  completed:      { label: "Completed",   color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-  cancelled:      { label: "Cancelled",   color: "bg-red-50 text-red-700 border-red-200",           dot: "bg-red-500" },
+  open:           { label: "Pending",         color: "bg-amber-50 text-amber-700 border-amber-200",   dot: "bg-amber-500" },
+  assigned:       { label: "Assigned",        color: "bg-blue-50 text-blue-700 border-blue-200",       dot: "bg-blue-500 animate-pulse" },
+  on_the_way:     { label: "On the Way",      color: "bg-indigo-50 text-indigo-700 border-indigo-200", dot: "bg-indigo-500 animate-pulse" },
+  working:        { label: "In Progress",     color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500 animate-pulse" },
+  report_submitted: { label: "Payment Due",   color: "bg-orange-50 text-orange-700 border-orange-200", dot: "bg-orange-500" },
+  completed:      { label: "Completed",       color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  cancelled:      { label: "Cancelled",       color: "bg-red-50 text-red-700 border-red-200",           dot: "bg-red-500" },
 }
 
 const ITEMS_PER_PAGE = 6
@@ -93,6 +93,7 @@ export default function OrdersPage() {
             month: d.toLocaleString("en-IN", { month: "short" }).toUpperCase(),
             year: String(d.getFullYear()),
             price: Number(o.price || 0), status: o.status,
+            paymentStatus: o.payment_status || "pending",
             canTrack: o.can_track, canReview: o.can_review, hasInvoice: o.invoice_available,
           }
         }))
@@ -134,6 +135,7 @@ export default function OrdersPage() {
             day, month, year,
             price:        Number(o.price || 0),
             status:       o.status,
+            paymentStatus: o.payment_status || "pending",
             canTrack:     o.can_track,
             canReview:    o.can_review,
             hasInvoice:   o.invoice_available,
@@ -342,7 +344,10 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
 
   const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.open
   const isActive = ["assigned", "on_the_way", "working"].includes(order.status)
-  const isCompleted = order.status === "completed" || order.status === "report_submitted"
+  const isCompleted = order.status === "completed"
+  const isPaid = order.paymentStatus === "completed"
+  const isPaymentDue = order.status === "report_submitted" && !isPaid
+  const isAwaitingClosure = order.status === "report_submitted" && isPaid
   const isCancellable = ["open", "assigned", "on_the_way", "working"].includes(order.status)
 
   const handleInvoice = async () => {
@@ -374,7 +379,8 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
       {/* Top accent for active jobs */}
       {isActive && <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-400" />}
-      {isCompleted && <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />}
+      {(isCompleted || isAwaitingClosure) && <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />}
+      {isPaymentDue && <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-400" />}
 
       <div className="p-5">
         <div className="flex items-start gap-4">
@@ -388,10 +394,10 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
 
           {/* Service icon */}
           <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-            isCompleted ? "bg-emerald-50" : isActive ? "bg-blue-50" : "bg-gray-50"
+            (isCompleted || isAwaitingClosure) ? "bg-emerald-50" : isPaymentDue ? "bg-orange-50" : isActive ? "bg-blue-50" : "bg-gray-50"
           }`}>
             <Wrench className={`w-5 h-5 ${
-              isCompleted ? "text-emerald-600" : isActive ? "text-blue-600" : "text-gray-400"
+              (isCompleted || isAwaitingClosure) ? "text-emerald-600" : isPaymentDue ? "text-orange-600" : isActive ? "text-blue-600" : "text-gray-400"
             }`} />
           </div>
 
@@ -410,10 +416,17 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
               </div>
 
               {/* Status badge */}
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border flex-shrink-0 ${statusCfg.color}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
-                {statusCfg.label}
-              </span>
+              {isAwaitingClosure ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border flex-shrink-0 bg-blue-50 text-blue-700 border-blue-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  Awaiting Closure
+                </span>
+              ) : (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border flex-shrink-0 ${statusCfg.color}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                  {statusCfg.label}
+                </span>
+              )}
             </div>
 
             {/* Price + Actions */}
@@ -451,11 +464,31 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
                 )}
 
                 {/* View Booking — for pending/active bookings that aren't trackable yet */}
-                {!order.canTrack && !isCompleted && order.status !== "cancelled" && (
+                {!order.canTrack && !isCompleted && !isPaymentDue && !isAwaitingClosure && order.status !== "cancelled" && (
                   <Link href={`/bookings?id=${order.id}`}>
                     <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-blue-200 active:scale-[0.97]">
                       <Navigation className="w-4 h-4" />
                       View Booking
+                    </button>
+                  </Link>
+                )}
+
+                {/* Complete Payment — for report_submitted with payment still pending */}
+                {isPaymentDue && (
+                  <Link href={`/bookings/completion?id=${order.id}`}>
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-orange-200 active:scale-[0.97]">
+                      <IndianRupee className="w-4 h-4" />
+                      Pay Now
+                    </button>
+                  </Link>
+                )}
+
+                {/* Awaiting Closure — payment done, waiting for technician to close */}
+                {isAwaitingClosure && (
+                  <Link href={`/bookings/completion?id=${order.id}`}>
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-blue-200 active:scale-[0.97]">
+                      <CheckCircle className="w-4 h-4" />
+                      View OTP
                     </button>
                   </Link>
                 )}

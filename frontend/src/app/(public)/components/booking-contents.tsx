@@ -108,22 +108,34 @@ export default function BookingsContent() {
   useEffect(() => {
     if (!booking?.job_status) return
 
+    // Only show notification when status actually changes (not on first load)
     if (previousStatusRef.current && previousStatusRef.current !== booking.job_status) {
       showLocalNotification(booking.job_status)
+
+      // Only redirect to feedback when status TRANSITIONS to completed/report_submitted in real-time
+      // (i.e., user was watching the timeline and technician just finished)
+      if (
+        (booking.job_status === "completed" || booking.job_status === "report_submitted") &&
+        !hasRedirected
+      ) {
+        setHasRedirected(true)
+        toast.success("Service completed 🎉")
+        setTimeout(() => {
+          if (booking.job_status === "report_submitted") {
+            // Work done, payment pending — go to payment page
+            router.push(`/bookings/completion?id=${bookingId}`)
+          } else {
+            // Fully completed — go to feedback (if not already given)
+            router.push(`/bookings/feedback?id=${bookingId}`)
+          }
+        }, 1500)
+      }
     }
 
     previousStatusRef.current = booking.job_status
 
     const step = getStepFromStatus(booking.job_status)
     setCurrentStep(step)
-
-    if ((booking.job_status === "completed" || booking.job_status === "report_submitted") && !hasRedirected) {
-      setHasRedirected(true)
-      toast.success("Service completed 🎉")
-      setTimeout(() => {
-        router.push(`/bookings/feedback?id=${bookingId}`)
-      }, 1500)
-    }
   }, [booking?.job_status])
 
   /* ---------------- LOCAL NOTIFICATION ---------------- */

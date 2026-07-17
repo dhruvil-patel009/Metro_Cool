@@ -18,6 +18,7 @@ export const getUserOrderHistory = async (req: any, res: Response) => {
         time_slot,
         total_amount,
         job_status,
+        payment_status,
         technician_id,
         services (
           id,
@@ -52,6 +53,7 @@ export const getUserOrderHistory = async (req: any, res: Response) => {
     /* ---------------- TRANSFORM DATA ---------------- */
 const orders = bookings.map(b => {
   const status = b.job_status
+  const paymentDone = b.payment_status === "completed"
 
   // 🔥 Supabase returns relation as array
   const service = Array.isArray(b.services) ? b.services[0] : b.services
@@ -65,6 +67,7 @@ const orders = bookings.map(b => {
     price: b.total_amount || 0,
 
     status,
+    payment_status: b.payment_status || "pending",
 
     technician_name: b.technician_id
       ? techniciansMap[b.technician_id] || null
@@ -72,7 +75,7 @@ const orders = bookings.map(b => {
 
     can_track: ["assigned", "on_the_way", "working"].includes(status),
     can_review: status === "completed",
-    invoice_available: status === "completed",
+    invoice_available: status === "completed" || paymentDone,
   }
 })
 

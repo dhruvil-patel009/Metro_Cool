@@ -518,32 +518,32 @@ export default function ServiceCompletionReportPage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3 }}
-              className="min-h-[80vh] flex items-center justify-center py-8"
+              className="min-h-[80vh] flex items-center justify-center py-8 px-4"
             >
-              <div className="w-full max-w-md">
+              <div className="w-full max-w-sm sm:max-w-md">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
+                  className="bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden"
                 >
                   {/* Success header */}
-                  <div className="pt-10 pb-8 px-8 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/20 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/30 rounded-full blur-3xl" />
+                  <div className="pt-12 pb-8 px-6 sm:px-8 bg-gradient-to-b from-emerald-50 to-white relative overflow-hidden">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-100/40 rounded-full blur-3xl -translate-y-1/2" />
 
-                    <div className="flex justify-center mb-5 relative">
+                    <div className="flex justify-center mb-6 relative">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 }}
-                        className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-200 relative"
+                        className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-xl shadow-emerald-200 relative"
                       >
                         {/* Ripple */}
                         {[1, 1.4, 1.8].map((scale, i) => (
                           <motion.div
                             key={i}
-                            initial={{ scale: 1, opacity: 0.4 }}
+                            initial={{ scale: 1, opacity: 0.3 }}
                             animate={{ scale, opacity: 0 }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut", delay: i * 0.4 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" as const, delay: i * 0.5 }}
                             className="absolute inset-0 rounded-full bg-emerald-400"
                           />
                         ))}
@@ -561,7 +561,7 @@ export default function ServiceCompletionReportPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4 }}
-                      className="text-2xl font-black text-slate-900 text-center mb-2"
+                      className="text-2xl sm:text-[26px] font-black text-slate-900 text-center mb-2"
                     >
                       Job Closed Successfully!
                     </motion.h2>
@@ -576,8 +576,8 @@ export default function ServiceCompletionReportPage() {
                     </motion.p>
                   </div>
 
-                  {/* Job summary — real data */}
-                  <div className="px-8 py-6 space-y-0 divide-y divide-slate-50">
+                  {/* Job summary */}
+                  <div className="px-6 sm:px-8 py-5 space-y-1">
                     {[
                       {
                         icon: Briefcase,
@@ -595,7 +595,7 @@ export default function ServiceCompletionReportPage() {
                         icon: IndianRupee,
                         label: "Job Amount",
                         value: booking?.total_amount
-                          ? `Rs. ${Number(booking.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                          ? `₹${Number(booking.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
                           : "—",
                         delay: 0.8,
                         highlight: true,
@@ -606,15 +606,15 @@ export default function ServiceCompletionReportPage() {
                         initial={{ opacity: 0, x: -16 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay }}
-                        className="flex items-center justify-between py-4 hover:bg-slate-50/60 rounded-xl px-2 -mx-2 transition-colors"
+                        className="flex items-center justify-between py-3.5 border-b border-slate-100 last:border-b-0"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center">
-                            <Icon className="w-4 h-4 text-slate-400" />
+                          <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
+                            <Icon className="w-4 h-4 text-slate-500" />
                           </div>
-                          <span className="text-slate-600 font-medium text-sm">{label}</span>
+                          <span className="text-slate-500 font-medium text-sm">{label}</span>
                         </div>
-                        <span className={`font-bold text-sm ${highlight ? "text-emerald-600 text-base" : "text-slate-900"}`}>
+                        <span className={`font-bold ${highlight ? "text-emerald-600 text-lg" : "text-slate-900 text-sm"}`}>
                           {value}
                         </span>
                       </motion.div>
@@ -626,15 +626,15 @@ export default function ServiceCompletionReportPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.9 }}
-                    className="px-8 pb-8 space-y-3"
+                    className="px-6 sm:px-8 pb-8 pt-3 space-y-3"
                   >
                     <Link href="/technician/jobs">
-                      <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold gap-2 transition-all">
+                      <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold gap-2 transition-all shadow-md shadow-blue-200/50">
                         <LayoutDashboard className="w-4 h-4" /> Back to Jobs
                       </Button>
                     </Link>
                     <Link href="/technician/jobs?tab=completed">
-                      <Button variant="outline" className="w-full h-12 rounded-2xl font-bold text-slate-600 border-slate-200 gap-2 hover:bg-slate-50 transition-all">
+                      <Button variant="outline" className="w-full h-12 rounded-xl font-bold text-slate-600 border-slate-200 gap-2 hover:bg-slate-50 transition-all">
                         <RotateCcw className="w-4 h-4" /> View Completed Jobs
                       </Button>
                     </Link>
