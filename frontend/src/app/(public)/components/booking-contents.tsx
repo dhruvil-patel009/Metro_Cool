@@ -66,7 +66,26 @@ export default function BookingsContent() {
           return
         }
 
+        if (res.status === 404) {
+          // Not a valid booking — maybe it's a product order
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current)
+            pollingRef.current = null
+          }
+          router.replace("/profile/orders")
+          return
+        }
+
         const data = await res.json()
+
+        if (!data.booking) {
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current)
+            pollingRef.current = null
+          }
+          router.replace("/profile/orders")
+          return
+        }
 
         setBooking((prev: any) => {
           if (!prev) return data.booking

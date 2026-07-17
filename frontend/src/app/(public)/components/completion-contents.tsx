@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import {
   Download, Lock, Copy, Check, CreditCard, Banknote,
   ShieldCheck, Wrench, CalendarDays, Clock, User, Receipt,
@@ -32,6 +32,7 @@ declare global {
 
 export default function CompletionContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   const [bookingId, setBookingId] = useState<string | null>(null)
   const [bookingError, setBookingError] = useState(false)
@@ -81,17 +82,27 @@ export default function CompletionContent() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => {
+        if (res.status === 404) {
+          // Not a valid booking — redirect to orders
+          router.replace("/profile/orders")
+          throw new Error("Not found")
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
       .then(data => {
+        if (!data.booking) {
+          router.replace("/profile/orders")
+          return
+        }
         setBooking(data.booking)
         if (data.booking?.payment_status === "completed") {
           setServiceOTP(data.booking.closure_otp)
           setPaymentConfirmed(true)
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err.message === "Not found") return
         setBookingError(true)
         toast.error("Failed to load booking details")
       })

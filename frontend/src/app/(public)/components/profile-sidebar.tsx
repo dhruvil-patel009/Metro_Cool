@@ -179,13 +179,13 @@ export function ProfileSidebar() {
       </div>
 
       {/* Promotional Card */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-lg">
+      {/* <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-lg">
         <h3 className="text-xl font-bold mb-2">Summer Sale!</h3>
         <p className="text-sm text-blue-100 mb-4">Get 20% off on all AC servicing packages this month.</p>
         <button className="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors">
           View Offers
         </button>
-      </div>
+      </div> */}
     </div>
   )
 }

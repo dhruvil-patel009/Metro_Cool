@@ -27,13 +27,19 @@ const formatINR = (v: number) =>
 
 /* ─── Status config ─── */
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  open:           { label: "Pending",         color: "bg-amber-50 text-amber-700 border-amber-200",   dot: "bg-amber-500" },
-  assigned:       { label: "Assigned",        color: "bg-blue-50 text-blue-700 border-blue-200",       dot: "bg-blue-500 animate-pulse" },
-  on_the_way:     { label: "On the Way",      color: "bg-indigo-50 text-indigo-700 border-indigo-200", dot: "bg-indigo-500 animate-pulse" },
-  working:        { label: "In Progress",     color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500 animate-pulse" },
-  report_submitted: { label: "Payment Due",   color: "bg-orange-50 text-orange-700 border-orange-200", dot: "bg-orange-500" },
-  completed:      { label: "Completed",       color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-  cancelled:      { label: "Cancelled",       color: "bg-red-50 text-red-700 border-red-200",           dot: "bg-red-500" },
+  // Service statuses
+  open:             { label: "Pending",        color: "bg-amber-50 text-amber-700 border-amber-200",     dot: "bg-amber-500" },
+  assigned:         { label: "Assigned",       color: "bg-blue-50 text-blue-700 border-blue-200",        dot: "bg-blue-500 animate-pulse" },
+  on_the_way:       { label: "On the Way",     color: "bg-indigo-50 text-indigo-700 border-indigo-200",  dot: "bg-indigo-500 animate-pulse" },
+  working:          { label: "In Progress",    color: "bg-purple-50 text-purple-700 border-purple-200",  dot: "bg-purple-500 animate-pulse" },
+  report_submitted: { label: "Payment Due",    color: "bg-orange-50 text-orange-700 border-orange-200",  dot: "bg-orange-500" },
+  completed:        { label: "Completed",      color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  cancelled:        { label: "Cancelled",      color: "bg-red-50 text-red-700 border-red-200",           dot: "bg-red-500" },
+  // Product statuses
+  pending:          { label: "Pending",        color: "bg-amber-50 text-amber-700 border-amber-200",     dot: "bg-amber-500" },
+  processing:       { label: "Processing",     color: "bg-blue-50 text-blue-700 border-blue-200",        dot: "bg-blue-500" },
+  confirmed:        { label: "Confirmed",      color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  cod_confirmed:    { label: "COD Confirmed",  color: "bg-teal-50 text-teal-700 border-teal-200",        dot: "bg-teal-500" },
 }
 
 const ITEMS_PER_PAGE = 6
@@ -87,8 +93,11 @@ export default function OrdersPage() {
         setOrders(data.orders.map((o: any) => {
           const d = new Date(o.date)
           return {
-            id: o.id, type: "service", title: o.service_title || "AC Service",
-            description: o.technician_name ? `${o.time} · Tech: ${o.technician_name}` : o.time,
+            id: o.id, type: o.type || "service", title: o.title || "Order",
+            description: o.type === "product"
+              ? `${o.item_count || 1} item${(o.item_count || 1) > 1 ? "s" : ""}`
+              : o.technician_name ? `${o.time} · Tech: ${o.technician_name}` : o.time,
+            image: o.image || null,
             day: String(d.getDate()).padStart(2, "0"),
             month: d.toLocaleString("en-IN", { month: "short" }).toUpperCase(),
             year: String(d.getFullYear()),
@@ -129,9 +138,12 @@ export default function OrdersPage() {
 
           return {
             id:           o.id,
-            type:         "service",
-            title:        o.service_title || "AC Service",
-            description:  o.technician_name ? `${o.time} · Tech: ${o.technician_name}` : o.time,
+            type:         o.type || "service",
+            title:        o.title || "Order",
+            description:  o.type === "product"
+              ? `${o.item_count || 1} item${(o.item_count || 1) > 1 ? "s" : ""}`
+              : o.technician_name ? `${o.time} · Tech: ${o.technician_name}` : o.time,
+            image:        o.image || null,
             day, month, year,
             price:        Number(o.price || 0),
             status:       o.status,
@@ -342,26 +354,27 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
   const router = useRouter()
   const [downloadingInvoice, setDownloadingInvoice] = useState(false)
 
+  const isProduct = order.type === "product"
   const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.open
   const isActive = ["assigned", "on_the_way", "working"].includes(order.status)
-  const isCompleted = order.status === "completed"
-  const isPaid = order.paymentStatus === "completed"
+  const isCompleted = order.status === "completed" || order.status === "confirmed" || order.status === "cod_confirmed"
+  const isPaid = order.paymentStatus === "completed" || order.paymentStatus === "cod_pending"
   const isPaymentDue = order.status === "report_submitted" && !isPaid
   const isAwaitingClosure = order.status === "report_submitted" && isPaid
-  const isCancellable = ["open", "assigned", "on_the_way", "working"].includes(order.status)
+  const isCancellable = !isProduct && ["open", "assigned", "on_the_way", "working"].includes(order.status)
 
   const handleInvoice = async () => {
     setDownloadingInvoice(true)
     try {
-      const data = await apiFetch<{ invoice_url?: string; error?: string }>(
-        `/payments/invoice/${order.id}`
-      )
+      const endpoint = isProduct
+        ? `/payments/order-invoice/${order.id}`
+        : `/payments/invoice/${order.id}`
+      const data = await apiFetch<{ invoice_url?: string; error?: string }>(endpoint)
       if (!data?.invoice_url) {
         console.error("[invoice] no URL returned:", data)
         toast.error(data?.error || "Invoice not ready yet. Please try again.")
         return
       }
-      console.log("[invoice] opening URL:", data.invoice_url)
       window.open(data.invoice_url, "_blank")
     } catch (err: any) {
       console.error("[invoice] download error:", err)
@@ -392,13 +405,19 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
             <div className="text-xs text-gray-400 mt-0.5">{order.year}</div>
           </div>
 
-          {/* Service icon */}
+          {/* Service/Product icon */}
           <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-            (isCompleted || isAwaitingClosure) ? "bg-emerald-50" : isPaymentDue ? "bg-orange-50" : isActive ? "bg-blue-50" : "bg-gray-50"
+            isProduct
+              ? (isCompleted ? "bg-emerald-50" : "bg-blue-50")
+              : (isCompleted || isAwaitingClosure) ? "bg-emerald-50" : isPaymentDue ? "bg-orange-50" : isActive ? "bg-blue-50" : "bg-gray-50"
           }`}>
-            <Wrench className={`w-5 h-5 ${
-              (isCompleted || isAwaitingClosure) ? "text-emerald-600" : isPaymentDue ? "text-orange-600" : isActive ? "text-blue-600" : "text-gray-400"
-            }`} />
+            {isProduct ? (
+              <ShoppingBag className={`w-5 h-5 ${isCompleted ? "text-emerald-600" : "text-blue-600"}`} />
+            ) : (
+              <Wrench className={`w-5 h-5 ${
+                (isCompleted || isAwaitingClosure) ? "text-emerald-600" : isPaymentDue ? "text-orange-600" : isActive ? "text-blue-600" : "text-gray-400"
+              }`} />
+            )}
           </div>
 
           {/* Content */}
@@ -463,8 +482,8 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
                   </Link>
                 )}
 
-                {/* View Booking — for pending/active bookings that aren't trackable yet */}
-                {!order.canTrack && !isCompleted && !isPaymentDue && !isAwaitingClosure && order.status !== "cancelled" && (
+                {/* View Booking — for pending/active SERVICE bookings that aren't trackable yet */}
+                {!isProduct && !order.canTrack && !isCompleted && !isPaymentDue && !isAwaitingClosure && order.status !== "cancelled" && (
                   <Link href={`/bookings?id=${order.id}`}>
                     <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-blue-200 active:scale-[0.97]">
                       <Navigation className="w-4 h-4" />

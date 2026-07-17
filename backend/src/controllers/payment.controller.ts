@@ -931,23 +931,38 @@ export const verifyProductPayment = async (req: Request, res: Response) => {
 export const getOrderInvoice = async (req: Request, res: Response) => {
   const { orderId } = req.params
 
-  // Find payment row for this order
-  const { data: paymentRow } = await supabase
-    .from("payments")
-    .select("id, invoice_url, amount, user_id, razorpay_payment_id, payment_method, created_at")
-    .eq("booking_id", orderId)   // product orders store order_id in booking_id column
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" })
+  }
 
-  // Ownership check
-  if (req.user && paymentRow?.user_id !== req.user.id) {
+  // First verify the user owns this order
+  const { data: order } = await supabase
+    .from("orders")
+    .select("id, user_id, total_amount, customer_name, phone, order_items(title, price, qty)")
+    .eq("id", orderId)
+    .single()
+
+  if (!order) {
+    return res.status(404).json({ error: "Order not found" })
+  }
+
+  // Ownership check — user must own the order or be admin
+  if (order.user_id !== req.user.id) {
     const { data: profile } = await supabase
       .from("profiles").select("role").eq("id", req.user.id).single()
     if (profile?.role !== "admin") {
       return res.status(403).json({ error: "Not authorized" })
     }
   }
+
+  // Find payment row for this order
+  const { data: paymentRow } = await supabase
+    .from("payments")
+    .select("id, invoice_url, amount, user_id, razorpay_payment_id, payment_method, created_at")
+    .eq("booking_id", orderId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
   // Return existing invoice if available
   if (paymentRow?.invoice_url) {
@@ -956,16 +971,6 @@ export const getOrderInvoice = async (req: Request, res: Response) => {
 
   // Generate on-demand
   try {
-    const { data: order } = await supabase
-      .from("orders")
-      .select("*, order_items(title, price, qty)")
-      .eq("id", orderId)
-      .single()
-
-    if (!order) {
-      return res.status(404).json({ error: "Order not found" })
-    }
-
     const { data: profile } = await supabase
       .from("profiles")
       .select("first_name, last_name, phone")
