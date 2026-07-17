@@ -450,9 +450,9 @@ function OrderCard({ order, onCancel }: { order: any; onCancel: () => void }) {
                   </Link>
                 )}
 
-                {/* Go to Completion — for completed, unpaid */}
+                {/* View Booking — for pending/active bookings that aren't trackable yet */}
                 {!order.canTrack && !isCompleted && order.status !== "cancelled" && (
-                  <Link href={`/bookings/completion?id=${order.id}`}>
+                  <Link href={`/bookings?id=${order.id}`}>
                     <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-blue-200 active:scale-[0.97]">
                       <Navigation className="w-4 h-4" />
                       View Booking
