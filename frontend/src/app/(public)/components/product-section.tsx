@@ -248,15 +248,15 @@ export function ProductsSection() {
             className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
           >
             {products.slice(0, 4).map((product) => {
-              const discount =
-                product.old_price && Number(product.old_price) > Number(product.price)
+              const hasValidOldPrice = product.old_price && Number(product.old_price) > 0 && Number(product.old_price) > Number(product.price)
+              const discount = hasValidOldPrice
                   ? Math.round(
                       ((Number(product.old_price) - Number(product.price)) /
                         Number(product.old_price)) *
                         100
                     )
                   : 0
-              const savings = product.old_price
+              const savings = hasValidOldPrice
                 ? Number(product.old_price) - Number(product.price)
                 : 0
 
@@ -321,8 +321,7 @@ export function ProductsSection() {
                           <span className="text-base sm:text-lg font-bold text-gray-900">
                             ₹{Number(product.price).toLocaleString("en-IN")}
                           </span>
-                          {product.old_price &&
-                            Number(product.old_price) > Number(product.price) && (
+                          {hasValidOldPrice && (
                               <span className="text-[10px] sm:text-xs text-gray-400 line-through">
                                 ₹{Number(product.old_price).toLocaleString("en-IN")}
                               </span>

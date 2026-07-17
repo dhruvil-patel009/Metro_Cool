@@ -1,6 +1,6 @@
 "use client"
 
-import { ShoppingCart, Star, Check, Heart, SlidersHorizontal, X, ChevronRight, Zap, ArrowUpDown } from "lucide-react"
+import { ShoppingCart, Star, Check, SlidersHorizontal, X, ChevronRight, Zap, ArrowUpDown } from "lucide-react"
 import Link from "next/link"
 import { useState, useMemo } from "react"
 import { formatINR } from "@/app/lib/currency"
@@ -378,8 +378,8 @@ export default function ProductsPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4">
                 {filteredAndSortedProducts.map((product: any) => {
                   const isAdded = addedIds.has(product.id)
-                  const discount = getDiscount(Number(product.price), product.old_price ? Number(product.old_price) : undefined)
-                  const savings = product.old_price ? Number(product.old_price) - Number(product.price) : 0
+                  const discount = getDiscount(Number(product.price), product.old_price && Number(product.old_price) > 0 ? Number(product.old_price) : undefined)
+                  const savings = product.old_price && Number(product.old_price) > Number(product.price) ? Number(product.old_price) - Number(product.price) : 0
 
                   return (
                     <Link
@@ -413,14 +413,6 @@ export default function ProductsPage() {
                             </div>
                           </div>
                         )}
-
-                        {/* Wishlist */}
-                        <button
-                          onClick={e => { e.preventDefault(); e.stopPropagation() }}
-                          className="absolute top-2 right-2 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100"
-                        >
-                          <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        </button>
 
                         {/* Out of Stock overlay */}
                         {product.in_stock === false && (
@@ -461,7 +453,7 @@ export default function ProductsPage() {
                             <span className="text-sm sm:text-lg font-bold text-[#1d242d]">
                               {formatINR(Number(product.price))}
                             </span>
-                            {product.old_price && Number(product.old_price) > Number(product.price) && (
+                            {Number(product.old_price) > 0 && Number(product.old_price) > Number(product.price) && (
                               <span className="text-[9px] sm:text-xs text-gray-400 line-through">
                                 {formatINR(Number(product.old_price))}
                               </span>
