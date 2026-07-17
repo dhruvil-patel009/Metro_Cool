@@ -90,7 +90,7 @@ export function Navigation() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(navigationSchema) }}
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 lg:h-20 items-center">
 
             {/* ===== LOGO ===== */}
