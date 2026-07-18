@@ -112,7 +112,13 @@ export const getUserOrderHistory = async (req: any, res: Response) => {
     })
 
     /* ---------------- TRANSFORM PRODUCT ORDERS ---------------- */
-    const productOrdersMapped = (productOrders || []).map(o => {
+    const productOrdersMapped = (productOrders || [])
+      .filter(o => {
+        // Only show product orders that have been paid (online or COD)
+        const ps = o.payment_status || "pending"
+        return ps === "completed" || ps === "cod_pending" || paidOrderIds.has(o.id)
+      })
+      .map(o => {
       const items = o.order_items || []
       const firstItem = items[0]
       const itemCount = items.reduce((sum: number, i: any) => sum + (i.qty || 1), 0)

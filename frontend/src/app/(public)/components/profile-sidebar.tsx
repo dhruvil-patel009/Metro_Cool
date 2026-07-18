@@ -73,9 +73,7 @@ export function ProfileSidebar() {
 
   /* ================= FORMAT SPENT ================= */
   const formatSpent = (v: number) => {
-    if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`
-    if (v >= 1000) return `₹${(v / 1000).toFixed(1)}k`
-    return `₹${v.toFixed(0)}`
+    return `₹${v.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
   }
 
   /* ================= INITIAL LOAD ================= */
