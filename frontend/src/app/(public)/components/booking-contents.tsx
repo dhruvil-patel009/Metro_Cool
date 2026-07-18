@@ -199,7 +199,7 @@ export default function BookingsContent() {
       reg.showNotification(title, {
         body: message,
         icon: "/assets/logo.ico",
-        badge: "/assets/icon-dark-32x32.png",
+        badge: "/assets/metro-cool-logo.png",
         vibrate: [100, 50, 100, 50, 200],
         tag,
         renotify: true,

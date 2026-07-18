@@ -243,3 +243,112 @@
         return res.status(500).json({ success: false, message: err.message });
       }
     };
+
+    /* ── DOWNLOAD SERVICE REPORT AS PDF ── */
+    export const downloadServiceReport = async (req: Request, res: Response) => {
+      try {
+        const { jobId } = req.params;
+
+        // Fetch the report
+        const { data: report, error } = await supabase
+          .from("service_reports")
+          .select("*")
+          .eq("job_id", jobId)
+          .single();
+
+        if (error || !report) {
+          return res.status(404).json({ success: false, message: "Service report not found" });
+        }
+
+        // Fetch booking details
+        const { data: booking } = await supabase
+          .from("bookings")
+          .select("id, booking_date, full_name, phone, user_id, technician_id, address, services(title)")
+          .eq("id", jobId)
+          .single();
+
+        // Verify access: user must be the technician, admin, or the customer
+        const userId = req.user?.id;
+        const userRole = req.user?.role;
+        const isAdmin = userRole === "admin";
+        const isTechnician = booking?.technician_id === userId;
+        const isCustomer = booking?.user_id === userId;
+
+        if (!isAdmin && !isTechnician && !isCustomer) {
+          return res.status(403).json({ success: false, message: "Not authorized to download this report" });
+        }
+
+        // Get technician name
+        let techName = "Technician";
+        let techPhone = "";
+        if (booking?.technician_id) {
+          const { data: tech } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, phone")
+            .eq("id", booking.technician_id)
+            .single();
+          if (tech) {
+            techName = `${tech.first_name || ""} ${tech.last_name || ""}`.trim() || "Technician";
+            techPhone = tech.phone || "";
+          }
+        }
+
+        // Get customer name
+        let customerName = booking?.full_name || "Customer";
+        let customerPhone = booking?.phone || "";
+        if (booking?.user_id) {
+          const { data: customer } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, phone")
+            .eq("id", booking.user_id)
+            .single();
+          if (customer) {
+            customerName = `${customer.first_name || ""} ${customer.last_name || ""}`.trim() || customerName;
+            customerPhone = customer.phone || customerPhone;
+          }
+        }
+
+        // Get service title
+        const service = Array.isArray(booking?.services) ? booking.services[0] : booking?.services;
+        const serviceTitle = (service as any)?.title || "AC Service";
+
+        // Generate PDF
+        const { generateServiceReportPDF } = await import("../utils/generateServiceReport.js");
+
+        const filePath = await generateServiceReportPDF({
+          report_id: report.id,
+          job_id: jobId,
+          issue_description: report.issue_description || "",
+          fix_applied: report.fix_applied || "",
+          additional_notes: report.additional_notes || "",
+          photos: report.photos || [],
+          created_at: report.created_at,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          technician_name: techName,
+          technician_phone: techPhone,
+          booking_date: booking?.booking_date
+            ? new Date(booking.booking_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+            : "—",
+          address: booking?.address || "",
+          service_title: serviceTitle,
+        });
+
+        // Send file
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename=service-report-${jobId.slice(0, 8)}.pdf`);
+
+        const { createReadStream } = await import("fs");
+        const stream = createReadStream(filePath);
+        stream.pipe(res);
+
+        // Clean up temp file after sending
+        stream.on("end", () => {
+          try { require("fs").unlinkSync(filePath); } catch {}
+        });
+
+      } catch (err: any) {
+        console.error("Download Service Report Error:", err);
+        return res.status(500).json({ success: false, message: err.message });
+      }
+    };

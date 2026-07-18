@@ -5,6 +5,7 @@ import {
   getMyServiceReports,
   getServiceReportById,
   getServiceReportByJobId,
+  downloadServiceReport,
 } from "../controllers/service-report.controller.js";
 import { reportUpload } from "../middlewares/reportUpload.middleware.js";
 import { protect } from "../middlewares/auth.middleware.js";
@@ -18,6 +19,9 @@ router.post(
   reportUpload.array("photos", 5),
   createServiceReport
 );
+
+// Download service report as PDF (technician, admin, or customer)
+router.get("/download/:jobId", protect, downloadServiceReport);
 
 // Admin: get all service reports
 router.get("/all", protect, authorize("admin"), getAllServiceReports);

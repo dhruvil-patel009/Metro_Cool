@@ -14,6 +14,7 @@ import {
   ChevronRight,
   FileText,
   Filter,
+  Download,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { AdminPageShell, AdminLoadingState, AdminEmptyState } from "../components/admin-page-shell"
@@ -269,14 +270,40 @@ function ReportDetailView({
             <h1 className="text-2xl font-bold text-gray-900">Service Completion Report</h1>
             <p className="text-sm text-gray-400 mt-1">Job #{report.job_id?.slice(0, 8).toUpperCase()}</p>
           </div>
-          <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
-            report.status === "submitted"
-              ? "bg-green-100 text-green-700"
-              : "bg-yellow-100 text-yellow-700"
-          }`}>
-            <ClipboardCheck className="w-3.5 h-3.5 mr-1.5" />
-            {report.status?.toUpperCase() || "SUBMITTED"}
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem("accessToken") || localStorage.getItem("token")
+                  const res = await fetch(`${API}/service-report/download/${report.job_id}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                  })
+                  if (!res.ok) throw new Error("Failed to download")
+                  const blob = await res.blob()
+                  const url = window.URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url
+                  a.download = `service-report-${report.job_id.slice(0, 8)}.pdf`
+                  a.click()
+                  window.URL.revokeObjectURL(url)
+                } catch (err) {
+                  console.error("Download error:", err)
+                }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              Download PDF
+            </button>
+            <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
+              report.status === "submitted"
+                ? "bg-green-100 text-green-700"
+                : "bg-yellow-100 text-yellow-700"
+            }`}>
+              <ClipboardCheck className="w-3.5 h-3.5 mr-1.5" />
+              {report.status?.toUpperCase() || "SUBMITTED"}
+            </span>
+          </div>
         </div>
 
         {/* Info Cards */}

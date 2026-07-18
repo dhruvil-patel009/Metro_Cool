@@ -14,6 +14,8 @@ import {
   ChevronRight,
   FileText,
   ArrowLeft,
+  Download,
+  Loader2,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -112,10 +114,36 @@ export default function TechnicianServiceReportsPage() {
                 Job #{selectedReport.job_id?.slice(0, 8).toUpperCase()}
               </p>
             </div>
-            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
-              <ClipboardCheck className="w-3.5 h-3.5 mr-1.5" />
-              {selectedReport.status?.toUpperCase() || "SUBMITTED"}
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem("accessToken") || localStorage.getItem("token")
+                    const res = await fetch(`${API}/service-report/download/${selectedReport.job_id}`, {
+                      headers: { Authorization: `Bearer ${token}` },
+                    })
+                    if (!res.ok) throw new Error("Failed to download")
+                    const blob = await res.blob()
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement("a")
+                    a.href = url
+                    a.download = `service-report-${selectedReport.job_id.slice(0, 8)}.pdf`
+                    a.click()
+                    window.URL.revokeObjectURL(url)
+                  } catch (err) {
+                    console.error("Download error:", err)
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all shadow-sm"
+              >
+                <Download className="w-4 h-4" />
+                Download PDF
+              </button>
+              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                <ClipboardCheck className="w-3.5 h-3.5 mr-1.5" />
+                {selectedReport.status?.toUpperCase() || "SUBMITTED"}
+              </span>
+            </div>
           </div>
 
           {/* Customer Info */}
