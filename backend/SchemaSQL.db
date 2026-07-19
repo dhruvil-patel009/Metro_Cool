@@ -106,6 +106,9 @@ create table products (
 
 alter table products disable row level security;
 
+-- Add delivery charge column (run separately if table already exists)
+-- alter table products add column if not exists delivery_charge numeric default 0;
+
 =========================== Bucket =================================
 
 1️⃣ Allow public uploads to services bucket

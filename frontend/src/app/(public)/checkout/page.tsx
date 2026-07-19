@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useCart } from "@/app/context/CartContext"
 import { useEffect, useRef, useState } from "react"
@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation"
 import { toast } from "react-toastify"
 import { formatINR } from "@/app/lib/currency"
 import {
-  MapPin, CreditCard, Banknote, ChevronRight, Package, Loader2,
-  Plus, Minus, Trash2, ShoppingCart,
+  MapPin, CreditCard, ChevronRight, Package, Loader2,
+  Plus, Minus, Trash2, ShoppingCart, AlertTriangle, CheckCircle2,
 } from "lucide-react"
 import AuthGuard from "@/app/components/AuthGuard"
 
@@ -17,6 +17,33 @@ declare global {
   interface Window {
     Razorpay: any
   }
+}
+
+// Ahmedabad serviceable PIN codes (must mirror backend list)
+const AHMEDABAD_PIN_CODES = new Set([
+  "380001", "380002", "380003", "380004", "380005", "380006", "380007",
+  "380008", "380009", "380010", "380013", "380014", "380015", "380016",
+  "380019", "380021", "380022", "380023", "380024", "380025", "380026",
+  "380027", "380028", "380051", "380052", "380053", "380054", "380055",
+  "380058", "380059", "380060", "380061", "380063", "382010", "382110",
+  "382115", "382120", "382130", "382140", "382145", "382150", "382210",
+  "382213", "382220", "382225", "382230", "382240", "382250", "382260",
+  "382305", "382308", "382310", "382315", "382320", "382321", "382325",
+  "382330", "382340", "382345", "382346", "382350", "382355", "382405",
+  "382408", "382415", "382418", "382421", "382422", "382424", "382425",
+  "382426", "382427", "382428", "382430", "382433", "382435", "382440",
+  "382443", "382445", "382449", "382450", "382455", "382460", "382463",
+  "382465", "382470", "382475", "382480", "382481", "382610", "382620",
+  "382630", "382640", "382650", "382721", "382725", "382728", "382730",
+  "382735", "382740", "382745", "382750", "382755", "382760", "382765",
+  "382775", "382810", "382815", "382820", "382825", "382830", "382835",
+  "382840", "382845", "382850", "382855", "382860",
+])
+
+function getPinStatus(pin: string): "empty" | "valid" | "invalid" {
+  if (!pin) return "empty"
+  if (pin.length < 6) return "empty"
+  return AHMEDABAD_PIN_CODES.has(pin.trim()) ? "valid" : "invalid"
 }
 
 export default function CheckoutPage() {
@@ -33,16 +60,20 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("")
   const [zip, setZip] = useState("")
 
-  const [paymentMethod, setPaymentMethod] = useState<"upi" | "cod" | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<"upi" | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
   const razorpayOpened = useRef(false)
 
-  const FREE_SHIPPING_THRESHOLD = 10000
-  const SHIPPING_FEE = 499
-  const shippingCost = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
+  // Delivery charge: sum of delivery_charge per cart item (qty Ã— delivery_charge)
+  const deliveryCharge = cart.reduce(
+    (sum, item) => sum + (Number(item.delivery_charge || 0) * (item.qty || 1)),
+    0
+  )
+
+  const pinStatus = getPinStatus(zip)
   const tax = total * 0.18
-  const finalAmount = total + tax + shippingCost
+  const finalAmount = total + tax + deliveryCharge
 
   /* LOAD ADDRESSES */
   const applyAddress = (addr: any) => {
@@ -92,7 +123,10 @@ export default function CheckoutPage() {
       })
     })
 
-    if (!res.ok) throw new Error("Failed to create order")
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}))
+      throw new Error(errData.error || "Failed to create order")
+    }
 
     const data = await res.json()
     return data.order.id
@@ -184,37 +218,15 @@ export default function CheckoutPage() {
     }
   }
 
-  /* COD */
-  const handleCOD = async () => {
-    try {
-      const orderId = await createOrder()
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token")
-
-      // Try to mark as COD — non-fatal if this fails
-      try {
-        await fetch(`${API_URL}/orders/cod`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ order_id: orderId }),
-        })
-      } catch {
-        // COD marking failed but order was created — still redirect
-        console.warn("COD status update failed, order still created")
-      }
-
-      clearCart()
-      router.push(`/checkout/order-success?order_id=${orderId}`)
-    } catch (err: any) {
-      toast.error(err.message || "Failed to place order. Please try again.")
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
   /* CHECKOUT */
   const handleCheckout = () => {
     if (!fullName || !phone || !street || !city || !zip) {
       toast.error("Please fill in all address fields")
+      return
+    }
+
+    if (pinStatus === "invalid") {
+      toast.error("Sorry, this product is currently not available for delivery in your area.")
       return
     }
 
@@ -226,7 +238,6 @@ export default function CheckoutPage() {
     setIsProcessing(true)
 
     if (paymentMethod === "upi") handleRazorpay()
-    if (paymentMethod === "cod") handleCOD()
   }
 
   /* EMPTY CART STATE */
@@ -361,12 +372,44 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">PIN Code</label>
-                    <input
-                      value={zip}
-                      onChange={e => setZip(e.target.value)}
-                      placeholder="380001"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                    />
+                    <div className="relative">
+                      <input
+                        value={zip}
+                        onChange={e => setZip(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="380001"
+                        maxLength={6}
+                        className={`w-full px-3.5 py-2.5 pr-9 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${
+                          pinStatus === "invalid"
+                            ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+                            : pinStatus === "valid"
+                            ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+                            : "border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                        }`}
+                      />
+                      {pinStatus === "valid" && (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+                      )}
+                      {pinStatus === "invalid" && (
+                        <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none" />
+                      )}
+                    </div>
+                    {pinStatus === "invalid" && (
+                      <p className="mt-1.5 text-xs text-red-600 font-medium flex items-start gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                        Sorry, this product is currently not available for delivery in your area.
+                      </p>
+                    )}
+                    {pinStatus === "valid" && (
+                      <p className="mt-1.5 text-xs text-emerald-600 font-medium flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        Delivery available in your area.
+                      </p>
+                    )}
+                    {pinStatus === "empty" && (
+                      <p className="mt-1.5 text-[11px] text-gray-400">
+                        Delivery available only within Ahmedabad.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -402,35 +445,11 @@ export default function CheckoutPage() {
                     {paymentMethod === "upi" && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
                   </div>
                 </button>
-
-                <button
-                  onClick={() => setPaymentMethod("cod")}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-                    paymentMethod === "cod"
-                      ? "border-blue-500 bg-blue-50/50"
-                      : "border-gray-100 hover:border-gray-200"
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    paymentMethod === "cod" ? "bg-blue-100" : "bg-gray-100"
-                  }`}>
-                    <Banknote className="w-5 h-5" style={{ color: paymentMethod === "cod" ? "#2563eb" : "#6b7280" }} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm text-gray-900">Cash on Delivery</p>
-                    <p className="text-xs text-gray-400">Pay when you receive the product</p>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    paymentMethod === "cod" ? "border-blue-600" : "border-gray-300"
-                  }`}>
-                    {paymentMethod === "cod" && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
-                  </div>
-                </button>
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN — ORDER SUMMARY */}
+          {/* RIGHT COLUMN â€” ORDER SUMMARY */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-24">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
@@ -447,6 +466,11 @@ export default function CheckoutPage() {
                       <p className="font-semibold text-sm text-gray-900 truncate">{item.title}</p>
                       <p className="text-xs text-gray-400">{item.capacity}</p>
                       <p className="text-sm font-bold text-blue-600 mt-0.5">{formatINR(item.price)}</p>
+                      {Number(item.delivery_charge) > 0 && (
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          + {formatINR(Number(item.delivery_charge))} delivery
+                        </p>
+                      )}
 
                       <div className="flex items-center gap-2 mt-2">
                         <div className="flex items-center border border-gray-200 rounded-lg">
@@ -490,45 +514,52 @@ export default function CheckoutPage() {
                   <span className="font-medium">{formatINR(Math.round(tax))}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Shipping</span>
-                  {shippingCost === 0 ? (
+                  <span>Delivery Charge</span>
+                  {deliveryCharge === 0 ? (
                     <span className="font-medium text-emerald-600">FREE</span>
                   ) : (
-                    <span className="font-medium">{formatINR(shippingCost)}</span>
+                    <span className="font-medium">{formatINR(deliveryCharge)}</span>
                   )}
                 </div>
-                {shippingCost > 0 && (
-                  <p className="text-[11px] text-amber-600 font-medium">
-                    Add {formatINR(FREE_SHIPPING_THRESHOLD - total)} more for free shipping
-                  </p>
-                )}
                 <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
                   <span>Total</span>
                   <span className="text-blue-600">{formatINR(Math.round(finalAmount))}</span>
                 </div>
               </div>
 
+              {/* PIN code warning in summary */}
+              {pinStatus === "invalid" && (
+                <div className="mx-5 mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-red-700 font-medium">
+                    Delivery not available for PIN {zip}. We currently deliver only within Ahmedabad.
+                  </p>
+                </div>
+              )}
+
               {/* Place Order Button */}
               <div className="p-5">
                 <button
                   onClick={handleCheckout}
-                  disabled={isProcessing}
+                  disabled={isProcessing || pinStatus === "invalid"}
                   className="w-full py-3.5 rounded-xl font-bold text-white transition-all bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing…
+                      Processingâ€¦
                     </>
                   ) : (
                     <>
-                      Place Order — {formatINR(Math.round(finalAmount))}
+                      Place Order â€” {formatINR(Math.round(finalAmount))}
                     </>
                   )}
                 </button>
-                <p className="text-center text-xs text-gray-400 mt-3">
-                  🔒 Secure encrypted checkout
-                </p>
+                {pinStatus !== "invalid" && (
+                  <p className="text-center text-xs text-gray-400 mt-3">
+                    ðŸ”’ Secure encrypted checkout
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -538,3 +569,4 @@ export default function CheckoutPage() {
     </AuthGuard>
   )
 }
+

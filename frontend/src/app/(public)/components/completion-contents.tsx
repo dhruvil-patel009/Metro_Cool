@@ -558,33 +558,34 @@ export default function CompletionContent() {
                       </div>
                     </button>
 
-                    {/* Cash */}
-                    <button
-                      onClick={() => setPaymentMethod("cash")}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 ${
-                        paymentMethod === "cash"
-                          ? "border-blue-600 bg-blue-50 shadow-sm"
-                          : "border-gray-100 hover:border-gray-200 bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          paymentMethod === "cash" ? "bg-blue-100" : "bg-white border border-gray-200"
-                        }`}>
-                          <Banknote className={`w-5 h-5 ${paymentMethod === "cash" ? "text-blue-600" : "text-gray-500"}`} />
-                        </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-gray-900 text-sm">Cash</p>
-                          <p className="text-xs text-gray-400">Pay directly to technician</p>
-                        </div>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        paymentMethod === "cash" ? "border-blue-600 bg-blue-600" : "border-gray-300"
-                      }`}>
-                        {paymentMethod === "cash" && <div className="w-2 h-2 bg-white rounded-full" />}
-                      </div>
-                    </button>
                   </div>
+
+                  {/* Cash */}
+                  <button
+                    onClick={() => setPaymentMethod("cash")}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 ${
+                      paymentMethod === "cash"
+                        ? "border-blue-600 bg-blue-50 shadow-sm"
+                        : "border-gray-100 hover:border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        paymentMethod === "cash" ? "bg-blue-100" : "bg-white border border-gray-200"
+                      }`}>
+                        <Banknote className={`w-5 h-5 ${paymentMethod === "cash" ? "text-blue-600" : "text-gray-500"}`} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-900 text-sm">Cash</p>
+                        <p className="text-xs text-gray-400">Pay directly to technician</p>
+                      </div>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      paymentMethod === "cash" ? "border-blue-600 bg-blue-600" : "border-gray-300"
+                    }`}>
+                      {paymentMethod === "cash" && <div className="w-2 h-2 bg-white rounded-full" />}
+                    </div>
+                  </button>
 
                   <button
                     onClick={() => {

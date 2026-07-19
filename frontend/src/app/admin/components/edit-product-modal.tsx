@@ -31,6 +31,7 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
   const [rating, setRating] = useState(String(product.rating || "4.5"))
   const [reviewCount, setReviewCount] = useState(String(product.review_count || "0"))
   const [oldPrice, setOldPrice] = useState(String(product.old_price || ""))
+  const [deliveryCharge, setDeliveryCharge] = useState(String(product.delivery_charge ?? "0"))
 
   const [variants, setVariants] = useState(
     Array.isArray(product.capacity_prices) && product.capacity_prices.length > 0
@@ -88,6 +89,7 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
       formData.append("rating", rating)
       formData.append("review_count", reviewCount)
       formData.append("old_price", oldPrice || "0")
+      formData.append("delivery_charge", deliveryCharge || "0")
       formData.append("price", String(basePrice))
       formData.append("capacityPrices", JSON.stringify(variants))
       formData.append("specifications", JSON.stringify(specs.filter((s: any) => s.label)))
@@ -221,6 +223,9 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormField label="MRP / Old Price (₹)">
               <Input type="number" placeholder="Strike-through price" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} />
+            </FormField>
+            <FormField label="Delivery Charge (₹)">
+              <Input type="number" min="0" placeholder="e.g. 499" value={deliveryCharge} onChange={(e) => setDeliveryCharge(e.target.value)} />
             </FormField>
             <FormField label="Rating">
               <Input type="number" step="0.1" min="0" max="5" placeholder="4.5" value={rating} onChange={(e) => setRating(e.target.value)} />

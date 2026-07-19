@@ -193,20 +193,42 @@ export default function OrdersPage() {
           <span className="text-gray-900 font-medium">Order History</span>
         </div>
 
+        {/* Mobile quick-nav (hidden on lg+) */}
+        <div className="flex lg:hidden overflow-x-auto gap-2 pb-2 mb-2 hide-scrollbar">
+          {[
+            { href: "/profile",               label: "Profile" },
+            { href: "/profile/orders",        label: "Orders" },
+            { href: "/profile/addresses",     label: "Addresses" },
+            { href: "/profile/notifications", label: "Notifications" },
+          ].map(item => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                item.href === "/profile/orders"
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "bg-white text-gray-600 border-gray-200"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-          {/* Sidebar */}
-          <div className="lg:col-span-3">
+          {/* Sidebar — desktop only */}
+          <div className="hidden lg:block lg:col-span-3">
             <ProfileSidebar />
           </div>
 
           {/* Main */}
-          <div className="lg:col-span-9 space-y-6">
+          <div className="lg:col-span-9 space-y-5">
 
             {/* Header + Filters */}
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Order History</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Order History</h1>
                 <p className="text-sm text-gray-500 mt-0.5">
                   Manage your bookings, track status and download invoices.
                 </p>
@@ -216,7 +238,7 @@ export default function OrdersPage() {
                   <button
                     key={f.id}
                     onClick={() => setActiveFilter(f.id)}
-                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all border ${
                       activeFilter === f.id
                         ? "bg-gray-900 text-white border-gray-900"
                         : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
@@ -229,19 +251,19 @@ export default function OrdersPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {[
-                { label: "Total Orders",  value: stats.total,     icon: ShoppingBag,  color: "text-blue-600",   bg: "bg-blue-50" },
-                { label: "Completed",     value: stats.completed,  icon: CheckCircle,  color: "text-emerald-600", bg: "bg-emerald-50" },
-                { label: "Upcoming",      value: stats.upcoming,   icon: Clock,        color: "text-purple-600",  bg: "bg-purple-50" },
+                { label: "Total Orders", value: stats.total,     icon: ShoppingBag, color: "text-blue-600",    bg: "bg-blue-50" },
+                { label: "Completed",    value: stats.completed,  icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
+                { label: "Upcoming",     value: stats.upcoming,   icon: Clock,       color: "text-purple-600",  bg: "bg-purple-50" },
               ].map(({ label, value, icon: Icon, color, bg }) => (
-                <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
-                    <Icon className={`w-5 h-5 ${color}`} />
+                <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${color}`} />
                   </div>
-                  <div>
-                    <p className="text-xl font-bold text-gray-900">{String(value).padStart(2, "0")}</p>
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
+                  <div className="min-w-0">
+                    <p className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">{String(value).padStart(2, "0")}</p>
+                    <p className="text-[9px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide leading-tight">{label}</p>
                   </div>
                 </div>
               ))}

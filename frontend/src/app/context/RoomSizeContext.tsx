@@ -5,48 +5,89 @@ import { createContext, useContext, useEffect, useState } from "react"
 /* ─── Room Size → Capacity Mapping ─── */
 export const ROOM_OPTIONS = [
   {
-    id: "small",
-    range: "90 – 120 sq ft",
-    label: "Small Bedroom",
-    capacity: "0.8 Ton",
-    capacityNum: 0.8,
-    description: "Ideal for compact bedrooms or small study rooms with limited sunlight.",
+    id: "upto-110",
+    range: "Up to 110 Sq. Ft",
+    label: "Small Room",
+    capacity: "1.0 TR",
+    capacityNum: 1.0,
+    description: "Ideal for compact bedrooms, study rooms or small spaces.",
   },
   {
-    id: "standard",
-    range: "121 – 154 sq ft",
+    id: "110-150",
+    range: "110 – 150 Sq. Ft",
     label: "Standard Bedroom",
-    capacity: "1.0 Ton",
-    capacityNum: 1.0,
+    capacity: "1.5 TR",
+    capacityNum: 1.5,
     description: "Best for standard bedrooms with moderate sunlight exposure.",
   },
   {
-    id: "large-bedroom",
-    range: "155 – 180 sq ft",
+    id: "150-200",
+    range: "150 – 200 Sq. Ft",
     label: "Large Bedroom",
-    capacity: "1.5 Ton",
-    capacityNum: 1.5,
-    description: "Perfect for spacious bedrooms or medium-sized rooms with good ventilation.",
+    capacity: "1.9 TR",
+    capacityNum: 1.9,
+    description: "Perfect for spacious bedrooms or medium-sized rooms.",
   },
   {
-    id: "living",
-    range: "181 – 250 sq ft",
-    label: "Living Room",
-    capacity: "2.0 Ton",
-    capacityNum: 2.0,
-    description: "Recommended for living rooms or open-plan spaces with higher cooling demand.",
+    id: "200-240",
+    range: "200 – 240 Sq. Ft",
+    label: "Master Bedroom",
+    capacity: "2.2 TR",
+    capacityNum: 2.2,
+    description: "Suitable for master bedrooms or rooms with higher heat load.",
   },
   {
-    id: "hall",
-    range: "251 – 350 sq ft",
-    label: "Large Hall",
-    capacity: "2.5 Ton",
+    id: "240-270",
+    range: "240 – 270 Sq. Ft",
+    label: "Large Room",
+    capacity: "2.5 TR",
     capacityNum: 2.5,
-    description: "Designed for large halls, offices or commercial spaces needing powerful cooling.",
+    description: "Recommended for large rooms or open-plan spaces.",
+  },
+  {
+    id: "270-300",
+    range: "270 – 300 Sq. Ft",
+    label: "Living Room",
+    capacity: "3.0 TR",
+    capacityNum: 3.0,
+    description: "Ideal for spacious living rooms with good airflow demand.",
+  },
+  {
+    id: "300-350",
+    range: "300 – 350 Sq. Ft",
+    label: "Large Hall",
+    capacity: "3.5 TR",
+    capacityNum: 3.5,
+    description: "Designed for large halls or semi-commercial spaces.",
+  },
+  {
+    id: "350-400",
+    range: "350 – 400 Sq. Ft",
+    label: "Commercial / Hall",
+    capacity: "4.0 TR",
+    capacityNum: 4.0,
+    description: "Best suited for large commercial areas or big halls needing powerful cooling.",
   },
 ] as const
 
+/* ─── Extract numeric tonnage from any capacity string ─── */
+function extractTon(capacity: string): number {
+  const match = capacity.match(/[\d.]+/)
+  return match ? parseFloat(match[0]) : 0
+}
+
+/* ─── Find the closest capacity in a list to a target number ─── */
+function findClosestCapacity(capacities: string[], targetNum: number): string | null {
+  if (!capacities.length) return null
+  return capacities.reduce((best, cur) => {
+    const bestDiff = Math.abs(extractTon(best) - targetNum)
+    const curDiff = Math.abs(extractTon(cur) - targetNum)
+    return curDiff < bestDiff ? cur : best
+  })
+}
+
 export type RoomOption = (typeof ROOM_OPTIONS)[number]
+export { extractTon, findClosestCapacity }
 
 interface RoomSizeContextType {
   selectedRoom: RoomOption | null

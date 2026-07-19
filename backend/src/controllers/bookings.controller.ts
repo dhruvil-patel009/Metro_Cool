@@ -17,11 +17,14 @@ export const getBookedDates = async (req: Request, res: Response) => {
 
   const endDateStr = endDate.toISOString().split("T")[0]
 
+  // Only block dates that have a CONFIRMED booking — drafts are in-progress
+  // and should not block dates for other users or for re-booking after cancellation
   const { data, error } = await supabase
     .from("bookings")
     .select("booking_date")
     .eq("service_id", serviceId)
-    .in("status", ["confirmed", "draft"]) // ✅ both confirmed AND draft block dates
+    .eq("status", "confirmed")
+    .in("job_status", ["open", "assigned", "on_the_way", "working", "report_submitted"])
     .gte("booking_date", startDate)
     .lt("booking_date", endDateStr)
 
@@ -30,15 +33,14 @@ export const getBookedDates = async (req: Request, res: Response) => {
   }
 
   const dates = data.map(d =>
-  new Date(d.booking_date).toISOString().split("T")[0]
-) 
+    new Date(d.booking_date).toISOString().split("T")[0]
+  )
 
   res.setHeader("Cache-Control", "no-store")
   return res.json({
     success: true,
     dates,
   })
-
 }
 
 export const getAllBookings = async (req: any, res: Response) => {
@@ -130,7 +132,21 @@ export const createBooking = async (req: any, res: Response) => {
       return res.status(201).json({ success: true, booking: existingDraft })
     }
 
-    // ✅ Clean up any stale draft bookings for this user + service (different date)
+    // ✅ Block if there's already a confirmed + active booking on this date for this service
+    const { data: existingConfirmed } = await supabase
+      .from("bookings")
+      .select("id")
+      .eq("service_id", serviceId)
+      .eq("booking_date", bookingDate)
+      .eq("status", "confirmed")
+      .in("job_status", ["open", "assigned", "on_the_way", "working", "report_submitted"])
+      .maybeSingle()
+
+    if (existingConfirmed) {
+      return res.status(400).json({ message: "This date is already booked. Please choose another date." })
+    }
+
+    // ✅ Clean up any stale draft bookings for this user + service (any date)
     await supabase
       .from("bookings")
       .delete()

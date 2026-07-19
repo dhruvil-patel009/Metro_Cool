@@ -8,6 +8,7 @@ export interface CartItem {
   capacity: string
   price: number
   qty: number
+  delivery_charge?: number
 }
 
 interface CartContextType {

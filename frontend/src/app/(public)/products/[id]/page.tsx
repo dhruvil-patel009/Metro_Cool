@@ -5,7 +5,6 @@ import {
   Star,
   Check,
   Shield,
-  Truck,
   ChevronRight,
   X,
   Plus,
@@ -29,7 +28,7 @@ import "@react-pdf-viewer/default-layout/lib/styles/index.css"
 import { useRouter } from "next/navigation"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
-import { useRoomSize, ROOM_OPTIONS, RoomOption } from "@/app/context/RoomSizeContext"
+import { useRoomSize, ROOM_OPTIONS, RoomOption, extractTon, findClosestCapacity } from "@/app/context/RoomSizeContext"
 import { useAuthStore } from "@/store/auth.store"
 import { toast } from "react-toastify"
 import { FaTrashAlt } from "react-icons/fa"
@@ -80,15 +79,12 @@ export default function ProductDetailsPage() {
       .then((data) => {
         setProduct(data)
         const capacities = data.capacity_prices?.map((c: any) => c.capacity) || []
-        if (recommendedCapacity && capacities.some((c: string) =>
-          c.toLowerCase().includes(recommendedCapacity.toLowerCase().replace(" ton", ""))
-        )) {
-          const match = capacities.find((c: string) =>
-            c.toLowerCase().includes(recommendedCapacity.toLowerCase().replace(" ton", ""))
-          )
-          setSelectedCapacity(match || data.capacity_prices?.[0]?.capacity)
+        if (recommendedCapacity && capacities.length > 0) {
+          const targetNum = extractTon(recommendedCapacity)
+          const closest = findClosestCapacity(capacities, targetNum)
+          setSelectedCapacity(closest || capacities[0])
         } else {
-          setSelectedCapacity(data.capacity_prices?.[0]?.capacity)
+          setSelectedCapacity(capacities[0] || "1.5 Ton")
         }
       })
       .catch((err) => {
@@ -293,10 +289,8 @@ export default function ProductDetailsPage() {
                             onClick={() => {
                               setSelectedRoom(option)
                               const capacities = product.capacity_prices?.map((c: any) => c.capacity) || []
-                              const match = capacities.find((c: string) =>
-                                c.toLowerCase().includes(option.capacity.toLowerCase().replace(" ton", ""))
-                              )
-                              if (match) setSelectedCapacity(match)
+                              const closest = findClosestCapacity(capacities, option.capacityNum)
+                              if (closest) setSelectedCapacity(closest)
                               setShowRoomPicker(false)
                             }}
                             className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 transition-all ${
@@ -352,9 +346,12 @@ export default function ProductDetailsPage() {
                       ? product.capacity_prices.map((c: any) => c.capacity)
                       : ["1.0 Ton", "1.5 Ton", "2.0 Ton"]
                     ).map((c: string) => {
-                      const isRecommended = recommendedCapacity && c.toLowerCase().includes(
-                        recommendedCapacity.toLowerCase().replace(" ton", "")
-                      )
+                      const isRecommended = recommendedCapacity &&
+                        selectedRoom &&
+                        findClosestCapacity(
+                          product.capacity_prices?.map((cp: any) => cp.capacity) || [],
+                          extractTon(recommendedCapacity)
+                        ) === c
                       const isSelected = c === selectedCapacity
                       return (
                         <button
@@ -390,6 +387,7 @@ export default function ProductDetailsPage() {
                         capacity: selectedCapacity,
                         price: selectedPrice,
                         qty: 1,
+                        delivery_charge: Number(product.delivery_charge || 0),
                       })
                       router.push("/checkout")
                     }}
@@ -414,6 +412,7 @@ export default function ProductDetailsPage() {
                         capacity: selectedCapacity,
                         price: selectedPrice,
                         qty: 1,
+                        delivery_charge: Number(product.delivery_charge || 0),
                       })
                       setAddedToCart(true)
                       setIsCartOpen(true)
@@ -437,10 +436,9 @@ export default function ProductDetailsPage() {
                 </div>
 
                 {/* Trust Badges */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-5 border-t border-gray-100">
+                <div className="grid grid-cols-3 gap-2.5 pt-5 border-t border-gray-100">
                   {[
                     { icon: <Shield className="w-4 h-4 text-blue-600" />, text: "5 Year Warranty", sub: "Brand warranty" },
-                    { icon: <Truck className="w-4 h-4 text-emerald-600" />, text: "Free Delivery", sub: "All India" },
                     { icon: <RefreshCw className="w-4 h-4 text-violet-600" />, text: "Easy Returns", sub: "7 day policy" },
                     { icon: <Zap className="w-4 h-4 text-amber-600" />, text: "Fast Install", sub: "Same day" },
                   ].map((badge, i) => (

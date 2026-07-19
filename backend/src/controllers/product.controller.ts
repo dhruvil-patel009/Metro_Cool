@@ -22,6 +22,7 @@ export const createProduct = async (req: Request, res: Response) => {
       specifications,
       features,
       capacityPrices, // <-- NEW
+      deliveryCharge, // <-- delivery charge per product
     } = req.body;
 
     if (!title) {
@@ -84,6 +85,7 @@ export const createProduct = async (req: Request, res: Response) => {
       rating: Number(req.body.rating || 0),
       review_count: Number(req.body.reviewCount || 0),
       old_price: Number(req.body.oldPrice || 0),
+      delivery_charge: Number(deliveryCharge || 0),
       badge,
       badge_color: badgeColor,
       in_stock: inStock === "true",
@@ -258,6 +260,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (req.body.review_count !== undefined) payload.review_count = Number(req.body.review_count);
     if (req.body.old_price !== undefined) payload.old_price = Number(req.body.old_price);
     if (req.body.price !== undefined) payload.price = Number(req.body.price);
+    if (req.body.delivery_charge !== undefined) payload.delivery_charge = Number(req.body.delivery_charge);
 
     // JSON fields
     if (parsedCapacityPrices) payload.capacity_prices = parsedCapacityPrices;

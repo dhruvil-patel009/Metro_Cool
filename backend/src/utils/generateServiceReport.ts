@@ -119,7 +119,8 @@ export const generateServiceReportPDF = async (data: ServiceReportData): Promise
       .text("Metro Cool", doc.page.width - 200, 35, { align: "right", width: 150 })
       .fillColor(C.muted)
       .font("Helvetica")
-      .text("Managed by Comfort HVAC Solutions", doc.page.width - 200, 50, { align: "right", width: 150 })
+      .text("AC Repair & Maintenance", doc.page.width - 200, 50, { align: "right", width: 150 })
+      .text("www.metro-cool.com", doc.page.width - 200, 65, { align: "right", width: 150 })
 
     let y = 120
 

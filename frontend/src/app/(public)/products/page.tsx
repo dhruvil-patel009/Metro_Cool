@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useState, useMemo, useRef } from "react"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
-import { useRoomSize } from "@/app/context/RoomSizeContext"
+import { useRoomSize, extractTon, findClosestCapacity } from "@/app/context/RoomSizeContext"
 import { useAuthStore } from "@/store/auth.store"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
@@ -52,13 +52,22 @@ export default function ProductsPage() {
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = products.filter(p => {
       const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(p.brand)
-      const capacityMatch = !recommendedCapacity || (
-        p.capacity_prices?.some((cp: any) =>
-          cp.capacity?.toLowerCase().includes(recommendedCapacity.toLowerCase().replace(" ton", ""))
-        ) ||
-        p.title?.toLowerCase().includes(recommendedCapacity.toLowerCase().replace(" ", "")) ||
-        p.title?.toLowerCase().includes(recommendedCapacity.toLowerCase())
-      )
+
+      // Nearest-capacity match: find the closest capacity in the product and
+      // check if it's within 0.3 TR of the recommended value
+      let capacityMatch = true
+      if (recommendedCapacity) {
+        const targetNum = extractTon(recommendedCapacity)
+        const productCapacities: string[] = p.capacity_prices?.map((cp: any) => cp.capacity) || []
+        if (productCapacities.length > 0) {
+          const closest = findClosestCapacity(productCapacities, targetNum)
+          capacityMatch = closest !== null && Math.abs(extractTon(closest) - targetNum) <= 0.3
+        } else {
+          // fallback: check title
+          capacityMatch = p.title?.toLowerCase().includes(String(targetNum)) || false
+        }
+      }
+
       const price = Number(p.price) || 0
       const priceMatch = price >= priceRange[0] && price <= priceRange[1]
       return brandMatch && capacityMatch && priceMatch
@@ -103,7 +112,7 @@ export default function ProductsPage() {
     }
     const capacity = product.capacity_prices?.[0]?.capacity || "1.5 Ton"
     const price = product.capacity_prices?.[0]?.price ?? product.price
-    addToCart({ id: product.id, title: product.title, image: product.main_image || "/placeholder.svg", capacity, price: Number(price), qty: 1 })
+    addToCart({ id: product.id, title: product.title, image: product.main_image || "/placeholder.svg", capacity, price: Number(price), qty: 1, delivery_charge: Number(product.delivery_charge || 0) })
     setAddedIds(prev => new Set([...prev, product.id]))
     setTimeout(() => setAddedIds(prev => { const n = new Set(prev); n.delete(product.id); return n }), 2000)
     toast.success(`${product.title} added to cart!`)

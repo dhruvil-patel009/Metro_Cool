@@ -2,6 +2,27 @@ import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
 import { sendOrderNotification } from "../utils/adminNotifications.js"
 
+// ── Ahmedabad serviceable PIN codes ───────────────────────────────────────────
+const AHMEDABAD_PIN_CODES = new Set([
+  "380001", "380002", "380003", "380004", "380005", "380006", "380007",
+  "380008", "380009", "380010", "380013", "380014", "380015", "380016",
+  "380019", "380021", "380022", "380023", "380024", "380025", "380026",
+  "380027", "380028", "380051", "380052", "380053", "380054", "380055",
+  "380058", "380059", "380060", "380061", "380063", "382010", "382110",
+  "382115", "382120", "382130", "382140", "382145", "382150", "382210",
+  "382213", "382220", "382225", "382230", "382240", "382250", "382260",
+  "382305", "382308", "382310", "382315", "382320", "382321", "382325",
+  "382330", "382340", "382345", "382346", "382350", "382355", "382405",
+  "382408", "382415", "382418", "382421", "382422", "382424", "382425",
+  "382426", "382427", "382428", "382430", "382433", "382435", "382440",
+  "382443", "382445", "382449", "382450", "382455", "382460", "382463",
+  "382465", "382470", "382475", "382480", "382481", "382610", "382620",
+  "382630", "382640", "382650", "382721", "382725", "382728", "382730",
+  "382735", "382740", "382745", "382750", "382755", "382760", "382765",
+  "382775", "382810", "382815", "382820", "382825", "382830", "382835",
+  "382840", "382845", "382850", "382855", "382860",
+])
+
 // Safe column list — only columns that definitely exist in orders table
 // If payment_method doesn't exist in your DB, remove it from this list
 const ORDER_COLUMNS = `
@@ -28,6 +49,15 @@ export const createOrder = async (req: Request, res: Response) => {
     if (!items?.length) return res.status(400).json({ error: "Cart is empty" })
     if (!customer_name || !phone || !address?.street || !address?.city || !address?.zip) {
       return res.status(400).json({ error: "Missing required fields" })
+    }
+
+    // Validate Ahmedabad PIN code
+    const pinCode = String(address.zip).trim()
+    if (!AHMEDABAD_PIN_CODES.has(pinCode)) {
+      return res.status(400).json({
+        error: "Sorry, this product is currently not available for delivery in your area.",
+        code: "PIN_NOT_SERVICEABLE",
+      })
     }
 
     // Only insert columns that exist — no apartment, no payment_method

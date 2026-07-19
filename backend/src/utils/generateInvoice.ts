@@ -273,10 +273,13 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       fieldLabel(doc, "From", ML, IR_Y)
       doc.fillColor(C.text).fontSize(10.5).font("Helvetica-Bold")
         .text("Metro Cool", ML, IR_Y + 13, { lineBreak: false })
+      doc.fillColor(C.subtle).fontSize(7.5).font("Helvetica")
+        .text("Powered by Comfort HVAC Solutions", ML, IR_Y + 25, { lineBreak: false })
       doc.fillColor(C.muted).fontSize(8).font("Helvetica")
-        .text("A-401, Suvas Oram, Opp. Hotel Safari,", ML, IR_Y + 27, { lineBreak: false })
-        .text("Odhav Ring Road, Odhav, Ahmedabad 382415", ML, IR_Y + 38, { lineBreak: false })
-        .text("GSTIN: 24AALFC4976A1ZK", ML, IR_Y + 49, { lineBreak: false })
+        .text("A-401, Suvas Oram, Opp. Hotel Safari,", ML, IR_Y + 37, { width: COL_W - 10, lineBreak: false })
+        .text("Odhav Ring Road, Odhav, Ahmedabad 382415", ML, IR_Y + 48, { width: COL_W - 10, lineBreak: false })
+      doc.fillColor(C.text).fontSize(8).font("Helvetica-Bold")
+        .text("GSTIN: 24AALFC4976A1ZK", ML, IR_Y + 59, { lineBreak: false })
 
       /* Vertical separator after col 1 */
       vRule(doc, ML + COL_W, IR_Y, COL_H)
@@ -504,29 +507,37 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
          9. FOOTER
       ════════════════════════════════════════ */
       const FY = FD_Y + 14
+      const LEFT_W = IW * 0.46    // left block max width (~233pt)
+      const FTX    = ML + LEFT_W + 20   // right block starts after gap
+      const FTW    = IW - LEFT_W - 20   // right block width
 
       /* Left — company block */
       doc.fillColor(C.navy).fontSize(10).font("Helvetica-Bold")
         .text("Metro Cool", ML, FY, { lineBreak: false })
+      doc.fillColor(C.subtle).fontSize(7.5).font("Helvetica")
+        .text("Powered by Comfort HVAC Solutions", ML, FY + 13, { lineBreak: false })
       doc.fillColor(C.muted).fontSize(8).font("Helvetica")
-        .text("A-401, Suvas Oram, Opp. Hotel Safari, Odhav Ring Road, Odhav, Ahmedabad 382415", ML, FY + 14, { lineBreak: false })
+        .text("A-401, Suvas Oram, Opp. Hotel Safari,", ML, FY + 25, { width: LEFT_W, lineBreak: false })
       doc.fillColor(C.muted).fontSize(8).font("Helvetica")
-        .text("GSTIN: 24AALFC4976A1ZK  |  support@metro-cool.com  |  www.metro-cool.com", ML, FY + 27, { lineBreak: false })
+        .text("Odhav Ring Road, Odhav, Ahmedabad - 382415", ML, FY + 36, { width: LEFT_W, lineBreak: false })
+      // GSTIN bold
+      doc.fillColor(C.text).fontSize(8).font("Helvetica-Bold")
+        .text("GSTIN: 24AALFC4976A1ZK", ML, FY + 47, { lineBreak: false })
+      doc.fillColor(C.muted).fontSize(8).font("Helvetica")
+        .text("  |  support@metro-cool.com  |  www.metro-cool.com", ML + 118, FY + 47, { lineBreak: false })
 
-      /* Right — terms */
-      const FTX = ML + IW * 0.44
-      const FTW = IW * 0.56
+      /* Right — terms (starts clearly after left block) */
       doc.fillColor(C.muted).fontSize(8).font("Helvetica")
         .text(
           "- Computer-generated invoice, no signature required.\n" +
           "- Disputes: email support@metro-cool.com within 7 days.\n",
-          FTX, FY, { width: FTW, lineGap: 3.5 }
+          FTX, FY, { width: FTW, lineGap: 4 }
         )
 
       /* ════════════════════════════════════════
          10. GENERATED-ON LINE
       ════════════════════════════════════════ */
-      const GY = FY + 52
+      const GY = FY + 72
       hRule(doc, ML, GY, IW, C.line, 0.5)
       doc.fillColor(C.subtle).fontSize(7).font("Helvetica")
         .text(
