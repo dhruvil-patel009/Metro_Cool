@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CheckCircle2, ArrowRight, Phone } from "lucide-react"
+import { CheckCircle2, ArrowRight, Wind } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { heroSlides } from "../lib/data"
 import Link from "next/link"
@@ -118,10 +118,10 @@ export function HeroSection() {
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
-            <Link href="/contact">
-              <button className="bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20 flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center">
-                <Phone className="w-4 h-4" />
-                Contact Us
+            <Link href="/products">
+              <button className="group bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20 flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center">
+                <Wind className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                Book an AC
               </button>
             </Link>
           </div>

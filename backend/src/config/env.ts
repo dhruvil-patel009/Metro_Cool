@@ -23,7 +23,7 @@ export const env = {
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET!,
   RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET!,
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
-  ADMIN_EMAIL: process.env.ADMIN_EMAIL || "metrocool.official@gmail.com",
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL || "support@metro-cool.com",
   SETTLEMENT_EMAIL: process.env.SETTLEMENT_EMAIL || "",
   /** Cron expression for settlement email (default: 8:00 PM daily = "0 20 * * *") */
   SETTLEMENT_CRON_TIME: process.env.SETTLEMENT_CRON_TIME || "0 20 * * *",

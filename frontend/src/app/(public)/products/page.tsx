@@ -2,7 +2,7 @@
 
 import { ShoppingCart, Star, Check, SlidersHorizontal, X, ChevronRight, Zap, ArrowUpDown } from "lucide-react"
 import Link from "next/link"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
 import { useRoomSize } from "@/app/context/RoomSizeContext"
@@ -37,6 +37,11 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState<SortOption>("relevance")
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000])
   const [showSortDropdown, setShowSortDropdown] = useState(false)
+  const sortButtonRef = useRef<HTMLButtonElement>(null)
+
+  const openSortDropdown = () => {
+    setShowSortDropdown(prev => !prev)
+  }
 
   const toggleBrand = (brand: string) =>
     setSelectedBrands(prev =>
@@ -236,7 +241,8 @@ export default function ProductsPage() {
             {/* Sort Dropdown */}
             <div className="relative">
               <button
-                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                ref={sortButtonRef}
+                onClick={openSortDropdown}
                 className="flex items-center gap-2 px-3.5 py-2.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
               >
                 <ArrowUpDown className="w-3.5 h-3.5" />
@@ -244,26 +250,34 @@ export default function ProductsPage() {
                 <span className="sm:hidden">Sort</span>
               </button>
 
-              {showSortDropdown && (
-                <>
-                  <div className="fixed inset-0 z-30" onClick={() => setShowSortDropdown(false)} />
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-40 py-1 overflow-hidden">
-                    {(Object.keys(sortLabels) as SortOption[]).map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => { setSortBy(option); setShowSortDropdown(false) }}
-                        className={`w-full text-left px-4 py-2.5 text-xs font-medium transition-colors ${
-                          sortBy === option
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-600 hover:bg-gray-50"
-                        }`}
-                      >
-                        {sortLabels[option]}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+              {showSortDropdown && (() => {
+                const rect = sortButtonRef.current?.getBoundingClientRect()
+                const top = rect ? rect.bottom + window.scrollY + 4 : 0
+                const left = rect ? Math.min(rect.left, window.innerWidth - 192 - 8) : 0
+                return (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setShowSortDropdown(false)} />
+                    <div
+                      className="fixed w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-40 py-1 overflow-hidden"
+                      style={{ top: `${top}px`, left: `${left}px` }}
+                    >
+                      {(Object.keys(sortLabels) as SortOption[]).map((option) => (
+                        <button
+                          key={option}
+                          onClick={() => { setSortBy(option); setShowSortDropdown(false) }}
+                          className={`w-full text-left px-4 py-2.5 text-xs font-medium transition-colors ${
+                            sortBy === option
+                              ? "bg-blue-50 text-blue-600"
+                              : "text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          {sortLabels[option]}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )
+              })()}
             </div>
 
             {/* Mobile Filter Button */}
