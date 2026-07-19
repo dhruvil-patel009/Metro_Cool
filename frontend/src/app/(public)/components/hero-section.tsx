@@ -121,7 +121,7 @@ export function HeroSection() {
             <Link href="/products">
               <button className="group bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20 flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center">
                 <Wind className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                Book an AC
+                Buy AC
               </button>
             </Link>
           </div>
