@@ -4,43 +4,10 @@ import { sendBookingNotification } from "../utils/adminNotifications.js"
 
 
 export const getBookedDates = async (req: Request, res: Response) => {
-  const { serviceId, month } = req.query
-  // month = "2026-01"
-
-  if (!serviceId || !month) {
-    return res.status(400).json({ message: "Missing parameters" })
-  }
-
-  const startDate = `${month}-01`
-  const endDate = new Date(startDate)
-  endDate.setMonth(endDate.getMonth() + 1)
-
-  const endDateStr = endDate.toISOString().split("T")[0]
-
-  // Only block dates that have a CONFIRMED booking — drafts are in-progress
-  // and should not block dates for other users or for re-booking after cancellation
-  const { data, error } = await supabase
-    .from("bookings")
-    .select("booking_date")
-    .eq("service_id", serviceId)
-    .eq("status", "confirmed")
-    .in("job_status", ["open", "assigned", "on_the_way", "working", "report_submitted"])
-    .gte("booking_date", startDate)
-    .lt("booking_date", endDateStr)
-
-  if (error) {
-    return res.status(500).json({ message: error.message })
-  }
-
-  const dates = data.map(d =>
-    new Date(d.booking_date).toISOString().split("T")[0]
-  )
-
+  // Dates are no longer blocked — multiple bookings of the same service
+  // on the same date are allowed. Return an empty array always.
   res.setHeader("Cache-Control", "no-store")
-  return res.json({
-    success: true,
-    dates,
-  })
+  return res.json({ success: true, dates: [] })
 }
 
 export const getAllBookings = async (req: any, res: Response) => {
@@ -118,6 +85,7 @@ export const createBooking = async (req: any, res: Response) => {
     }
 
     // ✅ Check for existing draft booking (same user + service + date)
+    // Return it instead of creating a duplicate draft
     const { data: existingDraft } = await supabase
       .from("bookings")
       .select("*")
@@ -128,23 +96,11 @@ export const createBooking = async (req: any, res: Response) => {
       .maybeSingle()
 
     if (existingDraft) {
-      // Return existing draft instead of failing on unique constraint
       return res.status(201).json({ success: true, booking: existingDraft })
     }
 
-    // ✅ Block if there's already a confirmed + active booking on this date for this service
-    const { data: existingConfirmed } = await supabase
-      .from("bookings")
-      .select("id")
-      .eq("service_id", serviceId)
-      .eq("booking_date", bookingDate)
-      .eq("status", "confirmed")
-      .in("job_status", ["open", "assigned", "on_the_way", "working", "report_submitted"])
-      .maybeSingle()
-
-    if (existingConfirmed) {
-      return res.status(400).json({ message: "This date is already booked. Please choose another date." })
-    }
+    // No date-level capacity restriction — multiple bookings of the same
+    // service on the same date are allowed.
 
     // ✅ Clean up any stale draft bookings for this user + service (any date)
     await supabase
