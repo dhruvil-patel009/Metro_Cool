@@ -542,7 +542,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                       className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors"
                     >
                       <Phone className="w-3.5 h-3.5" />
-                      +91 982 489 7099
+                      +91 91063 85649
                     </a>
                   </div>
                 </div>
