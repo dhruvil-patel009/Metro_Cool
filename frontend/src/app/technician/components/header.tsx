@@ -12,6 +12,7 @@ const routeLabels: Record<string, string> = {
   "/technician":               "Dashboard",
   "/technician/schedule":      "Schedule",
   "/technician/jobs":          "Jobs",
+  "/technician/notifications": "Notifications",
   "/technician/service-reports": "Service Reports",
   "/technician/earnings":      "Earnings",
   "/technician/profile":       "Profile",

@@ -1,7 +1,7 @@
 import webpush from "web-push"
 
 webpush.setVapidDetails(
-  "mailto:support@metro-cool.com",
+  "mailto:metrocool.official@gmail.com",
   process.env.VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!
 )

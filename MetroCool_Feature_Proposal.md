@@ -70,7 +70,7 @@ User clicks Delete → Modal appears → User clicks "Cancel" → Modal closes (
 
 ## 2. Email Notifications for Orders & Bookings
 
-**Recipient:** support@metro-cool.com
+**Recipient:** metrocool.official@gmail.com
 
 ### Description
 Automatic email notifications will be sent to the admin whenever a customer books a service or purchases a product.

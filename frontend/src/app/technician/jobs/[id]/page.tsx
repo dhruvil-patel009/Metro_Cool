@@ -241,9 +241,9 @@ export default function JobDetailsPage() {
 
           {/* When report submitted but OTP not verified — show resume button */}
           {(jobStatus === "report_submitted" || jobStatus === "completed") && (
-            <Link href={`/technician/jobs/${booking.id}/reports`}>
+            <Link href={`/technician/jobs/${booking.id}/reports`} className="w-full lg:w-auto">
               <Button
-                className="w-full lg:w-auto cursor-pointer bg-orange-500 hover:bg-orange-600 text-white font-black text-lg px-8 py-6 rounded-2xl shadow-lg flex items-center justify-center gap-3"
+                className="w-full lg:w-auto cursor-pointer bg-orange-500 hover:bg-orange-600 text-white font-black text-lg px-8 py-6 rounded-2xl shadow-lg flex items-center justify-center gap-3 text-xs sm:text-sm"
               >
                 <ClipboardCheck className="w-6 h-6" />
                 COMPLETE OTP VERIFICATION

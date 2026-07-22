@@ -335,7 +335,7 @@ export const generateServiceReportPDF = async (data: ServiceReportData): Promise
       .font("Helvetica")
       .fillColor(C.subtle)
       .text("This is a digitally generated service completion report by Metro Cool.", 50, y, { align: "center", width: pageWidth })
-      .text("For queries, contact support@metro-cool.com", 50, y + 12, { align: "center", width: pageWidth })
+      .text("For queries, contact metrocool.official@gmail.com", 50, y + 12, { align: "center", width: pageWidth })
 
     doc.end()
 

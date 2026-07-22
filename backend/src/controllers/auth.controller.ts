@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { supabase } from "../utils/supabase.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { transporter } from "../utils/mailer.js";
+import { transporter, MAIL_FROM } from "../utils/mailer.js";
 
 
 export const register = async (req: Request, res: Response) => {
@@ -357,7 +357,7 @@ export const forgotMpin = async (req: Request, res: Response) => {
 
   const { data: user } = await supabase
     .from("profiles")
-    .select("id,email")
+    .select("id,email,first_name")
     .eq("email", email.toLowerCase().trim())
     .single();
 
@@ -369,78 +369,105 @@ export const forgotMpin = async (req: Request, res: Response) => {
     { expiresIn: "15m" }
   );
 
-const resetLink = `${process.env.FRONTEND_URL}/auth/reset-mpin/${resetToken}`;
+  const resetLink = `${process.env.FRONTEND_URL}/auth/reset-mpin/${resetToken}`;
+  const firstName = user.first_name || "there";
+  const year = new Date().getFullYear();
 
-const LOGO = "https://nlimsceezdxwkykpzlbv.supabase.co/storage/v1/object/public/images/logo.ico";
+  await transporter.sendMail({
+    from: MAIL_FROM,
+    to: email,
+    replyTo: process.env.MAIL_USER,
+    subject: "Reset your MPIN – AC Marketplace",
+    headers: {
+      "X-Priority": "1",
+      "X-MSMail-Priority": "High",
+      "Importance": "high",
+    },
+    // Plain-text fallback — critical for spam scoring
+    text: `Hi ${firstName},
 
-await transporter.sendMail({
-  to: email,
-  subject: "Reset your MPIN • AC Marketplace",
-  html: `
-<!DOCTYPE html>
-<html>
+We received a request to reset the MPIN for your AC Marketplace account.
+
+Click the link below to reset your MPIN (valid for 15 minutes):
+${resetLink}
+
+If you did not request this, please ignore this email. Your account remains secure.
+
+Thanks,
+The AC Marketplace Team`,
+
+    html: `<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Reset MPIN</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Your MPIN</title>
 </head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
 
-<body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
-
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8;padding:30px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 16px;">
     <tr>
       <td align="center">
 
-        <!-- CARD -->
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+        <!-- MAIN CARD -->
+        <table role="presentation" width="100%" style="max-width:560px;" cellpadding="0" cellspacing="0">
 
-          <!-- HEADER -->
+          <!-- BRAND HEADER -->
           <tr>
-            <td style="background:#0f172a;padding:24px;text-align:center;">
-              <img src="${LOGO}" alt="AC Marketplace" width="140" style="display:block;margin:auto;" />
+            <td style="background-color:#0f172a;border-radius:12px 12px 0 0;padding:24px 32px;text-align:center;">
+              <p style="margin:0;color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.5px;">
+                🔵 AC Marketplace
+              </p>
             </td>
           </tr>
 
-          <!-- CONTENT -->
+          <!-- BODY -->
           <tr>
-            <td style="padding:32px;">
+            <td style="background-color:#ffffff;padding:36px 32px;border-radius:0 0 12px 12px;">
 
-              <h2 style="margin:0;color:#111827;">Reset your MPIN 🔐</h2>
-
-              <p style="color:#4b5563;font-size:15px;line-height:24px;margin-top:12px;">
-                We received a request to reset the MPIN for your <b>AC Marketplace</b> account.
-                Click the button below to set a new MPIN.
-              </p>
-
-              <!-- BUTTON -->
-              <div style="text-align:center;margin:32px 0;">
-                <a href="${resetLink}"
-                   style="background:#2563eb;color:#ffffff;text-decoration:none;
-                          padding:14px 28px;border-radius:8px;
-                          font-weight:bold;font-size:16px;
-                          display:inline-block;">
-                  Reset MPIN
-                </a>
+              <!-- Icon -->
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="display:inline-block;background-color:#eff6ff;border-radius:50%;width:64px;height:64px;line-height:64px;text-align:center;font-size:28px;">
+                  🔐
+                </div>
               </div>
 
-              <!-- EXPIRY -->
-              <p style="color:#6b7280;font-size:14px;">
-                ⏳ This link will expire in <b>15 minutes</b> for security reasons.
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:bold;color:#111827;text-align:center;">
+                Reset your MPIN
+              </h1>
+
+              <p style="margin:0 0 24px;font-size:15px;color:#6b7280;text-align:center;line-height:1.6;">
+                Hi <strong style="color:#111827;">${firstName}</strong>, we received a request to reset the MPIN
+                for your AC Marketplace account. This link is valid for <strong>15 minutes</strong>.
               </p>
 
-              <!-- SECURITY WARNING -->
-              <p style="color:#6b7280;font-size:14px;line-height:22px;">
-                If you did not request this, please ignore this email.
-                Your account remains safe and no changes were made.
+              <!-- CTA BUTTON -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding:8px 0 28px;">
+                    <a href="${resetLink}"
+                       style="display:inline-block;background-color:#2563eb;color:#ffffff;
+                              text-decoration:none;font-size:16px;font-weight:bold;
+                              padding:14px 36px;border-radius:8px;letter-spacing:0.3px;">
+                      Reset My MPIN
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- DIVIDER -->
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 24px;" />
+
+              <!-- SECURITY NOTE -->
+              <p style="margin:0 0 16px;font-size:13px;color:#6b7280;line-height:1.6;">
+                🔒 <strong>Didn't request this?</strong> You can safely ignore this email.
+                Your account has not been changed.
               </p>
 
-              <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;" />
-
-              <!-- FALLBACK LINK -->
-              <p style="color:#9ca3af;font-size:12px;word-break:break-all;">
-                If the button doesn't work, copy and paste this link into your browser:
-                <br/><br/>
-                <a href="${resetLink}" style="color:#2563eb;">${resetLink}</a>
+              <!-- FALLBACK URL -->
+              <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">
+                If the button doesn't work, paste this URL into your browser:<br />
+                <a href="${resetLink}" style="color:#2563eb;word-break:break-all;">${resetLink}</a>
               </p>
 
             </td>
@@ -448,22 +475,22 @@ await transporter.sendMail({
 
           <!-- FOOTER -->
           <tr>
-            <td style="background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;">
-              © ${new Date().getFullYear()} AC Marketplace <br/>
-              Ahmedabad, India 🇮🇳
+            <td style="padding:20px 0;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#9ca3af;">
+                © ${year} AC Marketplace · Ahmedabad, India<br />
+                This is an automated message — please do not reply directly.
+              </p>
             </td>
           </tr>
 
         </table>
-
       </td>
     </tr>
   </table>
 
 </body>
-</html>
-`,
-});
+</html>`,
+  });
 
   res.json({ message: "Reset link sent to email" });
 };

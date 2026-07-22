@@ -90,20 +90,22 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-400">
                 <Mail className="w-4 h-4 text-blue-400 shrink-0" />
-                <span>support@metro-cool.com</span>
+                <span>metrocool.official@gmail.com</span>
               </div>
             </div>
 
             {/* Social */}
             <div className="flex gap-3">
               {[
-                { icon: <Facebook className="w-4 h-4" />, href: "#" },
-                { icon: <Twitter className="w-4 h-4" />, href: "#" },
-                { icon: <Instagram className="w-4 h-4" />, href: "#" },
+                { icon: <Facebook className="w-4 h-4" />, href: "#", external: false },
+                { icon: <Twitter className="w-4 h-4" />, href: "#", external: false },
+                { icon: <Instagram className="w-4 h-4" />, href: "https://www.instagram.com/metrocool.official?igsh=YjE0bmEzY3IwaG56", external: true },
               ].map((social, i) => (
                 <Link
                   key={i}
                   href={social.href}
+                  target={social.external ? "_blank" : undefined}
+                  rel={social.external ? "noopener noreferrer" : undefined}
                   className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-200"
                 >
                   {social.icon}

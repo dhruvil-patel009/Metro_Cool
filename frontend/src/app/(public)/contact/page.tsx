@@ -81,8 +81,8 @@ export default function ContactPage() {
           <a href="tel:+919106385649" className="flex items-center gap-2 hover:text-blue-100 transition-colors">
             <Phone className="w-4 h-4" /> +91 91063 85649
           </a>
-          <a href="mailto:support@metro-cool.com" className="flex items-center gap-2 hover:text-blue-100 transition-colors">
-            <Mail className="w-4 h-4" /> support@metro-cool.com
+          <a href="mailto:metrocool.official@gmail.com" className="flex items-center gap-2 hover:text-blue-100 transition-colors">
+            <Mail className="w-4 h-4" /> metrocool.official@gmail.com
           </a>
         </div>
       </div>
@@ -196,8 +196,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Email</p>
-                    <a href="mailto:support@metro-cool.com" className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors break-all">
-                      support@metro-cool.com
+                    <a href="mailto:metrocool.official@gmail.com" className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors break-all">
+                      metrocool.official@gmail.com
                     </a>
                     <p className="text-xs text-gray-400 mt-0.5">Online support 24/7</p>
                   </div>

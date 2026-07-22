@@ -229,7 +229,7 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       doc.fillColor(C.muted).fontSize(9).font("Helvetica")
         .text("AC Repair & Maintenance Services", TX, LY + 25, { lineBreak: false })
       doc.fillColor(C.subtle).fontSize(7.5).font("Helvetica")
-        .text("www.metro-cool.com  |  support@metro-cool.com", TX, LY + 39, { lineBreak: false })
+        .text("www.metro-cool.com  |  metrocool.official@gmail.com", TX, LY + 39, { lineBreak: false })
 
       /* -- Right side: INVOICE title -- */
       // "INVOICE" text — right edge
@@ -524,13 +524,13 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       doc.fillColor(C.text).fontSize(8).font("Helvetica-Bold")
         .text("GSTIN: 24AALFC4976A1ZK", ML, FY + 47, { lineBreak: false })
       doc.fillColor(C.muted).fontSize(8).font("Helvetica")
-        .text("  |  support@metro-cool.com  |  www.metro-cool.com", ML + 118, FY + 47, { lineBreak: false })
+        .text("  |  metrocool.official@gmail.com  |  www.metro-cool.com", ML + 118, FY + 47, { lineBreak: false })
 
       /* Right — terms (starts clearly after left block) */
       doc.fillColor(C.muted).fontSize(8).font("Helvetica")
         .text(
           "- Computer-generated invoice, no signature required.\n" +
-          "- Disputes: email support@metro-cool.com within 7 days.\n",
+          "- Disputes: email metrocool.official@gmail.com within 7 days.\n",
           FTX, FY, { width: FTW, lineGap: 4 }
         )
 
@@ -541,7 +541,7 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       hRule(doc, ML, GY, IW, C.line, 0.5)
       doc.fillColor(C.subtle).fontSize(7).font("Helvetica")
         .text(
-          "Metro Cool Services  |  AC Repair & Maintenance  |  support@metro-cool.com  |  www.metro-cool.com",
+          "Metro Cool Services  |  AC Repair & Maintenance  |  metrocool.official@gmail.com  |  www.metro-cool.com",
           ML, GY + 8, { width: IW, align: "center", lineBreak: false }
         )
         .text(
