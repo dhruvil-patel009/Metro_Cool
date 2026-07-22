@@ -593,7 +593,7 @@ export default function CompletionContent() {
                       if (paymentMethod === "cash") handleCashPayment()
                     }}
                     disabled={!paymentMethod || paying}
-                    className={`w-full py-4 rounded-xl font-bold text-white text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                    className={`w-full mt-4 py-4 rounded-xl font-bold text-white text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                       !paymentMethod || paying
                         ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg active:scale-[0.98]"
