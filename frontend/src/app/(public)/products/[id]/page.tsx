@@ -14,7 +14,6 @@ import {
   Thermometer,
   ChevronDown,
   Zap,
-  RefreshCw,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -436,10 +435,9 @@ export default function ProductDetailsPage() {
                 </div>
 
                 {/* Trust Badges */}
-                <div className="grid grid-cols-3 gap-2.5 pt-5 border-t border-gray-100">
+                <div className="grid grid-cols-2 gap-2.5 pt-5 border-t border-gray-100">
                   {[
                     { icon: <Shield className="w-4 h-4 text-blue-600" />, text: "5 Year Warranty", sub: "Brand warranty" },
-                    { icon: <RefreshCw className="w-4 h-4 text-violet-600" />, text: "Easy Returns", sub: "7 day policy" },
                     { icon: <Zap className="w-4 h-4 text-amber-600" />, text: "Fast Install", sub: "Same day" },
                   ].map((badge, i) => (
                     <div key={i} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gray-50/80 border border-gray-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all">
