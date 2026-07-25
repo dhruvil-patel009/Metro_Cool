@@ -670,9 +670,9 @@ export default function ProductDetailsPage() {
         )}
 
         {/* ═══ BROCHURE ═══ */}
-        {product.catalog_pdf && (
+        {/* {product.catalog_pdf && (
           <BrochureViewer pdfUrl={product.catalog_pdf} />
-        )}
+        )} */}
       </main>
 
       {/* ═══ CART DRAWER ═══ */}
