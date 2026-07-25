@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react"
 import { CheckCircle2, ArrowRight, Wind } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 import { heroSlides } from "../lib/data"
 import Link from "next/link"
 
 export function HeroSection() {
   const [current, setCurrent] = useState(0)
+  const [animKey, setAnimKey] = useState(0)
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % heroSlides.length)
+      setAnimKey((k) => k + 1)
     }, 5000)
     return () => clearInterval(interval)
   }, [])
@@ -23,24 +24,14 @@ export function HeroSection() {
     "@type": "LocalBusiness",
     name: "Metro Cool",
     url: "https://www.metrocool.com",
-    description:
-      "Professional AC repair, installation and energy-efficient air conditioning services.",
-    areaServed: {
-      "@type": "Country",
-      name: "India",
-    },
+    description: "Professional AC repair, installation and energy-efficient air conditioning services.",
+    areaServed: { "@type": "Country", name: "India" },
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: "Air Conditioning Services",
       itemListElement: [
-        {
-          "@type": "Offer",
-          itemOffered: { "@type": "Service", name: "AC Repair" },
-        },
-        {
-          "@type": "Offer",
-          itemOffered: { "@type": "Service", name: "AC Installation" },
-        },
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "AC Repair" } },
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "AC Installation" } },
       ],
     },
   }
@@ -52,6 +43,16 @@ export function HeroSection() {
       itemScope
       itemType="https://schema.org/LocalBusiness"
     >
+      <style>{`
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .hero-content-enter {
+          animation: fadeSlideUp 0.6s ease-out forwards;
+        }
+      `}</style>
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(heroSchema) }}
@@ -78,37 +79,29 @@ export function HeroSection() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full py-20">
         <div className="max-w-3xl">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.6, ease: "easeOut" as const }}
-            >
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold mb-6">
-                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                  <CheckCircle2 className="text-white w-3 h-3" />
-                </div>
-                {slide.badge}
+          <div key={animKey} className="hero-content-enter">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold mb-6">
+              <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                <CheckCircle2 className="text-white w-3 h-3" />
               </div>
+              {slide.badge}
+            </div>
 
-              {/* Heading */}
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-[1.1] mb-6 text-white tracking-tight">
-                {slide.title}
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                  {slide.highlight}
-                </span>
-              </h1>
+            {/* Heading */}
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-[1.1] mb-6 text-white tracking-tight">
+              {slide.title}
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                {slide.highlight}
+              </span>
+            </h1>
 
-              {/* Description */}
-              <p className="text-base sm:text-lg lg:text-xl text-gray-300 leading-relaxed mb-10 max-w-xl">
-                {slide.desc}
-              </p>
-            </motion.div>
-          </AnimatePresence>
+            {/* Description */}
+            <p className="text-base sm:text-lg lg:text-xl text-gray-300 leading-relaxed mb-10 max-w-xl">
+              {slide.desc}
+            </p>
+          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
@@ -147,7 +140,7 @@ export function HeroSection() {
         {heroSlides.map((_, i) => (
           <button
             key={i}
-            onClick={() => setCurrent(i)}
+            onClick={() => { setCurrent(i); setAnimKey((k) => k + 1) }}
             aria-label={`Go to slide ${i + 1}`}
             className={`h-2 rounded-full transition-all duration-500 cursor-pointer ${
               current === i ? "bg-blue-500 w-8" : "bg-white/40 w-2 hover:bg-white/60"

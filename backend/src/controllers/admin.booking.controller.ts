@@ -1,5 +1,33 @@
 import { Request, Response } from "express"
+import fs from "fs"
+import path from "path"
+import { fileURLToPath } from "url"
 import { supabase } from "../utils/supabase.js"
+import { sendPush } from "../utils/push.js"
+import { transporter } from "../utils/mailer.js"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const templatesDir = path.resolve(__dirname, "../../templates")
+
+/* ── Load + fill an email template ── */
+function fillTemplate(fileName: string, vars: Record<string, string>): string {
+  const filePath = path.join(templatesDir, fileName)
+  let html = fs.readFileSync(filePath, "utf-8")
+  for (const [k, v] of Object.entries(vars)) {
+    html = html.replaceAll(`{{${k}}}`, v)
+  }
+  return html
+}
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
+  return new Date(dateStr).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
+}
+
+function formatCurrency(amount: number): string {
+  return `\u20B9${Number(amount).toLocaleString("en-IN")}`
+}
 
 /* ======================================================
    📊 GET WEEKLY BOOKING STATS (Chart data)
@@ -402,7 +430,8 @@ export const getAdminBookings = async (req: Request, res: Response) => {
 
 /* ======================================================
    🔄 REASSIGN TECHNICIAN (Admin)
-   Reassigns a booking to a different technician
+   Reassigns a booking to a different technician,
+   then sends a push notification + email to the new technician.
    ====================================================== */
 export const reassignTechnician = async (req: Request, res: Response) => {
   try {
@@ -413,10 +442,10 @@ export const reassignTechnician = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "technician_id is required" })
     }
 
-    // Verify booking exists and is reassignable
+    // ── 1. Verify booking exists and is reassignable ──
     const { data: existing, error: fetchError } = await supabase
       .from("bookings")
-      .select("id, job_status, technician_id")
+      .select("id, job_status, technician_id, booking_date, time_slot, full_name, phone, address, total_amount, service_id, booking_ref")
       .eq("id", id)
       .maybeSingle()
 
@@ -432,10 +461,10 @@ export const reassignTechnician = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Cannot reassign a cancelled booking" })
     }
 
-    // Verify technician exists
+    // ── 2. Verify technician exists and fetch their profile + email ──
     const { data: tech, error: techError } = await supabase
       .from("profiles")
-      .select("id, first_name, last_name")
+      .select("id, first_name, last_name, email, phone")
       .eq("id", technician_id)
       .eq("role", "technician")
       .maybeSingle()
@@ -444,27 +473,104 @@ export const reassignTechnician = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Technician not found" })
     }
 
-    // Reassign — reset status to "assigned" so technician sees fresh job
-    const { data, error } = await supabase
+    // ── 3. Fetch service name ──
+    let serviceName = "AC Service"
+    if (existing.service_id) {
+      const { data: svc } = await supabase
+        .from("services")
+        .select("title")
+        .eq("id", existing.service_id)
+        .maybeSingle()
+      if (svc?.title) serviceName = svc.title
+    }
+
+    // ── 4. Do the reassignment ──
+    const { data: booking, error: updateError } = await supabase
       .from("bookings")
       .update({
         technician_id,
         job_status: "assigned",
-        updated_at: new Date().toISOString(),
       })
       .eq("id", id)
       .select()
       .single()
 
-    if (error) throw error
+    if (updateError) {
+      console.error("Supabase reassign error:", JSON.stringify(updateError))
+      throw updateError
+    }
 
+    // ── 5. Respond immediately — notifications are fire-and-forget ──
     res.json({
       success: true,
       message: `Booking reassigned to ${tech.first_name} ${tech.last_name}`,
-      booking: data,
+      booking,
     })
-  } catch (err) {
-    console.error("Reassign technician error:", err)
-    res.status(500).json({ error: "Failed to reassign technician" })
+
+    // ── 6. Send push notification to the new technician ──
+    const bookingRef = existing.booking_ref || `#${id.slice(0, 8).toUpperCase()}`
+
+    try {
+      const { data: pushRow } = await supabase
+        .from("push_subscriptions")
+        .select("endpoint, p256dh, auth")
+        .eq("user_id", technician_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (pushRow?.endpoint) {
+        // Reconstruct the web-push subscription object from stored columns
+        const subscription = {
+          endpoint: pushRow.endpoint,
+          keys: { p256dh: pushRow.p256dh, auth: pushRow.auth },
+        }
+
+        await sendPush(subscription, {
+          title: "New Job Assigned 🔧",
+          body: `${serviceName} on ${formatDate(existing.booking_date)} · ${existing.time_slot || "TBD"}`,
+          url: "https://www.metro-cool.com/technician/jobs",
+          bookingRef,
+        })
+        console.log(`[reassign] Push sent to technician ${technician_id} ✅`)
+      } else {
+        console.log(`[reassign] No push subscription for technician ${technician_id} — skipping push`)
+      }
+    } catch (pushErr) {
+      console.error("[reassign] Push notification failed (non-fatal):", pushErr)
+    }
+
+    // ── 7. Send email to the new technician ──
+    if (tech.email) {
+      try {
+        const html = fillTemplate("technician-reassigned.html", {
+          techName: `${tech.first_name} ${tech.last_name}`.trim(),
+          bookingRef,
+          serviceName,
+          bookingDate: formatDate(existing.booking_date),
+          timeSlot: existing.time_slot || "To be confirmed",
+          customerAddress: existing.address || "See app for details",
+          customerName: existing.full_name || "Customer",
+          customerPhone: existing.phone || "N/A",
+          totalAmount: formatCurrency(Number(existing.total_amount || 0)),
+        })
+
+        await transporter.sendMail({
+          from: `"Metro Cool" <${process.env.MAIL_USER}>`,
+          to: tech.email,
+          subject: `[JOB] New Assignment — ${serviceName} on ${formatDate(existing.booking_date)} | Metro Cool`,
+          html,
+        })
+        console.log(`[reassign] Email sent to technician ${tech.email} ✅`)
+      } catch (mailErr) {
+        console.error("[reassign] Email failed (non-fatal):", mailErr)
+      }
+    } else {
+      console.log(`[reassign] Technician has no email — skipping email`)
+    }
+
+  } catch (err: any) {
+    console.error("Reassign technician error:", err?.message ?? err)
+    res.status(500).json({ error: err?.message || "Failed to reassign technician" })
   }
 }

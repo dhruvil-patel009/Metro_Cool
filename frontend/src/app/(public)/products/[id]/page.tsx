@@ -9,7 +9,6 @@ import {
   X,
   Plus,
   Minus,
-  Download,
   Home,
   Thermometer,
   ChevronDown,
@@ -20,11 +19,17 @@ import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { Worker, Viewer } from "@react-pdf-viewer/core"
-import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout"
+import dynamic from "next/dynamic"
 
-import "@react-pdf-viewer/core/lib/styles/index.css"
-import "@react-pdf-viewer/default-layout/lib/styles/index.css"
+// Lazy-load the heavy PDF viewer — avoids bundling pdfjs-dist on every page load
+const BrochureViewer = dynamic(() => import("./components/BrochureViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="mt-6 sm:mt-8 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 text-center text-sm text-gray-400">
+      Loading brochure...
+    </div>
+  ),
+})
 import { useRouter } from "next/navigation"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
@@ -48,10 +53,6 @@ export default function ProductDetailsPage() {
   const [showCartWarning, setShowCartWarning] = useState(false)
   const [showRoomPicker, setShowRoomPicker] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
-
-  const brochureLayoutPlugin = defaultLayoutPlugin({
-    sidebarTabs: (defaultTabs) => [defaultTabs[0]],
-  })
 
   const { cart, addToCart, removeFromCart, updateQty, total } = useCart()
   const { recommendedCapacity, selectedRoom, setSelectedRoom, clearSelection } = useRoomSize()
@@ -670,22 +671,7 @@ export default function ProductDetailsPage() {
 
         {/* ═══ BROCHURE ═══ */}
         {product.catalog_pdf && (
-          <div className="mt-6 sm:mt-8 rounded-2xl sm:rounded-3xl border border-gray-100 bg-white shadow-sm p-4 sm:p-6 lg:p-8">
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <h3 className="text-lg font-bold text-gray-900">Official Product Brochure</h3>
-              <a href={product.catalog_pdf} download
-                className="flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-100 px-4 py-2 font-semibold text-xs text-blue-600 transition hover:bg-blue-100">
-                <Download className="h-3.5 w-3.5" /> Download
-              </a>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-              <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
-                <div className="h-[300px] sm:h-[400px] lg:h-[520px]">
-                  <Viewer fileUrl={product.catalog_pdf} plugins={[brochureLayoutPlugin]} />
-                </div>
-              </Worker>
-            </div>
-          </div>
+          <BrochureViewer pdfUrl={product.catalog_pdf} />
         )}
       </main>
 
