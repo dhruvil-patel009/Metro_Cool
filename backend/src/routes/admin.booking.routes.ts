@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { getAllBookings, getAdminBookings, getBookingStats, getWeeklyBookingStats, getWeeklyRevenueStats, cancelBooking } from "../controllers/admin.booking.controller.js"
+import { getAllBookings, getAdminBookings, getBookingStats, getWeeklyBookingStats, getWeeklyRevenueStats, cancelBooking, reassignTechnician } from "../controllers/admin.booking.controller.js"
 import { protect } from "../middlewares/auth.middleware.js"
 import { authorize } from "../middlewares/role.middleware.js"
 
@@ -10,5 +10,6 @@ router.get("/bookings/weekly-stats", protect, authorize("admin"), getWeeklyBooki
 router.get("/bookings/weekly-revenue", protect, authorize("admin"), getWeeklyRevenueStats)
 router.get("/bookings", protect, authorize("admin"), getAdminBookings)
 router.put("/bookings/:id/cancel", protect, authorize("admin"), cancelBooking)
+router.put("/bookings/:id/reassign", protect, authorize("admin"), reassignTechnician)
 
 export default router

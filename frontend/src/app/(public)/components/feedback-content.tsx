@@ -57,7 +57,7 @@ export default function FeedbackContent() {
     year: "numeric",
   })
 
-  const orderId = `#${booking.id.slice(0, 8)}`
+  const orderId = booking.booking_ref || `#${booking.id.slice(0, 8).toUpperCase()}`
 
   /* ---------------- TAGS ---------------- */
   const tags = [

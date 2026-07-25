@@ -14,12 +14,13 @@ import {
   Car,
   User,
   ClipboardCheck,
+  XCircle,
 } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { WorkingView } from "../../components/working-view"
 
 type Address = {
@@ -31,6 +32,7 @@ type Address = {
 
 type Booking = {
   id: string
+  booking_ref?: string
   booking_date: string
   time_slot: string
   issues?: string[]
@@ -46,11 +48,17 @@ type Booking = {
 export default function JobDetailsPage() {
   const { id } = useParams()
 
+  const router = useRouter()
   const [booking, setBooking] = useState<Booking | null>(null)
   const [loading, setLoading] = useState(true)
   const [isWorking, setIsWorking] = useState(false)
   const [jobStatus, setJobStatus] = useState<Booking["job_status"]>("assigned")
   const [updating, setUpdating] = useState(false)
+
+  // ── Cancel job state ──
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState("")
+  const [cancelling, setCancelling] = useState(false)
 
   /* ================= ADDRESS HELPERS ================= */
 
@@ -156,6 +164,44 @@ export default function JobDetailsPage() {
     }
   }
 
+  /* ================= CANCEL JOB ================= */
+  const CANCEL_REASONS = [
+    "Cannot reach the location",
+    "Emergency / Personal issue",
+    "Vehicle breakdown",
+    "Customer not available at location",
+    "Duplicate job assigned",
+    "Workload too high",
+    "Other",
+  ]
+
+  const handleCancelJob = async () => {
+    if (!booking || !cancelReason) return
+    setCancelling(true)
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/bookings/${booking.id}/cancel-by-technician`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ cancellation_reason: cancelReason }),
+        }
+      )
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || "Failed to cancel")
+      setCancelModalOpen(false)
+      router.push("/technician/jobs")
+    } catch (err: any) {
+      alert(err.message || "Failed to cancel job")
+    } finally {
+      setCancelling(false)
+    }
+  }
+
   /* ================= STATES ================= */
 
   if (loading) return <div className="p-10 text-center">Loading job details…</div>
@@ -178,7 +224,7 @@ export default function JobDetailsPage() {
 
             <div>
               <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-                Job #{booking.id.slice(0, 6)}
+                {booking.booking_ref || `Job #${booking.id.slice(0, 6)}`}
               </h1>
               <p className="text-xs text-slate-400">Technician Dashboard</p>
             </div>
@@ -203,15 +249,28 @@ export default function JobDetailsPage() {
               Scheduled Service
             </h2>
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-slate-500 font-medium text-sm md:text-base">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {fullAddress}
+            <div className="flex flex-col gap-2.5 text-slate-500 font-medium text-sm">
+              {/* Address */}
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                <span className="leading-snug">{fullAddress || "Address not provided"}</span>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                {booking.booking_date}
+              {/* Date + Time */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 shrink-0 text-violet-500" />
+                  <span className="font-semibold text-slate-700">
+                    {new Date(booking.booking_date).toLocaleDateString("en-IN", {
+                      weekday: "short", day: "numeric", month: "long", year: "numeric"
+                    })}
+                  </span>
+                </div>
+                {/* {booking.time_slot && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 shrink-0 text-emerald-500" />
+                    <span className="font-semibold text-slate-700">{booking.time_slot}</span>
+                  </div>
+                )} */}
               </div>
             </div>
           </div>
@@ -249,6 +308,18 @@ export default function JobDetailsPage() {
                 COMPLETE OTP VERIFICATION
               </Button>
             </Link>
+          )}
+
+          {/* Cancel Job — only allowed before work starts */}
+          {["assigned", "on_the_way"].includes(jobStatus) && (
+            <Button
+              variant="outline"
+              onClick={() => { setCancelReason(""); setCancelModalOpen(true) }}
+              className="w-full lg:w-auto cursor-pointer border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-bold px-6 py-6 rounded-2xl flex items-center justify-center gap-2"
+            >
+              <XCircle className="w-5 h-5" />
+              Cancel Job
+            </Button>
           )}
 
         </motion.div>
@@ -340,19 +411,21 @@ export default function JobDetailsPage() {
                 <Calendar className="w-5 h-5 text-slate-400" />
                 <div>
                   <p className="text-xs text-slate-400 font-bold uppercase">Date</p>
-                  <p className="font-bold text-slate-900">{booking.booking_date}</p>
+                  <p className="font-bold text-slate-900">
+                    {new Date(booking.booking_date).toLocaleDateString("en-IN", {
+                      day: "2-digit", month: "short", year: "numeric"
+                    })}
+                  </p>
                 </div>
               </div>
 
-              <div className="rounded-2xl p-5 flex items-center gap-4">
-                {/* <Clock className="w-5 h-5 text-slate-400" />
-              <div>
-                <p className="text-xs text-slate-400 font-bold uppercase">
-                  Arrival Window
-                </p>
-                <p className="font-bold text-slate-900">{booking.time_slot}</p>
+              {/* <div className="bg-slate-50 rounded-2xl p-5 flex items-center gap-4">
+                <Clock className="w-5 h-5 text-slate-400" />
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase">Time Slot</p>
+                  <p className="font-bold text-slate-900">{booking.time_slot || "—"}</p>
+                </div>
               </div> */}
-            </div>
 
               {/* CUSTOMER NOTES */}
               {booking.instructions && (
@@ -385,6 +458,66 @@ export default function JobDetailsPage() {
         )}
 
       </main>
+
+      {/* ═══ CANCEL JOB MODAL ═══ */}
+      {cancelModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5"
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-red-100 flex items-center justify-center shrink-0">
+                <XCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Cancel Job</h3>
+                <p className="text-xs text-slate-400">This job will go back to admin for reassignment</p>
+              </div>
+            </div>
+
+            {/* Reason selector */}
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-slate-700">Reason for cancellation</p>
+              <div className="space-y-2">
+                {CANCEL_REASONS.map((reason) => (
+                  <button
+                    key={reason}
+                    onClick={() => setCancelReason(reason)}
+                    className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                      cancelReason === reason
+                        ? "border-red-400 bg-red-50 text-red-700"
+                        : "border-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <Button
+                variant="outline"
+                onClick={() => setCancelModalOpen(false)}
+                className="flex-1 rounded-xl py-5 font-semibold"
+              >
+                Keep Job
+              </Button>
+              <Button
+                disabled={!cancelReason || cancelling}
+                onClick={handleCancelJob}
+                className="flex-1 rounded-xl py-5 font-bold bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+              >
+                {cancelling ? "Cancelling..." : "Confirm Cancel"}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, X, Image as ImageIcon, Plus, Package, Tag, FileText, Star, Layers } from "lucide-react"
+import { Upload, X, Image as ImageIcon, Plus, Package, Tag, FileText, Star, Layers, Truck } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Textarea } from "@/app/components/ui/textarea"
@@ -31,7 +31,7 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
   const [rating, setRating] = useState(String(product.rating || "4.5"))
   const [reviewCount, setReviewCount] = useState(String(product.review_count || "0"))
   const [oldPrice, setOldPrice] = useState(String(product.old_price || ""))
-  const [deliveryCharge, setDeliveryCharge] = useState(String(product.delivery_charge ?? "0"))
+  const [deliveryCharge, setDeliveryCharge] = useState(String(product.delivery_charge ?? "400"))
 
   const [variants, setVariants] = useState(
     Array.isArray(product.capacity_prices) && product.capacity_prices.length > 0
@@ -225,7 +225,20 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
               <Input type="number" placeholder="Strike-through price" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} />
             </FormField>
             <FormField label="Delivery Charge (₹)">
-              <Input type="number" min="0" placeholder="e.g. 499" value={deliveryCharge} onChange={(e) => setDeliveryCharge(e.target.value)} />
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <Truck className="w-4 h-4 text-gray-400" />
+                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="400"
+                  value={deliveryCharge}
+                  onChange={(e) => setDeliveryCharge(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">Default is ₹400. Set 0 for free delivery.</p>
             </FormField>
             <FormField label="Rating">
               <Input type="number" step="0.1" min="0" max="5" placeholder="4.5" value={rating} onChange={(e) => setRating(e.target.value)} />

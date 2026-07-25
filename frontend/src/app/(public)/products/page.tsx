@@ -112,7 +112,7 @@ export default function ProductsPage() {
     }
     const capacity = product.capacity_prices?.[0]?.capacity || "1.5 Ton"
     const price = product.capacity_prices?.[0]?.price ?? product.price
-    addToCart({ id: product.id, title: product.title, image: product.main_image || "/placeholder.svg", capacity, price: Number(price), qty: 1, delivery_charge: Number(product.delivery_charge || 0) })
+    addToCart({ id: product.id, title: product.title, image: product.main_image || "/placeholder.svg", capacity, price: Number(price), qty: 1, delivery_charge: Number(product.delivery_charge) || 400 })
     setAddedIds(prev => new Set([...prev, product.id]))
     setTimeout(() => setAddedIds(prev => { const n = new Set(prev); n.delete(product.id); return n }), 2000)
     toast.success(`${product.title} added to cart!`)

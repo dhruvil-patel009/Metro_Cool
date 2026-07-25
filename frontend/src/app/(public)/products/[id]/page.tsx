@@ -14,6 +14,7 @@ import {
   Thermometer,
   ChevronDown,
   Zap,
+  Truck,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -245,7 +246,32 @@ export default function ProductDetailsPage() {
                       You save {formatINR(savings)} on this purchase
                     </p>
                   )}
-                  <p className="text-[11px] text-gray-400 mt-1.5">Inclusive of all taxes • Free delivery</p>
+                  <p className="text-[11px] text-gray-400 mt-1.5">Inclusive of all taxes</p>
+                  {/* Delivery Charge Row */}
+                  {(() => {
+                    const charge = Number(product.delivery_charge)
+                    const displayCharge = (!product.delivery_charge || charge === 0) ? 400 : charge
+                    const isFree = displayCharge === 0
+                    return (
+                      <div className={`flex items-center justify-between mt-3 px-3 py-2.5 rounded-xl border ${
+                        isFree
+                          ? "bg-emerald-50 border-emerald-200"
+                          : "bg-orange-50 border-orange-200"
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <Truck className={`w-4 h-4 ${isFree ? "text-emerald-600" : "text-orange-500"}`} />
+                          <span className={`text-xs font-semibold ${isFree ? "text-emerald-700" : "text-orange-700"}`}>
+                            Delivery Charge
+                          </span>
+                        </div>
+                        {isFree ? (
+                          <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-lg">FREE</span>
+                        ) : (
+                          <span className="text-xs font-bold text-orange-700">{formatINR(displayCharge)}</span>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 {/* Room Size Picker */}
@@ -386,7 +412,7 @@ export default function ProductDetailsPage() {
                         capacity: selectedCapacity,
                         price: selectedPrice,
                         qty: 1,
-                        delivery_charge: Number(product.delivery_charge || 0),
+                        delivery_charge: Number(product.delivery_charge) || 400,
                       })
                       router.push("/checkout")
                     }}
@@ -411,7 +437,7 @@ export default function ProductDetailsPage() {
                         capacity: selectedCapacity,
                         price: selectedPrice,
                         qty: 1,
-                        delivery_charge: Number(product.delivery_charge || 0),
+                        delivery_charge: Number(product.delivery_charge) || 400,
                       })
                       setAddedToCart(true)
                       setIsCartOpen(true)

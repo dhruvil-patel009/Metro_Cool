@@ -438,12 +438,12 @@ export default function CompletionContent() {
                     </div>
                     <p className="font-semibold text-gray-900 text-sm">{serviceDate}</p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3">
+                  {/* <div className="bg-gray-50 rounded-xl p-3">
                     <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
                       <Clock className="w-3.5 h-3.5" /> Time
                     </div>
                     <p className="font-semibold text-gray-900 text-sm">{serviceTime || "—"}</p>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>

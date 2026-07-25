@@ -399,3 +399,72 @@ export const getAdminBookings = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch bookings" })
   }
 }
+
+/* ======================================================
+   🔄 REASSIGN TECHNICIAN (Admin)
+   Reassigns a booking to a different technician
+   ====================================================== */
+export const reassignTechnician = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const { technician_id } = req.body
+
+    if (!technician_id) {
+      return res.status(400).json({ error: "technician_id is required" })
+    }
+
+    // Verify booking exists and is reassignable
+    const { data: existing, error: fetchError } = await supabase
+      .from("bookings")
+      .select("id, job_status, technician_id")
+      .eq("id", id)
+      .maybeSingle()
+
+    if (fetchError || !existing) {
+      return res.status(404).json({ error: "Booking not found" })
+    }
+
+    if (existing.job_status === "completed") {
+      return res.status(400).json({ error: "Cannot reassign a completed booking" })
+    }
+
+    if (existing.job_status === "cancelled") {
+      return res.status(400).json({ error: "Cannot reassign a cancelled booking" })
+    }
+
+    // Verify technician exists
+    const { data: tech, error: techError } = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name")
+      .eq("id", technician_id)
+      .eq("role", "technician")
+      .maybeSingle()
+
+    if (techError || !tech) {
+      return res.status(404).json({ error: "Technician not found" })
+    }
+
+    // Reassign — reset status to "assigned" so technician sees fresh job
+    const { data, error } = await supabase
+      .from("bookings")
+      .update({
+        technician_id,
+        job_status: "assigned",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    res.json({
+      success: true,
+      message: `Booking reassigned to ${tech.first_name} ${tech.last_name}`,
+      booking: data,
+    })
+  } catch (err) {
+    console.error("Reassign technician error:", err)
+    res.status(500).json({ error: "Failed to reassign technician" })
+  }
+}

@@ -233,7 +233,7 @@ export default function BookingsContent() {
   }
 
   /* ---------------- DERIVED DATA ---------------- */
-  const orderId = `#${booking.id?.slice(0, 8)}`
+  const orderId = booking.booking_ref || `#${booking.id?.slice(0, 8).toUpperCase()}`
   const address = booking.address
   const fullAddress = `${address.street}, ${address.apt || ""}, ${address.city} ${address.zipCode}`
   const service = booking.service

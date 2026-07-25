@@ -19,6 +19,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
 type Booking = {
   id: string
+  booking_ref?: string
   booking_date: string
   time_slot: string
   total_amount: number
@@ -66,11 +67,11 @@ export default function BookingSuccessPage() {
       .catch(() => setLoading(false))
   }, [bookingId])
 
+  const displayRef = booking?.booking_ref || `#${bookingId?.slice(0, 8).toUpperCase()}`
+
   const copyBookingId = () => {
-    if (bookingId) {
-      navigator.clipboard.writeText(bookingId)
-      toast.success("Booking ID copied!")
-    }
+    navigator.clipboard.writeText(displayRef)
+    toast.success("Booking ID copied!")
   }
 
   if (loading) {
@@ -135,7 +136,7 @@ export default function BookingSuccessPage() {
               onClick={copyBookingId}
               className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 px-4 py-2 rounded-xl hover:bg-blue-100 transition-colors"
             >
-              <span className="text-sm font-semibold">Booking ID: #{bookingId?.slice(0, 8)}</span>
+              <span className="text-sm font-semibold">Booking ID: {displayRef}</span>
               <Copy className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -204,14 +205,14 @@ export default function BookingSuccessPage() {
                       <p className="text-sm font-semibold text-[#1d242d]">{formattedDate}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  {/* <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
                       <Clock className="w-4 h-4 text-violet-600" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[#1d242d]">{time}</p>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 

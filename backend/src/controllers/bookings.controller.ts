@@ -1,6 +1,7 @@
 import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
 import { sendBookingNotification } from "../utils/adminNotifications.js"
+import { generateBookingRef } from "../utils/generateBookingRef.js"
 
 
 export const getBookedDates = async (req: Request, res: Response) => {
@@ -84,31 +85,17 @@ export const createBooking = async (req: any, res: Response) => {
       return res.status(404).json({ message: "User not found" })
     }
 
-    // ✅ Check for existing draft booking (same user + service + date)
-    // Return it instead of creating a duplicate draft
-    const { data: existingDraft } = await supabase
-      .from("bookings")
-      .select("*")
-      .eq("user_id", req.user.id)
-      .eq("service_id", serviceId)
-      .eq("booking_date", bookingDate)
-      .eq("status", "draft")
-      .maybeSingle()
-
-    if (existingDraft) {
-      return res.status(201).json({ success: true, booking: existingDraft })
-    }
-
-    // No date-level capacity restriction — multiple bookings of the same
-    // service on the same date are allowed.
-
-    // ✅ Clean up any stale draft bookings for this user + service (any date)
+    // Clean up any stale DRAFT bookings for this user + service (any date)
+    // This ensures a user can't stack up multiple unconfirmed drafts
     await supabase
       .from("bookings")
       .delete()
       .eq("user_id", req.user.id)
       .eq("service_id", serviceId)
       .eq("status", "draft")
+
+    // Generate unique booking reference
+    const bookingRef = await generateBookingRef()
 
     const { data, error } = await supabase
       .from("bookings")
@@ -120,13 +107,31 @@ export const createBooking = async (req: any, res: Response) => {
         status: "draft",
         full_name: `${profile.first_name} ${profile.last_name}`,
         phone: profile.phone,
+        booking_ref: bookingRef,
       })
       .select()
       .single()
 
     if (error) {
-      if (error.code === "23505") {
-        return res.status(400).json({ message: "Date already booked" })
+      // booking_ref collision — retry once with a fresh ref
+      if (error.code === "23505" && error.message?.includes("booking_ref")) {
+        const retryRef = await generateBookingRef()
+        const { data: retryData, error: retryError } = await supabase
+          .from("bookings")
+          .insert({
+            user_id: req.user.id,
+            service_id: serviceId,
+            booking_date: bookingDate,
+            time_slot: timeSlot,
+            status: "draft",
+            full_name: `${profile.first_name} ${profile.last_name}`,
+            phone: profile.phone,
+            booking_ref: retryRef,
+          })
+          .select()
+          .single()
+        if (retryError) throw retryError
+        return res.status(201).json({ success: true, booking: retryData })
       }
       throw error
     }
@@ -191,7 +196,7 @@ export const completeBooking = async (req: any, res: Response) => {
         : data.full_name || "Customer"
 
       await sendBookingNotification({
-        bookingId: data.id,
+        bookingId: data.booking_ref || data.id,
         customerName,
         customerPhone: profile?.phone || data.phone || "",
         customerEmail: profile?.email,
@@ -477,3 +482,65 @@ export const cancelBooking = async (req: any, res: Response) => {
 //   await sendPush(currentSubscription, payload)
 // }
 
+
+/* ======================================================
+   ❌ CANCEL JOB BY TECHNICIAN
+   Technician can cancel a job assigned to them,
+   only if it hasn't started (not in working/completed state)
+   ====================================================== */
+export const cancelJobByTechnician = async (req: any, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    const bookingId = req.params.id
+    const { cancellation_reason } = req.body
+
+    if (!cancellation_reason) {
+      return res.status(400).json({ message: "Cancellation reason is required" })
+    }
+
+    // Fetch the booking — must be assigned to this technician
+    const { data: existing, error: fetchError } = await supabase
+      .from("bookings")
+      .select("id, job_status, technician_id")
+      .eq("id", bookingId)
+      .maybeSingle()
+
+    if (fetchError || !existing) {
+      return res.status(404).json({ message: "Booking not found" })
+    }
+
+    if (existing.technician_id !== req.user.id) {
+      return res.status(403).json({ message: "You are not assigned to this job" })
+    }
+
+    if (["working", "report_submitted", "completed"].includes(existing.job_status)) {
+      return res.status(400).json({ message: "Cannot cancel a job that is already in progress or completed" })
+    }
+
+    if (existing.job_status === "cancelled") {
+      return res.status(400).json({ message: "Job is already cancelled" })
+    }
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .update({
+        job_status: "cancelled",
+        cancellation_reason,
+        cancelled_at: new Date().toISOString(),
+        cancelled_by: "technician",
+        technician_id: null,            // free up the job for reassignment
+      })
+      .eq("id", bookingId)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    res.json({ success: true, message: "Job cancelled successfully", booking: data })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message })
+  }
+}
