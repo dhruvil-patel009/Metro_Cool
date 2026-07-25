@@ -22,14 +22,14 @@ import { useParams } from "next/navigation"
 import dynamic from "next/dynamic"
 
 // Lazy-load the heavy PDF viewer — avoids bundling pdfjs-dist on every page load
-const BrochureViewer = dynamic(() => import("./components/BrochureViewer"), {
-  ssr: false,
-  loading: () => (
-    <div className="mt-6 sm:mt-8 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 text-center text-sm text-gray-400">
-      Loading brochure...
-    </div>
-  ),
-})
+// const BrochureViewer = dynamic(() => import("./components/BrochureViewer"), {
+//   ssr: false,
+//   loading: () => (
+//     <div className="mt-6 sm:mt-8 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 text-center text-sm text-gray-400">
+//       Loading brochure...
+//     </div>
+//   ),
+// })
 import { useRouter } from "next/navigation"
 import { formatINR } from "@/app/lib/currency"
 import { useCart } from "@/app/context/CartContext"
