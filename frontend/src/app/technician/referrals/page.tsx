@@ -8,7 +8,7 @@ import {
   Copy,
   Gift,
   Users,
-  Percent,
+  IndianRupee,
   CheckCircle2,
   Clock,
   Share2,
@@ -78,7 +78,8 @@ export default function ReferralsPage() {
 
   const referralCode = codeData?.referralCode;
   const totalReferrals = referralsData?.totalReferrals || 0;
-  const activeRewards = referralsData?.activeRewards || 0;
+  const pendingRewards = referralsData?.pendingRewards || 0;
+  const totalEarned = referralsData?.totalEarned || 0;
   const referrals = referralsData?.referrals || [];
 
   const handleCopy = () => {
@@ -91,7 +92,7 @@ export default function ReferralsPage() {
 
   const handleShare = () => {
     if (!referralCode) return;
-    const text = `Join Metro Cool as a technician! Use my referral code: ${referralCode} during registration and we both benefit. Register here: ${window.location.origin}/auth/technician-registration`;
+    const text = `Join Metro Cool as a technician! Use my referral code: ${referralCode} during registration and I'll earn ₹400 once you complete 3 jobs. Register here: ${window.location.origin}/auth/technician-registration`;
 
     if (navigator.share) {
       navigator.share({ title: "Metro Cool Referral", text });
@@ -107,7 +108,7 @@ export default function ReferralsPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Referral Program</h1>
         <p className="text-gray-600 mt-1">
-          Invite other technicians and earn commission discounts on your jobs.
+          Invite other technicians and earn ₹400 cash once they complete 3 jobs.
         </p>
       </div>
 
@@ -125,26 +126,26 @@ export default function ReferralsPage() {
           </div>
         </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+        <Card className="p-5 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
-              <Percent className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-900">{activeRewards}</p>
-              <p className="text-xs text-green-600">Active Rewards</p>
+              <p className="text-2xl font-bold text-amber-900">{pendingRewards}</p>
+              <p className="text-xs text-amber-600">Pending Rewards</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+        <Card className="p-5 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center">
-              <Gift className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
+              <IndianRupee className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-purple-900">5%</p>
-              <p className="text-xs text-purple-600">Discount Per Referral</p>
+              <p className="text-2xl font-bold text-green-900">₹{totalEarned}</p>
+              <p className="text-xs text-green-600">Total Earned</p>
             </div>
           </div>
         </Card>
@@ -198,7 +199,8 @@ export default function ReferralsPage() {
               <ol className="text-sm text-orange-700 space-y-1 list-decimal list-inside">
                 <li>Share your code with other AC technicians</li>
                 <li>They enter your code during registration</li>
-                <li>You get 5% commission discount on your next 3 jobs per referral</li>
+                <li>Once they complete 3 jobs, you earn <strong>₹400 cash</strong></li>
+                <li>Admin will transfer ₹400 to your account and notify you by email</li>
               </ol>
             </div>
           </div>
@@ -239,59 +241,71 @@ export default function ReferralsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {referrals.map((r: any) => (
-              <div
-                key={r.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                      r.rewardStatus === "active"
-                        ? "bg-green-100 text-green-600"
-                        : r.rewardStatus === "used"
-                        ? "bg-gray-100 text-gray-500"
-                        : "bg-red-100 text-red-500"
-                    }`}
-                  >
-                    {r.rewardStatus === "active" ? (
-                      <CheckCircle2 className="w-4 h-4" />
-                    ) : (
-                      <Clock className="w-4 h-4" />
-                    )}
+            {referrals.map((r: any) => {
+              const isCredited = r.rewardStatus === "credited";
+              const jobsDone = r.jobsCompleted ?? (3 - (r.jobsRemaining ?? 0));
+
+              return (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                        isCredited
+                          ? "bg-green-100 text-green-600"
+                          : "bg-amber-100 text-amber-600"
+                      }`}
+                    >
+                      {isCredited ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : (
+                        <Clock className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">{r.referredName}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(r.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">{r.referredName}</p>
+
+                  <div className="text-right space-y-1">
+                    {/* Progress bar */}
+                    {!isCredited && (
+                      <div className="flex items-center gap-1.5 justify-end mb-1">
+                        {[1, 2, 3].map((n) => (
+                          <div
+                            key={n}
+                            className={`w-2.5 h-2.5 rounded-full ${
+                              n <= jobsDone ? "bg-orange-500" : "bg-gray-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <span
+                      className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
+                        isCredited
+                          ? "bg-green-100 text-green-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {isCredited ? "₹400 Credited ✓" : `${jobsDone}/3 jobs done`}
+                    </span>
                     <p className="text-xs text-gray-500">
-                      {new Date(r.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                      {isCredited ? "Cash reward paid" : "₹400 on 3 jobs"}
                     </p>
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <span
-                    className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                      r.rewardStatus === "active"
-                        ? "bg-green-100 text-green-700"
-                        : r.rewardStatus === "used"
-                        ? "bg-gray-100 text-gray-600"
-                        : "bg-red-100 text-red-600"
-                    }`}
-                  >
-                    {r.rewardStatus === "active"
-                      ? `${r.jobsRemaining} jobs left`
-                      : r.rewardStatus === "used"
-                      ? "Completed"
-                      : "Expired"}
-                  </span>
-                  <p className="text-xs text-gray-500 mt-1">{r.rewardValue}% discount</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>

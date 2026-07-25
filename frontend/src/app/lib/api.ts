@@ -50,13 +50,13 @@ export const handleSessionExpiry = () => {
 
 /* ── Utility: is a JWT string expired? ── */
 export const isTokenExpired = (token: string | null): boolean => {
-  if (!token) return true
+  if (!token || token === "null" || token === "undefined") return true
   try {
     const payload = JSON.parse(atob(token.split(".")[1]))
-    // exp is in seconds; Date.now() is in ms
-    return payload.exp * 1000 < Date.now()
+    // exp is in seconds; Date.now() is in ms — add 30s buffer for clock skew
+    return payload.exp * 1000 < Date.now() - 30_000
   } catch (_) {
-    return false // can't decode — let the server decide
+    return false // can't decode — let the server decide, don't boot the user
   }
 }
 
@@ -74,7 +74,10 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const token = getToken()
 
-  // Pre-flight expiry check — avoid unnecessary network request
+  // Pre-flight expiry check — only trigger if we actually HAVE a token that is
+  // provably expired. If there's no token at all, let the request go through and
+  // let the 401 response handle it — prevents false-positive session expiry on
+  // pages that call apiFetch before Zustand has finished hydrating from localStorage.
   if (token && isTokenExpired(token)) {
     handleSessionExpiry()
     throw new Error("Session expired")

@@ -2,7 +2,6 @@ import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
 import { transporter } from "../utils/mailer.js"
 import ExcelJS from "exceljs"
-import { consumeReferralDiscount } from "./referral.controller.js"
 
 const formatINR = (v: number) => {
   const formatted = new Intl.NumberFormat("en-IN", {
@@ -89,13 +88,15 @@ const buildSettlements = async (todayOnly = false) => {
       commission = +(price * (commissionValue / 100)).toFixed(2)
     }
 
-    // ── Check for active referral/promo discount for this technician ──
-    let promoDiscount = 0
+    // ── Referral info (display only — no commission deduction) ──
+    // Referral reward is a flat ₹400 cash credit paid directly to the referrer
+    // once the referred technician completes 3 jobs. It does NOT affect commission.
     let promoCode: string | null = null
     let promoReferrerName: string | null = null
+    let referralStatus: string | null = null
 
     if (technicianId) {
-      // Get technician's promo_code used during registration
+      // Get promo code this technician used during registration
       const { data: techDetails } = await supabase
         .from("technician_details")
         .select("promo_code")
@@ -104,49 +105,35 @@ const buildSettlements = async (todayOnly = false) => {
 
       if (techDetails?.promo_code) {
         promoCode = techDetails.promo_code
-      }
 
-      // Check if this technician has active referral rewards (as referrer)
-      const { data: activeRewards } = await supabase
-        .from("referral_rewards")
-        .select("id, reward_value, jobs_remaining, referral_code_id")
-        .eq("referrer_id", technicianId)
-        .eq("reward_status", "active")
-        .gt("jobs_remaining", 0)
-        .order("created_at", { ascending: true })
-        .limit(1)
+        // Find the referral reward record for this technician (as referred_id)
+        const { data: rewardRecord } = await supabase
+          .from("referral_rewards")
+          .select("id, referrer_id, reward_status, jobs_remaining")
+          .eq("referred_id", technicianId)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle()
 
-      if (activeRewards && activeRewards.length > 0) {
-        const reward = activeRewards[0]
-        // reward_value is the percentage discount on commission (e.g. 5 = 5% off commission)
-        promoDiscount = +(commission * (Number(reward.reward_value) / 100)).toFixed(2)
+        if (rewardRecord) {
+          referralStatus = rewardRecord.reward_status // "pending" | "credited"
 
-        // Get the referral code text for display
-        if (reward.referral_code_id) {
-          const { data: refCode } = await supabase
-            .from("referral_codes")
-            .select("code, technician_id")
-            .eq("id", reward.referral_code_id)
+          // Get referrer name
+          const { data: referrerProfile } = await supabase
+            .from("profiles")
+            .select("first_name, last_name")
+            .eq("id", rewardRecord.referrer_id)
             .maybeSingle()
 
-          if (refCode) {
-            promoCode = refCode.code
-            // Get the referrer's name
-            const { data: referrerProfile } = await supabase
-              .from("profiles")
-              .select("first_name, last_name")
-              .eq("id", refCode.technician_id)
-              .maybeSingle()
-
-            if (referrerProfile) {
-              promoReferrerName = `${referrerProfile.first_name} ${referrerProfile.last_name}`.trim()
-            }
+          if (referrerProfile) {
+            promoReferrerName = `${referrerProfile.first_name} ${referrerProfile.last_name}`.trim()
           }
         }
       }
     }
 
-    const effectiveCommission = +(commission - promoDiscount).toFixed(2)
+    // Commission is unchanged — referral is a separate cash payout, not a deduction
+    const effectiveCommission = commission
     const payable = +(price - effectiveCommission).toFixed(2)
 
     const dateStr = booking?.completed_at || payment.created_at
@@ -173,9 +160,10 @@ const buildSettlements = async (todayOnly = false) => {
       commissionValue,
       commission: effectiveCommission,
       originalCommission: commission,
-      promoDiscount,
+      promoDiscount: 0,       // no longer deducted from commission
       promoCode,
       promoReferrerName,
+      referralStatus,         // "pending" | "credited" | null
       payable,
       status: payment.payout_status === "paid" ? "Paid" : "Pending",
     })
@@ -273,8 +261,10 @@ export const getPromoCodeSummary = async (_req: Request, res: Response) => {
           phone: referred?.phone || "",
           promoCodeUsed: referredTech?.promo_code || null,
         },
-        discountPercent: reward.reward_value,
-        status: reward.reward_status,
+        rewardAmount: reward.reward_value,          // always 400
+        rewardType: "cash_credit",
+        status: reward.reward_status,               // "pending" | "credited"
+        jobsCompleted: 3 - (reward.jobs_remaining ?? 0),
         jobsRemaining: reward.jobs_remaining,
         createdAt: reward.created_at,
         expiresAt: reward.expires_at,
@@ -282,13 +272,17 @@ export const getPromoCodeSummary = async (_req: Request, res: Response) => {
     }
 
     // 4. Calculate totals
-    const activeRewards = summary.filter(s => s.status === "active")
-    const usedRewards = summary.filter(s => s.status === "used")
+    const pendingRewards = summary.filter(s => s.status === "pending" || s.status === "active")
+    const creditedRewards = summary.filter(s => s.status === "credited" || s.status === "used")
+    const totalCredited = creditedRewards.reduce((sum, s) => sum + Number(s.rewardAmount), 0)
+    const totalPending = pendingRewards.reduce((sum, s) => sum + Number(s.rewardAmount), 0)
 
     res.json({
       totalReferrals: summary.length,
-      activeReferrals: activeRewards.length,
-      usedReferrals: usedRewards.length,
+      pendingReferrals: pendingRewards.length,
+      creditedReferrals: creditedRewards.length,
+      totalCreditedAmount: totalCredited,
+      totalPendingAmount: totalPending,
       techniciansWithPromo: (techsWithPromo || []).map(t => ({
         id: t.id,
         name: (t as any).profiles ? `${(t as any).profiles.first_name} ${(t as any).profiles.last_name}`.trim() : "Unknown",
@@ -359,7 +353,7 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
   // Header row
   const headerRow = sheet.addRow([
     "Booking ID", "Technician", "Service", "Date", "Time",
-    "Price (₹)", "Commission (₹)", "Promo Code", "Promo Discount (₹)", "Payable (₹)", "Status",
+    "Price (₹)", "Commission (₹)", "Promo Code", "Referral Status", "Payable (₹)", "Status",
   ])
   headerRow.eachCell(cell => {
     cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 }
@@ -392,6 +386,12 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
       ? `${s.promoCode}${s.promoReferrerName ? ` (${s.promoReferrerName})` : ""}`
       : "—"
 
+    const referralStatusLabel = s.referralStatus === "credited"
+      ? "₹400 Credited"
+      : s.referralStatus === "pending"
+      ? "Pending (3 jobs)"
+      : "—"
+
     const row = sheet.addRow([
       `#${String(s.bookingId).slice(0, 8).toUpperCase()}`,
       s.technician.name,
@@ -401,7 +401,7 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
       s.price,
       s.originalCommission || s.commission,
       promoLabel,
-      s.promoDiscount || 0,
+      referralStatusLabel,
       s.payable,
       s.status,
     ])
@@ -422,9 +422,14 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
           cell.font = { bold: true, color: { argb: "FF7C3AED" } }
         }
       }
-      // Promo Discount column — green color if discount exists
-      if (colNo === 9 && s.promoDiscount > 0) {
-        cell.font = { bold: true, color: { argb: "FF16A34A" } }
+      // Referral Status column — green for credited, amber for pending
+      if (colNo === 9) {
+        cell.alignment = { horizontal: "center", vertical: "middle" }
+        if (s.referralStatus === "credited") {
+          cell.font = { bold: true, color: { argb: "FF16A34A" } }
+        } else if (s.referralStatus === "pending") {
+          cell.font = { bold: true, color: { argb: "FFD97706" } }
+        }
       }
       // Status column
       if (s.status === "Paid") {
@@ -444,12 +449,11 @@ const buildExcelWorkbook = async (settlements: any[], reportDate: string) => {
   sheet.addRow([])
   const totalPrice = settlements.reduce((s, r) => s + r.price, 0)
   const totalComm = settlements.reduce((s, r) => s + (r.originalCommission || r.commission), 0)
-  const totalPromoDiscount = settlements.reduce((s, r) => s + (r.promoDiscount || 0), 0)
   const totalPayable = settlements.reduce((s, r) => s + r.payable, 0)
 
   const summaryRow = sheet.addRow([
     "TOTAL", "", "", "", "",
-    totalPrice, totalComm, "", totalPromoDiscount, totalPayable, "",
+    totalPrice, totalComm, "", "", totalPayable, "",
   ])
   summaryRow.eachCell(cell => {
     cell.font = { bold: true, size: 11 }
@@ -538,7 +542,15 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
             ? `<span style="background:#f3e8ff;color:#7c3aed;border:1px solid #d8b4fe;
                             padding:2px 8px;border-radius:6px;font-size:10px;
                             font-weight:700;white-space:nowrap;">${s.promoCode}</span>
-               ${s.promoDiscount > 0 ? `<br/><span style="font-size:10px;color:#16a34a;font-weight:600;">-${formatINR(s.promoDiscount)}</span>` : ""}`
+               <br/><span style="font-size:10px;font-weight:600;${
+                 s.referralStatus === "credited"
+                   ? "color:#16a34a;"
+                   : "color:#d97706;"
+               }">${
+                 s.referralStatus === "credited"
+                   ? "₹400 Credited ✓"
+                   : "⏳ Pending"
+               }</span>`
             : `<span style="color:#d1d5db;font-size:11px;">—</span>`}
         </td>
         <td style="padding:11px 14px;font-size:13px;text-align:right;
@@ -786,7 +798,7 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
                              border-right:1px solid rgba(255,255,255,0.1);">Comm.</th>
                   <th style="padding:11px 14px;text-align:center;font-size:10px;font-weight:700;
                              color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
-                             border-right:1px solid rgba(255,255,255,0.1);">Promo</th>
+                             border-right:1px solid rgba(255,255,255,0.1);">Referral</th>
                   <th style="padding:11px 14px;text-align:right;font-size:10px;font-weight:700;
                              color:#bfdbfe;text-transform:uppercase;letter-spacing:.6px;
                              border-right:1px solid rgba(255,255,255,0.1);">Payable</th>
@@ -805,7 +817,7 @@ export const emailSettlementReport = async (req: Request, res: Response) => {
                   <td style="padding:13px 14px;text-align:right;font-weight:800;
                              font-size:12px;color:#7c3aed;">&#8722;${formatINR(totalCommission)}</td>
                   <td style="padding:13px 14px;text-align:center;font-weight:800;
-                             font-size:12px;color:#16a34a;">${settlements.reduce((a: number, s: any) => a + (s.promoDiscount || 0), 0) > 0 ? `-${formatINR(settlements.reduce((a: number, s: any) => a + (s.promoDiscount || 0), 0))}` : "—"}</td>
+                             font-size:12px;color:#16a34a;">${settlements.filter((s: any) => s.referralStatus === "credited").length > 0 ? `${settlements.filter((s: any) => s.referralStatus === "credited").length} credited` : "—"}</td>
                   <td style="padding:13px 14px;text-align:right;font-weight:800;
                              font-size:12px;color:#15803d;">${formatINR(totalPayable)}</td>
                   <td></td>

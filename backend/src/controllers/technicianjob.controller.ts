@@ -1,5 +1,6 @@
 import { Request, Response } from "express"
 import { supabase } from "../utils/supabase.js"
+import { processReferralOnJobComplete } from "./referral.controller.js"
 
 /* ── ACCEPT JOB ── */
 export const acceptJob = async (req: Request, res: Response) => {
@@ -130,10 +131,21 @@ export const verifyOtpAndCloseJob = async (req: Request, res: Response) => {
     }
 
     // OTP matched — close the job
-    await supabase
+    const { data: closedBooking } = await supabase
       .from("bookings")
       .update({ job_status: "completed", completed_at: new Date().toISOString() })
       .eq("id", id)
+      .select("technician_id")
+      .single()
+
+    // ── Fire referral reward check (non-blocking) ──
+    // If the assigned technician was referred by another tech,
+    // decrement their jobs_remaining. On reaching 0, credit ₹400 + notify.
+    if (closedBooking?.technician_id) {
+      processReferralOnJobComplete(closedBooking.technician_id).catch((err) =>
+        console.error("[referral] Background processing error:", err)
+      )
+    }
 
     return res.json({ success: true })
   } catch (err) {

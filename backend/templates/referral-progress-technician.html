@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Referral Progress Update — Metro Cool</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 16px;">
+    <tr>
+      <td align="center">
+
+        <table role="presentation" width="100%" style="max-width:560px;" cellpadding="0" cellspacing="0">
+
+          <!-- BRAND HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#ea580c 0%,#f97316 100%);border-radius:12px 12px 0 0;padding:28px 32px;text-align:center;">
+              <p style="margin:0;color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.5px;">
+                🔵 Metro Cool
+              </p>
+              <p style="margin:8px 0 0;color:#fed7aa;font-size:13px;">Referral Progress Update</p>
+            </td>
+          </tr>
+
+          <!-- ACCENT BAR -->
+          <tr>
+            <td style="height:4px;background:linear-gradient(90deg,#f97316,#facc15,#f97316);"></td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="background-color:#ffffff;padding:36px 32px;border-radius:0 0 12px 12px;">
+
+              <!-- Icon -->
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="display:inline-block;background-color:#fff7ed;border-radius:50%;width:72px;height:72px;line-height:72px;text-align:center;font-size:36px;">
+                  🔧
+                </div>
+              </div>
+
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:bold;color:#111827;text-align:center;">
+                Your referral is progressing!
+              </h1>
+
+              <p style="margin:0 0 28px;font-size:15px;color:#6b7280;text-align:center;line-height:1.6;">
+                Hi <strong style="color:#111827;">{{referrerName}}</strong>,<br/>
+                <strong style="color:#111827;">{{referredName}}</strong> just completed a job on Metro Cool.
+                You're getting closer to your ₹400 referral reward!
+              </p>
+
+              <!-- Progress Card -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:2px solid #fdba74;border-radius:16px;padding:24px;text-align:center;">
+                    <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#9a3412;text-transform:uppercase;letter-spacing:0.8px;">
+                      Jobs Progress
+                    </p>
+
+                    <!-- Progress dots -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
+                      <tr>
+                        {{dot1}}
+                        <td style="width:12px;"></td>
+                        {{dot2}}
+                        <td style="width:12px;"></td>
+                        {{dot3}}
+                      </tr>
+                    </table>
+
+                    <p style="margin:0;font-size:36px;font-weight:900;color:#ea580c;line-height:1.1;">
+                      {{jobsDone}}/3
+                    </p>
+                    <p style="margin:8px 0 0;font-size:13px;color:#c2410c;font-weight:600;">
+                      jobs completed
+                    </p>
+                    <p style="margin:10px 0 0;font-size:12px;color:#d97706;">
+                      {{jobsRemaining}} more job{{jobsRemainingPlural}} to unlock <strong>₹400 cash</strong>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Reward reminder -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:18px 20px;">
+                    <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#1e40af;">
+                      💰 Your reward
+                    </p>
+                    <p style="margin:0;font-size:13px;color:#1d4ed8;line-height:1.7;">
+                      Once <strong>{{referredName}}</strong> completes all <strong>3 jobs</strong>,
+                      you'll receive <strong>₹400 cash</strong> directly to your account.
+                      Admin will notify you by email when the transfer is done.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Divider -->
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;" />
+
+              <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.7;">
+                Keep referring more technicians to earn more ₹400 rewards.<br/>
+                Each referral is tracked automatically.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding:20px 0;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#9ca3af;">
+                © {{year}} Metro Cool · Ahmedabad, India<br />
+                This is an automated message — please do not reply directly.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

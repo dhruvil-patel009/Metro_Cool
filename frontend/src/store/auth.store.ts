@@ -83,16 +83,20 @@ export const useAuthStore = create<AuthState>()(
             if (raw) {
               const parsed = JSON.parse(raw)
               const token = parsed?.state?.token
+              const user = parsed?.state?.user
               // Restore accessToken so API calls before Zustand loads work
-              if (token) {
+              if (token && token !== "null" && token !== "undefined") {
                 localStorage.setItem("accessToken", token)
+                // Also restore into Zustand state so components that read
+                // useAuthStore().token see it immediately after hydration
+                set({ token, user: user ?? null })
               }
             }
           } catch (err) {
             console.error("Auth hydration failed", err)
           }
         }
-        set({ hydrated: true })
+        set((s) => ({ ...s, hydrated: true }))
       },
     }),
     {

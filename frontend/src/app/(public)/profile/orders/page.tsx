@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/app/components/ui/button"
 
 import { apiFetch } from "@/app/lib/api"
+import { useAuthStore } from "@/store/auth.store"
 import { OrdersSkeletonList } from "@/app/components/ui/PageLoader"
 
 const formatINR = (v: number) =>
@@ -50,6 +51,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [stats, setStats] = useState({ total: 0, completed: 0, upcoming: 0 })
   const [loading, setLoading] = useState(true)
+  const { hydrated } = useAuthStore()
 
   /* Cancel modal state */
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
@@ -123,6 +125,10 @@ export default function OrdersPage() {
 
   /* ── Fetch ── */
   useEffect(() => {
+    // Wait for Zustand to rehydrate from localStorage before firing any
+    // authenticated API request — prevents false "session expired" on page load.
+    if (!hydrated) return
+
     const fetchOrders = async () => {
       try {
         const data = await apiFetch<any>("/users/me/orders")
@@ -164,7 +170,7 @@ export default function OrdersPage() {
     }
 
     fetchOrders()
-  }, [])
+  }, [hydrated])
 
   useEffect(() => { setCurrentPage(1) }, [activeFilter])
 

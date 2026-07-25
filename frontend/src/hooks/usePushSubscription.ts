@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react"
 import { useAuthStore } from "@/store/auth.store"
-import { apiFetch } from "@/app/lib/api"
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
 
@@ -161,17 +160,44 @@ function playNotificationSound() {
 /* ── POST subscription to backend ── */
 async function saveToBackend(subscription: PushSubscription) {
   const json = subscription.toJSON()
+
+  // Read token directly from localStorage — apiFetch may throw if token
+  // is missing, but the /push/subscribe route no longer requires auth.
+  // We still send the token when available so the backend links the
+  // subscription to the logged-in user.
+  const token = (() => {
+    try {
+      const direct = localStorage.getItem("accessToken")
+      if (direct && direct !== "null" && direct !== "undefined") return direct
+      const raw = localStorage.getItem("auth-storage")
+      if (raw) {
+        const t = JSON.parse(raw)?.state?.token
+        if (t && t !== "null" && t !== "undefined") return t
+      }
+    } catch (_) {}
+    return null
+  })()
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (token) headers["Authorization"] = `Bearer ${token}`
+
   try {
-    await apiFetch("/push/subscribe", {
-      method:  "POST",
-      body: JSON.stringify({
-        endpoint: json.endpoint,
-        keys: {
-          p256dh: json.keys?.p256dh,
-          auth:   json.keys?.auth,
-        },
-      }),
-    })
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/push/subscribe`,
+      {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({
+          endpoint: json.endpoint,
+          keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
+        }),
+      }
+    )
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      console.warn("[push] Backend save failed:", res.status, body)
+    }
   } catch (err) {
     console.error("[push] Failed to save subscription to backend:", err)
   }

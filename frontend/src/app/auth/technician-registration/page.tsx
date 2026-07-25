@@ -579,7 +579,7 @@ const handleServiceRemove = (service: string) => {
                     </p>
                   )}
                   <p className="text-xs text-gray-500">
-                    Have a referral code from another technician? Enter it to give them a reward.
+                    Have a referral code from another technician? Enter it so they earn ₹400 once you complete 3 jobs.
                   </p>
                 </div>
 
