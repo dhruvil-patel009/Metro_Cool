@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Briefcase, Users, UserCircle,
   Calendar, CreditCard, Settings, LogOut, Menu,
   PackageSearch, ChevronLeft, ChevronRight, Layers, Zap, Headphones,
-  ClipboardCheck, Percent,
+  ClipboardCheck, Percent, Wrench,
 } from "lucide-react"
 import { cn } from "@/app/lib/utils"
 import { toast } from "react-toastify"
@@ -37,6 +37,7 @@ const menuGroups = [
       { icon: ClipboardCheck,  label: "Service Reports", href: "/admin/ServiceReports", accent: "#14b8a6" },
       { icon: CreditCard,      label: "Settlements",  href: "/admin/Settlements",  accent: "#f59e0b" },
       { icon: Percent,         label: "Commission",   href: "/admin/CommissionSettings", accent: "#8b5cf6" },
+      { icon: Wrench,          label: "Installation",  href: "/admin/InstallationCharges", accent: "#0ea5e9" },
       { icon: Headphones,      label: "Support",      href: "/admin/support",      accent: "#8b5cf6" },
     ],
   },
