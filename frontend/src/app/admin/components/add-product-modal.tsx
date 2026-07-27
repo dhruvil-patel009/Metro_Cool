@@ -40,6 +40,7 @@ export function AddProductModal({ isOpen, onClose }: Props) {
   const [gallery, setGallery] = useState<File[]>([])
   const [catalog, setCatalog] = useState<File | null>(null)
 
+  const [fastInstallation, setFastInstallation] = useState(false)
   const [saving, setSaving] = useState(false)
 
   /* ================= SUBMIT ================= */
@@ -59,6 +60,7 @@ export function AddProductModal({ isOpen, onClose }: Props) {
       formData.append("badge", badge)
       formData.append("badgeColor", badgeColor)
       formData.append("inStock", String(inStock))
+      formData.append("fastInstallation", String(fastInstallation))
       formData.append("rating", rating)
       formData.append("reviewCount", reviewCount)
       formData.append("oldPrice", oldPrice)
@@ -437,6 +439,15 @@ export function AddProductModal({ isOpen, onClose }: Props) {
               <p className="text-xs text-gray-500">Product available for purchase</p>
             </div>
             <Switch checked={inStock} onCheckedChange={setInStock} />
+          </div>
+
+          {/* ══════ SECTION: Fast Installation ══════ */}
+          <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-100 rounded-xl">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Fast Installation</p>
+              <p className="text-xs text-gray-500">Show installation charges section on the product page</p>
+            </div>
+            <Switch checked={fastInstallation} onCheckedChange={setFastInstallation} />
           </div>
         </div>
 

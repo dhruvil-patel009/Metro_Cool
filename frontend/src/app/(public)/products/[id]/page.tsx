@@ -463,19 +463,30 @@ export default function ProductDetailsPage() {
                 </div>
 
                 {/* Trust Badges */}
-                <div className="grid grid-cols-2 gap-2.5 pt-5 border-t border-gray-100">
-                  {[
-                    { icon: <Shield className="w-4 h-4 text-blue-600" />, text: "5 Year Warranty", sub: "Brand warranty" },
-                    { icon: <Zap className="w-4 h-4 text-amber-600" />, text: "Fast Install", sub: "Same day" },
-                  ].map((badge, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gray-50/80 border border-gray-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all">
-                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                        {badge.icon}
-                      </div>
-                      <span className="text-[10px] sm:text-[11px] font-bold text-gray-700 text-center leading-tight">{badge.text}</span>
-                      <span className="text-[9px] text-gray-400 font-medium">{badge.sub}</span>
+                <div className={`pt-5 border-t border-gray-100 grid gap-3 ${product.fast_installation ? "grid-cols-2" : "grid-cols-1"}`}>
+                  {/* Warranty — always shown */}
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 text-center">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-blue-600" />
                     </div>
-                  ))}
+                    <div>
+                      <p className="text-xs font-bold text-gray-900">5 Year Warranty</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">Brand warranty covered</p>
+                    </div>
+                  </div>
+
+                  {/* Fast Install — only when enabled */}
+                  {product.fast_installation && (
+                    <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b from-amber-50 to-white border border-amber-100 text-center">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-amber-500" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-900">Fast Installation</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">Same day available</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -484,7 +495,9 @@ export default function ProductDetailsPage() {
         </div>
 
         {/* ═══ INSTALLATION CHARGES ═══ */}
-        <InstallationCharges productPrice={selectedPrice} />
+        {product.fast_installation && (
+          <InstallationCharges productPrice={selectedPrice} />
+        )}
 
         {/* ═══ TABS SECTION ═══ */}
         <div className="mt-6 sm:mt-8 bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
@@ -766,18 +779,28 @@ export default function ProductDetailsPage() {
                 Please add a product first
               </div>
             )}
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Subtotal</span>
-              <span className="font-medium text-gray-700">{formatINR(total)}</span>
-            </div>
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Shipping</span>
-              <span className="text-emerald-600 font-semibold">FREE</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg text-gray-900 pt-3 border-t border-gray-200">
-              <span>Total</span>
-              <span>{formatINR(total)}</span>
-            </div>
+            {(() => {
+              const drawerDelivery = cart.reduce(
+                (sum, item) => sum + (Number(item.delivery_charge || 0) * item.qty),
+                0
+              )
+              return (
+                <>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Subtotal</span>
+                    <span className="font-medium text-gray-700">{formatINR(total)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Delivery</span>
+                    <span className="font-medium text-gray-700">{formatINR(drawerDelivery)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg text-gray-900 pt-3 border-t border-gray-200">
+                    <span>Total</span>
+                    <span>{formatINR(total + drawerDelivery)}</span>
+                  </div>
+                </>
+              )
+            })()}
             <button
               onClick={() => {
                 if (cart.length === 0) { setShowCartWarning(true); setTimeout(() => setShowCartWarning(false), 2000); return }

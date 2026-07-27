@@ -28,10 +28,11 @@ export default function CartPage() {
 
   const itemCount = cart.reduce((sum, item) => sum + item.qty, 0)
 
-  // Shipping logic
-  const FREE_SHIPPING_THRESHOLD = 10000
-  const SHIPPING_FEE = 499
-  const shippingCost = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
+  // Delivery charge: sum of each item's delivery_charge × qty
+  const shippingCost = cart.reduce(
+    (sum, item) => sum + (Number(item.delivery_charge || 0) * item.qty),
+    0
+  )
   const finalTotal = total + shippingCost
 
   const handleRemove = (id: string, capacity: string) => {
@@ -98,14 +99,14 @@ export default function CartPage() {
           </button>
         </div>
 
-        {/* Free shipping banner */}
-        {shippingCost === 0 && (
-          <div className="mb-5 p-3 sm:p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-              <Truck className="w-4 h-4 text-emerald-600" />
+        {/* Delivery charge info banner */}
+        {shippingCost > 0 && (
+          <div className="mb-5 p-3 sm:p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+              <Truck className="w-4 h-4 text-blue-600" />
             </div>
-            <p className="text-sm text-emerald-700 font-medium">
-              🎉 You qualify for <span className="font-bold">FREE delivery</span> on this order!
+            <p className="text-sm text-blue-700 font-medium">
+              Delivery charge of <span className="font-bold">{formatINR(shippingCost)}</span> applies to this order.
             </p>
           </div>
         )}
@@ -302,21 +303,6 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  {/* Free shipping progress */}
-                  {shippingCost > 0 && (
-                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-100">
-                      <p className="text-xs text-amber-700 font-medium mb-2.5">
-                        Add <span className="font-bold">{formatINR(FREE_SHIPPING_THRESHOLD - total)}</span> more for free shipping!
-                      </p>
-                      <div className="w-full h-2 bg-amber-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min((total / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
                   {/* Total */}
                   <div className="border-t border-gray-100 pt-4">
                     <div className="flex justify-between items-baseline">
@@ -351,8 +337,8 @@ export default function CartPage() {
                   {
                     icon: <Truck className="w-4 h-4 text-emerald-600" />,
                     bg: "bg-emerald-50",
-                    title: "Free Delivery",
-                    desc: "On orders above ₹10,000",
+                    title: "Delivery Charge",
+                    desc: "₹400 per product",
                   },
                   {
                     icon: <Shield className="w-4 h-4 text-blue-600" />,

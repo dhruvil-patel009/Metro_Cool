@@ -23,6 +23,7 @@ export const createProduct = async (req: Request, res: Response) => {
       features,
       capacityPrices, // <-- NEW
       deliveryCharge, // <-- delivery charge per product
+      fastInstallation, // <-- optional fast installation toggle
     } = req.body;
 
     if (!title) {
@@ -89,6 +90,7 @@ export const createProduct = async (req: Request, res: Response) => {
       badge,
       badge_color: badgeColor,
       in_stock: inStock === "true",
+      fast_installation: fastInstallation === "true",
       category,
       brand,
       specifications: specifications ? JSON.parse(specifications) : [],
@@ -256,6 +258,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (req.body.badge !== undefined) payload.badge = req.body.badge;
     if (req.body.badge_color !== undefined) payload.badge_color = req.body.badge_color;
     if (req.body.in_stock !== undefined) payload.in_stock = req.body.in_stock === "true" || req.body.in_stock === true;
+    if (req.body.fast_installation !== undefined) payload.fast_installation = req.body.fast_installation === "true" || req.body.fast_installation === true;
     if (req.body.rating !== undefined) payload.rating = Number(req.body.rating);
     if (req.body.review_count !== undefined) payload.review_count = Number(req.body.review_count);
     if (req.body.old_price !== undefined) payload.old_price = Number(req.body.old_price);

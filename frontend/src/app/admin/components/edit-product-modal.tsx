@@ -28,10 +28,15 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
   const [badge, setBadge] = useState(product.badge || "")
   const [badgeColor, setBadgeColor] = useState(product.badge_color || "#3b82f6")
   const [inStock, setInStock] = useState(product.in_stock ?? true)
+  const [fastInstallation, setFastInstallation] = useState(product.fast_installation ?? false)
   const [rating, setRating] = useState(String(product.rating || "4.5"))
   const [reviewCount, setReviewCount] = useState(String(product.review_count || "0"))
   const [oldPrice, setOldPrice] = useState(String(product.old_price || ""))
-  const [deliveryCharge, setDeliveryCharge] = useState(String(product.delivery_charge ?? "400"))
+  const [deliveryCharge, setDeliveryCharge] = useState(
+    product.delivery_charge != null && Number(product.delivery_charge) > 0
+      ? String(product.delivery_charge)
+      : "400"
+  )
 
   const [variants, setVariants] = useState(
     Array.isArray(product.capacity_prices) && product.capacity_prices.length > 0
@@ -86,6 +91,7 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
       formData.append("badge", badge)
       formData.append("badge_color", badgeColor)
       formData.append("in_stock", String(inStock))
+      formData.append("fast_installation", String(fastInstallation))
       formData.append("rating", rating)
       formData.append("review_count", reviewCount)
       formData.append("old_price", oldPrice || "0")
@@ -538,6 +544,15 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
               <p className="text-xs text-gray-500">Product available for purchase</p>
             </div>
             <Switch checked={inStock} onCheckedChange={setInStock} />
+          </div>
+
+          {/* ══════ SECTION: Fast Installation ══════ */}
+          <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-100 rounded-xl">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Fast Installation</p>
+              <p className="text-xs text-gray-500">Show installation charges section on the product page</p>
+            </div>
+            <Switch checked={fastInstallation} onCheckedChange={setFastInstallation} />
           </div>
         </div>
 
