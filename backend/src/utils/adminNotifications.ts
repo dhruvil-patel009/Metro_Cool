@@ -99,7 +99,7 @@ export async function sendBookingNotification(data: BookingNotificationData): Pr
     const info = await transporter.sendMail({
       from: `"Metro Cool" <${process.env.MAIL_USER}>`,
       to: env.ADMIN_EMAIL,
-      subject: `🔔 New Booking - ${data.serviceName} | ${data.customerName}`,
+      subject: `[SERVICE] New Booking — ${data.serviceName} | ${data.customerName}`,
       html: adminHtml,
     })
 
@@ -117,7 +117,7 @@ export async function sendBookingNotification(data: BookingNotificationData): Pr
         const custInfo = await transporter.sendMail({
           from: `"Metro Cool" <${process.env.MAIL_USER}>`,
           to: data.customerEmail,
-          subject: `✅ Booking Confirmed - ${data.serviceName} | Metro Cool`,
+          subject: `[SERVICE] Booking Confirmed — ${data.serviceName} | Metro Cool`,
           html: customerHtml,
         })
 
@@ -186,7 +186,7 @@ export async function sendPaymentCompletedNotification(data: PaymentCompletedDat
     const info = await transporter.sendMail({
       from: `"Metro Cool" <${process.env.MAIL_USER}>`,
       to: env.ADMIN_EMAIL,
-      subject: `✅ Payment Received - ${data.serviceName} | ${data.customerName} | ${formatCurrency(data.amountPaid)}`,
+      subject: `[SERVICE] Payment Received — ${data.serviceName} | ${data.customerName} | ${formatCurrency(data.amountPaid)}`,
       html,
     })
 
@@ -265,7 +265,7 @@ export async function sendOrderNotification(data: OrderNotificationData): Promis
     const info = await transporter.sendMail({
       from: `"Metro Cool" <${process.env.MAIL_USER}>`,
       to: env.ADMIN_EMAIL,
-      subject: `📦 New Order - ${formatCurrency(data.totalAmount)} | ${data.customerName}`,
+      subject: `[PRODUCT] New Order — ${formatCurrency(data.totalAmount)} | ${data.customerName}`,
       html,
     })
 

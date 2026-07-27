@@ -34,7 +34,19 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   /* ---------- Load from localStorage ---------- */
   useEffect(() => {
     const stored = localStorage.getItem("metrocart")
-    if (stored) setCart(JSON.parse(stored))
+    if (stored) {
+      try {
+        const parsed: CartItem[] = JSON.parse(stored)
+        // Strip stale delivery_charge: 0 so the product page re-applies the correct value on next addToCart
+        const cleaned = parsed.map(item => ({
+          ...item,
+          delivery_charge: item.delivery_charge === 0 ? undefined : item.delivery_charge,
+        }))
+        setCart(cleaned)
+      } catch {
+        setCart([])
+      }
+    }
   }, [])
 
   /* ---------- Save to localStorage ---------- */
@@ -50,7 +62,12 @@ const addToCart = (item: CartItem) => {
 
     if (existIndex !== -1) {
       const updated = [...prev];
-      updated[existIndex].qty += 1;
+      updated[existIndex] = {
+        ...updated[existIndex],
+        qty: updated[existIndex].qty + 1,
+        price: item.price,                        // refresh price from latest product data
+        delivery_charge: item.delivery_charge,    // refresh delivery charge from latest product data
+      };
       return updated;
     }
 

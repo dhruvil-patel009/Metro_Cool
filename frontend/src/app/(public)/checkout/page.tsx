@@ -1,4 +1,4 @@
-﻿"use client"
+﻿﻿﻿"use client"
 
 import { useCart } from "@/app/context/CartContext"
 import { useEffect, useRef, useState } from "react"
@@ -67,7 +67,7 @@ export default function CheckoutPage() {
 
   // Delivery charge: sum of delivery_charge per cart item (qty Ã— delivery_charge)
   const deliveryCharge = cart.reduce(
-    (sum, item) => sum + (Number(item.delivery_charge || 0) * (item.qty || 1)),
+    (sum, item) => sum + ((Number(item.delivery_charge) || 400) * (item.qty || 1)),
     0
   )
 
@@ -449,7 +449,7 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN â€” ORDER SUMMARY */}
+          {/* RIGHT COLUMN — ORDER SUMMARY */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-24">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
@@ -466,9 +466,9 @@ export default function CheckoutPage() {
                       <p className="font-semibold text-sm text-gray-900 truncate">{item.title}</p>
                       <p className="text-xs text-gray-400">{item.capacity}</p>
                       <p className="text-sm font-bold text-blue-600 mt-0.5">{formatINR(item.price)}</p>
-                      {Number(item.delivery_charge) > 0 && (
+                      {(Number(item.delivery_charge) || 400) > 0 && (
                         <p className="text-[11px] text-gray-400 mt-0.5">
-                          + {formatINR(Number(item.delivery_charge))} delivery
+                          + {formatINR(Number(item.delivery_charge) || 400)} delivery
                         </p>
                       )}
 
@@ -547,17 +547,17 @@ export default function CheckoutPage() {
                   {isProcessing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Processingâ€¦
+                      Processing...
                     </>
                   ) : (
                     <>
-                      Place Order â€” {formatINR(Math.round(finalAmount))}
+                      Place Order — {formatINR(Math.round(finalAmount))}
                     </>
                   )}
                 </button>
                 {pinStatus !== "invalid" && (
                   <p className="text-center text-xs text-gray-400 mt-3">
-                    ðŸ”’ Secure encrypted checkout
+                    🔒 Secure encrypted checkout
                   </p>
                 )}
               </div>

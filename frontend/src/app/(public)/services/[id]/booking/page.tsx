@@ -427,9 +427,6 @@ export default function BookingPage() {
                         ? `${MONTH_NAMES[selectedMonth]} ${selectedDay}, ${selectedYear}`
                         : "Select a date"}
                     </p>
-                    <p className="text-sm font-medium text-blue-600 mt-0.5">
-                      {selectedTime} - {Number.parseInt(selectedTime) + 1}:30 {selectedTime.includes("AM") ? "AM" : "PM"}
-                    </p>
                   </div>
 
                   {/* Location */}

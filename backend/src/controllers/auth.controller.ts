@@ -229,18 +229,43 @@ export const register = async (req: Request, res: Response) => {
           .maybeSingle();
 
         if (referralCode && referralCode.technician_id !== userId) {
-          // Create reward for the referrer (5% commission discount for next 3 jobs)
-          await supabase
+          // Try inserting with new schema values first (after migration)
+          const { error: rewardError } = await supabase
             .from("referral_rewards")
             .insert({
-              referrer_id: referralCode.technician_id,
-              referred_id: userId,
+              referrer_id:      referralCode.technician_id,
+              referred_id:      userId,
               referral_code_id: referralCode.id,
-              reward_type: "commission_discount",
-              reward_value: 5,
-              reward_status: "active",
-              jobs_remaining: 3,
+              reward_type:      "cash_credit",
+              reward_value:     400,
+              reward_status:    "pending",
+              jobs_remaining:   3,
             });
+
+          if (rewardError) {
+            // DB still has old CHECK constraint — fall back to legacy values
+            console.warn("[referral] Insert with new values failed (DB constraint?), trying legacy:", rewardError.message);
+
+            const { error: fallbackError } = await supabase
+              .from("referral_rewards")
+              .insert({
+                referrer_id:      referralCode.technician_id,
+                referred_id:      userId,
+                referral_code_id: referralCode.id,
+                reward_type:      "commission_discount",
+                reward_value:     5,
+                reward_status:    "active",
+                jobs_remaining:   3,
+              });
+
+            if (fallbackError) {
+              console.error("[referral] ❌ Both inserts failed. Referral reward NOT created:", fallbackError.message);
+            } else {
+              console.log(`[referral] ✅ Reward row created (legacy values) for referrer ${referralCode.technician_id}`);
+            }
+          } else {
+            console.log(`[referral] ✅ Reward row created for referrer ${referralCode.technician_id}`);
+          }
         }
       }
     }

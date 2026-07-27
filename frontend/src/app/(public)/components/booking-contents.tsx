@@ -48,10 +48,22 @@ export default function BookingsContent() {
     if (!bookingId) return
 
     const fetchBooking = async () => {
-      const token = localStorage.getItem("accessToken")
-      if (!token) {
-        router.replace("/auth/login")
-        return
+      // Check both localStorage and the Zustand persist key
+      const token =
+        localStorage.getItem("accessToken") ||
+        (() => {
+          try {
+            const raw = localStorage.getItem("auth-storage");
+            return raw ? JSON.parse(raw)?.state?.token ?? null : null;
+          } catch (_) {
+            return null;
+          }
+        })();
+
+      if (!token || token === "null" || token === "undefined") {
+        // Don't redirect immediately — give Zustand time to hydrate.
+        // The AuthGuard wrapper will handle the redirect if truly unauthenticated.
+        return;
       }
 
       try {
@@ -61,8 +73,11 @@ export default function BookingsContent() {
         })
 
         if (res.status === 401) {
-          localStorage.removeItem("accessToken")
-          router.replace("/auth/login")
+          // Token is genuinely invalid/expired — let api.ts handleSessionExpiry manage cleanup
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current)
+            pollingRef.current = null
+          }
           return
         }
 
@@ -233,7 +248,7 @@ export default function BookingsContent() {
   }
 
   /* ---------------- DERIVED DATA ---------------- */
-  const orderId = `#${booking.id?.slice(0, 8)}`
+  const orderId = booking.booking_ref || `#${booking.id?.slice(0, 8).toUpperCase()}`
   const address = booking.address
   const fullAddress = `${address.street}, ${address.apt || ""}, ${address.city} ${address.zipCode}`
   const service = booking.service

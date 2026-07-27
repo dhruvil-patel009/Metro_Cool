@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Referral Progress Update — Metro Cool Admin</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 16px;">
+    <tr>
+      <td align="center">
+
+        <table role="presentation" width="100%" style="max-width:580px;" cellpadding="0" cellspacing="0">
+
+          <!-- BRAND HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);border-radius:12px 12px 0 0;padding:28px 32px;text-align:center;">
+              <p style="margin:0;color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.5px;">
+                🔵 Metro Cool Admin
+              </p>
+              <p style="margin:8px 0 0;color:#bfdbfe;font-size:13px;">Referral Job Progress — {{jobsDone}}/3</p>
+            </td>
+          </tr>
+
+          <!-- ACCENT BAR -->
+          <tr>
+            <td style="height:4px;background:linear-gradient(90deg,#2563eb,#7c3aed,#ec4899);"></td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="background-color:#ffffff;padding:36px 32px;border-radius:0 0 12px 12px;">
+
+              <!-- Icon -->
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="display:inline-block;background-color:#eff6ff;border-radius:50%;width:72px;height:72px;line-height:72px;text-align:center;font-size:34px;">
+                  📊
+                </div>
+              </div>
+
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:bold;color:#111827;text-align:center;">
+                Referral job progress update
+              </h1>
+
+              <p style="margin:0 0 28px;font-size:14px;color:#6b7280;text-align:center;line-height:1.7;">
+                A referred technician completed a job.<br/>
+                Progress is now <strong style="color:#111827;">{{jobsDone}} of 3 jobs</strong>.
+              </p>
+
+              <!-- Details Table -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                style="border:1.5px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:24px;">
+
+                <tr style="background:#f8fafc;">
+                  <td style="padding:12px 18px;font-size:12px;font-weight:700;color:#6b7280;
+                             text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid #e5e7eb;width:45%;">
+                    Field
+                  </td>
+                  <td style="padding:12px 18px;font-size:12px;font-weight:700;color:#6b7280;
+                             text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid #e5e7eb;">
+                    Value
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:13px 18px;font-size:13px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Referrer (will receive ₹400)</td>
+                  <td style="padding:13px 18px;font-size:13px;font-weight:700;color:#111827;border-bottom:1px solid #f1f5f9;">{{referrerName}}</td>
+                </tr>
+
+                <tr style="background:#fafafa;">
+                  <td style="padding:13px 18px;font-size:13px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Referrer Email</td>
+                  <td style="padding:13px 18px;font-size:13px;color:#2563eb;border-bottom:1px solid #f1f5f9;">{{referrerEmail}}</td>
+                </tr>
+
+                <tr>
+                  <td style="padding:13px 18px;font-size:13px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Referred Technician</td>
+                  <td style="padding:13px 18px;font-size:13px;font-weight:600;color:#374151;border-bottom:1px solid #f1f5f9;">{{referredName}}</td>
+                </tr>
+
+                <tr style="background:#fafafa;">
+                  <td style="padding:13px 18px;font-size:13px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Jobs Completed</td>
+                  <td style="padding:13px 18px;border-bottom:1px solid #f1f5f9;">
+                    <!-- Progress dots inline -->
+                    <span style="display:inline-flex;gap:6px;align-items:center;">
+                      {{dot1}}
+                      {{dot2}}
+                      {{dot3}}
+                      &nbsp;<strong style="font-size:14px;color:#ea580c;">{{jobsDone}}/3</strong>
+                    </span>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:13px 18px;font-size:13px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Jobs Remaining</td>
+                  <td style="padding:13px 18px;font-size:13px;font-weight:700;
+                             color:{{remainingColor}};border-bottom:1px solid #f1f5f9;">
+                    {{jobsRemaining}} job{{jobsRemainingPlural}} left
+                  </td>
+                </tr>
+
+                <tr style="background:#fafafa;">
+                  <td style="padding:13px 18px;font-size:13px;color:#6b7280;">Reward Amount</td>
+                  <td style="padding:13px 18px;font-size:18px;font-weight:900;color:#ea580c;">₹400</td>
+                </tr>
+
+              </table>
+
+              <!-- Status Banner -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="background:{{bannerBg}};border:1.5px solid {{bannerBorder}};border-radius:12px;padding:16px 20px;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="font-size:22px;vertical-align:middle;padding-right:12px;">{{bannerIcon}}</td>
+                      <td style="vertical-align:middle;">
+                        <p style="margin:0;font-size:13px;font-weight:700;color:{{bannerTextBold}};">
+                          {{bannerTitle}}
+                        </p>
+                        <p style="margin:4px 0 0;font-size:12px;color:{{bannerText}};">
+                          {{bannerBody}}
+                        </p>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Divider -->
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;" />
+
+              <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
+                This notification was auto-generated by the Metro Cool referral system.<br/>
+                No action needed until all 3 jobs are completed.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding:20px 0;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#9ca3af;">
+                © {{year}} Metro Cool · Admin Panel<br />
+                This is an automated alert — do not reply to this email.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

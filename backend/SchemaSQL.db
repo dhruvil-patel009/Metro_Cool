@@ -179,3 +179,18 @@ using (auth.uid() = technician_id);
 create policy "Technician can read own rewards"
 on referral_rewards for select
 using (auth.uid() = referrer_id);
+
+
+=========================== Push Subscriptions Table ================================
+
+-- Stores web-push subscriptions per user (technicians, customers, admins).
+-- One row per user — upserted on each subscribe call.
+
+create table push_subscriptions (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null unique,
+  subscription jsonb not null,
+  updated_at timestamptz default now()
+);
+
+alter table push_subscriptions disable row level security;

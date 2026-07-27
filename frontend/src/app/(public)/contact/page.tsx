@@ -15,7 +15,7 @@ const addresses = [
       "https://maps.google.com/maps?q=A-401,+Suvas+Oram,+Opp.+Hotel+Safari,+Odhav+Ring+Road,+Ahmedabad+382415",
   },
   {
-    label: "Service Centre",
+    label: "Branch Office",
     icon: Home,
     address: "GF-6, Radhe Chamber, Kansas County, B/h, Vastral, Ahmedabad, Gujarat 382418",
     mapSrc:
@@ -221,13 +221,13 @@ export default function ContactPage() {
 
                 <div className="border-t border-gray-50" />
 
-                {/* Service Centre */}
+                {/* Branch Office */}
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
                     <MapPin className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Service Centre</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Branch Office</p>
                     <p className="text-sm font-semibold text-gray-900 leading-snug">
                       GF-6, Radhe Chamber, Kansas County,<br />
                       B/h, Vastral, Ahmedabad, Gujarat 382418

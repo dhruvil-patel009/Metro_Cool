@@ -19,6 +19,7 @@ import {
   CalendarDays,
   Loader2,
   AlertTriangle,
+  UserCheck,
 } from "lucide-react"
 import { AdminEmptyState } from "./admin-page-shell"
 import { toast } from "react-toastify"
@@ -97,6 +98,14 @@ export default function BookingsContent() {
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null)
   const [cancelReason, setCancelReason] = useState("")
   const [cancelling, setCancelling] = useState(false)
+
+  /* Reassign modal state */
+  const [reassignModalOpen, setReassignModalOpen] = useState(false)
+  const [reassignBookingId, setReassignBookingId] = useState<string | null>(null)
+  const [technicians, setTechnicians] = useState<{ id: string; name: string; phone: string }[]>([])
+  const [selectedTechId, setSelectedTechId] = useState("")
+  const [loadingTechs, setLoadingTechs] = useState(false)
+  const [reassigning, setReassigning] = useState(false)
 
   const start = (page - 1) * limit + 1
 const end = Math.min(page * limit, total)
@@ -197,6 +206,59 @@ const fetchBookings = async () => {
     "Admin decision",
     "Other",
   ]
+
+  /* ================= REASSIGN TECHNICIAN ================= */
+
+  const openReassignModal = async (bookingId: string) => {
+    setReassignBookingId(bookingId)
+    setSelectedTechId("")
+    setReassignModalOpen(true)
+    setLoadingTechs(true)
+    try {
+      const res = await fetch(`${API_URL}/admin/technicians?limit=100`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      // Response shape: { data: [{ id, profiles: { first_name, last_name } }] }
+      const rows = data.data || data.technicians || data || []
+      const list = rows
+        .filter((t: any) => t.profiles)
+        .map((t: any) => ({
+          id: t.id,
+          name: `${t.profiles.first_name ?? ""} ${t.profiles.last_name ?? ""}`.trim(),
+          phone: t.profiles.phone ?? "",
+        }))
+      setTechnicians(list)
+    } catch {
+      setTechnicians([])
+    } finally {
+      setLoadingTechs(false)
+    }
+  }
+
+  const handleReassign = async () => {
+    if (!reassignBookingId || !selectedTechId) return
+    setReassigning(true)
+    try {
+      const res = await fetch(`${API_URL}/admin/bookings/${reassignBookingId}/reassign`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ technician_id: selectedTechId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to reassign")
+      toast.success(data.message || "Technician reassigned successfully")
+      setReassignModalOpen(false)
+      fetchBookings()
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reassign technician")
+    } finally {
+      setReassigning(false)
+    }
+  }
 
   /* ================= FILTER ================= */
 
@@ -431,7 +493,10 @@ const fetchBookings = async () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Assign Technician</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openReassignModal(booking.id)}>
+                            <UserCheck className="w-4 h-4 mr-2 text-blue-500" />
+                            Reassign Technician
+                          </DropdownMenuItem>
                           {booking.status !== "Completed" && booking.status !== "Cancelled" && (
                             <DropdownMenuItem className="text-red-600" onClick={() => openCancelModal(booking.id)}>Cancel Booking</DropdownMenuItem>
                           )}
@@ -483,6 +548,74 @@ const fetchBookings = async () => {
           </DialogContent>
         </Dialog>
 
+        {/* ── Reassign Technician Modal ── */}
+        <Dialog open={reassignModalOpen} onOpenChange={setReassignModalOpen}>
+          <DialogContent className="sm:max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-gray-900">
+                <UserCheck className="w-5 h-5 text-blue-500" />
+                Reassign Technician
+              </DialogTitle>
+              <DialogDescription>
+                Select a technician to assign this job to. The job status will be reset to "Assigned".
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              {loadingTechs ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-500 mr-2" />
+                  <span className="text-sm text-gray-500">Loading technicians...</span>
+                </div>
+              ) : technicians.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">No technicians available</p>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {technicians.map((tech) => (
+                    <button
+                      key={tech.id}
+                      onClick={() => setSelectedTechId(tech.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                        selectedTechId === tech.id
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center text-violet-700 text-sm font-bold shrink-0">
+                        {tech.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold truncate ${selectedTechId === tech.id ? "text-blue-800" : "text-gray-800"}`}>
+                          {tech.name}
+                        </p>
+                        <p className="text-xs text-gray-400">{tech.phone || "Technician"}</p>
+                      </div>
+                      {selectedTechId === tech.id && (
+                        <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 justify-end pt-1">
+                <Button variant="outline" onClick={() => setReassignModalOpen(false)} className="rounded-xl">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleReassign}
+                  disabled={!selectedTechId || reassigning || loadingTechs}
+                  className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {reassigning ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" /> Reassigning…</> : "Confirm Reassign"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Pagination */}
         <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-gray-50/40">
           <p className="text-sm text-gray-500">
@@ -524,7 +657,10 @@ const fetchBookings = async () => {
                   <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>View Details</DropdownMenuItem>
-                    <DropdownMenuItem>Assign Technician</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openReassignModal(booking.id)}>
+                      <UserCheck className="w-4 h-4 mr-2 text-blue-500" />
+                      Reassign Technician
+                    </DropdownMenuItem>
                     {booking.status !== "Completed" && booking.status !== "Cancelled" && (
                       <DropdownMenuItem className="text-red-600" onClick={() => openCancelModal(booking.id)}>Cancel Booking</DropdownMenuItem>
                     )}

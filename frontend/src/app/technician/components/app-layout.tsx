@@ -4,11 +4,13 @@ import type React from "react"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
 import { useSidebar } from "./sidebar-content"
-
-
+import { usePushSubscription } from "@/hooks/usePushSubscription"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { isCollapsed } = useSidebar()
+
+  // Registers SW + subscribes to push on login (technician auto-opt-in)
+  usePushSubscription()
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
