@@ -1,4 +1,4 @@
-﻿﻿﻿"use client"
+﻿﻿"use client"
 
 import { useCart } from "@/app/context/CartContext"
 import { useEffect, useRef, useState } from "react"
@@ -7,9 +7,10 @@ import { toast } from "react-toastify"
 import { formatINR } from "@/app/lib/currency"
 import {
   MapPin, CreditCard, ChevronRight, Package, Loader2,
-  Plus, Minus, Trash2, ShoppingCart, AlertTriangle, CheckCircle2,
+  Plus, Minus, Trash2, ShoppingCart, AlertTriangle, CheckCircle2, Wrench,
 } from "lucide-react"
 import AuthGuard from "@/app/components/AuthGuard"
+import { InstallationSection } from "./components/InstallationSection"
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
@@ -62,18 +63,26 @@ export default function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] = useState<"upi" | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-
   const razorpayOpened = useRef(false)
 
-  // Delivery charge: sum of delivery_charge per cart item (qty Ã— delivery_charge)
+  // installMap: "itemId+capacity" → installation price | null (managed by InstallationSection)
+  const [installMap, setInstallMap] = useState<Record<string, number | null>>({})
+
+  // Delivery charge: sum of delivery_charge per cart item (qty × delivery_charge)
   const deliveryCharge = cart.reduce(
     (sum, item) => sum + ((Number(item.delivery_charge) || 400) * (item.qty || 1)),
     0
   )
 
+  // Installation charge: sum of selected plans × qty
+  const installationCharge = cart.reduce((sum, item) => {
+    const planPrice = installMap[item.id + item.capacity] ?? null
+    return sum + (planPrice !== null ? Number(planPrice) * (item.qty || 1) : 0)
+  }, 0)
+
   const pinStatus = getPinStatus(zip)
   const tax = total * 0.18
-  const finalAmount = total + tax + deliveryCharge
+  const finalAmount = total + tax + deliveryCharge + installationCharge
 
   /* LOAD ADDRESSES */
   const applyAddress = (addr: any) => {
@@ -89,16 +98,13 @@ export default function CheckoutPage() {
   useEffect(() => {
     const token = localStorage.getItem("accessToken")
     if (!token) return
-
-    fetch(`${API_URL}/addresses`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch(`${API_URL}/addresses`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
       .then(data => {
         if (data.addresses) {
           setSavedAddresses(data.addresses)
-          const defaultAddress = data.addresses.find((a: any) => a.is_default)
-          if (defaultAddress) applyAddress(defaultAddress)
+          const def = data.addresses.find((a: any) => a.is_default)
+          if (def) applyAddress(def)
         }
       })
       .catch(() => {})
@@ -107,34 +113,28 @@ export default function CheckoutPage() {
   /* CREATE ORDER */
   const createOrder = async () => {
     const token = localStorage.getItem("accessToken")
-
     const res = await fetch(`${API_URL}/orders`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         items: cart,
         customer_name: fullName,
         phone,
         address: { street, city, zip },
-        total_amount: finalAmount
-      })
+        total_amount: finalAmount,
+      }),
     })
-
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}))
       throw new Error(errData.error || "Failed to create order")
     }
-
     const data = await res.json()
     return data.order.id
   }
 
   /* LOAD RAZORPAY */
-  const loadRazorpay = () => {
-    return new Promise<void>((resolve, reject) => {
+  const loadRazorpay = () =>
+    new Promise<void>((resolve, reject) => {
       if (window.Razorpay) { resolve(); return }
       const script = document.createElement("script")
       script.src = "https://checkout.razorpay.com/v1/checkout.js"
@@ -142,31 +142,22 @@ export default function CheckoutPage() {
       script.onerror = () => reject()
       document.body.appendChild(script)
     })
-  }
 
-  /* ONLINE PAYMENT (PRODUCT) */
+  /* ONLINE PAYMENT */
   const handleRazorpay = async () => {
     if (razorpayOpened.current) return
     razorpayOpened.current = true
-
     try {
       await loadRazorpay()
       const orderId = await createOrder()
       const token = localStorage.getItem("accessToken")
-
       const orderRes = await fetch(`${API_URL}/payments/product-razorpay-order`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ order_id: orderId, amount: finalAmount })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ order_id: orderId, amount: finalAmount }),
       })
-
       if (!orderRes.ok) throw new Error("Failed to create payment order")
-
       const orderData = await orderRes.json()
-
       const options = {
         key: orderData.key,
         order_id: orderData.orderId,
@@ -177,16 +168,13 @@ export default function CheckoutPage() {
           try {
             const verifyRes = await fetch(`${API_URL}/payments/product-verify`, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-              },
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
               body: JSON.stringify({
                 order_id: orderId,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
-              })
+              }),
             })
             if (!verifyRes.ok) {
               toast.error("Payment verification failed. Please contact support.")
@@ -201,14 +189,8 @@ export default function CheckoutPage() {
             router.push(`/checkout/order-success?order_id=${orderId}`)
           }
         },
-        modal: {
-          ondismiss: () => {
-            razorpayOpened.current = false
-            setIsProcessing(false)
-          }
-        }
+        modal: { ondismiss: () => { razorpayOpened.current = false; setIsProcessing(false) } },
       }
-
       const rzp = new window.Razorpay(options)
       rzp.open()
     } catch (err: any) {
@@ -224,23 +206,19 @@ export default function CheckoutPage() {
       toast.error("Please fill in all address fields")
       return
     }
-
     if (pinStatus === "invalid") {
       toast.error("Sorry, this product is currently not available for delivery in your area.")
       return
     }
-
     if (!paymentMethod) {
       toast.error("Please select a payment method")
       return
     }
-
     setIsProcessing(true)
-
     if (paymentMethod === "upi") handleRazorpay()
   }
 
-  /* EMPTY CART STATE */
+  /* EMPTY CART */
   if (cart.length === 0) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
@@ -261,312 +239,273 @@ export default function CheckoutPage() {
 
   return (
     <AuthGuard>
-    <div className="min-h-screen bg-white py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen bg-gray-50/50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
 
-        {/* Breadcrumb */}
-        <nav className="mb-5 flex items-center gap-1.5 text-xs text-gray-400">
-          <button onClick={() => router.push("/products")} className="hover:text-gray-600 transition-colors">Products</button>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-gray-700 font-medium">Checkout</span>
-        </nav>
+          {/* Breadcrumb */}
+          <nav className="mb-5 flex items-center gap-1.5 text-xs text-gray-400">
+            <button onClick={() => router.push("/products")} className="hover:text-gray-600 transition-colors">Products</button>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-gray-700 font-medium">Checkout</span>
+          </nav>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#1d242d] mb-6">Checkout</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#1d242d] mb-6">Checkout</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-3 space-y-5">
+            {/* ── LEFT COLUMN ── */}
+            <div className="lg:col-span-3 space-y-5">
 
-            {/* SAVED ADDRESSES */}
-            {savedAddresses.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600" />
-                  <h2 className="font-semibold text-gray-900">Saved Addresses</h2>
-                </div>
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {savedAddresses.map(addr => (
-                    <button
-                      key={addr.id}
-                      onClick={() => applyAddress(addr)}
-                      className={`text-left p-4 rounded-xl border-2 transition-all ${
-                        selectedAddressId === addr.id
-                          ? "border-blue-500 bg-blue-50/50"
-                          : "border-gray-100 hover:border-gray-200"
-                      }`}
-                    >
-                      <p className="font-semibold text-sm text-gray-900">
-                        {addr.label}
-                        {addr.is_default && (
-                          <span className="ml-2 text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full">
-                            Default
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-600 mt-1">{addr.full_name}</p>
-                      <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
-                        {addr.street}, {addr.apartment ?? ""}, {addr.city}, {addr.state} {addr.postal_code}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5">{addr.phone}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ADDRESS FORM */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-blue-600" />
-                <h2 className="font-semibold text-gray-900">Delivery Address</h2>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Full Name</label>
-                    <input
-                      value={fullName}
-                      onChange={e => setFullName(e.target.value)}
-                      placeholder="John Doe"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                    />
+              {/* SAVED ADDRESSES */}
+              {savedAddresses.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-blue-600" />
+                    <h2 className="font-semibold text-gray-900">Saved Addresses</h2>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Phone</label>
-                    <input
-                      value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      placeholder="9876543210"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Street Address</label>
-                  <input
-                    value={street}
-                    onChange={e => setStreet(e.target.value)}
-                    placeholder="123, Main Street"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Apartment</label>
-                    <input
-                      value={apt}
-                      onChange={e => setApt(e.target.value)}
-                      placeholder="Apt 4B"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">City</label>
-                    <input
-                      value={city}
-                      onChange={e => setCity(e.target.value)}
-                      placeholder="Ahmedabad"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">PIN Code</label>
-                    <div className="relative">
-                      <input
-                        value={zip}
-                        onChange={e => setZip(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        placeholder="380001"
-                        maxLength={6}
-                        className={`w-full px-3.5 py-2.5 pr-9 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${
-                          pinStatus === "invalid"
-                            ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
-                            : pinStatus === "valid"
-                            ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20"
-                            : "border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {savedAddresses.map(addr => (
+                      <button
+                        key={addr.id}
+                        onClick={() => applyAddress(addr)}
+                        className={`text-left p-4 rounded-xl border-2 transition-all ${
+                          selectedAddressId === addr.id
+                            ? "border-blue-500 bg-blue-50/50"
+                            : "border-gray-100 hover:border-gray-200"
                         }`}
-                      />
-                      {pinStatus === "valid" && (
-                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
-                      )}
-                      {pinStatus === "invalid" && (
-                        <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none" />
-                      )}
-                    </div>
-                    {pinStatus === "invalid" && (
-                      <p className="mt-1.5 text-xs text-red-600 font-medium flex items-start gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                        Sorry, this product is currently not available for delivery in your area.
-                      </p>
-                    )}
-                    {pinStatus === "valid" && (
-                      <p className="mt-1.5 text-xs text-emerald-600 font-medium flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                        Delivery available in your area.
-                      </p>
-                    )}
-                    {pinStatus === "empty" && (
-                      <p className="mt-1.5 text-[11px] text-gray-400">
-                        Delivery available only within Ahmedabad.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* PAYMENT METHOD */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-blue-600" />
-                <h2 className="font-semibold text-gray-900">Payment Method</h2>
-              </div>
-              <div className="p-4 space-y-3">
-                <button
-                  onClick={() => setPaymentMethod("upi")}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-                    paymentMethod === "upi"
-                      ? "border-blue-500 bg-blue-50/50"
-                      : "border-gray-100 hover:border-gray-200"
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    paymentMethod === "upi" ? "bg-blue-100" : "bg-gray-100"
-                  }`}>
-                    <CreditCard className="w-5 h-5" style={{ color: paymentMethod === "upi" ? "#2563eb" : "#6b7280" }} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm text-gray-900">Online Payment</p>
-                    <p className="text-xs text-gray-400">UPI, Cards, Net Banking via Razorpay</p>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    paymentMethod === "upi" ? "border-blue-600" : "border-gray-300"
-                  }`}>
-                    {paymentMethod === "upi" && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN — ORDER SUMMARY */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-24">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-                <Package className="w-4 h-4 text-blue-600" />
-                <h2 className="font-semibold text-gray-900">Order Summary</h2>
-              </div>
-
-              {/* Cart Items */}
-              <div className="p-4 space-y-3 max-h-72 overflow-y-auto">
-                {cart.map(item => (
-                  <div key={item.id + item.capacity} className="flex gap-3 pb-3 border-b border-gray-50 last:border-0">
-                    <img src={item.image} className="w-16 h-16 rounded-xl object-cover border border-gray-100" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 truncate">{item.title}</p>
-                      <p className="text-xs text-gray-400">{item.capacity}</p>
-                      <p className="text-sm font-bold text-blue-600 mt-0.5">{formatINR(item.price)}</p>
-                      {(Number(item.delivery_charge) || 400) > 0 && (
-                        <p className="text-[11px] text-gray-400 mt-0.5">
-                          + {formatINR(Number(item.delivery_charge) || 400)} delivery
+                      >
+                        <p className="font-semibold text-sm text-gray-900">
+                          {addr.label}
+                          {addr.is_default && (
+                            <span className="ml-2 text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full">Default</span>
+                          )}
                         </p>
-                      )}
-
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="flex items-center border border-gray-200 rounded-lg">
-                          <button
-                            onClick={() => {
-                              if (item.qty === 1) removeFromCart(item.id, item.capacity)
-                              else updateQty(item.id, item.capacity, item.qty - 1)
-                            }}
-                            className="px-2 py-1 hover:bg-gray-50 rounded-l-lg"
-                          >
-                            <Minus className="w-3 h-3 rotate-180" />
-                          </button>
-                          <span className="px-2 text-sm font-semibold">{item.qty}</span>
-                          <button
-                            onClick={() => updateQty(item.id, item.capacity, item.qty + 1)}
-                            className="px-2 py-1 hover:bg-gray-50 rounded-r-lg"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => removeFromCart(item.id, item.capacity)}
-                          className="ml-auto p-1.5 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                        </button>
-                      </div>
-                    </div>
+                        <p className="text-xs text-gray-600 mt-1">{addr.full_name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
+                          {addr.street}, {addr.apartment ?? ""}, {addr.city}, {addr.state} {addr.postal_code}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">{addr.phone}</p>
+                      </button>
+                    ))}
                   </div>
-                ))}
-              </div>
-
-              {/* Totals */}
-              <div className="px-5 py-4 bg-gray-50/60 border-t border-gray-100 space-y-2.5">
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Subtotal</span>
-                  <span className="font-medium">{formatINR(total)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Tax (18% GST)</span>
-                  <span className="font-medium">{formatINR(Math.round(tax))}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Delivery Charge</span>
-                  {deliveryCharge === 0 ? (
-                    <span className="font-medium text-emerald-600">FREE</span>
-                  ) : (
-                    <span className="font-medium">{formatINR(deliveryCharge)}</span>
-                  )}
-                </div>
-                <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
-                  <span>Total</span>
-                  <span className="text-blue-600">{formatINR(Math.round(finalAmount))}</span>
-                </div>
-              </div>
-
-              {/* PIN code warning in summary */}
-              {pinStatus === "invalid" && (
-                <div className="mx-5 mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-                  <p className="text-xs text-red-700 font-medium">
-                    Delivery not available for PIN {zip}. We currently deliver only within Ahmedabad.
-                  </p>
                 </div>
               )}
 
-              {/* Place Order Button */}
-              <div className="p-5">
-                <button
-                  onClick={handleCheckout}
-                  disabled={isProcessing || pinStatus === "invalid"}
-                  className="w-full py-3.5 rounded-xl font-bold text-white transition-all bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      Place Order — {formatINR(Math.round(finalAmount))}
-                    </>
-                  )}
-                </button>
-                {pinStatus !== "invalid" && (
-                  <p className="text-center text-xs text-gray-400 mt-3">
-                    🔒 Secure encrypted checkout
-                  </p>
-                )}
+              {/* ADDRESS FORM */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                  <h2 className="font-semibold text-gray-900">Delivery Address</h2>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Full Name</label>
+                      <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="John Doe"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Phone</label>
+                      <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="9876543210"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Street Address</label>
+                    <input value={street} onChange={e => setStreet(e.target.value)} placeholder="123, Main Street"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Apartment</label>
+                      <input value={apt} onChange={e => setApt(e.target.value)} placeholder="Apt 4B"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">City</label>
+                      <input value={city} onChange={e => setCity(e.target.value)} placeholder="Ahmedabad"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">PIN Code</label>
+                      <div className="relative">
+                        <input
+                          value={zip}
+                          onChange={e => setZip(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          placeholder="380001" maxLength={6}
+                          className={`w-full px-3.5 py-2.5 pr-9 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${
+                            pinStatus === "invalid" ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+                            : pinStatus === "valid" ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+                            : "border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                          }`}
+                        />
+                        {pinStatus === "valid" && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />}
+                        {pinStatus === "invalid" && <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none" />}
+                      </div>
+                      {pinStatus === "invalid" && <p className="mt-1.5 text-xs text-red-600 font-medium flex items-start gap-1"><AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />Sorry, delivery not available in your area.</p>}
+                      {pinStatus === "valid" && <p className="mt-1.5 text-xs text-emerald-600 font-medium flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" />Delivery available in your area.</p>}
+                      {pinStatus === "empty" && <p className="mt-1.5 text-[11px] text-gray-400">Delivery available only within Ahmedabad.</p>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* INSTALLATION */}
+              <InstallationSection cartItems={cart} onChange={setInstallMap} />
+
+              {/* PAYMENT METHOD */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-blue-600" />
+                  <h2 className="font-semibold text-gray-900">Payment Method</h2>
+                </div>
+                <div className="p-4 space-y-3">
+                  <button
+                    onClick={() => setPaymentMethod("upi")}
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                      paymentMethod === "upi" ? "border-blue-500 bg-blue-50/50" : "border-gray-100 hover:border-gray-200"
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${paymentMethod === "upi" ? "bg-blue-100" : "bg-gray-100"}`}>
+                      <CreditCard className="w-5 h-5" style={{ color: paymentMethod === "upi" ? "#2563eb" : "#6b7280" }} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-gray-900">Online Payment</p>
+                      <p className="text-xs text-gray-400">UPI, Cards, Net Banking via Razorpay</p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "upi" ? "border-blue-600" : "border-gray-300"}`}>
+                      {paymentMethod === "upi" && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
+
+            {/* ── RIGHT COLUMN — ORDER SUMMARY ── */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-24">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                  <Package className="w-4 h-4 text-blue-600" />
+                  <h2 className="font-semibold text-gray-900">Order Summary</h2>
+                </div>
+
+                {/* Cart Items */}
+                <div className="p-4 space-y-3 max-h-72 overflow-y-auto">
+                  {cart.map(item => {
+                    const planPrice = installMap[item.id + item.capacity] ?? null
+                    return (
+                      <div key={item.id + item.capacity} className="flex gap-3 pb-3 border-b border-gray-50 last:border-0">
+                        <img src={item.image} className="w-16 h-16 rounded-xl object-cover border border-gray-100" alt={item.title} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-gray-900 truncate">{item.title}</p>
+                          <p className="text-xs text-gray-400">{item.capacity}</p>
+                          <p className="text-sm font-bold text-blue-600 mt-0.5">{formatINR(item.price)}</p>
+                          {(Number(item.delivery_charge) || 400) > 0 && (
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              + {formatINR(Number(item.delivery_charge) || 400)} delivery
+                            </p>
+                          )}
+                          {planPrice !== null && (
+                            <p className="text-[11px] text-amber-600 font-medium mt-0.5 flex items-center gap-1">
+                              <Wrench className="w-3 h-3 shrink-0" />
+                              + {formatINR(Number(planPrice))} installation
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="flex items-center border border-gray-200 rounded-lg">
+                              <button
+                                onClick={() => { if (item.qty === 1) removeFromCart(item.id, item.capacity); else updateQty(item.id, item.capacity, item.qty - 1) }}
+                                className="px-2 py-1 hover:bg-gray-50 rounded-l-lg"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="px-2 text-sm font-semibold">{item.qty}</span>
+                              <button
+                                onClick={() => updateQty(item.id, item.capacity, item.qty + 1)}
+                                className="px-2 py-1 hover:bg-gray-50 rounded-r-lg"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => removeFromCart(item.id, item.capacity)}
+                              className="ml-auto p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Totals */}
+                <div className="px-5 py-4 bg-gray-50/60 border-t border-gray-100 space-y-2.5">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal</span>
+                    <span className="font-medium">{formatINR(total)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Tax (18% GST)</span>
+                    <span className="font-medium">{formatINR(Math.round(tax))}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Delivery Charge</span>
+                    {deliveryCharge === 0 ? (
+                      <span className="font-medium text-emerald-600">FREE</span>
+                    ) : (
+                      <span className="font-medium">{formatINR(deliveryCharge)}</span>
+                    )}
+                  </div>
+                  {installationCharge > 0 && (
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span className="flex items-center gap-1.5">
+                        <Wrench className="w-3.5 h-3.5 text-amber-500" />
+                        Installation
+                      </span>
+                      <span className="font-medium text-amber-600">{formatINR(installationCharge)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
+                    <span>Total</span>
+                    <span className="text-blue-600">{formatINR(Math.round(finalAmount))}</span>
+                  </div>
+                </div>
+
+                {/* PIN warning */}
+                {pinStatus === "invalid" && (
+                  <div className="mx-5 mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                    <p className="text-xs text-red-700 font-medium">
+                      Delivery not available for PIN {zip}. We currently deliver only within Ahmedabad.
+                    </p>
+                  </div>
+                )}
+
+                {/* Place Order Button */}
+                <div className="p-5">
+                  <button
+                    onClick={handleCheckout}
+                    disabled={isProcessing || pinStatus === "invalid"}
+                    className="w-full py-3.5 rounded-xl font-bold text-white transition-all bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isProcessing ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" />Processing...</>
+                    ) : (
+                      <>Place Order — {formatINR(Math.round(finalAmount))}</>
+                    )}
+                  </button>
+                  {pinStatus !== "invalid" && (
+                    <p className="text-center text-xs text-gray-400 mt-3">🔒 Secure encrypted checkout</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
     </AuthGuard>
   )
 }
-

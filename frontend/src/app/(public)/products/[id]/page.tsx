@@ -38,7 +38,6 @@ import { useAuthStore } from "@/store/auth.store"
 import { toast } from "react-toastify"
 import { FaTrashAlt } from "react-icons/fa"
 import { ImageGallery } from "./components/ImageGallery"
-import { InstallationCharges } from "./components/InstallationCharges"
 
 export default function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>()
@@ -493,11 +492,6 @@ export default function ProductDetailsPage() {
             </div>
           </div>
         </div>
-
-        {/* ═══ INSTALLATION CHARGES ═══ */}
-        {product.fast_installation && (
-          <InstallationCharges productPrice={selectedPrice} />
-        )}
 
         {/* ═══ TABS SECTION ═══ */}
         <div className="mt-6 sm:mt-8 bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
