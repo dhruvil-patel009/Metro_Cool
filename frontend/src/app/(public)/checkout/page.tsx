@@ -61,6 +61,7 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("")
   const [zip, setZip] = useState("")
 
+  const [gstin, setGstin] = useState("")
   const [paymentMethod, setPaymentMethod] = useState<"upi" | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const razorpayOpened = useRef(false)
@@ -122,6 +123,7 @@ export default function CheckoutPage() {
         phone,
         address: { street, city, zip },
         total_amount: finalAmount,
+        customer_gstin: gstin.trim() || undefined,
       }),
     })
     if (!res.ok) {
@@ -346,6 +348,23 @@ export default function CheckoutPage() {
                       {pinStatus === "valid" && <p className="mt-1.5 text-xs text-emerald-600 font-medium flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" />Delivery available in your area.</p>}
                       {pinStatus === "empty" && <p className="mt-1.5 text-[11px] text-gray-400">Delivery available only within Ahmedabad.</p>}
                     </div>
+                  </div>
+
+                  {/* GST Number (optional — for B2B invoicing) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      GST Number <span className="normal-case font-normal text-gray-400">(optional — for business invoices)</span>
+                    </label>
+                    <input
+                      value={gstin}
+                      onChange={e => setGstin(e.target.value.toUpperCase().replace(/\s/g, ""))}
+                      placeholder="e.g. 22AAAAA0000A1Z5"
+                      maxLength={15}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-mono focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    />
+                    <p className="mt-1.5 text-[11px] text-gray-400">
+                      Enter your 15-digit GSTIN to have it printed on your invoice.
+                    </p>
                   </div>
                 </div>
               </div>

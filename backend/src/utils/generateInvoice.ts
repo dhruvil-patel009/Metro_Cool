@@ -75,21 +75,25 @@ const methodTag = (m: string): string =>
 
 /* ─── INTERFACE ────────────────────────────────────────── */
 export interface InvoiceData {
-  booking_id:      string
-  payment_id:      string
-  amount:          number | string
-  customer_name:   string
-  customer_phone?: string
-  service_name:    string
-  service_type?:   "service" | "product"
-  booking_date?:   string
-  time_slot?:      string
-  payment_method?: string
-  payment_last4?:  string
-  payment_bank?:   string
-  payment_vpa?:    string
-  payment_date?:   string
-  otp?:            string
+  booking_id:        string
+  payment_id:        string
+  amount:            number | string
+  customer_name:     string
+  customer_phone?:   string
+  customer_email?:   string
+  customer_gstin?:   string
+  billing_address?:  string   // full formatted address string
+  shipping_address?: string   // if different from billing, else same
+  service_name:      string
+  service_type?:     "service" | "product"
+  booking_date?:     string
+  time_slot?:        string
+  payment_method?:   string
+  payment_last4?:    string
+  payment_bank?:     string
+  payment_vpa?:      string
+  payment_date?:     string
+  otp?:              string
 }
 
 /* ─── DRAWING HELPERS ──────────────────────────────────── */
@@ -227,11 +231,11 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
 
       /* ════════════════════════════════════════
          SECTION 3 — INFO ROW  y: HDR_END+14
-         Three equal columns, fixed height 100
+         Three equal columns
          FROM | BILLED TO | SERVICE DETAILS
+         Height is dynamic — grows to fit content
       ════════════════════════════════════════ */
       const IR_Y  = HDR_END + 14     // ~159
-      const IR_H  = 100              // fixed — enough for all content
       const CW    = Math.floor(IW / 3)  // ~169 each
 
       // Column X edges
@@ -240,9 +244,24 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       const C3X = ML + CW * 2 + 14      // 396
       const C3W = W - MR - C3X          // right col available width
 
-      // Row background (very light)
+      /* ── Pre-calculate BILLED TO height so we can size the row ── */
+      // Each line is ~11px; label header = 12px top offset + 12px gap
+      let billedLines = 1                             // name
+      if (data.customer_phone)   billedLines += 1     // phone
+      if (data.customer_email)   billedLines += 1     // email
+      if (data.billing_address) {
+        // Estimate wrap: chars-per-line ≈ col width / avg char width (4.5px @ 7.5pt)
+        const charsPerLine = Math.floor((CW - 22) / 4.5)
+        billedLines += Math.max(1, Math.ceil(data.billing_address.length / charsPerLine))
+      }
+      if (data.customer_gstin)   billedLines += 1     // GSTIN
+
+      // Each line ≈ 12px; top label 12px + 4px padding top/bottom
+      const IR_H = Math.max(118, 12 + billedLines * 12 + 16)
+
+      // Row background
       fillRect(doc, ML, IR_Y - 4, IW, IR_H + 8, "#F8FAFC")
-      hRule(doc, ML, IR_Y - 4,   IW, C.line, 0.5)
+      hRule(doc, ML, IR_Y - 4,        IW, C.line, 0.5)
       hRule(doc, ML, IR_Y + IR_H + 4, IW, C.lineDark, 0.8)
 
       // Vertical dividers
@@ -264,13 +283,50 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       doc.fillColor(C.text).fontSize(7.5).font("Helvetica-Bold")
          .text("GSTIN: 24AALFC4976A1ZK", C1X, IR_Y + 72, { width: CW - 14, lineBreak: false })
 
-      /* — COL 2: BILLED TO — */
+      /* — COL 2: BILLED TO — flowing cursor, no hard-coded Y offsets — */
       label(doc, "Billed To", C2X, IR_Y)
-      doc.fillColor(C.text).fontSize(10).font("Helvetica-Bold")
-         .text(data.customer_name || "Customer", C2X, IR_Y + 12, { width: CW - 22, lineBreak: false })
+
+      let billedY = IR_Y + 12   // cursor starts just below the label
+
+      // Customer name
+      doc.fillColor(C.text).fontSize(9.5).font("Helvetica-Bold")
+         .text(data.customer_name || "Customer", C2X, billedY, { width: CW - 22, lineBreak: false })
+      billedY += 14
+
+      // Phone
       if (data.customer_phone) {
-        doc.fillColor(C.teal).fontSize(9).font("Helvetica")
-           .text(data.customer_phone, C2X, IR_Y + 27, { width: CW - 22, lineBreak: false })
+        doc.fillColor(C.teal).fontSize(8).font("Helvetica")
+           .text(data.customer_phone, C2X, billedY, { width: CW - 22, lineBreak: false })
+        billedY += 12
+      }
+
+      // Email
+      if (data.customer_email) {
+        doc.fillColor(C.muted).fontSize(7.5).font("Helvetica")
+           .text(data.customer_email, C2X, billedY, { width: CW - 22, lineBreak: false })
+        billedY += 12
+      }
+
+      // Billing address — can wrap, so we measure the rendered height
+      if (data.billing_address) {
+        billedY += 2   // small gap before address block
+        doc.fillColor(C.muted).fontSize(7.5).font("Helvetica")
+        // Use doc.heightOfString to get the real wrapped height
+        const addrBlockH = doc.heightOfString(data.billing_address, { width: CW - 22 })
+        doc.text(data.billing_address, C2X, billedY, { width: CW - 22 })
+        billedY += addrBlockH + 2
+      }
+
+      // Customer GSTIN — always last, visually distinct
+      if (data.customer_gstin) {
+        billedY += 3   // extra gap before GSTIN
+        // Small teal-bordered badge background
+        const gstinText = "GSTIN: " + data.customer_gstin
+        const gstinBgH  = 14
+        fillRRect(doc, C2X - 2, billedY - 1, CW - 20, gstinBgH, 3, C.tealLight)
+        doc.fillColor(C.teal).fontSize(7.5).font("Helvetica-Bold")
+           .text(gstinText, C2X + 2, billedY + 2, { width: CW - 26, lineBreak: false })
+        billedY += gstinBgH + 2
       }
 
       /* — COL 3: SERVICE DETAILS — */
@@ -297,10 +353,29 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
       }
 
       /* ════════════════════════════════════════
-         SECTION 4 — ITEMS TABLE
-         y starts after info row
+         SECTION 3B — SHIPPING ADDRESS BAND
+         Only shown when shipping_address exists
+         and differs from billing_address
       ════════════════════════════════════════ */
-      const TB_Y = IR_Y + IR_H + 12   // ~275
+      const hasShipping = !!(data.shipping_address &&
+        data.shipping_address !== data.billing_address)
+      const SHIP_H = hasShipping ? 26 : 0
+      const SHIP_Y = IR_Y + IR_H + 6
+
+      if (hasShipping) {
+        fillRect(doc, ML, SHIP_Y, IW, SHIP_H, C.tableBg)
+        hRule(doc, ML, SHIP_Y, IW, C.lineDark, 0.5)
+        hRule(doc, ML, SHIP_Y + SHIP_H, IW, C.lineDark, 0.5)
+        label(doc, "Ship To", ML + 8, SHIP_Y + 6, C.muted)
+        doc.fillColor(C.text).fontSize(8).font("Helvetica")
+           .text(data.shipping_address!, ML + 50, SHIP_Y + 5, { width: IW - 60, lineBreak: false })
+      }
+
+      /* ════════════════════════════════════════
+         SECTION 4 — ITEMS TABLE
+         y starts after info row (+ optional shipping band)
+      ════════════════════════════════════════ */
+      const TB_Y = SHIP_Y + SHIP_H + 10
 
       // Column X anchors
       const xDesc  = ML + 8          // description (left-pad 8)
@@ -501,12 +576,206 @@ export const generateInvoice = async (data: InvoiceData): Promise<string> => {
            ML, GY + 8, { width: IW, align: "center", lineBreak: false }
          )
          .text(
-           `Generated on ${fDate(new Date())}  |  Page 1 of 1`,
+           `Generated on ${fDate(new Date())}  |  Page 1 of 3`,
            ML, GY + 19, { width: IW, align: "center", lineBreak: false }
          )
 
-      // Bottom navy bar
+      // Bottom navy bar (page 1)
       fillRect(doc, 0, H - 5, W, 5, C.navy)
+
+      /* ════════════════════════════════════════
+         PAGES 2 & 3 — TERMS & CONDITIONS
+         Page 2: header + notice + §1-§6
+         Page 3: §7-§10 + contact + footer
+         doc.y is always only moved forward.
+         All shapes drawn before text at doc.y.
+      ════════════════════════════════════════ */
+
+      /* ── shared T&C page constants ── */
+      const TC_BODY_START = 102  // y where body content begins (after header+notice)
+      const TC_FOOTER_Y   = H - 40  // footer band top
+      const TC_MARGIN_L   = ML + 2  // body left margin
+
+      /* ── helper: draw T&C page header (reused on page 2 & 3) ── */
+      const tcPageHeader = (pageLabel: string) => {
+        fillRect(doc, 0, 0, W, H, C.white)
+        fillRect(doc, 0, 0, W, 5, C.navy)
+        fillRect(doc, 0, 5, W, 56, C.headerBg)
+        hRule(doc, 0, 61, W, C.lineDark, 1)
+        doc.fillColor(C.navy).fontSize(16).font("Helvetica-Bold")
+           .text("TERMS & CONDITIONS OF SALE & SERVICE", ML, 16, { width: IW, lineBreak: false })
+        doc.fillColor(C.muted).fontSize(7).font("Helvetica")
+           .text("Effective Date: Last Updated July 2026  |  Website: www.metro-cool.com  |  MetroCool - Managed by Comfort HVAC Solutions",
+                 ML, 38, { width: IW, lineBreak: false })
+      }
+
+      /* ── helper: draw T&C page footer ── */
+      const tcPageFooter = (pageNum: string, total: string) => {
+        hRule(doc, ML, TC_FOOTER_Y, IW, C.lineDark, 0.7)
+        doc.fillColor(C.subtle).fontSize(6.5).font("Helvetica")
+           .text(`MetroCool Terms & Conditions  |  Page ${pageNum} of ${total}  |  www.metro-cool.com`,
+                 ML, TC_FOOTER_Y + 10, { width: IW, align: "center", lineBreak: false })
+        fillRect(doc, 0, H - 5, W, 5, C.navy)
+      }
+
+      /* ── helper: drawn dot ── */
+      const dot = (cx: number, cy: number, r: number, color: string) => {
+        doc.save().circle(cx, cy, r).fill(color).restore()
+      }
+
+      /* ── helper: section header row ── */
+      const tcSec = (num: string, title: string) => {
+        doc.y += 5
+        const sy = doc.y
+        fillRect(doc, TC_MARGIN_L, sy, 3, 14, C.teal)
+        fillRRect(doc, TC_MARGIN_L + 6, sy, 20, 14, 3, C.navy)
+        // badge number — absolute, lineBreak false, does NOT affect doc.y
+        doc.fillColor(C.white).fontSize(7).font("Helvetica-Bold")
+           .text(num, TC_MARGIN_L + 6, sy + 4, { width: 20, align: "center", lineBreak: false })
+        // title — absolute, lineBreak false, does NOT affect doc.y
+        doc.fillColor(C.navy).fontSize(8).font("Helvetica-Bold")
+           .text(title, TC_MARGIN_L + 30, sy + 3, { width: IW - 32, lineBreak: false })
+        // advance past header
+        doc.y = sy + 17
+        hRule(doc, TC_MARGIN_L, doc.y, IW - 2, C.tealBdr, 0.5)
+        doc.y += 3
+      }
+
+      /* ── helper: clause label + body ── */
+      const tcClause = (label: string, body: string) => {
+        doc.y += 3
+        const ly = doc.y
+        dot(TC_MARGIN_L + 8, ly + 4, 2, C.teal)
+        doc.fillColor(C.teal).fontSize(7).font("Helvetica-Bold")
+           .text(label, TC_MARGIN_L + 14, ly, { width: IW - 16, lineBreak: false })
+        doc.y = ly + 10
+        if (body) {
+          doc.fillColor(C.text).fontSize(7).font("Helvetica")
+             .text(body, TC_MARGIN_L + 14, doc.y, { width: IW - 16 })
+          doc.y += 2
+        }
+      }
+
+      /* ── helper: bullet item ── */
+      const tcBul = (txt: string) => {
+        const by = doc.y + 1
+        dot(TC_MARGIN_L + 20, by + 4, 1.5, C.muted)
+        doc.fillColor(C.text).fontSize(7).font("Helvetica")
+           .text(txt, TC_MARGIN_L + 26, by, { width: IW - 28 })
+        doc.y += 2
+      }
+
+      /* ════════ PAGE 2 ════════ */
+      doc.addPage({ size: "A4", margins: { top: 0, bottom: 0, left: 0, right: 0 } })
+      tcPageHeader("2 of 3")
+
+      /* Important notice box */
+      fillRRect(doc, ML, 66, IW, 28, 5, "#EFF6FF", C.blue, 0.8)
+      doc.fillColor(C.blue).fontSize(7.5).font("Helvetica-Bold")
+         .text("IMPORTANT NOTICE:", ML + 8, 72, { width: 100, lineBreak: false })
+      doc.fillColor(C.text).fontSize(7.5).font("Helvetica")
+         .text(
+           "Please read these Terms carefully before purchasing goods or booking HVAC services through MetroCool. " +
+           "By accessing our platform or engaging our services, you agree to be bound by these legally binding terms.",
+           ML + 112, 72, { width: IW - 116, lineBreak: true }
+         )
+
+      doc.y = TC_BODY_START
+
+      /* §1 */ tcSec("1", "GENERAL OVERVIEW & COMPANY DETAILS")
+      tcClause("1.1  Partnership Entity", 'MetroCool ("Company") is a brand owned and operated under Comfort HVAC Solutions, with registered operations based in Ahmedabad, Gujarat, India.')
+      tcClause("1.2  Applicability", "These Terms govern all sales of consumer durable products (Air Conditioners, HVAC equipment, accessories, spare parts) and all rendered services including site surveys, installations, repairs, gas charging, and preventive maintenance/AMCs.")
+      tcClause("1.3  Modifications", "We reserve the right to revise these Terms at any time without prior notice. Continued use of www.metro-cool.com constitutes acceptance of the modified terms.")
+
+      /* §2 */ tcSec("2", "PRODUCT SALES & CONSUMER DURABLE PURCHASES")
+      tcClause("2.1  Product Availability & Pricing", "All sales listings, prices, and specifications are subject to stock availability and price confirmation. We reserve the right to adjust pricing or correct typographical errors prior to dispatch.")
+      tcClause("2.2  Delivery & Title", "Delivery timelines are estimates provided in good faith. Risk of loss and title pass to the buyer upon physical delivery to the designated installation or delivery site.")
+      tcClause("2.3  Product Warranties", "")
+      tcBul("OEM Warranty: All new AC units carry the standard manufacturer warranty (e.g., compressor/PCB). MetroCool acts as an authorized seller and facilitator.")
+      tcBul("Warranty Registration: The customer is responsible for maintaining purchase invoices and registering products with the manufacturer where applicable.")
+
+      /* §3 */ tcSec("3", "HVAC SERVICES, INSTALLATIONS & MAINTENANCE")
+      tcClause("3.1  Service Scope", "Service requests cover diagnostic inspections, preventive maintenance, repair work, refrigerant charging, and complete HVAC unit installations executed by certified technicians.")
+      tcClause("3.2  Site Readiness & Customer Obligations", "")
+      tcBul("Customer must ensure safe and unrestricted access to premises, outdoor unit mounting points, electrical points (stable power supply and adequate earthing), and water sources for wet cleaning.")
+      tcBul("Customer is responsible for obtaining necessary permissions from housing societies, building management, or local authorities for drilling, outdoor bracket installation, or structural access.")
+      tcClause("3.3  Site Inspection & Additional Work", "Quotes provided online or by phone are estimates. If additional piping, electrical wiring, civil work, or scaffolding is required, additional charges will be communicated and agreed upon before work proceeds.")
+
+      /* §4 */ tcSec("4", "PRICING, PAYMENTS & DIAGNOSTIC FEES")
+      tcClause("4.1  Diagnostic / Visiting Charges", "A mandatory visiting fee applies to all diagnostic visits. If the customer accepts the repair estimate and proceeds, the visiting fee may be adjusted against the final service bill as per current promotional offers.")
+      tcClause("4.2  Payment Terms", "Payments for product purchases must be made in full prior to dispatch unless cash-on-delivery or approved finance options are explicitly agreed. Service and repair charges are payable immediately upon completion of work on the same day.")
+      tcClause("4.3  Taxes", "All listed prices and quotes are subject to applicable taxes including Goods and Services Tax (GST), which will be clearly itemized on tax invoices.")
+
+      /* §5 */ tcSec("5", "SERVICE WORKMANSHIP GUARANTEE & LIMITATIONS")
+      tcClause("5.1  Workmanship Guarantee", "MetroCool offers a 30-day service warranty on labor and specific repair components directly replaced by MetroCool technicians, effective from the date of service completion.")
+      tcClause("5.2  Exclusions from Warranty", "The service guarantee is rendered null and void under the following conditions:")
+      tcBul("Tampering or intervention by an unauthorized third-party technician following our service.")
+      tcBul("Physical damage, accidental impacts, pest infestations, or power surges/voltage instability.")
+      tcBul("Failure to adhere to operational and maintenance guidelines provided by the manufacturer or technician.")
+      tcBul("Existing or legacy plumbing, structural wall seepage, or electrical defects pre-dating MetroCool's visit.")
+
+      /* §6 */ tcSec("6", "CANCELLATION, RETURN & REFUND POLICY")
+      tcClause("6.1  Product Order Cancellations", "Product purchases may be canceled prior to dispatch for a full refund. Once dispatched, cancellation or return requests are subject to restocking fees and return shipping charges, provided the box remains unopened and sealed.")
+      tcClause("6.2  Service Appointment Cancellations", "Service appointments can be rescheduled or canceled free of charge up to 2 hours prior to the scheduled technician arrival time. Cancellations at the door after a technician has arrived will incur the standard visiting fee.")
+
+      tcPageFooter("2", "3")
+
+      /* ════════ PAGE 3 ════════ */
+      doc.addPage({ size: "A4", margins: { top: 0, bottom: 0, left: 0, right: 0 } })
+      tcPageHeader("3 of 3")
+      doc.y = TC_BODY_START
+
+      /* §7 */ tcSec("7", "ANNUAL MAINTENANCE CONTRACTS (AMC)")
+      tcClause("7.1  Scope of AMC", "AMC terms (Comprehensive or Non-Comprehensive) are governed by specific contract agreements issued at the time of purchase. AMCs cover scheduled preventive services and specified replacement parts as detailed in the contract document.")
+      tcClause("7.2  Non-Transferability", "AMCs are bound to the registered equipment and location address and are non-transferable unless explicitly approved by MetroCool management in writing.")
+
+      /* §8 */ tcSec("8", "LIMITATION OF LIABILITY")
+      tcClause("8.1  Direct & Indirect Damages", "MetroCool and its parent entity, Comfort HVAC Solutions, shall not be liable for any indirect, incidental, consequential, or punitive damages (including loss of revenue, business disruption, or secondary property damage) arising out of product usage or service execution.")
+      tcClause("8.2  Liability Cap", "Under all circumstances, the total cumulative liability of MetroCool for any claim shall not exceed the actual amount paid by the customer for that specific product or service order.")
+
+      /* §9 */ tcSec("9", "GOVERNING LAW & DISPUTE RESOLUTION")
+      tcClause("9.1  Jurisdiction", "These Terms & Conditions shall be governed by and construed in accordance with the laws of India.")
+      tcClause("9.2  Legal Venue", "Any legal disputes, claims, or proceedings arising from or in connection with MetroCool services or products shall be subject to the exclusive jurisdiction of the competent courts in Ahmedabad, Gujarat, India.")
+
+      /* §10 */ tcSec("10", "CONTACT & SUPPORT INFORMATION")
+      doc.y += 2
+      doc.fillColor(C.muted).fontSize(7.5).font("Helvetica")
+         .text("For service support, queries, warranty claims, or legal communications, please reach out to us at:",
+               TC_MARGIN_L + 6, doc.y, { width: IW - 8 })
+      doc.y += 14
+
+      /* contact info box */
+      const cbY = doc.y
+      fillRRect(doc, ML, cbY, IW, 52, 6, C.headerBg, C.lineDark, 0.5)
+      const col1x = ML + 12
+      const col2x = ML + 12 + Math.floor(IW / 2)
+      type CRow = [string, string, number, number, boolean]
+      const cRows: CRow[] = [
+        ["Brand Name:",      "MetroCool",                 col1x, cbY + 8,  false],
+        ["Managing Entity:", "Comfort HVAC Solutions",    col1x, cbY + 22, false],
+        ["Official Email:",  "comforthvac16@gmail.com",   col1x, cbY + 36, true ],
+        ["Website:",         "www.metro-cool.com",        col2x, cbY + 8,  true ],
+        ["Registered Region:", "Ahmedabad, Gujarat, India", col2x, cbY + 22, false],
+      ]
+      for (const [lbl, val, cx, cy, isTeal] of cRows) {
+        doc.fontSize(7.5).font("Helvetica-Bold").fillColor(C.navy)
+           .text(lbl, cx, cy, { lineBreak: false })
+        const lw = doc.widthOfString(lbl) + 3
+        doc.fontSize(7.5).font("Helvetica").fillColor(isTeal ? C.teal : C.text)
+           .text(val, cx + lw, cy, { lineBreak: false })
+      }
+      doc.y = cbY + 58
+
+      /* legal note strip */
+      const lnY2 = doc.y
+      fillRRect(doc, ML, lnY2, IW, 18, 4, C.greenLight, C.greenBdr, 0.5)
+      doc.fillColor(C.green).fontSize(6.5).font("Helvetica")
+         .text(
+           "This document serves as the standard legal framework for MetroCool (Comfort HVAC Solutions). Customers are advised to review these terms periodically.",
+           ML + 10, lnY2 + 5, { width: IW - 20, lineBreak: false }
+         )
+
+      tcPageFooter("3", "3")
 
       doc.end()
       stream.on("finish", () => resolve(filePath))

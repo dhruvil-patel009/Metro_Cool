@@ -43,7 +43,7 @@ const ORDER_COLUMNS = `
 /* ─── CREATE ORDER ─────────────────────────────────── */
 export const createOrder = async (req: Request, res: Response) => {
   try {
-    const { items, customer_name, phone, address, total_amount } = req.body
+    const { items, customer_name, phone, address, total_amount, customer_gstin } = req.body
 
     if (!req.user) return res.status(401).json({ error: "Unauthorized" })
     if (!items?.length) return res.status(400).json({ error: "Cart is empty" })
@@ -60,19 +60,24 @@ export const createOrder = async (req: Request, res: Response) => {
       })
     }
 
-    // Only insert columns that exist — no apartment, no payment_method
+    // Build insert payload — customer_gstin is optional
+    const orderPayload: Record<string, any> = {
+      user_id: req.user.id,
+      customer_name,
+      phone,
+      street: address.street,
+      city: address.city,
+      zip: address.zip,
+      total_amount,
+      payment_status: "pending",
+    }
+    if (customer_gstin?.trim()) {
+      orderPayload.customer_gstin = customer_gstin.trim().toUpperCase()
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
-      .insert({
-        user_id: req.user.id,
-        customer_name,
-        phone,
-        street: address.street,
-        city: address.city,
-        zip: address.zip,
-        total_amount,
-        payment_status: "pending",
-      })
+      .insert(orderPayload)
       .select()
       .single()
 

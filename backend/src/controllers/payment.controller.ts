@@ -20,6 +20,10 @@ const buildAndUploadInvoice = async ({
   amount,
   customer_name,
   customer_phone,
+  customer_email,
+  customer_gstin,
+  billing_address,
+  shipping_address,
   service_name,
   service_type,
   booking_date,
@@ -36,6 +40,10 @@ const buildAndUploadInvoice = async ({
   amount: number
   customer_name: string
   customer_phone?: string
+  customer_email?: string
+  customer_gstin?: string
+  billing_address?: string
+  shipping_address?: string
   service_name: string
   service_type?: "service" | "product"
   booking_date?: string
@@ -56,6 +64,10 @@ const buildAndUploadInvoice = async ({
       amount,
       customer_name,
       customer_phone,
+      customer_email,
+      customer_gstin,
+      billing_address,
+      shipping_address,
       service_name,
       service_type,
       booking_date,
@@ -239,6 +251,19 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       .eq("id", booking.user_id)
       .single()
 
+    // ── 6b. Fetch booking address ─────────────────────────
+    const { data: addrRow } = await supabase
+      .from("user_addresses")
+      .select("street, apartment, city, state, postal_code")
+      .eq("user_id", booking.user_id)
+      .eq("is_default", true)
+      .maybeSingle()
+
+    const billingAddr = addrRow
+      ? [addrRow.apartment, addrRow.street, addrRow.city, addrRow.state, addrRow.postal_code]
+          .filter(Boolean).join(", ")
+      : (booking.address || undefined)
+
     // ── 7. Update booking ─────────────────────────────────
     const { error: bookingUpdateError } = await supabase
       .from("bookings")
@@ -295,6 +320,9 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       amount: booking.total_amount,
       customer_name: customerName,
       customer_phone: (profile as any)?.phone,
+      customer_email: (profile as any)?.email,
+      billing_address: billingAddr,
+      shipping_address: billingAddr,
       service_name: serviceName,
       service_type: "service",
       booking_date: booking.booking_date,
@@ -440,6 +468,19 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
       return res.status(200).send("OK")
     }
 
+    // ── Fetch address ────────────────────────────────────
+    const { data: webhookAddr } = await supabase
+      .from("user_addresses")
+      .select("street, apartment, city, state, postal_code")
+      .eq("user_id", booking.user_id)
+      .eq("is_default", true)
+      .maybeSingle()
+
+    const webhookBillingAddr = webhookAddr
+      ? [webhookAddr.apartment, webhookAddr.street, webhookAddr.city, webhookAddr.state, webhookAddr.postal_code]
+          .filter(Boolean).join(", ")
+      : (booking.address || undefined)
+
     // ── Generate invoice (non-fatal) ─────────────────────
     const customerName = profile
       ? `${profile.first_name} ${profile.last_name}`.trim()
@@ -452,6 +493,9 @@ export const razorpayWebhook = async (req: Request, res: Response) => {
       amount: booking.total_amount,
       customer_name: customerName,
       customer_phone: (profile as any)?.phone,
+      customer_email: (profile as any)?.email,
+      billing_address: webhookBillingAddr,
+      shipping_address: webhookBillingAddr,
       service_name: serviceName,
       service_type: "service",
       booking_date: booking.booking_date,
@@ -565,6 +609,18 @@ export const markCashPayment = async (req: Request, res: Response) => {
       .eq("id", user_id)
       .single()
 
+    const { data: cashAddr } = await supabase
+      .from("user_addresses")
+      .select("street, apartment, city, state, postal_code")
+      .eq("user_id", user_id)
+      .eq("is_default", true)
+      .maybeSingle()
+
+    const cashBillingAddr = cashAddr
+      ? [cashAddr.apartment, cashAddr.street, cashAddr.city, cashAddr.state, cashAddr.postal_code]
+          .filter(Boolean).join(", ")
+      : (booking.address || undefined)
+
     const customerName = profile
       ? `${profile.first_name} ${profile.last_name}`.trim()
       : booking.full_name || "Customer"
@@ -576,6 +632,9 @@ export const markCashPayment = async (req: Request, res: Response) => {
       amount: booking.total_amount,
       customer_name: customerName,
       customer_phone: (profile as any)?.phone,
+      customer_email: (profile as any)?.email,
+      billing_address: cashBillingAddr,
+      shipping_address: cashBillingAddr,
       service_name: serviceName,
       service_type: "service",
       booking_date: booking.booking_date,
@@ -669,9 +728,21 @@ export const getInvoice = async (req: Request, res: Response) => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name, phone")
+      .select("first_name, last_name, phone, email")
       .eq("id", paymentRow.user_id)
       .single()
+
+    const { data: getInvAddr } = await supabase
+      .from("user_addresses")
+      .select("street, apartment, city, state, postal_code")
+      .eq("user_id", paymentRow.user_id)
+      .eq("is_default", true)
+      .maybeSingle()
+
+    const getInvBillingAddr = getInvAddr
+      ? [getInvAddr.apartment, getInvAddr.street, getInvAddr.city, getInvAddr.state, getInvAddr.postal_code]
+          .filter(Boolean).join(", ")
+      : (booking?.address || undefined)
 
     const customerName = profile
       ? `${profile.first_name} ${profile.last_name}`.trim()
@@ -687,6 +758,9 @@ export const getInvoice = async (req: Request, res: Response) => {
       amount: paymentRow.amount,
       customer_name: customerName,
       customer_phone: (profile as any)?.phone,
+      customer_email: (profile as any)?.email,
+      billing_address: getInvBillingAddr,
+      shipping_address: getInvBillingAddr,
       service_name: serviceName,
       service_type: "service",
       booking_date: booking?.booking_date,
@@ -853,6 +927,7 @@ export const verifyProductPayment = async (req: Request, res: Response) => {
         razorpay_payment_id,
         razorpay_order_id,
         status: "captured",
+        customer_gstin: order.customer_gstin || null,
       })
       .select()
       .single()
@@ -881,12 +956,19 @@ export const verifyProductPayment = async (req: Request, res: Response) => {
 
         const productName = orderItems?.[0]?.title || "AC Product"
 
+        // Build address from order columns (street / city / zip stored directly on orders)
+        const orderAddr = [order.street, order.city, order.zip].filter(Boolean).join(", ") || undefined
+
         await buildAndUploadInvoice({
           booking_id: order_id,
           payment_id: razorpay_payment_id,
           amount: order.total_amount,
           customer_name: customerName,
           customer_phone: (profile as any)?.phone || order.phone,
+          customer_email: (profile as any)?.email,
+          customer_gstin: order.customer_gstin || undefined,
+          billing_address: orderAddr,
+          shipping_address: orderAddr,
           service_name: productName,
           service_type: "product",
           payment_method: paymentMethod,
@@ -938,7 +1020,7 @@ export const getOrderInvoice = async (req: Request, res: Response) => {
   // First verify the user owns this order
   const { data: order } = await supabase
     .from("orders")
-    .select("id, user_id, total_amount, customer_name, phone, order_items(title, price, qty)")
+    .select("id, user_id, total_amount, customer_name, phone, street, city, zip, customer_gstin, order_items(title, price, qty)")
     .eq("id", orderId)
     .single()
 
@@ -973,7 +1055,7 @@ export const getOrderInvoice = async (req: Request, res: Response) => {
   try {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name, phone")
+      .select("first_name, last_name, phone, email")
       .eq("id", order.user_id)
       .single()
 
@@ -982,33 +1064,26 @@ export const getOrderInvoice = async (req: Request, res: Response) => {
       : order.customer_name || "Customer"
 
     const productName = order.order_items?.[0]?.title || "AC Product"
-
-    const paymentId = paymentRow?.razorpay_payment_id || orderId
+    const orderAddr = [order.street, order.city, order.zip].filter(Boolean).join(", ") || undefined
     const amount = paymentRow?.amount || order.total_amount
     const paymentRowId = paymentRow?.id
 
-    const invoicePath = await generateInvoice({
+    const invoiceUrl = await buildAndUploadInvoice({
       booking_id: orderId,
-      payment_id: paymentId,
+      payment_id: paymentRow?.razorpay_payment_id || orderId,
       amount,
       customer_name: customerName,
       customer_phone: (profile as any)?.phone || order.phone,
+      customer_email: (profile as any)?.email,
+      customer_gstin: (order as any).customer_gstin || undefined,
+      billing_address: orderAddr,
+      shipping_address: orderAddr,
       service_name: productName,
       service_type: "product",
       payment_method: (paymentRow as any)?.payment_method || "card",
       payment_date: (paymentRow as any)?.created_at || new Date().toISOString(),
-      otp: "",
+      payment_row_id: paymentRowId || orderId,
     })
-
-    const invoiceUrl = await uploadInvoice(invoicePath, orderId)
-    try { fs.unlinkSync(invoicePath) } catch (_) {}
-
-    if (paymentRowId) {
-      await supabase
-        .from("payments")
-        .update({ invoice_url: invoiceUrl })
-        .eq("id", paymentRowId)
-    }
 
     return res.json({ invoice_url: invoiceUrl })
   } catch (err) {
