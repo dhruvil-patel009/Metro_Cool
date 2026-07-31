@@ -6,12 +6,16 @@ import {
   updateProduct,
   deleteProduct,
 } from "../controllers/product.controller.js";
-
+import { getSiteConfig, updateSiteConfig } from "../controllers/siteConfig.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.middleware.js";
 import { upload } from "../middlewares/upload.middleware.js";
 
 const router = Router();
+
+/* ── Site config (public read, admin write) ── */
+router.get("/config", getSiteConfig);
+router.put("/config", protect, authorize("admin"), updateSiteConfig);
 
 /* PUBLIC */
 router.get("/", getProducts);

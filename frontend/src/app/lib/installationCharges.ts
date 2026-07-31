@@ -2,6 +2,37 @@
 // are instantly reflected on the product page (same browser session).
 // In production you'd persist this in Supabase instead.
 
+export const INSTALLATION_WITHIN_OPTIONS = [
+  { value: "24 hours", label: "24 Hours" },
+  { value: "1 day",    label: "1 Day" },
+  { value: "2 days",   label: "2 Days" },
+  { value: "3 days",   label: "3 Days" },
+  { value: "4 days",   label: "4 Days" },
+  { value: "5 days",   label: "5 Days" },
+  { value: "6 days",   label: "6 Days" },
+  { value: "7 days",   label: "7 Days" },
+] as const
+
+export type InstallationWithinValue = typeof INSTALLATION_WITHIN_OPTIONS[number]["value"]
+
+const GLOBAL_WITHIN_KEY = "mc_installation_within"
+
+/** Get the global installation_within value (default: "24 hours") */
+export function getGlobalInstallationWithin(): InstallationWithinValue {
+  if (typeof window === "undefined") return "24 hours"
+  try {
+    const raw = localStorage.getItem(GLOBAL_WITHIN_KEY)
+    if (raw) return raw as InstallationWithinValue
+  } catch {}
+  return "24 hours"
+}
+
+/** Save the global installation_within value */
+export function saveGlobalInstallationWithin(value: InstallationWithinValue): void {
+  if (typeof window === "undefined") return
+  localStorage.setItem(GLOBAL_WITHIN_KEY, value)
+}
+
 export interface InstallationPlan {
   id: string
   label: string          // e.g. "Standard Installation"

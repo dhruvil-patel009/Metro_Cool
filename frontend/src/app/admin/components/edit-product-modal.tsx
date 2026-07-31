@@ -1,13 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, X, Image as ImageIcon, Plus, Package, Tag, FileText, Star, Layers, Truck } from "lucide-react"
+import { Upload, X, Image as ImageIcon, Plus, Package, Tag, FileText, Star, Layers, Truck, ChevronDown } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Textarea } from "@/app/components/ui/textarea"
 import { Switch } from "@/app/components/ui/switch"
 import { updateProduct } from "@/app/lib/products.api"
 import { toast } from "react-toastify"
+import {
+  INSTALLATION_WITHIN_OPTIONS,
+  InstallationWithinValue,
+} from "@/app/lib/installationCharges"
 
 interface Props {
   product: any
@@ -29,6 +33,9 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
   const [badgeColor, setBadgeColor] = useState(product.badge_color || "#3b82f6")
   const [inStock, setInStock] = useState(product.in_stock ?? true)
   const [fastInstallation, setFastInstallation] = useState(product.fast_installation ?? false)
+  const [installationWithin, setInstallationWithin] = useState<InstallationWithinValue | "">(
+    product.installation_within || ""
+  )
   const [rating, setRating] = useState(String(product.rating || "4.5"))
   const [reviewCount, setReviewCount] = useState(String(product.review_count || "0"))
   const [oldPrice, setOldPrice] = useState(String(product.old_price || ""))
@@ -92,6 +99,8 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
       formData.append("badge_color", badgeColor)
       formData.append("in_stock", String(inStock))
       formData.append("fast_installation", String(fastInstallation))
+      // Send the per-product override, or empty string to clear it (falls back to global)
+      formData.append("installation_within", installationWithin || "")
       formData.append("rating", rating)
       formData.append("review_count", reviewCount)
       formData.append("old_price", oldPrice || "0")
@@ -547,12 +556,41 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
           </div>
 
           {/* ══════ SECTION: Fast Installation ══════ */}
-          <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-100 rounded-xl">
-            <div>
-              <p className="text-sm font-semibold text-gray-800">Fast Installation</p>
-              <p className="text-xs text-gray-500">Show installation charges section on the product page</p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-100 rounded-xl">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Fast Installation</p>
+                <p className="text-xs text-gray-500">Show installation charges section on the product page</p>
+              </div>
+              <Switch checked={fastInstallation} onCheckedChange={setFastInstallation} />
             </div>
-            <Switch checked={fastInstallation} onCheckedChange={setFastInstallation} />
+
+            {/* Per-product installation_within override — only when fast installation is enabled */}
+            {fastInstallation && (
+              <div className="p-4 bg-amber-50/60 border border-amber-100 rounded-xl space-y-2">
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Installation Timeline <span className="normal-case font-normal text-gray-400">(optional — overrides global setting)</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={installationWithin}
+                    onChange={e => setInstallationWithin(e.target.value as InstallationWithinValue | "")}
+                    className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-9 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 cursor-pointer"
+                  >
+                    <option value="">Use global setting</option>
+                    {INSTALLATION_WITHIN_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>
+                        Installation within {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  Leave as "Use global setting" to inherit the timeline set on the Products page.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

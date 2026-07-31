@@ -264,6 +264,10 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (req.body.old_price !== undefined) payload.old_price = Number(req.body.old_price);
     if (req.body.price !== undefined) payload.price = Number(req.body.price);
     if (req.body.delivery_charge !== undefined) payload.delivery_charge = Number(req.body.delivery_charge);
+    // installation_within: empty string → set to null (inherit global), otherwise store value
+    if (req.body.installation_within !== undefined) {
+      payload.installation_within = req.body.installation_within?.trim() || null;
+    }
 
     // JSON fields
     if (parsedCapacityPrices) payload.capacity_prices = parsedCapacityPrices;

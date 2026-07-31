@@ -38,7 +38,6 @@ import { useAuthStore } from "@/store/auth.store"
 import { toast } from "react-toastify"
 import { FaTrashAlt } from "react-icons/fa"
 import { ImageGallery } from "./components/ImageGallery"
-
 export default function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>()
 
@@ -49,6 +48,7 @@ export default function ProductDetailsPage() {
   const [activeTab, setActiveTab] = useState("description")
   const [loading, setLoading] = useState(true)
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [installationWithin, setInstallationWithin] = useState("24 hours")
   const router = useRouter()
   const [showCartWarning, setShowCartWarning] = useState(false)
   const [showRoomPicker, setShowRoomPicker] = useState(false)
@@ -57,6 +57,18 @@ export default function ProductDetailsPage() {
   const { cart, addToCart, removeFromCart, updateQty, total } = useCart()
   const { recommendedCapacity, selectedRoom, setSelectedRoom, clearSelection } = useRoomSize()
   const { token } = useAuthStore()
+
+  /** Fetch global installation_within from backend on mount */
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/config`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.installation_within) {
+          setInstallationWithin(data.installation_within)
+        }
+      })
+      .catch(() => {/* keep default "24 hours" */})
+  }, [])
 
   /** Redirect to login if not authenticated, returns true if logged in */
   const requireAuth = () => {
@@ -86,6 +98,11 @@ export default function ProductDetailsPage() {
           setSelectedCapacity(closest || capacities[0])
         } else {
           setSelectedCapacity(capacities[0] || "1.5 Ton")
+        }
+        // If this product has its own installation_within override, apply it.
+        // Otherwise keep whatever the global localStorage value resolved to.
+        if (data.installation_within) {
+          setInstallationWithin(data.installation_within)
         }
       })
       .catch((err) => {
@@ -482,7 +499,9 @@ export default function ProductDetailsPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-gray-900">Fast Installation</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">Same day available</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">
+                          within {installationWithin}
+                        </p>
                       </div>
                     </div>
                   )}
