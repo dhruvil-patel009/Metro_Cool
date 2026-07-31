@@ -482,7 +482,7 @@ export default function BookingPage() {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-[#1d242d]">Need help?</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">We're available 24/7</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">Mon – Sat, 9am – 9pm</p>
                       <a href="tel:+919824897099" className="text-xs text-blue-600 font-semibold mt-1.5 inline-block hover:underline">
                         Call Support
                       </a>

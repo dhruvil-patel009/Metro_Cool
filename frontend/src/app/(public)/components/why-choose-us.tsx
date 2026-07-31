@@ -33,8 +33,8 @@ const reasons = [
   },
   {
     icon: <Headphones className="w-6 h-6" />,
-    title: "24/7 Support",
-    desc: "Round-the-clock customer support for all your queries.",
+    title: "Dedicated Support",
+    desc: "Expert customer support available Mon – Sat, 9am – 9pm for all your queries.",
     color: "text-rose-600",
     bg: "bg-rose-50",
   },

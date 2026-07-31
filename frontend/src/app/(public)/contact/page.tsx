@@ -199,7 +199,7 @@ export default function ContactPage() {
                     <a href="mailto:metrocool.official@gmail.com" className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors break-all">
                       metrocool.official@gmail.com
                     </a>
-                    <p className="text-xs text-gray-400 mt-0.5">Online support 24/7</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Mon – Sat, 9am – 9pm</p>
                   </div>
                 </div>
 

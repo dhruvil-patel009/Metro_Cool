@@ -536,7 +536,7 @@ export default function ServiceDetailsPage({ params }: { params: Promise<{ id: s
                   </div>
                   <div>
                     <h3 className="text-base font-bold mb-0.5">Need Assistance?</h3>
-                    <p className="text-gray-400 text-xs mb-3">Our experts are available 24/7</p>
+                    <p className="text-gray-400 text-xs mb-3">Our experts are available Mon – Sat, 9am – 9pm</p>
                     <a
                       href="tel:+919824897099"
                       className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors"

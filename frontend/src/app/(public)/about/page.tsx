@@ -120,22 +120,45 @@ export default function AboutPage() {
       {/* Stats Section */}
       <section className="relative -mt-20 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl shadow-xl p-8 grid grid-cols-2 md:grid-cols-4 gap-6 animate-scale-in">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">10k+</div>
-              <div className="text-sm text-gray-600 uppercase tracking-wide">Hours Worked</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">50+</div>
-              <div className="text-sm text-gray-600 uppercase tracking-wide">Certifications</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">9+</div>
-              <div className="text-sm text-gray-600 uppercase tracking-wide">Years Experience</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">24/7</div>
-              <div className="text-sm text-gray-600 uppercase tracking-wide">Emergency Support</div>
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden animate-scale-in">
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-y-2 md:divide-y-0 md:divide-x-2 divide-gray-100">
+
+              {/* Stat 1 — Hours */}
+              <div className="flex flex-col items-center justify-center gap-1.5 px-5 py-7 text-center group">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-1.5 group-hover:bg-blue-100 transition-colors">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="text-3xl font-bold text-gray-900 leading-none">10k+</div>
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mt-1">Hours Worked</div>
+              </div>
+
+              {/* Stat 2 — Certifications */}
+              <div className="flex flex-col items-center justify-center gap-1.5 px-5 py-7 text-center group">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mb-1.5 group-hover:bg-emerald-100 transition-colors">
+                  <BadgeCheck className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div className="text-3xl font-bold text-gray-900 leading-none">50+</div>
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mt-1">Certifications</div>
+              </div>
+
+              {/* Stat 3 — Experience */}
+              <div className="flex flex-col items-center justify-center gap-1.5 px-5 py-7 text-center group">
+                <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center mb-1.5 group-hover:bg-violet-100 transition-colors">
+                  <TrendingUp className="w-5 h-5 text-violet-600" />
+                </div>
+                <div className="text-3xl font-bold text-gray-900 leading-none">9+</div>
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mt-1">Years Experience</div>
+              </div>
+
+              {/* Stat 4 — Support Hours (highlighted) */}
+              <div className="flex flex-col items-center justify-center gap-1.5 px-5 py-7 text-center bg-blue-600">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-1.5">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <div className="text-2xl font-bold text-white leading-none tracking-tight">9am – 9pm</div>
+                <div className="text-[11px] font-semibold text-blue-200 uppercase tracking-widest mt-1">Mon – Sat Support</div>
+              </div>
+
             </div>
           </div>
         </div>
