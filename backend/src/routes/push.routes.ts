@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { sendPush } from "../utils/push.js"
+import { sendPush, sendPushToUser } from "../utils/push.js"
 import { supabase } from "../utils/supabase.js"
 import { protect } from "../middlewares/auth.middleware.js"
 
@@ -64,35 +64,20 @@ router.post("/subscribe", async (req: any, res) => {
 
 /**
  * POST /api/push/send  (test endpoint)
- * Sends a test push to the authenticated user's most recent subscription.
+ * Sends a test push to ALL devices of the authenticated user.
+ * This tests the full flow — notification should appear on lock screen,
+ * play sound, and show even if the browser/app tab is closed.
  */
 router.post("/send", protect, async (req: any, res) => {
   try {
     const userId = req.user?.id
     if (!userId) return res.status(401).json({ error: "Unauthorized" })
 
-    const { data, error } = await supabase
-      .from("push_subscriptions")
-      .select("endpoint, p256dh, auth")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (error || !data) {
-      return res.status(400).json({ message: "No subscription found for this user" })
-    }
-
-    // Reconstruct the web-push subscription object from columns
-    const subscription = {
-      endpoint: data.endpoint,
-      keys: { p256dh: data.p256dh, auth: data.auth },
-    }
-
-    await sendPush(subscription, {
+    await sendPushToUser(userId, {
       title: "Metro Cool 🔧",
-      body: "Your service update is here!",
-      url: "https://metro-cool.com",
+      body:  "Your service update is here!",
+      url:   "https://metro-cool.com",
+      tag:   "metro-cool-test-" + Date.now(), // unique tag → always plays sound
     })
 
     res.json({ success: true })
