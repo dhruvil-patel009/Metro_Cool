@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Package, Plus, HelpCircle, Loader2, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
@@ -13,7 +13,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/app/components/ui/select";
-import { updateService } from "@/app/lib/services.api";
+import { updateService, getServiceContent, getAllServiceContent, assignContentToService } from "@/app/lib/services.api";
+import type { ServiceInclude, ServiceAddon, ServiceFaq } from "@/app/lib/services.api";
 import { uploadServiceImage } from "@/app/lib/uploadImage";
 import { toast } from "react-toastify";
 
@@ -40,6 +41,15 @@ export function EditServiceModal({
   const [commissionType, setCommissionType] = useState<"percentage" | "flat">("percentage");
   const [commissionValue, setCommissionValue] = useState("10");
 
+  // Service content state
+  const [allIncludes, setAllIncludes] = useState<ServiceInclude[]>([]);
+  const [allAddons, setAllAddons] = useState<ServiceAddon[]>([]);
+  const [allFaqs, setAllFaqs] = useState<ServiceFaq[]>([]);
+  const [selectedIncludes, setSelectedIncludes] = useState<Set<string>>(new Set());
+  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
+  const [selectedFaqs, setSelectedFaqs] = useState<Set<string>>(new Set());
+  const [contentLoading, setContentLoading] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
 
   /* ---------------- PREFILL ---------------- */
@@ -54,6 +64,54 @@ export function EditServiceModal({
     setImageUrl(service.image_url || null);
     setCommissionType(service.commission_type || "percentage");
     setCommissionValue((service.commission_value ?? 20).toString());
+
+    // Fetch all available content + this service's current content
+    setContentLoading(true);
+    Promise.all([getAllServiceContent(), getServiceContent(service.id)])
+      .then(([allContent, serviceContent]) => {
+        setAllIncludes(allContent.includes || []);
+        setAllAddons(allContent.addons || []);
+        setAllFaqs(allContent.faqs || []);
+
+        // Pre-select items that are already linked to this service (match by title/question)
+        const existingIncludeTitles = new Set(
+          (serviceContent.includes || []).map((i: ServiceInclude) => i.title.trim().toLowerCase())
+        );
+        const existingAddonTitles = new Set(
+          (serviceContent.addons || []).map((a: ServiceAddon) => a.title.trim().toLowerCase())
+        );
+        const existingFaqQuestions = new Set(
+          (serviceContent.faqs || []).map((f: ServiceFaq) => f.question.trim().toLowerCase())
+        );
+
+        setSelectedIncludes(
+          new Set(
+            (allContent.includes || [])
+              .filter((i: ServiceInclude) => existingIncludeTitles.has(i.title.trim().toLowerCase()))
+              .map((i: ServiceInclude) => i.id)
+          )
+        );
+        setSelectedAddons(
+          new Set(
+            (allContent.addons || [])
+              .filter((a: ServiceAddon) => existingAddonTitles.has(a.title.trim().toLowerCase()))
+              .map((a: ServiceAddon) => a.id)
+          )
+        );
+        setSelectedFaqs(
+          new Set(
+            (allContent.faqs || [])
+              .filter((f: ServiceFaq) => existingFaqQuestions.has(f.question.trim().toLowerCase()))
+              .map((f: ServiceFaq) => f.id)
+          )
+        );
+      })
+      .catch(() => {
+        setAllIncludes([]);
+        setAllAddons([]);
+        setAllFaqs([]);
+      })
+      .finally(() => setContentLoading(false));
   }, [service]);
 
   if (!isOpen) return null;
@@ -83,7 +141,7 @@ export function EditServiceModal({
       let finalImageUrl = imageUrl;
 
       if (imageFile) {
-        toast.info("📤 Uploading image...");
+        toast.info("Uploading image...");
         finalImageUrl = await uploadServiceImage(imageFile);
       }
 
@@ -99,10 +157,24 @@ export function EditServiceModal({
         commissionValue: Number(commissionValue),
       });
 
-      toast.success("✅ Service updated successfully!");
+      // Assign selected content to the service
+      const contentPayload = {
+        includes: allIncludes
+          .filter((item) => selectedIncludes.has(item.id))
+          .map((item) => ({ title: item.title, description: item.description, icon: item.icon })),
+        addons: allAddons
+          .filter((item) => selectedAddons.has(item.id))
+          .map((item) => ({ title: item.title, description: item.description, price: item.price, image: item.image })),
+        faqs: allFaqs
+          .filter((item) => selectedFaqs.has(item.id))
+          .map((item) => ({ question: item.question, answer: item.answer })),
+      };
+      await assignContentToService(service.id, contentPayload);
+
+      toast.success("Service updated successfully!");
       onClose();
     } catch (err: any) {
-      toast.error(err?.message || "❌ Failed to update service. Please try again.");
+      toast.error(err?.message || "Failed to update service. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -289,6 +361,150 @@ export function EditServiceModal({
               </svg>
               Commission is deducted from technician payment during settlement
             </p>
+          </div>
+
+          {/* Service Content Selection */}
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
+                <Package className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Service Content</h3>
+                <p className="text-xs text-gray-500">Select content to show on this service page</p>
+              </div>
+            </div>
+
+            <div className="p-4 space-y-4 max-h-64 overflow-y-auto">
+              {contentLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                  <span className="ml-2 text-sm text-gray-500">Loading content...</span>
+                </div>
+              ) : (allIncludes.length === 0 && allAddons.length === 0 && allFaqs.length === 0) ? (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  No content available. Add content from the Service Content page first.
+                </p>
+              ) : (
+                <>
+                  {/* Includes */}
+                  {allIncludes.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Package className="h-3.5 w-3.5 text-blue-600" />
+                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Includes</h4>
+                      </div>
+                      <div className="space-y-1">
+                        {allIncludes.map((item) => {
+                          const checked = selectedIncludes.has(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                const next = new Set(selectedIncludes);
+                                checked ? next.delete(item.id) : next.add(item.id);
+                                setSelectedIncludes(next);
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                            >
+                              {checked
+                                ? <CheckSquare className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                : <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-800 truncate">{item.title}</p>
+                                {item.description && <p className="text-xs text-gray-500 truncate">{item.description}</p>}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Addons */}
+                  {allAddons.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Plus className="h-3.5 w-3.5 text-emerald-600" />
+                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Add-ons</h4>
+                      </div>
+                      <div className="space-y-1">
+                        {allAddons.map((item) => {
+                          const checked = selectedAddons.has(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                const next = new Set(selectedAddons);
+                                checked ? next.delete(item.id) : next.add(item.id);
+                                setSelectedAddons(next);
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                            >
+                              {checked
+                                ? <CheckSquare className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                                : <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-medium text-gray-800 truncate">{item.title}</p>
+                                  <span className="text-xs font-semibold text-emerald-700 ml-2">₹{item.price}</span>
+                                </div>
+                                {item.description && <p className="text-xs text-gray-500 truncate">{item.description}</p>}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FAQs */}
+                  {allFaqs.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <HelpCircle className="h-3.5 w-3.5 text-violet-600" />
+                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">FAQs</h4>
+                      </div>
+                      <div className="space-y-1">
+                        {allFaqs.map((item) => {
+                          const checked = selectedFaqs.has(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                const next = new Set(selectedFaqs);
+                                checked ? next.delete(item.id) : next.add(item.id);
+                                setSelectedFaqs(next);
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                            >
+                              {checked
+                                ? <CheckSquare className="w-4 h-4 text-violet-600 flex-shrink-0" />
+                                : <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-800 truncate">{item.question}</p>
+                                <p className="text-xs text-gray-500 truncate">{item.answer}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {(selectedIncludes.size > 0 || selectedAddons.size > 0 || selectedFaqs.size > 0) && (
+              <div className="px-5 py-3 bg-blue-50 border-t border-blue-100">
+                <p className="text-xs text-blue-700 font-medium">
+                  Selected: {selectedIncludes.size} includes, {selectedAddons.size} add-ons, {selectedFaqs.size} FAQs
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Service Status */}

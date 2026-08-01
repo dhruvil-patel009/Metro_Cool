@@ -103,3 +103,69 @@ export const updateService = async (
   });
 };
 
+
+/* ================= Service Content Types ================= */
+export interface ServiceInclude {
+  id: string;
+  service_id: string;
+  title: string;
+  description: string;
+  icon: string;
+  created_at?: string;
+}
+
+export interface ServiceAddon {
+  id: string;
+  service_id: string;
+  title: string;
+  description: string;
+  price: number;
+  image?: string;
+  created_at?: string;
+}
+
+export interface ServiceFaq {
+  id: string;
+  service_id: string;
+  question: string;
+  answer: string;
+  created_at?: string;
+}
+
+export interface ServiceContent {
+  includes: ServiceInclude[];
+  addons: ServiceAddon[];
+  faqs: ServiceFaq[];
+}
+
+/**
+ * ADMIN — Get Service Content (includes, addons, FAQs) for a specific service
+ */
+export const getServiceContent = async (serviceId: string): Promise<ServiceContent> => {
+  return apiFetch(`/service-content/${serviceId}`);
+};
+
+/**
+ * ADMIN — Get ALL available service content (unique items across all services)
+ */
+export const getAllServiceContent = async (): Promise<ServiceContent> => {
+  return apiFetch(`/service-content/all`);
+};
+
+/**
+ * ADMIN — Assign selected content to a service (replaces existing)
+ */
+export const assignContentToService = async (
+  serviceId: string,
+  content: {
+    includes: Pick<ServiceInclude, "title" | "description" | "icon">[];
+    addons: Pick<ServiceAddon, "title" | "description" | "price" | "image">[];
+    faqs: Pick<ServiceFaq, "question" | "answer">[];
+  }
+): Promise<{ message: string }> => {
+  return apiFetch(`/service-content/${serviceId}/assign`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(content),
+  });
+};
