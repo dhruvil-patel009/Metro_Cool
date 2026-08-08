@@ -1,5 +1,6 @@
 "use client"
 import { createContext, useContext, useEffect, useState } from "react"
+import { useAuthStore } from "@/store/auth.store"
 
 export interface CartItem {
   id: string
@@ -28,12 +29,26 @@ export const useCart = () => {
   return ctx
 }
 
+/** Returns a user-scoped localStorage key so carts never bleed across accounts */
+function cartKey(userId: string | undefined) {
+  return userId ? `metrocart_${userId}` : null
+}
+
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([])
+  const userId = useAuthStore((s) => s.user?.id)
 
-  /* ---------- Load from localStorage ---------- */
+  /* ---------- Load from localStorage when user changes ---------- */
   useEffect(() => {
-    const stored = localStorage.getItem("metrocart")
+    const key = cartKey(userId)
+
+    if (!key) {
+      // No logged-in user — show empty cart
+      setCart([])
+      return
+    }
+
+    const stored = localStorage.getItem(key)
     if (stored) {
       try {
         const parsed: CartItem[] = JSON.parse(stored)
@@ -46,13 +61,18 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       } catch {
         setCart([])
       }
+    } else {
+      // New user with no saved cart — start fresh
+      setCart([])
     }
-  }, [])
+  }, [userId])
 
-  /* ---------- Save to localStorage ---------- */
+  /* ---------- Save to localStorage (only when a user is logged in) ---------- */
   useEffect(() => {
-    localStorage.setItem("metrocart", JSON.stringify(cart))
-  }, [cart])
+    const key = cartKey(userId)
+    if (!key) return
+    localStorage.setItem(key, JSON.stringify(cart))
+  }, [cart, userId])
 
 const addToCart = (item: CartItem) => {
   setCart(prev => {

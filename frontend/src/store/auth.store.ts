@@ -65,6 +65,8 @@ export const useAuthStore = create<AuthState>()(
     localStorage.removeItem("auth-storage");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("token");
+    // Clear cart so the next user doesn't inherit this user's cart
+    localStorage.removeItem("metrocart");
     // Clear the middleware cookie
     document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax";
   }

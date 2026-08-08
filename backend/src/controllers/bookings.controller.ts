@@ -195,12 +195,26 @@ export const completeBooking = async (req: any, res: Response) => {
         ? `${profile.first_name} ${profile.last_name}`.trim()
         : data.full_name || "Customer"
 
+      // Format address object into a readable string
+      let formattedAddress = ""
+      if (address && typeof address === "object") {
+        const parts = [
+          address.street,
+          address.apt,
+          address.city,
+          address.zipCode,
+        ].filter(Boolean)
+        formattedAddress = parts.join(", ")
+      } else if (typeof address === "string") {
+        formattedAddress = address
+      }
+
       await sendBookingNotification({
         bookingId: data.booking_ref || data.id,
         customerName,
         customerPhone: profile?.phone || data.phone || "",
         customerEmail: profile?.email,
-        customerAddress: address || "",
+        customerAddress: formattedAddress || "N/A",
         serviceName: service?.title || "AC Service",
         bookingDate: data.booking_date,
         timeSlot: data.time_slot || "",

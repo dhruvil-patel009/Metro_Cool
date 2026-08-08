@@ -22,7 +22,7 @@ export default function BookingConfirmPage() {
   const id = params.id
 
   const [selectedDate, setSelectedDate] = useState("")
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState("09:00 - 11:00")
+  // const [selectedTimeSlot, setSelectedTimeSlot] = useState("09:00 - 11:00")
   const [selectedIssues, setSelectedIssues] = useState<string[]>(["not-cooling"])
   const [additionalInstructions, setAdditionalInstructions] = useState("")
   const [fullName, setFullName] = useState("")
@@ -43,7 +43,7 @@ export default function BookingConfirmPage() {
     const storedDate = localStorage.getItem("bookingDate")
     const storedTime = localStorage.getItem("bookingTime")
     if (storedDate) setSelectedDate(storedDate)
-    if (storedTime) setSelectedTimeSlot(storedTime)
+    // if (storedTime) setSelectedTimeSlot(storedTime)
   }, [])
 
   /* ---------- APPLY ADDRESS ---------- */
@@ -167,7 +167,7 @@ export default function BookingConfirmPage() {
         },
         body: JSON.stringify({
           bookingDate: selectedDate,
-          timeSlot: selectedTimeSlot,
+          // timeSlot: selectedTimeSlot,
           issues: selectedIssues,
           instructions: additionalInstructions,
           address: {
@@ -484,7 +484,7 @@ export default function BookingConfirmPage() {
                             month: "short",
                             year: "numeric",
                           })}
-                          {" • "}{selectedTimeSlot}
+                    
                         </p>
                       </div>
                     </div>
