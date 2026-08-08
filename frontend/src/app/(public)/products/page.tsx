@@ -398,7 +398,7 @@ export default function ProductsPage() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4">
                 {filteredAndSortedProducts.map((product: any) => {
                   const isAdded = addedIds.has(product.id)
                   const discount = getDiscount(Number(product.price), product.old_price && Number(product.old_price) > 0 ? Number(product.old_price) : undefined)
@@ -411,7 +411,7 @@ export default function ProductsPage() {
                       className="group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-xl transition-all duration-300 flex flex-col"
                     >
                       {/* Image */}
-                      <div className="relative aspect-[4/3] sm:aspect-square overflow-hidden bg-gray-50/80">
+                      <div className="relative aspect-square overflow-hidden bg-gray-50/80">
                         <img
                           src={product.main_image || "/placeholder.svg"}
                           alt={product.title}

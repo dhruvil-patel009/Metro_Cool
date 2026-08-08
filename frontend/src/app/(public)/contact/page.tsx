@@ -262,12 +262,12 @@ export default function ContactPage() {
                   </div>
 
                   {/* Card footer */}
-                  <div className="p-5 flex items-start justify-between gap-4">
+                  <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${i === 0 ? "bg-blue-50" : "bg-emerald-50"}`}>
                         <Icon className={`w-5 h-5 ${i === 0 ? "text-blue-600" : "text-emerald-600"}`} />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${i === 0 ? "text-blue-500" : "text-emerald-500"}`}>
                           {addr.label}
                         </p>
@@ -278,14 +278,14 @@ export default function ContactPage() {
                       href={addr.mapsLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap ${
+                      className={`shrink-0 flex items-center justify-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap w-full sm:w-auto ${
                         i === 0
                           ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-100"
                           : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-100"
                       }`}
                     >
                       <MapPin className="w-3.5 h-3.5" />
-                      Directions
+                      Get Directions
                     </a>
                   </div>
                 </div>

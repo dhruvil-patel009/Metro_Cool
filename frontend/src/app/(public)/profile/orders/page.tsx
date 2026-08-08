@@ -257,13 +257,13 @@ export default function OrdersPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {[
                 { label: "Total Orders", value: stats.total,     icon: ShoppingBag, color: "text-blue-600",    bg: "bg-blue-50" },
                 { label: "Completed",    value: stats.completed,  icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
                 { label: "Upcoming",     value: stats.upcoming,   icon: Clock,       color: "text-purple-600",  bg: "bg-purple-50" },
               ].map(({ label, value, icon: Icon, color, bg }) => (
-                <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${color}`} />
                   </div>

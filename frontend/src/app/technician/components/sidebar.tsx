@@ -71,9 +71,9 @@ export function Sidebar() {
     {/* MOBILE TOGGLE BUTTON */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="fixed left-0 top-3 z-50 rounded-lg bg-white p-2 shadow md:hidden"
+        className="fixed left-3 top-4 z-50 rounded-lg bg-white p-2 shadow-md border border-gray-100 md:hidden"
       >
-        <Menu className="w-6 h-6" />
+        <Menu className="w-5 h-5" />
       </button>
 
       {/* MOBILE OVERLAY */}

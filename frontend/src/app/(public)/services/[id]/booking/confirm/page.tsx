@@ -41,9 +41,7 @@ export default function BookingConfirmPage() {
   /* ---------- LOAD STORED DATE/TIME ---------- */
   useEffect(() => {
     const storedDate = localStorage.getItem("bookingDate")
-    const storedTime = localStorage.getItem("bookingTime")
     if (storedDate) setSelectedDate(storedDate)
-    // if (storedTime) setSelectedTimeSlot(storedTime)
   }, [])
 
   /* ---------- APPLY ADDRESS ---------- */
@@ -433,10 +431,21 @@ export default function BookingConfirmPage() {
               </div>
 
               {/* Mobile CTA (visible on mobile only) */}
-              <div className="lg:hidden bg-white rounded-2xl border border-gray-100 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-gray-500">Total</span>
-                  <span className="text-xl font-bold text-blue-600">{formatINR(total.toFixed(2))}</span>
+              <div className="lg:hidden bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                {/* Price breakdown on mobile */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Service Fee</span>
+                    <span className="font-semibold text-[#1d242d]">{formatINR(serviceFee.toFixed(2))}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">GST (18%)</span>
+                    <span className="font-semibold text-[#1d242d]">{formatINR(gstAmount.toFixed(2))}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <span className="text-sm font-bold text-[#1d242d]">Total</span>
+                    <span className="text-xl font-bold text-blue-600">{formatINR(total.toFixed(2))}</span>
+                  </div>
                 </div>
                 <button
                   onClick={handleCompleteBooking}

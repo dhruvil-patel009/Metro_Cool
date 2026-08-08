@@ -58,7 +58,7 @@ export function Footer() {
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 mb-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-14">
           {/* Brand Column */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="mb-6">
@@ -82,15 +82,15 @@ export function Footer() {
             <div className="space-y-3 mb-6">
               <div className="flex items-start gap-3 text-sm text-gray-400">
                 <MapPin className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-                <span>A-401, Suvas Oram, Opp. Hotel Safari, Odhav Ring Road, Ahmedabad 382415</span>
+                <span className="break-words">A-401, Suvas Oram, Opp. Hotel Safari, Odhav Ring Road, Ahmedabad 382415</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-400">
                 <Phone className="w-4 h-4 text-blue-400 shrink-0" />
-                <span>+91 91063 85649</span>
+                <a href="tel:+919106385649" className="hover:text-blue-400 transition-colors">+91 91063 85649</a>
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-400">
+              <div className="flex items-center gap-3 text-sm text-gray-400 min-w-0">
                 <Mail className="w-4 h-4 text-blue-400 shrink-0" />
-                <span>metrocool.official@gmail.com</span>
+                <a href="mailto:metrocool.official@gmail.com" className="hover:text-blue-400 transition-colors truncate">metrocool.official@gmail.com</a>
               </div>
             </div>
 

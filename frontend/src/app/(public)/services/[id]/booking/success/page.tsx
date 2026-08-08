@@ -6,7 +6,6 @@ import { useParams } from "next/navigation"
 import {
   CheckCircle,
   Calendar,
-  Clock,
   MapPin,
   ArrowRight,
   Copy,
@@ -104,7 +103,6 @@ export default function BookingSuccessPage() {
     month: "long",
     year: "numeric",
   })
-  const time = booking.time_slot
   const address = booking.address
 
   return (
@@ -292,13 +290,13 @@ export default function BookingSuccessPage() {
           >
             <Link
               href="/"
-              className="px-6 py-3.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-sm text-center hover:border-gray-300 hover:bg-gray-50 transition-all"
+              className="px-6 py-3.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-sm text-center hover:border-gray-300 hover:bg-gray-50 transition-all w-full sm:w-auto"
             >
               Back to Home
             </Link>
             <Link
               href={`/bookings?id=${bookingId}`}
-              className="px-6 py-3.5 bg-blue-600 text-white rounded-xl font-semibold text-sm text-center hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-200"
+              className="px-6 py-3.5 bg-blue-600 text-white rounded-xl font-semibold text-sm text-center hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-200 w-full sm:w-auto"
             >
               View My Bookings
               <ArrowRight className="w-4 h-4" />

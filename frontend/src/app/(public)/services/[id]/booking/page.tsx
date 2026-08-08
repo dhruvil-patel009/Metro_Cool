@@ -283,18 +283,18 @@ export default function BookingPage() {
             {/* Left - Calendar */}
             <div className="lg:col-span-2 space-y-5">
               {/* Calendar Card */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm">
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
                 {/* Calendar Header */}
                 <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
                       <Calendar className="w-4 h-4 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="font-bold text-base sm:text-lg text-[#1d242d]">
+                      <h2 className="font-bold text-sm sm:text-lg text-[#1d242d]">
                         {MONTH_NAMES[selectedMonth]} {selectedYear}
                       </h2>
-                      <p className="text-[11px] text-gray-400">Available slots for your area</p>
+                      <p className="text-[11px] text-gray-400 hidden sm:block">Available slots for your area</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -315,10 +315,10 @@ export default function BookingPage() {
                 </div>
 
                 {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                <div className="grid grid-cols-7 gap-0.5 sm:gap-2">
                   {/* Day headers */}
                   {DAY_NAMES.map((day) => (
-                    <div key={day} className="text-center text-[11px] font-bold text-gray-400 uppercase py-2">
+                    <div key={day} className="text-center text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase py-2">
                       {day}
                     </div>
                   ))}
@@ -340,7 +340,7 @@ export default function BookingPage() {
                         onClick={() => !isDisabled && setSelectedDay(day)}
                         disabled={isDisabled}
                         className={`
-                          aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all
+                          aspect-square flex items-center justify-center rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all
                           ${isSelected
                             ? "bg-blue-600 text-white shadow-md shadow-blue-200 scale-105"
                             : isToday
@@ -358,7 +358,7 @@ export default function BookingPage() {
                 </div>
 
                 {/* Legend */}
-                <div className="flex flex-wrap items-center gap-4 mt-5 pt-4 border-t border-gray-100">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-4 sm:mt-5 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-blue-600" />
                     <span className="text-[11px] text-gray-500">Selected</span>

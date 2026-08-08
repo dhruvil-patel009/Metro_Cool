@@ -77,19 +77,19 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full py-16 sm:py-20">
         <div className="max-w-3xl">
           <div key={animKey} className="hero-content-enter">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold mb-6">
-              <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                <CheckCircle2 className="text-white w-3 h-3" />
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold mb-4 sm:mb-6">
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="text-white w-2.5 h-2.5 sm:w-3 sm:h-3" />
               </div>
-              {slide.badge}
+              <span className="line-clamp-1">{slide.badge}</span>
             </div>
 
             {/* Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-[1.1] mb-6 text-white tracking-tight">
+            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold leading-[1.15] sm:leading-[1.1] mb-4 sm:mb-6 text-white tracking-tight">
               {slide.title}
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
@@ -98,21 +98,21 @@ export function HeroSection() {
             </h1>
 
             {/* Description */}
-            <p className="text-base sm:text-lg lg:text-xl text-gray-300 leading-relaxed mb-10 max-w-xl">
+            <p className="text-sm sm:text-lg lg:text-xl text-gray-300 leading-relaxed mb-7 sm:mb-10 max-w-xl">
               {slide.desc}
             </p>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/services">
-              <button className="group bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Link href="/services" className="w-full sm:w-auto">
+              <button className="group bg-blue-600 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 flex items-center gap-2 cursor-pointer w-full justify-center">
                 Book a Service
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
-            <Link href="/products">
-              <button className="group bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20 flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center">
+            <Link href="/products" className="w-full sm:w-auto">
+              <button className="group bg-white/10 backdrop-blur-md text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20 flex items-center gap-2 cursor-pointer w-full justify-center">
                 <Wind className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                 Buy AC
               </button>
@@ -120,15 +120,15 @@ export function HeroSection() {
           </div>
 
           {/* Stats Row */}
-          <div className="mt-14 flex flex-wrap gap-6 sm:gap-10">
+          <div className="mt-10 sm:mt-14 grid grid-cols-3 gap-4 sm:flex sm:flex-wrap sm:gap-10 max-w-xs sm:max-w-none">
             {[
               { value: "9+", label: "Years Experience" },
               { value: "5000+", label: "Happy Customers" },
               { value: "4.8★", label: "Average Rating" },
             ].map((stat) => (
               <div key={stat.label} className="text-center sm:text-left">
-                <p className="text-2xl sm:text-3xl font-bold text-white">{stat.value}</p>
-                <p className="text-xs sm:text-sm text-gray-400 mt-1">{stat.label}</p>
+                <p className="text-xl sm:text-3xl font-bold text-white">{stat.value}</p>
+                <p className="text-[10px] sm:text-sm text-gray-400 mt-0.5 sm:mt-1 leading-tight">{stat.label}</p>
               </div>
             ))}
           </div>

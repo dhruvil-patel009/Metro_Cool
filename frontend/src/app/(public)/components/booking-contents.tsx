@@ -345,7 +345,7 @@ export default function BookingsContent() {
                 mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
-              <div className="relative h-[250px] sm:h-[350px] lg:h-[400px]">
+              <div className="relative h-[220px] sm:h-[320px] lg:h-[400px]">
                 <iframe
                   title="Service Location"
                   src={`https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`}
@@ -355,7 +355,7 @@ export default function BookingsContent() {
                 />
 
                 {/* Live Tracking Badge */}
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm border border-gray-100 flex items-center gap-2">
+                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1.5 shadow-sm border border-gray-100 flex items-center gap-2">
                   <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   <span className="text-xs font-semibold text-[#1d242d]">Live</span>
                 </div>
@@ -368,9 +368,9 @@ export default function BookingsContent() {
                     <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
                       <MapPin className="w-5 h-5 text-blue-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-400 font-medium">Service Location</p>
-                      <p className="text-sm font-semibold text-[#1d242d] truncate max-w-[250px]">
+                      <p className="text-sm font-semibold text-[#1d242d] truncate max-w-[220px] sm:max-w-[280px]">
                         {location.address}
                       </p>
                     </div>
@@ -379,7 +379,7 @@ export default function BookingsContent() {
                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 shrink-0"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 shrink-0 self-start sm:self-auto"
                   >
                     <NavigationIcon className="w-3 h-3" />
                     Get Directions
