@@ -131,8 +131,8 @@ export default function EarningsPage() {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Earnings</h1>
-          <p className="text-slate-500 mt-1">Track your performance and income</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Earnings</h1>
+          <p className="text-slate-500 mt-1 text-sm">Track your performance and income</p>
         </div>
 
         {/* Period toggle */}
@@ -156,78 +156,78 @@ export default function EarningsPage() {
       </div>
 
       {/* ── Stat cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {/* Total earnings */}
-        <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 bg-cyan-50 rounded-xl group-hover:bg-cyan-100 transition-colors">
-              <Wallet className="w-5 h-5 text-cyan-600" />
+        <Card className="p-4 sm:p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <div className="p-2 sm:p-2.5 bg-cyan-50 rounded-xl group-hover:bg-cyan-100 transition-colors">
+              <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-600" />
             </div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">
               {period === "week" ? "This Week" : "This Month"}
             </span>
           </div>
-          <p className="text-3xl font-black text-slate-900 mb-2">{inr(current.total)}</p>
-          <Badge className={`border-0 text-xs font-bold ${
+          <p className="text-xl sm:text-3xl font-black text-slate-900 mb-1 sm:mb-2 truncate">{inr(current.total)}</p>
+          <Badge className={`border-0 text-[10px] sm:text-xs font-bold ${
             current.growth >= 0
               ? "bg-emerald-50 text-emerald-700"
               : "bg-red-50 text-red-700"
           }`}>
             <TrendingUp className="w-3 h-3 mr-1" />
-            {current.growth >= 0 ? "+" : ""}{current.growth}% vs last {period}
+            {current.growth >= 0 ? "+" : ""}{current.growth}%
           </Badge>
         </Card>
 
         {/* Jobs completed */}
-        <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-              <Briefcase className="w-5 h-5 text-blue-600" />
+        <Card className="p-4 sm:p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <div className="p-2 sm:p-2.5 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+              <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Jobs Completed</span>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Jobs Done</span>
           </div>
-          <p className="text-3xl font-black text-slate-900 mb-2">{current.jobs}</p>
-          <p className="text-xs text-slate-400 font-medium">in this {period}</p>
+          <p className="text-xl sm:text-3xl font-black text-slate-900 mb-1 sm:mb-2">{current.jobs}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 font-medium">in this {period}</p>
         </Card>
 
         {/* Average per job */}
-        <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
-              <BarChart2 className="w-5 h-5 text-purple-600" />
+        <Card className="p-4 sm:p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <div className="p-2 sm:p-2.5 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
+              <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
             </div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Avg. Per Job</span>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Avg/Job</span>
           </div>
-          <p className="text-3xl font-black text-slate-900 mb-2">
+          <p className="text-xl sm:text-3xl font-black text-slate-900 mb-1 sm:mb-2 truncate">
             {current.jobs > 0 ? inr(current.avg) : "—"}
           </p>
-          <p className="text-xs text-slate-400 font-medium">per completed job</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 font-medium">per job</p>
         </Card>
 
         {/* All-time total */}
-        <Card className="p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group bg-gradient-to-br from-blue-600 to-blue-700">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 bg-white/20 rounded-xl">
-              <IndianRupee className="w-5 h-5 text-white" />
+        <Card className="p-4 sm:p-6 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group bg-gradient-to-br from-blue-600 to-blue-700">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <div className="p-2 sm:p-2.5 bg-white/20 rounded-xl">
+              <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <span className="text-xs font-bold text-blue-200 uppercase tracking-wide">All Time</span>
+            <span className="text-[10px] sm:text-xs font-bold text-blue-200 uppercase tracking-wide">All Time</span>
           </div>
-          <p className="text-3xl font-black text-white mb-2">{inr(allTimeTotal)}</p>
-          <p className="text-xs text-blue-200 font-medium">{completed.length} completed jobs</p>
+          <p className="text-xl sm:text-3xl font-black text-white mb-1 sm:mb-2 truncate">{inr(allTimeTotal)}</p>
+          <p className="text-[10px] sm:text-xs text-blue-200 font-medium">{completed.length} jobs</p>
         </Card>
       </div>
 
       {/* ── Earnings History ── */}
       <Card className="border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-blue-500" />
-            <h2 className="text-xl font-bold text-slate-900">Earnings History</h2>
+            <CalendarDays className="w-5 h-5 text-blue-500 shrink-0" />
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Earnings History</h2>
             <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
               {history.length} records
             </span>
           </div>
-          <Button variant="outline" size="sm" className="gap-2 bg-transparent hover:bg-slate-50">
+          <Button variant="outline" size="sm" className="gap-2 bg-transparent hover:bg-slate-50 w-fit">
             <Download className="w-4 h-4" /> Export
           </Button>
         </div>

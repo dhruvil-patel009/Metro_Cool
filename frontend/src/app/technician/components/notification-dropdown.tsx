@@ -114,11 +114,10 @@ export function NotificationDropdown() {
       style={{
         position: "fixed",
         top: dropdownPos.top,
-        right: dropdownPos.right,
+        right: Math.max(dropdownPos.right, 8),
         zIndex: 99999,
-        width: "340px",
       }}
-      className="sm:w-[380px] bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+      className="w-[calc(100vw-16px)] sm:w-[380px] max-w-[380px] bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">

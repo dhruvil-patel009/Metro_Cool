@@ -113,39 +113,39 @@ export default function ReferralsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="p-5 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        <Card className="p-4 sm:p-5 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-900">{totalReferrals}</p>
-              <p className="text-xs text-blue-600">Total Referrals</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-900">{totalReferrals}</p>
+              <p className="text-[10px] sm:text-xs text-blue-600">Total Referrals</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
+        <Card className="p-4 sm:p-5 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-amber-900">{pendingRewards}</p>
-              <p className="text-xs text-amber-600">Pending Rewards</p>
+              <p className="text-xl sm:text-2xl font-bold text-amber-900">{pendingRewards}</p>
+              <p className="text-[10px] sm:text-xs text-amber-600">Pending Rewards</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
-              <IndianRupee className="w-5 h-5 text-white" />
+        <Card className="p-4 sm:p-5 bg-gradient-to-br from-green-50 to-green-100 border-green-200 col-span-2 sm:col-span-1">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
+              <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-900">₹{totalEarned}</p>
-              <p className="text-xs text-green-600">Total Earned</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-900">₹{totalEarned}</p>
+              <p className="text-[10px] sm:text-xs text-green-600">Total Earned</p>
             </div>
           </div>
         </Card>
@@ -165,32 +165,34 @@ export default function ReferralsPage() {
         ) : referralCode ? (
           <div className="space-y-4">
             {/* Code Display */}
-            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-              <code className="text-2xl font-bold text-gray-900 tracking-widest flex-1">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+              <code className="text-xl sm:text-2xl font-bold text-gray-900 tracking-widest flex-1 min-w-0 break-all">
                 {referralCode}
               </code>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopy}
-                className="gap-2"
-              >
-                {copied ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-                {copied ? "Copied" : "Copy"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleShare}
-                className="gap-2"
-              >
-                <Share2 className="w-4 h-4" />
-                Share
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="gap-1.5 text-xs"
+                >
+                  {copied ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                  {copied ? "Copied" : "Copy"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShare}
+                  className="gap-1.5 text-xs"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  Share
+                </Button>
+              </div>
             </div>
 
             {/* How it works */}
