@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createProduct,
+  getUploadUrl,
   getProducts,
   getProductById,
   updateProduct,
@@ -22,6 +23,8 @@ router.get("/", getProducts);
 router.get("/:id", getProductById);
 
 /* ADMIN */
+router.post("/upload-url", protect, authorize("admin"), getUploadUrl);
+
 router.post(
   "/create",
   protect,

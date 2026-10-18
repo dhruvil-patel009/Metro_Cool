@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, X, Image as ImageIcon, Plus, Package, Tag, FileText, Star, Layers, Truck } from "lucide-react"
+import { Upload, X, Image as ImageIcon, Plus, Package, Tag, FileText, Star, Layers, Truck, Loader2 } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Textarea } from "@/app/components/ui/textarea"
 import { Switch } from "@/app/components/ui/switch"
 import { createProduct } from "@/app/lib/products.api"
+import { uploadProductAsset } from "@/app/lib/productUpload"
 import { toast } from "react-toastify"
 
 interface Props {
@@ -42,6 +43,8 @@ export function AddProductModal({ isOpen, onClose }: Props) {
 
   const [fastInstallation, setFastInstallation] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState("")
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
@@ -50,37 +53,82 @@ export function AddProductModal({ isOpen, onClose }: Props) {
     if (thumbnails.length < 3) { toast.error("Minimum 3 thumbnail images required"); return }
 
     setSaving(true)
+    setUploadProgress(0)
+
     try {
-      const formData = new FormData()
-      formData.append("title", title)
-      formData.append("shortDesc", shortDesc)
-      formData.append("description", description)
-      formData.append("brand", brand)
-      formData.append("category", category)
-      formData.append("badge", badge)
-      formData.append("badgeColor", badgeColor)
-      formData.append("inStock", String(inStock))
-      formData.append("fastInstallation", String(fastInstallation))
-      formData.append("rating", rating)
-      formData.append("reviewCount", reviewCount)
-      formData.append("oldPrice", oldPrice)
-      formData.append("deliveryCharge", deliveryCharge)
-      formData.append("capacityPrices", JSON.stringify(variants))
-      formData.append("specifications", JSON.stringify(specs))
-      formData.append("features", JSON.stringify(featuresList))
+      // 1. Upload Main Image directly to Supabase
+      let mainImageUrl: string | null = null
+      if (mainImage) {
+        setUploadStatus("Uploading main image...")
+        mainImageUrl = await uploadProductAsset(mainImage, "main", (pct) => setUploadProgress(pct))
+      }
 
-      if (mainImage) formData.append("mainImage", mainImage)
-      thumbnails.forEach((t) => formData.append("thumbnail", t))
-      gallery.forEach((g) => formData.append("gallery", g))
-      if (catalog) formData.append("catalog", catalog)
+      // 2. Upload Thumbnails directly to Supabase
+      const thumbnailUrls: string[] = []
+      for (let i = 0; i < thumbnails.length; i++) {
+        setUploadStatus(`Uploading thumbnail ${i + 1}/${thumbnails.length}...`)
+        setUploadProgress(0)
+        const url = await uploadProductAsset(thumbnails[i], "thumbnail", (pct) => setUploadProgress(pct))
+        thumbnailUrls.push(url)
+      }
 
-      await createProduct(formData)
+      // 3. Upload Gallery Images directly to Supabase
+      const galleryUrls: string[] = []
+      for (let i = 0; i < gallery.length; i++) {
+        setUploadStatus(`Uploading gallery image ${i + 1}/${gallery.length}...`)
+        setUploadProgress(0)
+        const url = await uploadProductAsset(gallery[i], "gallery", (pct) => setUploadProgress(pct))
+        galleryUrls.push(url)
+      }
+
+      // 4. Upload Catalog PDF directly to Supabase (bypasses Vercel 4.5MB limit, supports 50MB)
+      let catalogUrl: string | null = null
+      if (catalog) {
+        const sizeMb = (catalog.size / (1024 * 1024)).toFixed(1)
+        setUploadStatus(`Uploading catalog PDF (${sizeMb} MB)...`)
+        setUploadProgress(0)
+        catalogUrl = await uploadProductAsset(catalog, "catalog", (pct) => setUploadProgress(pct))
+      }
+
+      setUploadStatus("Saving product details...")
+      setUploadProgress(100)
+
+      const basePrice = Math.min(...variants.map(v => Number(v.price)))
+
+      const productPayload = {
+        title,
+        short_desc: shortDesc,
+        description,
+        brand,
+        category,
+        badge,
+        badge_color: badgeColor,
+        in_stock: inStock,
+        fast_installation: fastInstallation,
+        rating: Number(rating || 0),
+        review_count: Number(reviewCount || 0),
+        old_price: Number(oldPrice || 0),
+        delivery_charge: Number(deliveryCharge || 0),
+        price: basePrice,
+        capacity_prices: variants,
+        specifications: specs.filter(s => s.label.trim()),
+        features: featuresList.filter(f => f.title.trim()),
+        main_image: mainImageUrl,
+        thumbnail_images: thumbnailUrls,
+        gallery_images: galleryUrls,
+        catalog_pdf: catalogUrl,
+      }
+
+      await createProduct(productPayload)
       toast.success("Product created successfully")
       onClose()
     } catch (err: any) {
+      console.error("AddProductModal submit error:", err)
       toast.error(err?.message || "Failed to create product")
     } finally {
       setSaving(false)
+      setUploadStatus("")
+      setUploadProgress(0)
     }
   }
 
@@ -412,22 +460,46 @@ export function AddProductModal({ isOpen, onClose }: Props) {
           </FormField>
 
           {/* Catalog PDF */}
-          <FormField label="Catalog PDF">
+          <FormField label="Catalog PDF (Brochure)">
             {catalog ? (
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-red-600" />
+                <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5 text-red-600" />
                 </div>
-                <span className="text-sm font-medium text-gray-700 truncate flex-1">{catalog.name}</span>
-                <button onClick={() => setCatalog(null)} className="text-red-500 hover:text-red-600">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{catalog.name}</p>
+                  <p className="text-xs text-emerald-600 font-medium">
+                    {(catalog.size / (1024 * 1024)).toFixed(2)} MB • Ready to upload directly to storage
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCatalog(null)}
+                  disabled={saving}
+                  className="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                >
                   <X size={16} />
                 </button>
               </div>
             ) : (
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 p-5 text-sm text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all">
-                <Upload className="w-4 h-4" />
-                <span>Upload PDF Brochure</span>
-                <input hidden type="file" accept="application/pdf" onChange={(e) => setCatalog(e.target.files?.[0] || null)} />
+              <label className="flex cursor-pointer flex-col sm:flex-row items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 p-5 text-sm text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all text-center">
+                <Upload className="w-5 h-5 text-blue-500" />
+                <span className="font-medium text-gray-700">Upload PDF Brochure</span>
+                <span className="text-xs text-gray-400">(Supports large PDFs up to 50MB)</span>
+                <input
+                  hidden
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (!f) return
+                    if (f.size > 50 * 1024 * 1024) {
+                      toast.error(`PDF size is ${(f.size / (1024 * 1024)).toFixed(1)}MB. Maximum allowed is 50MB.`)
+                      return
+                    }
+                    setCatalog(f)
+                  }}
+                />
               </label>
             )}
           </FormField>
@@ -452,17 +524,37 @@ export function AddProductModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* ─── Footer ─── */}
-        <div className="flex items-center justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100 shrink-0">
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
-            onClick={handleSubmit}
-            disabled={saving}
-          >
-            {saving ? "Creating..." : "Create Product"}
-          </Button>
+        <div className="px-5 sm:px-6 py-4 border-t border-gray-100 shrink-0 space-y-3">
+          {saving && (
+            <div className="bg-blue-50 border border-blue-200/80 rounded-xl p-3 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between text-xs font-semibold text-blue-900 mb-1.5">
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                  {uploadStatus || "Uploading assets..."}
+                </span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="outline" onClick={onClose} disabled={saving}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
+              onClick={handleSubmit}
+              disabled={saving}
+            >
+              {saving ? "Creating Product..." : "Create Product"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

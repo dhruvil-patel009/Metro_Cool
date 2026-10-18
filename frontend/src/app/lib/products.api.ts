@@ -33,40 +33,48 @@ export const getProductById = async (id: string): Promise<Product> => {
 
 /* ================= CREATE ================= */
 
-export const createProduct = async (formData: FormData) => {
+export const createProduct = async (data: FormData | Record<string, any>) => {
   const token = localStorage.getItem("accessToken");
+  const isFormData = data instanceof FormData;
 
   const res = await fetch(`${API_URL}/products/create`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
     },
-    body: formData,
+    body: isFormData ? data : JSON.stringify(data),
   });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to create product (${res.status} ${res.statusText})`);
+  }
 
   return res.json();
 };
-
 
 /* ================= UPDATE ================= */
 
 export const updateProduct = async (
   id: string,
-  formData: FormData
+  data: FormData | Record<string, any>
 ) => {
   const token = localStorage.getItem("accessToken");
+  const isFormData = data instanceof FormData;
 
   const res = await fetch(`${API_URL}/products/${id}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
     },
-    body: formData,
+    body: isFormData ? data : JSON.stringify(data),
   });
 
   if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Failed to update product");
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to update product (${res.status} ${res.statusText})`);
   }
 
   return res.json();
