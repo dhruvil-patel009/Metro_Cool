@@ -79,6 +79,19 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
   const [gallery, setGallery] = useState<File[]>([])
   const [catalog, setCatalog] = useState<File | null>(null)
 
+  const existingWarrantySpec = (product.specifications || []).find(
+    (s: any) => s?.label?.trim().toLowerCase() === "warranty" || s?.label?.trim().toLowerCase() === "brand warranty"
+  )
+  const [hasWarranty, setHasWarranty] = useState(
+    Boolean((product as any).warranty || existingWarrantySpec)
+  )
+  const [warrantyText, setWarrantyText] = useState(
+    (product as any).warranty || existingWarrantySpec?.value || "5 Year Warranty"
+  )
+  const [warrantySubtext, setWarrantySubtext] = useState(
+    existingWarrantySpec?.subtext || "Brand warranty covered"
+  )
+
   const [saving, setSaving] = useState(false)
   const [uploadStatus, setUploadStatus] = useState("")
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -138,6 +151,17 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
 
       const basePrice = Math.min(...variants.map((v: any) => Number(v.price)))
 
+      let finalSpecs = specs.filter(
+        (s: any) => s.label?.trim() && s.label?.trim().toLowerCase() !== "warranty" && s.label?.trim().toLowerCase() !== "brand warranty"
+      )
+      if (hasWarranty && warrantyText.trim()) {
+        finalSpecs.push({
+          label: "Warranty",
+          value: warrantyText.trim(),
+          subtext: warrantySubtext.trim() || "Brand warranty covered",
+        } as any)
+      }
+
       const updatePayload = {
         title,
         short_desc: shortDesc,
@@ -155,7 +179,7 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
         delivery_charge: Number(deliveryCharge || 0),
         price: basePrice,
         capacity_prices: variants,
-        specifications: specs.filter((s: any) => s.label?.trim()),
+        specifications: finalSpecs,
         features: featuresList.filter((f: any) => f.title?.trim()),
         main_image: finalMainImage,
         thumbnail_images: finalThumbnails,
@@ -683,6 +707,36 @@ export function EditProductModal({ product, isOpen, onClose, onUpdated }: Props)
                 <p className="text-[11px] text-gray-400">
                   Leave as "Use global setting" to inherit the timeline set on the Products page.
                 </p>
+              </div>
+            )}
+          </div>
+
+          {/* ══════ SECTION: Brand Warranty ══════ */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 bg-blue-50/60 border border-blue-100 rounded-xl">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Brand Warranty</p>
+                <p className="text-xs text-gray-500">Display warranty trust badge on the product page (off by default)</p>
+              </div>
+              <Switch checked={hasWarranty} onCheckedChange={setHasWarranty} />
+            </div>
+
+            {hasWarranty && (
+              <div className="p-4 bg-blue-50/40 border border-blue-100 rounded-xl space-y-3 animate-in fade-in duration-200">
+                <FormField label="Warranty Headline" required>
+                  <Input
+                    placeholder="e.g. 5 Year Warranty, 1 Year Comprehensive"
+                    value={warrantyText}
+                    onChange={(e) => setWarrantyText(e.target.value)}
+                  />
+                </FormField>
+                <FormField label="Warranty Subtext">
+                  <Input
+                    placeholder="e.g. Brand warranty covered, 10 Years on Compressor"
+                    value={warrantySubtext}
+                    onChange={(e) => setWarrantySubtext(e.target.value)}
+                  />
+                </FormField>
               </div>
             )}
           </div>

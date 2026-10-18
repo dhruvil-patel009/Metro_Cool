@@ -479,33 +479,49 @@ export default function ProductDetailsPage() {
                 </div>
 
                 {/* Trust Badges */}
-                <div className={`pt-5 border-t border-gray-100 grid gap-3 ${product.fast_installation ? "grid-cols-2" : "grid-cols-1"}`}>
-                  {/* Warranty — always shown */}
-                  <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 text-center">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-gray-900">5 Year Warranty</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">Brand warranty covered</p>
-                    </div>
-                  </div>
+                {(() => {
+                  const warrantySpec = (product.specifications || []).find(
+                    (s: any) => s?.label?.trim().toLowerCase() === "warranty" || s?.label?.trim().toLowerCase() === "brand warranty"
+                  );
+                  const warrantyHeadline = (product as any).warranty || warrantySpec?.value || null;
+                  const warrantySub = (warrantySpec as any)?.subtext || "Brand warranty covered";
+                  const showWarranty = Boolean(warrantyHeadline && String(warrantyHeadline).trim());
+                  const showFastInstall = Boolean(product.fast_installation);
 
-                  {/* Fast Install — only when enabled */}
-                  {product.fast_installation && (
-                    <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b from-amber-50 to-white border border-amber-100 text-center">
-                      <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center">
-                        <Zap className="w-5 h-5 text-amber-500" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-gray-900">Fast Installation</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">
-                          within {installationWithin}
-                        </p>
-                      </div>
+                  if (!showWarranty && !showFastInstall) return null;
+
+                  return (
+                    <div className={`pt-5 border-t border-gray-100 grid gap-3 ${showWarranty && showFastInstall ? "grid-cols-2" : "grid-cols-1"}`}>
+                      {/* Warranty — only when enabled/provided */}
+                      {showWarranty && (
+                        <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 text-center">
+                          <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center">
+                            <Shield className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-900">{warrantyHeadline}</p>
+                            <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">{warrantySub}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Fast Install — only when enabled */}
+                      {showFastInstall && (
+                        <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b from-amber-50 to-white border border-amber-100 text-center">
+                          <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center">
+                            <Zap className="w-5 h-5 text-amber-500" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-900">Fast Installation</p>
+                            <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">
+                              within {installationWithin}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
 
               </div>
             </div>

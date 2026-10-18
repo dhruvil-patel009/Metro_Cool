@@ -42,6 +42,9 @@ export function AddProductModal({ isOpen, onClose }: Props) {
   const [catalog, setCatalog] = useState<File | null>(null)
 
   const [fastInstallation, setFastInstallation] = useState(false)
+  const [hasWarranty, setHasWarranty] = useState(false)
+  const [warrantyText, setWarrantyText] = useState("5 Year Warranty")
+  const [warrantySubtext, setWarrantySubtext] = useState("Brand warranty covered")
   const [saving, setSaving] = useState(false)
   const [uploadStatus, setUploadStatus] = useState("")
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -95,6 +98,17 @@ export function AddProductModal({ isOpen, onClose }: Props) {
 
       const basePrice = Math.min(...variants.map(v => Number(v.price)))
 
+      let finalSpecs = specs.filter(
+        s => s.label.trim() && s.label.trim().toLowerCase() !== "warranty" && s.label.trim().toLowerCase() !== "brand warranty"
+      )
+      if (hasWarranty && warrantyText.trim()) {
+        finalSpecs.push({
+          label: "Warranty",
+          value: warrantyText.trim(),
+          subtext: warrantySubtext.trim() || "Brand warranty covered",
+        } as any)
+      }
+
       const productPayload = {
         title,
         short_desc: shortDesc,
@@ -111,7 +125,7 @@ export function AddProductModal({ isOpen, onClose }: Props) {
         delivery_charge: Number(deliveryCharge || 0),
         price: basePrice,
         capacity_prices: variants,
-        specifications: specs.filter(s => s.label.trim()),
+        specifications: finalSpecs,
         features: featuresList.filter(f => f.title.trim()),
         main_image: mainImageUrl,
         thumbnail_images: thumbnailUrls,
@@ -520,6 +534,36 @@ export function AddProductModal({ isOpen, onClose }: Props) {
               <p className="text-xs text-gray-500">Show installation charges section on the product page</p>
             </div>
             <Switch checked={fastInstallation} onCheckedChange={setFastInstallation} />
+          </div>
+
+          {/* ══════ SECTION: Brand Warranty ══════ */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 bg-blue-50/60 border border-blue-100 rounded-xl">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Brand Warranty</p>
+                <p className="text-xs text-gray-500">Display warranty trust badge on the product page (off by default)</p>
+              </div>
+              <Switch checked={hasWarranty} onCheckedChange={setHasWarranty} />
+            </div>
+
+            {hasWarranty && (
+              <div className="p-4 bg-blue-50/40 border border-blue-100 rounded-xl space-y-3 animate-in fade-in duration-200">
+                <FormField label="Warranty Headline" required>
+                  <Input
+                    placeholder="e.g. 5 Year Warranty, 1 Year Comprehensive"
+                    value={warrantyText}
+                    onChange={(e) => setWarrantyText(e.target.value)}
+                  />
+                </FormField>
+                <FormField label="Warranty Subtext">
+                  <Input
+                    placeholder="e.g. Brand warranty covered, 10 Years on Compressor"
+                    value={warrantySubtext}
+                    onChange={(e) => setWarrantySubtext(e.target.value)}
+                  />
+                </FormField>
+              </div>
+            )}
           </div>
         </div>
 
