@@ -6,7 +6,7 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Card } from "@/app/components/ui/card"
-import { Wallet, BadgeCheck, BarChart3, User, CreditCard, Phone, Mail, Tag, Lock, CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { Wallet, BadgeCheck, BarChart3, User, CreditCard, Phone, Mail, Tag, Lock, CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
 import SuccessModal from "./successModel";
@@ -36,6 +36,19 @@ export default function TechnicianRegistration() {
   const [aadhaarPan, setAadhaarPan] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [aadhaarError, setAadhaarError] = useState<string | null>(null);
+
+  // Maximum allowed file size limits
+  const MAX_PROFILE_PHOTO_SIZE = 2 * 1024 * 1024; // 2 MB
+  const MAX_AADHAAR_PAN_SIZE = 5 * 1024 * 1024;   // 5 MB
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
 
   // Promo code validation state
   const [promoValidating, setPromoValidating] = useState(false);
@@ -43,27 +56,12 @@ export default function TechnicianRegistration() {
   const [promoMessage, setPromoMessage] = useState<string>("");
   const promoDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-const handleReturnToHome = () => {
-  router.push('/');
-}
+  const handleReturnToHome = () => {
+    router.push('/');
+  };
+
   const handleChange = (e: any) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setProfilePhoto(file);
-    setProfilePreview(URL.createObjectURL(file));
-  };
-
-  const handleAadhaarPanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setAadhaarPan(file);
-    setAadhaarPreview(URL.createObjectURL(file));
   };
 
   const profileInputRef = useRef<HTMLInputElement>(null);
@@ -76,13 +74,75 @@ const handleReturnToHome = () => {
     if (!file) return;
 
     if (type === "profile") {
+      const allowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+      if (!allowedImageTypes.includes(file.type)) {
+        const errorMsg = "Invalid file type. Please upload a JPG or PNG image.";
+        setProfileError(errorMsg);
+        toast.error(errorMsg);
+        setProfilePhoto(null);
+        setProfilePreview(null);
+        if (profileInputRef.current) profileInputRef.current.value = "";
+        return;
+      }
+
+      if (file.size > MAX_PROFILE_PHOTO_SIZE) {
+        const currentSize = formatFileSize(file.size);
+        const errorMsg = `File size is ${currentSize}. Maximum allowed size is 2 MB. Please choose a smaller image.`;
+        setProfileError(errorMsg);
+        toast.error(`Profile photo is too large (${currentSize}). Please upload an image under 2 MB.`);
+        setProfilePhoto(null);
+        setProfilePreview(null);
+        if (profileInputRef.current) profileInputRef.current.value = "";
+        return;
+      }
+
+      setProfileError(null);
       setProfilePhoto(file);
       setProfilePreview(URL.createObjectURL(file));
+      toast.success(`Profile photo selected (${formatFileSize(file.size)})`);
     }
 
     if (type === "document") {
+      const allowedDocTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg", "application/pdf"];
+      if (!allowedDocTypes.includes(file.type)) {
+        const errorMsg = "Invalid file type. Please upload a PDF, JPG, or PNG document.";
+        setAadhaarError(errorMsg);
+        toast.error(errorMsg);
+        setAadhaarPan(null);
+        setAadhaarPreview(null);
+        if (documentInputRef.current) documentInputRef.current.value = "";
+        return;
+      }
+
+      if (file.size > MAX_AADHAAR_PAN_SIZE) {
+        const currentSize = formatFileSize(file.size);
+        const errorMsg = `File size is ${currentSize}. Maximum allowed size is 5 MB. Please choose a smaller file.`;
+        setAadhaarError(errorMsg);
+        toast.error(`Document is too large (${currentSize}). Please upload a file under 5 MB.`);
+        setAadhaarPan(null);
+        setAadhaarPreview(null);
+        if (documentInputRef.current) documentInputRef.current.value = "";
+        return;
+      }
+
+      setAadhaarError(null);
       setAadhaarPan(file);
-      setAadhaarPreview(URL.createObjectURL(file));
+      setAadhaarPreview(file.type === "application/pdf" ? null : URL.createObjectURL(file));
+      toast.success(`Document selected (${formatFileSize(file.size)})`);
+    }
+  };
+
+  const handleRemoveFile = (type: "profile" | "document") => {
+    if (type === "profile") {
+      setProfilePhoto(null);
+      setProfilePreview(null);
+      setProfileError(null);
+      if (profileInputRef.current) profileInputRef.current.value = "";
+    } else {
+      setAadhaarPan(null);
+      setAadhaarPreview(null);
+      setAadhaarError(null);
+      if (documentInputRef.current) documentInputRef.current.value = "";
     }
   };
 
@@ -139,6 +199,16 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   if (!profilePhoto || !aadhaarPan) {
     toast.warning('Please upload profile photo and Aadhaar/PAN');
+    return;
+  }
+
+  if (profilePhoto.size > MAX_PROFILE_PHOTO_SIZE) {
+    toast.error(`Profile photo exceeds 2 MB limit (${formatFileSize(profilePhoto.size)}). Please choose a smaller image.`);
+    return;
+  }
+
+  if (aadhaarPan.size > MAX_AADHAAR_PAN_SIZE) {
+    toast.error(`Aadhaar/PAN document exceeds 5 MB limit (${formatFileSize(aadhaarPan.size)}). Please choose a smaller file.`);
     return;
   }
 
@@ -515,25 +585,29 @@ const handleServiceRemove = (service: string) => {
                   {/* File Uploads */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FileUploadBox
-                      icon={<User className="w-8 h-8" />}
+                      icon={<User className="w-7 h-7" />}
                       title="Upload Profile Photo"
-                      subtitle="JPG, PNG (Max 2MB)"
+                      subtitle="JPG, PNG (Max 2 MB)"
                       inputRef={profileInputRef}
                       file={profilePhoto}
                       preview={profilePreview}
-                      accept="image/jpeg,image/png"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      error={profileError}
                       onFileSelect={(file) => handleFileUpload("profile", file)}
+                      onRemove={() => handleRemoveFile("profile")}
                     />
 
                     <FileUploadBox
-                      icon={<CreditCard className="w-8 h-8" />}
+                      icon={<CreditCard className="w-7 h-7" />}
                       title="Upload Aadhaar / PAN"
-                      subtitle="PDF, JPG (Max 5MB)"
+                      subtitle="PDF, JPG, PNG (Max 5 MB)"
                       inputRef={documentInputRef}
                       file={aadhaarPan}
                       preview={aadhaarPreview}
-                      accept="application/pdf,image/jpeg,image/png"
+                      accept="application/pdf,image/jpeg,image/png,image/webp,image/jpg"
+                      error={aadhaarError}
                       onFileSelect={(file) => handleFileUpload("document", file)}
+                      onRemove={() => handleRemoveFile("document")}
                     />
                   </div>
 
@@ -656,7 +730,9 @@ function FileUploadBox({
   file,
   preview,
   accept,
+  error,
   onFileSelect,
+  onRemove,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -665,48 +741,138 @@ function FileUploadBox({
   file: File | null;
   preview?: string | null;
   accept: string;
+  error?: string | null;
   onFileSelect: (file: File | null) => void;
+  onRemove?: () => void;
 }) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      onFileSelect(droppedFile);
+    }
+  };
+
   return (
-    <div
-      onClick={() => inputRef.current?.click()}
-      className="border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all bg-white"
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        className="hidden"
-        accept={accept}
-        onChange={(e) => onFileSelect(e.target.files?.[0] || null)}
-      />
+    <div className="flex flex-col gap-2">
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`border-2 border-dashed rounded-xl p-5 cursor-pointer transition-all bg-white relative group ${
+          error
+            ? "border-red-400 bg-red-50/40 hover:border-red-500"
+            : file
+            ? "border-green-400 bg-green-50/30 hover:border-green-500"
+            : isDragging
+            ? "border-blue-600 bg-blue-50"
+            : "border-gray-300 hover:border-blue-500 hover:bg-blue-50/50"
+        }`}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          className="hidden"
+          accept={accept}
+          onChange={(e) => {
+            const f = e.target.files?.[0] || null;
+            onFileSelect(f);
+            e.target.value = "";
+          }}
+        />
 
-      {/* 🔹 NO FILE SELECTED */}
-      {!file && (
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="text-blue-600">{icon}</div>
-          <p className="font-medium text-gray-900 text-sm">{title}</p>
-          <p className="text-xs text-gray-500">{subtitle}</p>
-        </div>
-      )}
-
-      {/* 🔹 FILE SELECTED */}
-      {file && (
-        <div className="flex flex-col items-center gap-3">
-          {preview ? (
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-28 h-28 rounded-lg object-cover border"
-            />
-          ) : (
-            <div className="text-sm text-blue-600 font-medium truncate max-w-[180px]">
-              📄 {file.name}
+        {/* 🔹 NO FILE SELECTED */}
+        {!file && (
+          <div className="flex flex-col items-center gap-2.5 text-center">
+            <div className={`p-3 rounded-full transition-colors ${
+              error ? "bg-red-100 text-red-600" : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
+            }`}>
+              {icon}
             </div>
-          )}
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">{title}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
+            </div>
+            <span className="text-xs text-blue-600 font-medium group-hover:underline">
+              Click to browse or drag & drop
+            </span>
+          </div>
+        )}
 
-          <p className="text-xs text-green-600 font-semibold">
-            ✓ File Selected
-          </p>
+        {/* 🔹 FILE SELECTED */}
+        {file && (
+          <div className="flex flex-col items-center gap-2.5">
+            {preview ? (
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-24 h-24 rounded-lg object-cover border shadow-sm"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-lg bg-blue-50 border border-blue-200 flex flex-col items-center justify-center text-blue-600 shadow-sm">
+                <span className="text-2xl">📄</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider mt-1">PDF Document</span>
+              </div>
+            )}
+
+            <div className="text-center max-w-[200px]">
+              <p className="text-xs font-semibold text-gray-800 truncate" title={file.name}>
+                {file.name}
+              </p>
+              <p className="text-[11px] text-gray-500">
+                Size: <span className="font-medium text-gray-700">{formatSize(file.size)}</span>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 mt-0.5">
+              <span className="inline-flex items-center gap-1 text-[11px] text-green-700 font-semibold bg-green-100/90 px-2 py-0.5 rounded-full">
+                ✓ Ready
+              </span>
+              {onRemove && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove();
+                  }}
+                  className="text-xs text-red-500 hover:text-red-700 font-medium hover:underline"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ⚠️ INLINE ERROR ALERT */}
+      {error && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs animate-in fade-in duration-200">
+          <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span className="font-semibold">Size limit exceeded: </span>
+            <span>{error}</span>
+          </div>
         </div>
       )}
     </div>

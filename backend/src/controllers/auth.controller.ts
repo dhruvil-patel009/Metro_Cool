@@ -102,6 +102,11 @@ export const register = async (req: Request, res: Response) => {
 
     /* -------------------- PROFILE PHOTO -------------------- */
     if (profileFile) {
+      if (profileFile.size > 2 * 1024 * 1024) {
+        return res.status(400).json({
+          error: "Profile photo exceeds 2 MB limit. Please upload a smaller image."
+        });
+      }
       const ext = profileFile.originalname.split(".").pop();
       const path = `profiles/${userId}.${ext}`;
 
@@ -125,6 +130,11 @@ export const register = async (req: Request, res: Response) => {
 
     /* -------------------- AADHAAR / PAN -------------------- */
     if (aadhaarFile) {
+      if (aadhaarFile.size > 5 * 1024 * 1024) {
+        return res.status(400).json({
+          error: "Aadhaar/PAN document exceeds 5 MB limit. Please upload a smaller file."
+        });
+      }
       const ext = aadhaarFile.originalname.split(".").pop();
       const path = `aadhaar_pan/${userId}.${ext}`;
 
