@@ -1,0 +1,72 @@
+PORT=5000
+# PORT=https://metro-cool-p3g4.vercel.app/
+FRONTEND_URL=http://localhost:3000
+# FRONTEND_URL=https://www.metro-cool.com
+
+SUPABASE_URL=https://nlimsceezdxwkykpzlbv.supabase.co
+# SUPABASE_URL=https://nlimsceezdxwkykpzlbv.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5saW1zY2VlemR4d2t5a3B6bGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NzE3NTcsImV4cCI6MjA4MjM0Nzc1N30.AVq3KGiURkbatVvP0JWQSFWRi54gCXSyVnM2GboJp-8
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5saW1zY2VlemR4d2t5a3B6bGJ2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Njc3MTc1NywiZXhwIjoyMDgyMzQ3NzU3fQ.LTIYLG723fy-iZdXp1EgUGse8Bio5bOuu8oS_L4l8tM
+
+JWT_SECRET=super_ultra_secure_secret_key_123
+
+MSG91_AUTH_KEY=484906AkHTgEO5l694f00aeP1
+
+MSG91_SENDER_ID=AC
+MSG91_TEMPLATE_ID=694f9fff56e6be5b653c8ddb
+
+TEMP_OTP=123456
+
+
+# Local Cread 
+RAZORPAY_KEY_ID=rzp_test_S7sqcflCHRNMxQ
+# RAZORPAY_KEY_ID=rzp_live_T0N94v7W8TlEza
+RAZORPAY_KEY_SECRET=1zBvE0kt7mHLlYK3NYMTPt7V
+# RAZORPAY_KEY_SECRET=TQwUcoPXHKpSbVLMN04BspfR
+# RAZORPAY_WEBHOOK_SECRET=DhruvilRazorpay@2001
+RAZORPAY_WEBHOOK_SECRET=Dhruvil@2001
+# RAZORPAY_WEBHOOK_SECRET=zYB8xqnf6F3tr_E
+
+#Live Cread
+# RAZORPAY_KEY_ID=rzp_live_T0N94v7W8TlEza
+# RAZORPAY_KEY_SECRET=TQwUcoPXHKpSbVLMN04BspfR
+# RAZORPAY_WEBHOOK_SECRET=zYB8xqnf6F3tr_E
+
+MAIL_USER=dhruvilpatel200199@gmail.com
+MAIL_PASS=qdhb hzgl eabu amfn
+# MAIL_USER=metrocool.official@gmail.com
+# MAIL_PASS=uieu vjgz vjaa nbbh
+
+# Admin email for booking/order notifications
+ADMIN_EMAIL=metrocool.official@gmail.com
+
+# Settlement Report Auto-Email
+SETTLEMENT_EMAIL=metrocool.official@gmail.com
+# Cron expression (default: "0 20 * * *" = 8:00 PM daily)
+# Examples: "30 9 * * *" = 9:30 AM | "0 */6 * * *" = every 6 hours | "0 8,20 * * *" = 8 AM & 8 PM
+SETTLEMENT_CRON_TIME=0 20 * * *
+# IANA Timezone (default: Asia/Kolkata)
+SETTLEMENT_CRON_TIMEZONE=Asia/Kolkata
+
+
+
+# Twillo Cread
+
+TWILIO_ACCOUNT_SID=AC069300926ffc11b57320eb12f7f5ccd2
+TWILIO_AUTH_TOKEN=13407f23cfc2f2f3bbe200eac7994d1d
+TWILIO_VERIFY_SERVICE_SID=VA2a7e9a4f6765da7160c556e78956b3fc
+
+
+# PS D:\Private Work\Metro_Cool\backend> npx web-push generate-vapid-keys
+
+# =======================================
+
+# Public Key:
+# BKiFMM7U-ko6uArgmfNI3Fagx6oX01xWULvhJr1efH9Bwy1Ilwj9Ah5c6lzLMCxxqMgg8t-YOOfypRAB1w9om6M
+
+# Private Key:
+# iqlgxwEb862b_NuqD_jT-XnD36saszpC_USFGfMN72U
+
+
+VAPID_PUBLIC_KEY=BKiFMM7U-ko6uArgmfNI3Fagx6oX01xWULvhJr1efH9Bwy1Ilwj9Ah5c6lzLMCxxqMgg8t-YOOfypRAB1w9om6M
+VAPID_PRIVATE_KEY=iqlgxwEb862b_NuqD_jT-XnD36saszpC_USFGfMN72U

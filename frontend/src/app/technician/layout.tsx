@@ -15,14 +15,8 @@ export const metadata: Metadata = {
   description: "Metro Cool Technician Dashboard - Manage your service jobs",
   icons: {
     icon: [
-      {
-        url: "/assets/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/assets/metro-cool-logo.png",
-        media: "(prefers-color-scheme: dark)",
-      },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/assets/icon-192.png", sizes: "192x192", type: "image/png" },
     ],
     apple: "/assets/apple-icon.png",
   },
